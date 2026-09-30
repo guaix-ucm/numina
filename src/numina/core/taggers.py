@@ -9,7 +9,6 @@
 
 """Function to retrieve tags from Observation results."""
 
-
 import itertools
 import warnings
 
@@ -28,9 +27,11 @@ def get_tags_from_full_ob(ob, reqtags=None):
     A dictionary
 
     """
-    warnings.warn("'get_tags_from_full_ob' is deprecated, use 'extract_tags_from_obsres' instead",
-                  DeprecationWarning, stacklevel=2)
-
+    warnings.warn(
+        "'get_tags_from_full_ob' is deprecated, use 'extract_tags_from_obsres' instead",
+        DeprecationWarning,
+        stacklevel=2,
+    )
 
     if reqtags is None:
         reqtags = []
@@ -46,12 +47,10 @@ def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True
     if sample is None:
         return {}
     ref_img = sample.open()
-    final_tags = extract_tags_from_img(
-        ref_img, tag_keys, datamodel, base=obsres.labels)
+    final_tags = extract_tags_from_img(ref_img, tag_keys, datamodel, base=obsres.labels)
     if strict:
         for frame in itertools.chain(obsres.frames, obsres.results.values()):
-            this_tags = extract_tags_from_img(
-                frame.open(), tag_keys, datamodel, base=obsres.labels)
+            this_tags = extract_tags_from_img(frame.open(), tag_keys, datamodel, base=obsres.labels)
             if this_tags != final_tags:
                 raise ValueError(f"tags in image {frame} are {this_tags} ! = {final_tags}")
 
@@ -59,7 +58,7 @@ def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True
             res_tags = res.tags
             for t in tag_keys:
                 if final_tags[t] != res_tags[t]:
-                    msg = f'wrong tag {t} in product {res}'
+                    msg = f"wrong tag {t} in product {res}"
                     raise ValueError(msg)
 
         return final_tags
@@ -70,7 +69,7 @@ def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True
 def extract_tags_from_img(img, tag_keys, datamodel: DataModel, base=None) -> dict:
 
     base = base or {}
-    fits_extractor = datamodel.extractor_map['fits']
+    fits_extractor = datamodel.extractor_map["fits"]
     final_tags = {}
     for key in tag_keys:
 

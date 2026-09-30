@@ -96,14 +96,12 @@ class LinearModelYvsX:
 
     """
 
-    def __init__(self, x, y, degree, w=None,
-                 raw=True, renorm=False,
-                 rm_all=False, debug=False):
+    def __init__(self, x, y, degree, w=None, raw=True, renorm=False, rm_all=False, debug=False):
         """Fit polynomial using the R lm() function."""
 
         # remove all objects in R session
         if rm_all:
-            ro.r('rm(list=ls())')
+            ro.r("rm(list=ls())")
 
         # renormalize data ranges when requested
         if renorm:
@@ -115,14 +113,14 @@ class LinearModelYvsX:
                 bx = 1.0
                 cx = 0.0
             else:
-                bx = 2./(xmax - xmin)
-                cx = (xmax + xmin)/(xmax - xmin)
+                bx = 2.0 / (xmax - xmin)
+                cx = (xmax + xmin) / (xmax - xmin)
             if ymin == ymax:
                 by = 1.0
                 cy = 0.0
             else:
-                by = 2./(ymax - ymin)
-                cy = (ymax + ymin)/(ymax - ymin)
+                by = 2.0 / (ymax - ymin)
+                cy = (ymax + ymin) / (ymax - ymin)
             xx = bx * x - cx
             yy = by * y - cy
             if w is None:
@@ -138,26 +136,26 @@ class LinearModelYvsX:
                 ww = np.copy(w)
 
         # declare x and y in R session
-        ro.globalenv['x'] = ro.FloatVector(xx)
-        ro.globalenv['y'] = ro.FloatVector(yy)
+        ro.globalenv["x"] = ro.FloatVector(xx)
+        ro.globalenv["y"] = ro.FloatVector(yy)
 
         # define R command line to be executed
-        r_command = 'lm(y ~ poly(x, degree=' + str(degree)
-        r_command += ', raw=' + str(raw).upper() + ')'
+        r_command = "lm(y ~ poly(x, degree=" + str(degree)
+        r_command += ", raw=" + str(raw).upper() + ")"
         if w is not None:  # weigthed fit
             # declare weights in R session
-            ro.globalenv['w'] = ro.FloatVector(ww)
-            r_command += ', weights=w'
-        r_command += ')'
+            ro.globalenv["w"] = ro.FloatVector(ww)
+            r_command += ", weights=w"
+        r_command += ")"
 
         if debug:
-            print('r_command:\n', r_command)
+            print("r_command:\n", r_command)
 
         # execute command line and store resulting fit
         self.fit = ro.r(r_command)
 
         # store summary
-        base = importr('base')
+        base = importr("base")
         self.summary = base.summary(self.fit)
 
         # store coefficients and associated statistics
@@ -180,17 +178,13 @@ class LinearModelYvsX:
                 # coeff_std_error = np.zeros_like(self.coeff_std_error)
                 for i in range(degree + 1):
                     for j in range(i, degree + 1):
-                        coeff_estimate[i] += aa[j] * comb(j, j-i, True) * \
-                            (bx**i)*((-cx)**(j-i))
+                        coeff_estimate[i] += aa[j] * comb(j, j - i, True) * (bx**i) * ((-cx) ** (j - i))
             coeff_estimate[0] += cy
             coeff_estimate /= by
             self.coeff_estimate = coeff_estimate
 
         # compute global p-value, which is not stored in summary
         fstatistic = self.summary.rx2("fstatistic")
-        stats = importr('stats')
-        global_p_value = stats.pf(q=fstatistic[0],
-                                  df1=fstatistic[1],
-                                  df2=fstatistic[2],
-                                  lower_tail=False)
+        stats = importr("stats")
+        global_p_value = stats.pf(q=fstatistic[0], df1=fstatistic[1], df2=fstatistic[2], lower_tail=False)
         self.p_value = np.array(global_p_value)[0]

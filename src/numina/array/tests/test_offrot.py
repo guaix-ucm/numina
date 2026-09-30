@@ -1,4 +1,3 @@
-
 import math
 import numpy
 
@@ -12,10 +11,7 @@ def test_off_rot():
     sa = math.sin(ang)
     rot = numpy.array([[ca, -sa], [sa, ca]])
 
-    coords0 = numpy.array(
-        [[0, 0], [0, 0.5], [0, 0.1], [0, 0.2], [0.5, 0],
-         [0.1, 0], [0.3, 0], [0.2, 0]]
-    )
+    coords0 = numpy.array([[0, 0], [0, 0.5], [0, 0.1], [0, 0.2], [0.5, 0], [0.1, 0], [0.3, 0], [0.2, 0]])
     coords1 = numpy.dot(rot, coords0.T).T + off
 
     off01, rot01 = fit_offset_and_rotation(coords0, coords1)
@@ -32,10 +28,7 @@ def test_off_rot_fb():
     rot = numpy.array([[ca, -sa], [sa, ca]])
     off = numpy.array([0.23, -0.1])
 
-    coords0 = numpy.array(
-        [[0, 0], [0, 0.5], [1.3, 0.1], [-3.0, 0.2], [0.5, 0],
-         [0.1, 0], [0.3, 0], [0.2, 0]]
-    )
+    coords0 = numpy.array([[0, 0], [0, 0.5], [1.3, 0.1], [-3.0, 0.2], [0.5, 0], [0.1, 0], [0.3, 0], [0.2, 0]])
     c0m = coords0.mean(axis=0)
     cb0 = coords0 - c0m
     coords1 = numpy.dot(rot, cb0.T).T + off
@@ -54,14 +47,10 @@ def test_off_rot_fb():
 
 
 def test_off_rot_182():
-    p2 = [(1444.96997070312, 468.980010986328),
-          (1352.80004882812, 1517.91003417969)]
+    p2 = [(1444.96997070312, 468.980010986328), (1352.80004882812, 1517.91003417969)]
     p1 = numpy.array(p2)
 
-    q2 = numpy.array(
-        [[1445.99857531, 458.24017547],
-         [1353.24937729, 1507.67677833]]
-    )
+    q2 = numpy.array([[1445.99857531, 458.24017547], [1353.24937729, 1507.67677833]])
     q1 = numpy.array(q2)
 
     off1, rot1 = fit_offset_and_rotation(p1, q1)

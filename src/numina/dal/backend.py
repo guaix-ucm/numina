@@ -22,7 +22,6 @@ from numina.util.context import working_directory
 from .dictdal import BaseHybridDAL
 from .stored import StoredProduct, StoredResult
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -270,9 +269,7 @@ class Backend(BaseHybridDAL):
         if mode is not None:
             # mode must match
             if cobsres.mode != mode:
-                msg = (
-                    f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
-                )
+                msg = f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
                 raise NoResultFound(msg)
 
         try:
@@ -281,9 +278,7 @@ class Backend(BaseHybridDAL):
                 if node_id == val["oblock_id"]:
                     candidates.append(val)
 
-            s_can = sorted(
-                candidates, key=operator.itemgetter("time_create"), reverse=True
-            )
+            s_can = sorted(candidates, key=operator.itemgetter("time_create"), reverse=True)
             if s_can:
                 result_reg = s_can[0]
                 directory = result_reg.get("result_dir", "")

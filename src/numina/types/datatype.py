@@ -16,9 +16,7 @@ from .typedialect import dialect_info
 
 
 class DataType(DataTypeBase):
-    """Base class for input/output types of recipes.
-
-    """
+    """Base class for input/output types of recipes."""
 
     def __init__(self, ptype, node_type=None, default=None, **kwds):
         super(DataType, self).__init__(**kwds)
@@ -69,8 +67,8 @@ class DataType(DataTypeBase):
         return True
 
     def add_dialect_info(self, dialect, tipo):
-        key = self.__module__ + '.' + self.__class__.__name__
-        result = {'fqn': key, 'python': self.internal_type, 'type': tipo}
+        key = self.__module__ + "." + self.__class__.__name__
+        result = {"fqn": key, "python": self.internal_type, "type": tipo}
         self.internal_dialect[dialect] = result
         return result
 
@@ -128,7 +126,7 @@ class PlainPythonType(DataType):
         elif callable(validator):
             self.custom_validator = validator
         else:
-            raise TypeError('validator must be callable or None')
+            raise TypeError("validator must be callable or None")
 
         super(PlainPythonType, self).__init__(stype, default=default)
 
@@ -149,16 +147,15 @@ class PlainPythonType(DataType):
 class ListOfType(DataType):
     """Data type for lists of other types."""
 
-    def __init__(self, ref, default=None, index=0, nmin=None, nmax=None, accept_scalar=False,
-                 multi_query=None):
+    def __init__(self, ref, default=None, index=0, nmin=None, nmax=None, accept_scalar=False, multi_query=None):
         from numina.core.validator import range_validator
+
         stype = list
         if inspect.isclass(ref):
             node_type = ref()
         else:
             node_type = ref
-        super(ListOfType, self).__init__(
-            stype, node_type=node_type, default=default)
+        super(ListOfType, self).__init__(stype, node_type=node_type, default=default)
         self.internal_scalar = False
         self.index = index
         self.nmin = nmin
@@ -178,8 +175,9 @@ class ListOfType(DataType):
             if self.accept_scalar:
                 obj = [obj]
             else:
-                raise TypeError("The object received should be iterable"
-                                " or the type modified to accept scalar values")
+                raise TypeError(
+                    "The object received should be iterable" " or the type modified to accept scalar values"
+                )
 
         result = [self.node_type.convert(o) for o in obj]
         self.len_validator(len(result))
@@ -195,7 +193,7 @@ class ListOfType(DataType):
         result = []
         old_dest = where
         for idx, obj in enumerate(objs, start=self.index):
-            n_where = f'{old_dest}{idx}'
+            n_where = f"{old_dest}{idx}"
             res = self.node_type._datatype_dump(obj, n_where)
             result.append(res)
         return result
@@ -205,8 +203,9 @@ class ListOfType(DataType):
             if self.accept_scalar:
                 objs = [objs]
             else:
-                raise TypeError("The object received should be iterable"
-                                " or the type modified to accept scalar values")
+                raise TypeError(
+                    "The object received should be iterable" " or the type modified to accept scalar values"
+                )
         return [self.node_type._datatype_load(obj) for obj in objs]
 
     def __str__(self):

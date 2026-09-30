@@ -10,37 +10,42 @@
 
 """Exceptions for the numina package."""
 
-
 import numina.ext.gtc
 
 
 class Error(Exception):
     """Base class for exceptions in the numina package."""
+
     pass
 
 
 class RecipeError(Error):
     """A non recoverable problem during recipe execution."""
+
     pass
 
 
 class DetectorElapseError(Error):
     """Error in the clocking of a Detector."""
+
     pass
 
 
 class DetectorReadoutError(Error):
     """Error in the readout of a Detector."""
+
     pass
 
 
 class ValidationError(Exception):
     """Error during validation of Recipe inputs and outputs."""
+
     pass
 
 
 class NoResultFound(Exception):
     """No result found in a DAL query."""
+
     pass
 
 

@@ -145,29 +145,21 @@ def backend(tmpdir):
         reduced_rss=simpleobj.create_simple_frame(),
         reduced_image=simpleobj.create_simple_frame(),
     )
-    result1_content = dict(
-        qc="GOOD", values=result1_values, uuid="10000000-10000000-10000000-10000000"
-    )
+    result1_content = dict(qc="GOOD", values=result1_values, uuid="10000000-10000000-10000000-10000000")
     with working_directory(str(result1_dir)):
         repeat_my(result1_content, result_name)
 
     result2_dir = tmpdir.mkdir("dum2")
 
     result2_values = dict(calib=simpleobj.create_simple_structured())
-    result2_content = dict(
-        qc="BAD", values=result2_values, uuid="20000000-20000000-20000000-20000000"
-    )
+    result2_content = dict(qc="BAD", values=result2_values, uuid="20000000-20000000-20000000-20000000")
     with working_directory(str(result2_dir)):
         repeat_my(result2_content, result_name)
 
     result3_dir = tmpdir.mkdir("dum3")
 
-    result3_values = dict(
-        reduced_rss="reduced_rss.fits", reduced_image="reduced_image.fits"
-    )
-    result3_content = dict(
-        qc="BAD", values=result3_values, uuid="30000000-30000000-30000000-30000000"
-    )
+    result3_values = dict(reduced_rss="reduced_rss.fits", reduced_image="reduced_image.fits")
+    result3_content = dict(qc="BAD", values=result3_values, uuid="30000000-30000000-30000000-30000000")
     with working_directory(str(result3_dir)):
         repeat_my(result3_content, result_name)
 

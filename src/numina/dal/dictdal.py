@@ -29,7 +29,6 @@ from .stored import StoredProduct, StoredParameter, StoredResult
 from .diskfiledal import build_product_path
 from .utils import tags_are_valid
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -38,9 +37,7 @@ class BaseDictDAL(AbsDrpDAL):
 
     _RESERVED_MODE_NAMES = ["nulo", "container", "root", "raiz"]
 
-    def __init__(
-        self, drps, ob_table, prod_table, req_table, extra_data=None, components=None
-    ):
+    def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None, components=None):
         super(BaseDictDAL, self).__init__(drps)
         # Check that the structure of the base is correct
         self.ob_table = ob_table
@@ -167,9 +164,7 @@ class BaseDictDAL(AbsDrpDAL):
         obsres.__dict__ = oblock.__dict__
 
         obsres.mode = as_mode or obsres.mode
-        _logger.debug(
-            "obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode
-        )
+        _logger.debug("obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode)
 
         try:
             this_drp = self.drps.query_by_name(obsres.instrument)
@@ -296,9 +291,7 @@ class Dict2DAL(BaseDictDAL):
         else:
             req_table = base.get("requirements", {})
 
-        super().__init__(
-            drps, obtable, prod_table, req_table, extra_data, components=components
-        )
+        super().__init__(drps, obtable, prod_table, req_table, extra_data, components=components)
 
     def new_task_id(self, request, request_params):
         if request == "reduce":
@@ -378,9 +371,7 @@ class BaseHybridDAL(Dict2DAL):
         else:
             self.basedir = basedir
 
-        super().__init__(
-            drps, obtable, base, extra_data=extra_data, components=components
-        )
+        super().__init__(drps, obtable, base, extra_data=extra_data, components=components)
 
     def add_obs(self, obtable):
         obdict = {}
@@ -447,9 +438,7 @@ class BaseHybridDAL(Dict2DAL):
                     path = prod["content"]
                 else:
                     # Build path
-                    path = build_product_path(
-                        drp, self.rootdir, profile, name, tipo, obsres
-                    )
+                    path = build_product_path(drp, self.rootdir, profile, name, tipo, obsres)
                 _logger.debug("searching product in path: %s", path)
                 rprod["content"] = self.product_loader(tipo, name, path)
                 return StoredProduct(**rprod)
@@ -527,9 +516,7 @@ class BaseHybridDAL(Dict2DAL):
             for previd in self.search_previous_obsres(obsres, node=result_node):
                 # print('searching in node', previd)
                 try:
-                    st = self.search_result_id(
-                        previd, tipo, result_field, mode=result_mode
-                    )
+                    st = self.search_result_id(previd, tipo, result_field, mode=result_mode)
                     return st
                 except NoResultFound:
                     pass
@@ -644,9 +631,7 @@ class HybridDAL(BaseHybridDAL):
                     path = prod["content"]
                 else:
                     # Build path
-                    path = build_product_path(
-                        drp, self.rootdir, profile, name, tipo, obsres
-                    )
+                    path = build_product_path(drp, self.rootdir, profile, name, tipo, obsres)
                 _logger.debug("path is %s", path)
                 rprod["content"] = numina.store.load(tipo, path)
                 return StoredProduct(**rprod)
@@ -664,9 +649,7 @@ class HybridDAL(BaseHybridDAL):
         if mode is not None:
             # mode must match
             if cobsres.mode != mode:
-                msg = (
-                    f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
-                )
+                msg = f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
                 raise NoResultFound(msg)
 
         try:
@@ -685,9 +668,7 @@ class HybridDAL(BaseHybridDAL):
                     with open(filename_json) as fd:
                         result_data = json.load(fd)
                 else:
-                    raise ValueError(
-                        f"result.yaml or result.json not found in {directory}"
-                    )
+                    raise ValueError(f"result.yaml or result.json not found in {directory}")
 
                 stored_result = StoredResult.load_data(result_data)
 

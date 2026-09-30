@@ -33,7 +33,7 @@ def wcs_to_pix(w):
     return [coor_to_pix_1d(w1) for w1 in w[::-1]]
 
 
-def coor_to_pix(w, order='rc'):
+def coor_to_pix(w, order="rc"):
     """
 
     Parameters
@@ -45,8 +45,8 @@ def coor_to_pix(w, order='rc'):
     -------
 
     """
-    if order == 'xy':
-        return coor_to_pix(w[::-1], order='rc')
+    if order == "xy":
+        return coor_to_pix(w[::-1], order="rc")
     return [coor_to_pix_1d(w1) for w1 in w]
 
 
@@ -63,7 +63,7 @@ def wcs_to_pix_np(w):
     """
     wnp = numpy.asarray(w)
     mm = numpy.floor(wnp + 0.5)
-    return mm[::-1].astype('int')
+    return mm[::-1].astype("int")
 
 
 def slice_create(center, block, start=0, stop=None):
@@ -97,8 +97,7 @@ def slice_create(center, block, start=0, stop=None):
 
 def image_box(center, shape, box):
     """Create a region of size box, around a center in a image of shape."""
-    return tuple(slice_create(c, b, stop=s)
-                 for c, s, b in zip(center, shape, box))
+    return tuple(slice_create(c, b, stop=s) for c, s, b in zip(center, shape, box))
 
 
 def image_box2d(x, y, shape, box):
@@ -129,7 +128,7 @@ def extent(sl):
     -------
 
     """
-    result = [sl[1].start-0.5, sl[1].stop-0.5, sl[0].start-0.5, sl[0].stop-0.5]
+    result = [sl[1].start - 0.5, sl[1].stop - 0.5, sl[0].start - 0.5, sl[0].stop - 0.5]
     return result
 
 
@@ -145,5 +144,4 @@ def expand_slice(s, a, b, start=0, stop=None):
 
 def expand_region(tuple_of_s, a, b, start=0, stop=None):
     """Apply expend_slice on a tuple of slices"""
-    return tuple(expand_slice(s, a, b, start=start, stop=stop)
-                 for s in tuple_of_s)
+    return tuple(expand_slice(s, a, b, start=start, stop=stop) for s in tuple_of_s)

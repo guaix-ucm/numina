@@ -27,6 +27,7 @@ class DrpBase(object):
     @staticmethod
     def instrumentdrp_check(drpins, entryname):
         import numina.core.pipeline
+
         if isinstance(drpins, numina.core.pipeline.InstrumentDRP):
             if drpins.name == entryname:
                 return True
@@ -35,7 +36,7 @@ class DrpBase(object):
                 warnings.warn(msg, RuntimeWarning)
                 return False
         else:
-            msg = f'Object {drpins!r} does not contain a valid DRP'
+            msg = f"Object {drpins!r} does not contain a valid DRP"
             warnings.warn(msg, RuntimeWarning)
             return False
 
@@ -48,9 +49,7 @@ class DrpGeneric(DrpBase):
         self.drps = drps
 
     def query_by_name(self, name):
-        """Query DRPs in internal storage by name
-
-        """
+        """Query DRPs in internal storage by name"""
         return self._drps[name]
 
     def query_all(self):

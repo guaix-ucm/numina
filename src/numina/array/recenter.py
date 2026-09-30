@@ -52,8 +52,7 @@ def _centering_centroid_loop_xy(data, center_xy, box):
     return ncenter_xy, back
 
 
-def centering_centroid(data, xi, yi, box, nloop=10, toldist=1e-3,
-                       maxdist=10.0):
+def centering_centroid(data, xi, yi, box, nloop=10, toldist=1e-3, maxdist=10.0):
     """
     Computes centroid around point
 
@@ -85,7 +84,7 @@ def centering_centroid(data, xi, yi, box, nloop=10, toldist=1e-3,
     back = 0.0
 
     if nloop == 0:
-        return xi, yi, 0.0, 0, 'not recentering'
+        return xi, yi, 0.0, 0, "not recentering"
 
     for i in range(nloop):
         nxy, back = _centering_centroid_loop_xy(data, cxy, box)
@@ -93,14 +92,14 @@ def centering_centroid(data, xi, yi, box, nloop=10, toldist=1e-3,
         # if we are to far away from the initial point, break
         dst = distance.euclidean(origin, nxy)
         if dst > maxdist:
-            msg = f'maximum distance ({maxdist:5.2f}) from origin reached'
+            msg = f"maximum distance ({maxdist:5.2f}) from origin reached"
             return cxy[0], cxy[1], back, 2, msg
 
         # check convergence
         dst = distance.euclidean(nxy, cxy)
         if dst < toldist:
-            return nxy[0], nxy[1], back, 1, f'converged in iteration {i}'
+            return nxy[0], nxy[1], back, 1, f"converged in iteration {i}"
         else:
             cxy = nxy
 
-    return nxy[0], nxy[1], back, 3, f'not converged in {nloop} iterations'
+    return nxy[0], nxy[1], back, 3, f"not converged in {nloop} iterations"

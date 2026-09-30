@@ -10,7 +10,6 @@
 
 """Extra logging handlers for the numina logging system."""
 
-
 import logging
 
 from astropy.io import fits
@@ -50,6 +49,7 @@ def log_to_history(logger, name):
                 return result
             finally:
                 logger.removeHandler(fh)
+
         return l2h_method
 
     return log_to_history_decorator

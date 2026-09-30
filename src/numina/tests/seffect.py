@@ -1,4 +1,3 @@
-
 """Side effect decorator
 
 Decorates a function to call another
@@ -38,6 +37,7 @@ def side_effect(effect_func):
         func_wrapper.side_effect = effect_func
 
         return func_wrapper
+
     return side_effect_decorator
 
 

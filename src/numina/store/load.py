@@ -28,10 +28,10 @@ def load(tag, obj):
 
     """
 
-    if hasattr(tag, '__numina_load__'):
+    if hasattr(tag, "__numina_load__"):
         return tag.__numina_load__(obj)
 
-    if hasattr(tag, '_datatype_load'):
+    if hasattr(tag, "_datatype_load"):
         return tag._datatype_load(obj)
 
     return obj

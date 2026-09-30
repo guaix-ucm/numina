@@ -9,7 +9,6 @@
 
 """DAL base classes"""
 
-
 from .daliface import DALInterface
 from numina.exceptions import NoResultFound  # noqa: F401
 
@@ -25,17 +24,17 @@ class AbsDrpDAL(DALInterface):
 
     def search_instrument_configuration_from_ob(self, obsres):
         from numina.instrument.assembly import assembly_instrument
+
         this_drp = self.drps.query_by_name(obsres.instrument)
         key, date_obs, keyname = this_drp.select_profile(obsres)
-        ins = assembly_instrument(
-            this_drp.configurations, key, date_obs, by_key=keyname)
+        ins = assembly_instrument(this_drp.configurations, key, date_obs, by_key=keyname)
         return ins
 
-    def search_instrument_configuration(self, keyval, value, by_key='name'):
+    def search_instrument_configuration(self, keyval, value, by_key="name"):
         from numina.instrument.assembly import assembly_instrument
+
         drp = self.drps.query_by_name(keyval)
-        ins = assembly_instrument(
-            drp.configurations, keyval, value, by_key=by_key)
+        ins = assembly_instrument(drp.configurations, keyval, value, by_key=by_key)
         return ins
 
     def search_recipe(self, ins, mode, pipeline):
@@ -51,7 +50,7 @@ class AbsDrpDAL(DALInterface):
         recipe_fqn = recipes[mode]
         return recipe_fqn
 
-    def search_recipe_from_ob(self, ob, pipeline='default'):
+    def search_recipe_from_ob(self, ob, pipeline="default"):
         instrument = ob.instrument
         mode = ob.mode
         pipeline = ob.pipeline

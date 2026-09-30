@@ -11,7 +11,6 @@
 Recipe requirement holders
 """
 
-
 import numina.exceptions
 import numina.types.obsresult as obtypes
 
@@ -24,8 +23,7 @@ class ObservationResultRequirement(Requirement):
     def __init__(self, query_opts=None):
 
         super(ObservationResultRequirement, self).__init__(
-            obtypes.ObservationResultType, "Observation Result",
-            query_opts=query_opts
+            obtypes.ObservationResultType, "Observation Result", query_opts=query_opts
         )
 
     def __repr__(self):
@@ -52,7 +50,7 @@ class ObservationResultRequirement(Requirement):
         q_options = self.query_options(options)
 
         if isinstance(q_options, ResultOf):
-            dest_field = 'frames'
+            dest_field = "frames"
             dest_type = list
             # Field to insert the results
             if not hasattr(obsres, dest_field):
@@ -60,8 +58,7 @@ class ObservationResultRequirement(Requirement):
 
             dest_obj = getattr(obsres, dest_field)
 
-            values = dal.search_result_relative(self.dest, self.type, obsres,
-                                                result_desc=q_options)
+            values = dal.search_result_relative(self.dest, self.type, obsres, result_desc=q_options)
 
             for partial in values:
                 dest_obj.append(partial.content)
@@ -79,5 +76,4 @@ class ObservationResultRequirement(Requirement):
         -------
 
         """
-        raise numina.exceptions.NoResultFound(
-            'unable to complete ObservationResult') from notfound
+        raise numina.exceptions.NoResultFound("unable to complete ObservationResult") from notfound

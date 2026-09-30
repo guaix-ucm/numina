@@ -40,6 +40,7 @@ def only_positive(value):
 
 def as_list(callable):
     """Convert a scalar validator in a list validator"""
+
     @wraps(callable)
     def wrapper(value_iter):
         return [callable(value) for value in value_iter]
@@ -63,6 +64,7 @@ def range_validator(minval=None, maxval=None):
     ValidationError is the values are outside the range
 
     """
+
     def checker_func(value):
         if minval is not None and value < minval:
             msg = f"must be >= {minval}"

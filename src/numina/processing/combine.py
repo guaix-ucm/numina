@@ -21,26 +21,24 @@ from numina.datamodel import get_imgid
 
 
 def basic_processing_with_combination(
-        rinput, reduction_flows,
-        method=combine.mean, method_kwargs=None,
-        errors=True, prolog=None):
+    rinput, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
+):
 
     return basic_processing_with_combination_frames(
-        rinput.obresult.frames, reduction_flows,
-        method=method, method_kwargs=method_kwargs,
-        errors=errors, prolog=prolog
+        rinput.obresult.frames,
+        reduction_flows,
+        method=method,
+        method_kwargs=method_kwargs,
+        errors=errors,
+        prolog=prolog,
     )
 
 
 def basic_processing_with_combination_frames(
-        frames, reduction_flows,
-        method=combine.mean, method_kwargs=None,
-        errors=True, prolog=None):
+    frames, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
+):
 
-    result = combine_frames(
-        frames, method=method, method_kwargs=method_kwargs,
-        errors=errors, prolog=prolog
-    )
+    result = combine_frames(frames, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog)
 
     if isinstance(reduction_flows, list):
         # FIXME: handling a list, we use only the first element
@@ -71,16 +69,14 @@ def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True,
 
     with contextlib.ExitStack() as stack:
         hduls = [stack.enter_context(dframe.open()) for dframe in frames]
-        result = combine_imgs(
-            hduls, method=method, method_kwargs=method_kwargs,
-            errors=errors, prolog=prolog
-        )
+        result = combine_imgs(hduls, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog)
 
     return result
 
 
-def combine_imgs(hduls, method=combine.mean, method_kwargs=None,
-                 errors=True, prolog=None, crmasks=None, use_lamedian=False):
+def combine_imgs(
+    hduls, method=combine.mean, method_kwargs=None, errors=True, prolog=None, crmasks=None, use_lamedian=False
+):
     """
 
     Parameters
@@ -101,37 +97,37 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None,
 
     cnum = len(hduls)
     if cnum == 0:
-        raise ValueError('number of HDUList == 0')
+        raise ValueError("number of HDUList == 0")
 
     first_image = hduls[0]
     base_header = first_image[0].header.copy()
     last_header = hduls[-1][0].header.copy()
 
     method_kwargs = method_kwargs or {}
-    if 'dtype' not in method_kwargs:
-        method_kwargs['dtype'] = 'float32'
+    if "dtype" not in method_kwargs:
+        method_kwargs["dtype"] = "float32"
 
     _logger.info(f"stacking {cnum:d} images using '{method.__name__}'")
-    if method.__name__ in ['mediancr', 'meancrt', 'meancr', 'meancr2']:
+    if method.__name__ in ["mediancr", "meancrt", "meancr", "meancr2"]:
         combined_data = method([d[0].data for d in hduls], crmasks=crmasks, **method_kwargs)
     else:
         combined_data = method([d[0].data for d in hduls], **method_kwargs)
 
     hdu = fits.PrimaryHDU(combined_data[0], header=base_header)
-    _logger.debug('update result header')
+    _logger.debug("update result header")
     if prolog:
-        _logger.debug('write prolog')
-        hdu.header['history'] = prolog
-    hdu.header['history'] = f"Combined {cnum:d} images using '{method.__name__}'"
+        _logger.debug("write prolog")
+        hdu.header["history"] = prolog
+    hdu.header["history"] = f"Combined {cnum:d} images using '{method.__name__}'"
     t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    hdu.header['history'] = f'Combination time {t_str}'
+    hdu.header["history"] = f"Combination time {t_str}"
 
     for img in hduls:
-        hdu.header['history'] = f"Image {get_imgid(img)}"
+        hdu.header["history"] = f"Image {get_imgid(img)}"
 
-    prevnum = base_header.get('NUM-NCOM', 1)
-    hdu.header['NUM-NCOM'] = prevnum * cnum
-    hdu.header['UUID'] = str(uuid.uuid1())
+    prevnum = base_header.get("NUM-NCOM", 1)
+    hdu.header["NUM-NCOM"] = prevnum * cnum
+    hdu.header["UUID"] = str(uuid.uuid1())
 
     # Copy extensions and then append 'variance' and 'map'
     result = fits.HDUList([hdu])
@@ -139,13 +135,13 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None,
         result.append(hdu.copy())
 
     # Headers of last image, this is an EMIRISM
-    if 'TSUTC2' in hdu.header:
-        hdu.header['TSUTC2'] = last_header['TSUTC2']
+    if "TSUTC2" in hdu.header:
+        hdu.header["TSUTC2"] = last_header["TSUTC2"]
     # Append error extensions
     if errors:
-        varhdu = fits.ImageHDU(combined_data[1], name='VARIANCE')
+        varhdu = fits.ImageHDU(combined_data[1], name="VARIANCE")
         result.append(varhdu)
-        num = fits.ImageHDU(combined_data[2].astype('int16'), name='MAP')
+        num = fits.ImageHDU(combined_data[2].astype("int16"), name="MAP")
         result.append(num)
 
     return result
@@ -154,19 +150,19 @@ def combine_imgs(hduls, method=combine.mean, method_kwargs=None,
 def main(args=None):
     import argparse
 
-    parser = argparse.ArgumentParser(prog='combine')
-    parser.add_argument('-o', '--output', default='combined.fits')
-    parser.add_argument('-e', '--errors', default=False, action='store_true')
-    parser.add_argument('--method', default='mean', choices=['mean', 'median'])
-    parser.add_argument('image', nargs='+')
+    parser = argparse.ArgumentParser(prog="combine")
+    parser.add_argument("-o", "--output", default="combined.fits")
+    parser.add_argument("-e", "--errors", default=False, action="store_true")
+    parser.add_argument("--method", default="mean", choices=["mean", "median"])
+    parser.add_argument("image", nargs="+")
     args = parser.parse_args(args)
 
-    if args.method == 'mean':
+    if args.method == "mean":
         method = combine.mean
-    elif args.method == 'median':
+    elif args.method == "median":
         method = combine.median
     else:
-        raise ValueError(f'wrong method {args.method}')
+        raise ValueError(f"wrong method {args.method}")
 
     errors = args.errors
     with contextlib.ExitStack() as stack:
@@ -176,5 +172,5 @@ def main(args=None):
     result.writeto(args.output, overwrite=True)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

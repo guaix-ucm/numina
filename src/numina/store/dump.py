@@ -35,13 +35,14 @@ def dump(tag, obj, where):
 
     """
 
-    if hasattr(tag, '__numina_dump__'):
+    if hasattr(tag, "__numina_dump__"):
         return tag.__numina_dump__(obj, where)
 
-    if hasattr(tag, '_datatype_dump'):
+    if hasattr(tag, "_datatype_dump"):
         return tag._datatype_dump(obj, where)
 
     return obj
+
 
 # It's not clear if I need to register these three
 # functions

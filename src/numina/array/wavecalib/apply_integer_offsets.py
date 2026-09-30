@@ -36,7 +36,7 @@ def apply_integer_offsets(image2d, offx, offy):
 
     # protections
     if not isinstance(offx, int) or not isinstance(offy, int):
-        raise ValueError(f'Invalid non-integer offsets: {offx=} of type {type(offx)}, {offy=} of type {type(offy)}')
+        raise ValueError(f"Invalid non-integer offsets: {offx=} of type {type(offx)}, {offy=} of type {type(offy)}")
 
     # image dimensions
     naxis2, naxis1 = image2d.shape
@@ -45,12 +45,16 @@ def apply_integer_offsets(image2d, offx, offy):
     image2d_shifted = np.zeros((naxis2, naxis1))
 
     # handle negative and positive shifts accordingly
-    def non(s): return s if s < 0 else None  # noqa: E731
-    def mom(s): return max(0, s)  # noqa: E731
+    def non(s):
+        return s if s < 0 else None  # noqa: E731
+
+    def mom(s):
+        return max(0, s)  # noqa: E731
 
     # shift image
-    image2d_shifted[mom(offy):non(offy), mom(offx):non(offx)] = \
-        image2d[mom(-offy):non(-offy), mom(-offx):non(-offx)]
+    image2d_shifted[mom(offy) : non(offy), mom(offx) : non(offx)] = image2d[
+        mom(-offy) : non(-offy), mom(-offx) : non(-offx)
+    ]
 
     # return shifted image
     return image2d_shifted
@@ -60,43 +64,26 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser()
     # required parameters
-    parser.add_argument("infile",
-                        help="Input FITS image",
-                        type=str
-                        )
-    parser.add_argument("outfile",
-                        help="Output FITS image",
-                        type=str
-                        )
+    parser.add_argument("infile", help="Input FITS image", type=str)
+    parser.add_argument("outfile", help="Output FITS image", type=str)
     # optional arguments
-    parser.add_argument("--offx",
-                        help="Offset in the X direction (integer)",
-                        default=0, type=int)
-    parser.add_argument("--offy",
-                        help="Offset in the Y direction (integer)",
-                        default=0, type=int)
-    parser.add_argument("--extension",
-                        help="Extension number in FITS image (0=first "
-                             "extension)",
-                        default=0, type=int)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument("--offx", help="Offset in the X direction (integer)", default=0, type=int)
+    parser.add_argument("--offy", help="Offset in the Y direction (integer)", default=0, type=int)
+    parser.add_argument(
+        "--extension", help="Extension number in FITS image (0=first " "extension)", default=0, type=int
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
     args = parser.parse_args(args=args)
 
     if args.echo:
-        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31m% " + " ".join(sys.argv) + "\033[0m\n")
 
     # ---
 
     # read input FITS file
     with fits.open(args.infile) as hdulist:
         image2d = hdulist[args.extension].data
-        hdulist[args.extension].data = apply_integer_offsets(
-            image2d=image2d,
-            offx=args.offx,
-            offy=args.offy
-        )
+        hdulist[args.extension].data = apply_integer_offsets(image2d=image2d, offx=args.offx, offy=args.offy)
 
     # save output FITS file
     hdulist.writeto(args.outfile, overwrite=True)

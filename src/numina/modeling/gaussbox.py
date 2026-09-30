@@ -22,7 +22,7 @@ def norm_pdf_t(x):
 def gauss_box_model(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
     """Integrate a Gaussian profile."""
     # deactivate runtime warning for division by zero, it is handled in the code
-    with np.errstate(divide='ignore', invalid='ignore'):
+    with np.errstate(divide="ignore", invalid="ignore"):
         z = (x - mean) / stddev
         z2 = z + hpix / stddev
         z1 = z - hpix / stddev
@@ -52,6 +52,7 @@ def gauss_box_model_deriv(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
 
 class GaussBox(Fittable1DModel):
     """Model for fitting a 1D Gaussina convolved with a square"""
+
     amplitude = Parameter(default=1.0)
     mean = Parameter(default=0.0)
     stddev = Parameter(default=1.0)

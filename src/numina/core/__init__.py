@@ -10,6 +10,7 @@
 from .recipes import BaseRecipe  # noqa: F401
 from .recipeinout import RecipeInput, RecipeResult  # noqa: F401
 from .pipeline import InstrumentDRP, Pipeline  # noqa: F401
+
 # from .instrument.insconf import InstrumentConfiguration
 from .pipeline import ObservingMode  # noqa: F401
 from .pipelineload import drp_load  # noqa: F401

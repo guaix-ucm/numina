@@ -21,8 +21,8 @@ from numina.types.datatype import PlainPythonType
 
 
 class PruebaRecipe1(BaseRecipe):
-    somereq = Requirement(int, 'Some integer')
-    someresult = Result(int, 'Some integer')
+    somereq = Requirement(int, "Some integer")
+    someresult = Result(int, "Some integer")
 
     def run(self, recipe_input):
         if recipe_input.somereq >= 100:
@@ -46,62 +46,62 @@ def test_metaclass_empty_base():
     class RecipeTest(metaclass=RecipeType):
         pass
 
-    assert hasattr(RecipeTest, 'RecipeInput')
+    assert hasattr(RecipeTest, "RecipeInput")
 
-    assert hasattr(RecipeTest, 'RecipeResult')
+    assert hasattr(RecipeTest, "RecipeResult")
 
     assert issubclass(RecipeTest.RecipeInput, RecipeInput)
 
     assert issubclass(RecipeTest.RecipeResult, RecipeResult)
 
-    assert RecipeTest.RecipeInput.__name__ == 'RecipeInput'
+    assert RecipeTest.RecipeInput.__name__ == "RecipeInput"
 
-    assert RecipeTest.RecipeResult.__name__ == 'RecipeResult'
+    assert RecipeTest.RecipeResult.__name__ == "RecipeResult"
 
 
 def test_metaclass():
 
     class RecipeTest(metaclass=RecipeType):
         obsresult = ObservationResultRequirement()
-        someresult = Result(int, 'Some integer')
+        someresult = Result(int, "Some integer")
 
-    assert hasattr(RecipeTest, 'RecipeInput')
+    assert hasattr(RecipeTest, "RecipeInput")
 
-    assert hasattr(RecipeTest, 'RecipeResult')
+    assert hasattr(RecipeTest, "RecipeResult")
 
-    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
+    assert RecipeTest.RecipeInput.__name__ == "RecipeTestInput"
 
-    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
+    assert RecipeTest.RecipeResult.__name__ == "RecipeTestResult"
 
 
 def test_recipe_with_autofield():
 
     class RecipeTestAutoField(BaseRecipe):
-        qc82h = Result(float, destination='qc')
+        qc82h = Result(float, destination="qc")
 
     class RecipeTest(RecipeTestAutoField):
         obsresult = ObservationResultRequirement()
-        someresult = Result(int, 'Some integer')
+        someresult = Result(int, "Some integer")
 
-    assert hasattr(RecipeTest, 'RecipeInput')
+    assert hasattr(RecipeTest, "RecipeInput")
 
-    assert hasattr(RecipeTest, 'RecipeResult')
+    assert hasattr(RecipeTest, "RecipeResult")
 
     assert issubclass(RecipeTest.RecipeInput, RecipeInput)
 
     assert issubclass(RecipeTest.RecipeResult, RecipeResult)
 
-    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
+    assert RecipeTest.RecipeInput.__name__ == "RecipeTestInput"
 
-    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
+    assert RecipeTest.RecipeResult.__name__ == "RecipeTestResult"
 
-    assert 'qc' in RecipeTest.RecipeResult.stored()
-    assert 'qc' in RecipeTest.products()
+    assert "qc" in RecipeTest.RecipeResult.stored()
+    assert "qc" in RecipeTest.products()
 
     for prod in RecipeTest.RecipeResult.stored().values():
         assert isinstance(prod, Result)
 
-    qc = RecipeTest.RecipeResult.stored()['qc']
+    qc = RecipeTest.RecipeResult.stored()["qc"]
 
     assert isinstance(qc.type, PlainPythonType)
 
@@ -110,22 +110,22 @@ def test_recipe_without_autofield():
 
     class RecipeTest(BaseRecipe):
         obsresult = ObservationResultRequirement()
-        someresult = Result(int, 'Some integer')
+        someresult = Result(int, "Some integer")
 
-    assert hasattr(RecipeTest, 'RecipeInput')
+    assert hasattr(RecipeTest, "RecipeInput")
 
-    assert hasattr(RecipeTest, 'RecipeResult')
+    assert hasattr(RecipeTest, "RecipeResult")
 
     assert issubclass(RecipeTest.RecipeInput, RecipeInput)
 
     assert issubclass(RecipeTest.RecipeResult, RecipeResult)
 
-    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
+    assert RecipeTest.RecipeInput.__name__ == "RecipeTestInput"
 
-    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
+    assert RecipeTest.RecipeResult.__name__ == "RecipeTestResult"
 
-    assert 'qc' not in RecipeTest.RecipeResult.stored()
-    assert 'qc' not in RecipeTest.products()
+    assert "qc" not in RecipeTest.RecipeResult.stored()
+    assert "qc" not in RecipeTest.products()
 
     for prod in RecipeTest.RecipeResult.stored().values():
         assert isinstance(prod, Result)
@@ -135,24 +135,24 @@ def test_recipe_io_inheritance():
 
     class TestBaseRecipe(BaseRecipe):
         obresult = ObservationResultRequirement()
-        someresult1 = Result(int, 'Some integer')
+        someresult1 = Result(int, "Some integer")
 
     class RecipeTest(TestBaseRecipe):
-        other = Requirement(int, description='Other')
-        someresult2 = Result(int, 'Some integer')
+        other = Requirement(int, description="Other")
+        someresult2 = Result(int, "Some integer")
 
     assert issubclass(RecipeTest.RecipeInput, TestBaseRecipe.RecipeInput)
 
     assert issubclass(RecipeTest.RecipeResult, TestBaseRecipe.RecipeResult)
 
-    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
+    assert RecipeTest.RecipeInput.__name__ == "RecipeTestInput"
 
-    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
+    assert RecipeTest.RecipeResult.__name__ == "RecipeTestResult"
 
-    assert 'obresult' in RecipeTest.requirements()
-    assert 'other' in RecipeTest.requirements()
-    assert 'someresult1' in RecipeTest.products()
-    assert 'someresult2' in RecipeTest.products()
+    assert "obresult" in RecipeTest.requirements()
+    assert "other" in RecipeTest.requirements()
+    assert "someresult1" in RecipeTest.products()
+    assert "someresult2" in RecipeTest.products()
 
 
 def test_recipe_io_baseclass():
@@ -171,19 +171,19 @@ def test_recipe_io_baseclass():
 
         RecipeResult = MyRecipeResult
 
-        other = Requirement(int, description='Other')
-        someresult2 = Result(int, 'Some integer')
+        other = Requirement(int, description="Other")
+        someresult2 = Result(int, "Some integer")
 
     assert issubclass(RecipeTest.RecipeInput, MyRecipeInput)
 
     assert issubclass(RecipeTest.RecipeResult, MyRecipeResult)
 
-    assert RecipeTest.RecipeInput.__name__ == 'RecipeTestInput'
+    assert RecipeTest.RecipeInput.__name__ == "RecipeTestInput"
 
-    assert RecipeTest.RecipeResult.__name__ == 'RecipeTestResult'
+    assert RecipeTest.RecipeResult.__name__ == "RecipeTestResult"
 
-    assert 'other' in RecipeTest.requirements()
-    assert 'someresult2' in RecipeTest.products()
+    assert "other" in RecipeTest.requirements()
+    assert "someresult2" in RecipeTest.products()
 
     assert RecipeTest.RecipeInput().myfunction() == 1
     assert RecipeTest.RecipeResult().myfunction() == 2

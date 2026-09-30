@@ -244,6 +244,6 @@ def update_image2d_rss_method1(
         plt.tight_layout()
         plt.show()
 
-    # Return the 2D RSS slice for the considered slice. 
+    # Return the 2D RSS slice for the considered slice.
     # IMPORTANT: The caller is responsible for adding this slice to the full RSS image.
     return image2d_slice_rss

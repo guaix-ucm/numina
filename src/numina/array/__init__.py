@@ -43,16 +43,15 @@ def subarray_match(shape, ref, sshape, sref=None):
 
     """
     # Reference point in im
-    ref1 = numpy.asarray(ref, dtype='int')
+    ref1 = numpy.asarray(ref, dtype="int")
 
     if sref is not None:
-        ref2 = numpy.asarray(sref, dtype='int')
+        ref2 = numpy.asarray(sref, dtype="int")
     else:
         ref2 = numpy.zeros_like(ref1)
 
     offset = ref1 - ref2
-    urc1 = numpy.minimum(offset + numpy.asarray(sshape) -
-                         1, numpy.asarray(shape) - 1)
+    urc1 = numpy.minimum(offset + numpy.asarray(sshape) - 1, numpy.asarray(shape) - 1)
     blc1 = numpy.maximum(offset, 0)
     urc2 = urc1 - offset
     blc2 = blc1 - offset
@@ -83,7 +82,7 @@ def combine_shape(shapes, offsets):
     return finalshape, offsetsp
 
 
-def combine_shapes(shapes, refs, order='rc'):
+def combine_shapes(shapes, refs, order="rc"):
 
     # Order 'rc' -> row column
     # Order 'xy' -> xy coordinates
@@ -91,7 +90,7 @@ def combine_shapes(shapes, refs, order='rc'):
     sharr = numpy.asarray(shapes)
     rfarr = numpy.asarray(refs)
 
-    if order == 'xy':
+    if order == "xy":
         rfarr = rfarr[:, ::-1]
 
     offarr = rfarr - rfarr[0]
@@ -116,14 +115,13 @@ def combine_shapes(shapes, refs, order='rc'):
     # It's equal for all pixels
     ref_final_0 = lower_corners[0] + rfarr[0]
 
-    if order == 'xy':
+    if order == "xy":
         ref_final_0 = ref_final_0[::-1]
 
     return finalshape, subshapes, tuple(ref_final_0)
 
 
-def resize_array(data, finalshape, region, window=None,
-                 scale=1, fill=0.0, conserve=True, dtype=None):
+def resize_array(data, finalshape, region, window=None, scale=1, fill=0.0, conserve=True, dtype=None):
 
     if window is not None:
         data = data[window]
@@ -150,8 +148,7 @@ def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, con
     regions = []
     for array, rel_offset in zip(arrays, offsetsp):
         region, _ = subarray_match(finalshape, rel_offset, shape)
-        newdata = resize_array(array, finalshape, region, window=window,
-                               fill=fill, scale=scale, conserve=conserve)
+        newdata = resize_array(array, finalshape, region, window=window, fill=fill, scale=scale, conserve=conserve)
         rarrays.append(newdata)
         regions.append(region)
     return rarrays, regions
@@ -160,8 +157,7 @@ def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, con
 def resize_arrays_alt(arrays, regions, finalshape, window=None, scale=1, conserve=True, fill=0.0):
     rarrays = []
     for array, region in zip(arrays, regions):
-        newdata = resize_array(array, finalshape, region, window=window,
-                               fill=fill, scale=scale, conserve=conserve)
+        newdata = resize_array(array, finalshape, region, window=window, fill=fill, scale=scale, conserve=conserve)
         rarrays.append(newdata)
     return rarrays
 
@@ -177,15 +173,14 @@ def rebin_scale(a, scale=1):
 def rebin(a, newshape):
     """Rebin an array to a new shape."""
 
-    slices = [slice(0, old, float(old)/new)
-              for old, new in zip(a.shape, newshape)]
+    slices = [slice(0, old, float(old) / new) for old, new in zip(a.shape, newshape)]
     coordinates = numpy.mgrid[slices]
     # choose the biggest smaller integer index
-    indices = coordinates.astype('i')
+    indices = coordinates.astype("i")
     return a[tuple(indices)]
 
 
-def fixpix(data, mask, kind='linear'):
+def fixpix(data, mask, kind="linear"):
     """Interpolate 2D array data in rows"""
     if data.shape != mask.shape:
         raise ValueError
@@ -196,16 +191,15 @@ def fixpix(data, mask, kind='linear'):
     x = numpy.arange(0, data.shape[0])
     for row, mrow in zip(data, mask):
         if numpy.any(mrow):  # Interpolate if there's some pixel missing
-            valid = (mrow == numpy.False_)
-            invalid = (mrow == numpy.True_)
+            valid = mrow == numpy.False_
+            invalid = mrow == numpy.True_
             itp = interp1d(x[valid], row[valid], kind=kind, copy=False)
             row[invalid] = itp(x[invalid]).astype(row.dtype)
     return data
 
 
 def fixpix2(data, mask, iterations=3, out=None):
-    """Substitute pixels in mask by a bilinear least square fitting.
-    """
+    """Substitute pixels in mask by a bilinear least square fitting."""
     out = out if out is not None else data.copy()
 
     # A binary mask, regions are ones
@@ -226,9 +220,7 @@ def fixpix2(data, mask, iterations=3, out=None):
         # dilation will only touch these pixels
         dilmask = numpy.logical_or(back, segm)
         # Dilation 3 times
-        more = ndimage.binary_dilation(segm, stct,
-                                       iterations=iterations,
-                                       mask=dilmask)
+        more = ndimage.binary_dilation(segm, stct, iterations=iterations, mask=dilmask)
         # Border pixels
         # Pixels in the border around the object are
         # more and (not segm)
@@ -245,25 +237,25 @@ def fixpix2(data, mask, iterations=3, out=None):
     return out
 
 
-def correct_dark(data, dark, dtype='float32'):
+def correct_dark(data, dark, dtype="float32"):
     result = data - dark
     result = result.astype(dtype)
     return result
 
 
-def correct_flatfield(data, flat, dtype='float32'):
+def correct_flatfield(data, flat, dtype="float32"):
     result = data / flat
     result = result.astype(dtype)
     return result
 
 
-def correct_sky(data, sky, dtype='float32'):
+def correct_sky(data, sky, dtype="float32"):
     result = data - sky
     result = result.astype(dtype)
     return result
 
 
-def correct_nonlinearity(data, polynomial, dtype='float32'):
+def correct_nonlinearity(data, polynomial, dtype="float32"):
     result = numpy.polyval(polynomial, data)
     result = result.astype(dtype)
     return result

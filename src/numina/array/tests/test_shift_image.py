@@ -27,5 +27,5 @@ def test_simple_offset():
     assert np.allclose(a_shifted, a_expected)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     test_simple_offset()

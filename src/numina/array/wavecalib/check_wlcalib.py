@@ -22,8 +22,7 @@ from numina.array.display.iofunctions import readc
 from numina.array.display.matplotlib_qt import set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
-from numina.array.display.polfit_residuals \
-    import polfit_residuals_with_sigma_rejection
+from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
@@ -73,19 +72,19 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
                     wv_verified_all_peaks[j] = wv_master[i]
                     wv_unused[j] = False
         elif j == len(wv_expected_all_peaks):
-            if wv_unused[j-1]:
-                delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j-1])
+            if wv_unused[j - 1]:
+                delta_wv = abs(wv_master[i] - wv_expected_all_peaks[j - 1])
                 if delta_wv < delta_wv_max:
-                    wv_verified_all_peaks[j-1] = wv_master[i]
-                    wv_unused[j-1] = False
+                    wv_verified_all_peaks[j - 1] = wv_master[i]
+                    wv_unused[j - 1] = False
         else:
-            delta_wv1 = abs(wv_master[i] - wv_expected_all_peaks[j-1])
+            delta_wv1 = abs(wv_master[i] - wv_expected_all_peaks[j - 1])
             delta_wv2 = abs(wv_master[i] - wv_expected_all_peaks[j])
             if delta_wv1 < delta_wv2:
                 if delta_wv1 < delta_wv_max:
-                    if wv_unused[j-1]:
-                        wv_verified_all_peaks[j-1] = wv_master[i]
-                        wv_unused[j-1] = False
+                    if wv_unused[j - 1]:
+                        wv_verified_all_peaks[j - 1] = wv_master[i]
+                        wv_unused[j - 1] = False
                     elif wv_unused[j]:
                         if delta_wv2 < delta_wv_max:
                             wv_verified_all_peaks[j] = wv_master[i]
@@ -95,10 +94,10 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
                     if wv_unused[j]:
                         wv_verified_all_peaks[j] = wv_master[i]
                         wv_unused[j] = False
-                    elif wv_unused[j-1]:
+                    elif wv_unused[j - 1]:
                         if delta_wv1 < delta_wv_max:
-                            wv_verified_all_peaks[j-1] = wv_master[i]
-                            wv_unused[j-1] = False
+                            wv_verified_all_peaks[j - 1] = wv_master[i]
+                            wv_unused[j - 1] = False
 
     return wv_verified_all_peaks
 
@@ -130,23 +129,30 @@ def fun_wv(xchannel, crpix1, crval1, cdelt1):
     return wv
 
 
-def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
-                     coeff_ini=None, naxis1_ini=None,
-                     min_nlines_to_refine=0,
-                     interactive=False,
-                     threshold=0,
-                     nwinwidth_initial=7,
-                     nwinwidth_refined=5,
-                     ntimes_match_wv=2,
-                     poldeg_residuals=1,
-                     times_sigma_reject=5,
-                     use_r=False,
-                     title=None,
-                     remove_null_borders=True,
-                     ylogscale=False,
-                     geometry=None,
-                     pdf=None,
-                     debugplot=0):
+def check_wlcalib_sp(
+    sp,
+    crpix1,
+    crval1,
+    cdelt1,
+    wv_master,
+    coeff_ini=None,
+    naxis1_ini=None,
+    min_nlines_to_refine=0,
+    interactive=False,
+    threshold=0,
+    nwinwidth_initial=7,
+    nwinwidth_refined=5,
+    ntimes_match_wv=2,
+    poldeg_residuals=1,
+    times_sigma_reject=5,
+    use_r=False,
+    title=None,
+    remove_null_borders=True,
+    ylogscale=False,
+    geometry=None,
+    pdf=None,
+    debugplot=0,
+):
     """Check wavelength calibration of the provided spectrum.
 
     Parameters
@@ -228,24 +234,21 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     elif coeff_ini is not None and naxis1_ini is not None:
         pass
     else:
-        raise ValueError("coeff_ini and naxis1_ini must be simultaneously "
-                         "None of both different from None")
+        raise ValueError("coeff_ini and naxis1_ini must be simultaneously " "None of both different from None")
 
     # check that interactive use takes place when plotting
     if interactive:
         if abs(debugplot) % 10 == 0:
-            raise ValueError("ERROR: interative use of this function is not "
-                             "possible when debugplot=", debugplot)
+            raise ValueError("ERROR: interative use of this function is not " "possible when debugplot=", debugplot)
 
     # interactive and pdf are incompatible
     if interactive:
         if pdf is not None:
-            raise ValueError("ERROR: interactive use of this function is not "
-                             "possible when pdf is not None")
+            raise ValueError("ERROR: interactive use of this function is not " "possible when pdf is not None")
 
     # display list of expected arc lines
     if abs(debugplot) in (21, 22):
-        print('wv_master:', wv_master)
+        print("wv_master:", wv_master)
 
     # determine spectrum length
     naxis1 = sp.shape[0]
@@ -265,28 +268,18 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
     local_ylogscale = ylogscale
 
     # find initial line peaks
-    ixpeaks = find_peaks_spectrum(sp,
-                                  nwinwidth=nwinwidth_initial,
-                                  threshold=threshold)
+    ixpeaks = find_peaks_spectrum(sp, nwinwidth=nwinwidth_initial, threshold=threshold)
     npeaks = len(ixpeaks)
 
     if npeaks > 0:
         # refine location of line peaks
-        fxpeaks, sxpeaks = refine_peaks_spectrum(
-            sp, ixpeaks,
-            nwinwidth=nwinwidth_refined,
-            method="gaussian"
-        )
+        fxpeaks, sxpeaks = refine_peaks_spectrum(sp, ixpeaks, nwinwidth=nwinwidth_refined, method="gaussian")
         ixpeaks_wv = fun_wv(ixpeaks + 1, crpix1, crval1, cdelt1)
         fxpeaks_wv = fun_wv(fxpeaks + 1, crpix1, crval1, cdelt1)
 
         # match peaks with expected arc lines
         delta_wv_max = ntimes_match_wv * cdelt1
-        wv_verified_all_peaks = match_wv_arrays(
-            wv_master,
-            fxpeaks_wv,
-            delta_wv_max=delta_wv_max
-        )
+        wv_verified_all_peaks = match_wv_arrays(wv_master, fxpeaks_wv, delta_wv_max=delta_wv_max)
 
     loop = True
 
@@ -310,28 +303,26 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                     poldeg_effective = nlines_ok - 1
 
                 # fit polynomial to residuals
-                polyres, yresres, reject = \
-                    polfit_residuals_with_sigma_rejection(
-                        x=xresid,
-                        y=yresid,
-                        deg=poldeg_effective,
-                        times_sigma_reject=times_sigma_reject,
-                        use_r=use_r,
-                        debugplot=0
-                    )
+                polyres, yresres, reject = polfit_residuals_with_sigma_rejection(
+                    x=xresid,
+                    y=yresid,
+                    deg=poldeg_effective,
+                    times_sigma_reject=times_sigma_reject,
+                    use_r=use_r,
+                    debugplot=0,
+                )
                 ysummary = summary(yresres)
             else:
                 polyres = np.polynomial.Polynomial([0.0])
 
-        list_wv_found = [str(round(wv, 4))
-                         for wv in wv_verified_all_peaks if wv != 0]
+        list_wv_found = [str(round(wv, 4)) for wv in wv_verified_all_peaks if wv != 0]
         list_wv_master = [str(round(wv, 4)) for wv in wv_master]
         set1 = set(list_wv_master)
         set2 = set(list_wv_found)
         missing_wv = list(set1.symmetric_difference(set2))
         missing_wv.sort()
         if abs(debugplot) >= 10:
-            print('-' * 79)
+            print("-" * 79)
             print(">>> Number of arc lines in master file:", len(wv_master))
         if abs(debugplot) in [21, 22]:
             print(">>> Unmatched lines...................:", missing_wv)
@@ -347,6 +338,7 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         # display results
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
             from numina.array.display.matplotlib_qt import plt
+
             if pdf is not None:
                 fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
             else:
@@ -360,8 +352,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 ymax = max(yresid)
                 dy = ymax - ymin
                 if dy > 0:
-                    ymin -= dy/20
-                    ymax += dy/20
+                    ymin -= dy / 20
+                    ymax += dy / 20
                 else:
                     ymin -= 0.5
                     ymax += 0.5
@@ -370,43 +362,62 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 ymax = 1.0
             ax2.set_ylim(ymin, ymax)
             if nlines_ok > 0:
-                ax2.plot(xresid, yresid, 'o')
-                ax2.plot(xresid[reject], yresid[reject], 'o', color='tab:gray')
-            ax2.set_ylabel('Offset ' + r'($\AA$)')
+                ax2.plot(xresid, yresid, "o")
+                ax2.plot(xresid[reject], yresid[reject], "o", color="tab:gray")
+            ax2.set_ylabel("Offset " + r"($\AA$)")
             ax2.yaxis.label.set_size(10)
             if title is not None:
-                ax2.set_title(title, **{'size': 12})
+                ax2.set_title(title, **{"size": 12})
             xwv = fun_wv(np.arange(naxis1) + 1.0, crpix1, crval1, cdelt1)
-            ax2.plot(xwv, polyres(xwv), '-')
-            ax2.text(1, 0, 'CDELT1 (' + r'$\AA$' + '/pixel)=' + str(cdelt1),
-                     horizontalalignment='right',
-                     verticalalignment='bottom',
-                     transform=ax2.transAxes)
-            ax2.text(0, 0, 'Wavelength ' + r'($\AA$) --->',
-                     horizontalalignment='left',
-                     verticalalignment='bottom',
-                     transform=ax2.transAxes)
-            ax2.text(0, 1, 'median=' +
-                     str(round(ysummary['median'], 4)) + r' $\AA$',
-                     horizontalalignment='left',
-                     verticalalignment='top',
-                     transform=ax2.transAxes)
-            ax2.text(0.5, 1, 'npoints (total / used / removed)',
-                     horizontalalignment='center',
-                     verticalalignment='top',
-                     transform=ax2.transAxes)
-            ax2.text(0.5, 0.92,
-                     str(ysummary['npoints']) + ' / ' +
-                     str(ysummary['npoints'] - sum(reject)) + ' / ' +
-                     str(sum(reject)),
-                     horizontalalignment='center',
-                     verticalalignment='top',
-                     transform=ax2.transAxes)
-            ax2.text(1, 1, 'robust_std=' +
-                     str(round(ysummary['robust_std'], 4)) + r' $\AA$',
-                     horizontalalignment='right',
-                     verticalalignment='top',
-                     transform=ax2.transAxes)
+            ax2.plot(xwv, polyres(xwv), "-")
+            ax2.text(
+                1,
+                0,
+                "CDELT1 (" + r"$\AA$" + "/pixel)=" + str(cdelt1),
+                horizontalalignment="right",
+                verticalalignment="bottom",
+                transform=ax2.transAxes,
+            )
+            ax2.text(
+                0,
+                0,
+                "Wavelength " + r"($\AA$) --->",
+                horizontalalignment="left",
+                verticalalignment="bottom",
+                transform=ax2.transAxes,
+            )
+            ax2.text(
+                0,
+                1,
+                "median=" + str(round(ysummary["median"], 4)) + r" $\AA$",
+                horizontalalignment="left",
+                verticalalignment="top",
+                transform=ax2.transAxes,
+            )
+            ax2.text(
+                0.5,
+                1,
+                "npoints (total / used / removed)",
+                horizontalalignment="center",
+                verticalalignment="top",
+                transform=ax2.transAxes,
+            )
+            ax2.text(
+                0.5,
+                0.92,
+                str(ysummary["npoints"]) + " / " + str(ysummary["npoints"] - sum(reject)) + " / " + str(sum(reject)),
+                horizontalalignment="center",
+                verticalalignment="top",
+                transform=ax2.transAxes,
+            )
+            ax2.text(
+                1,
+                1,
+                "robust_std=" + str(round(ysummary["robust_std"], 4)) + r" $\AA$",
+                horizontalalignment="right",
+                verticalalignment="top",
+                transform=ax2.transAxes,
+            )
 
             # median spectrum and peaks
             # remove leading and trailing zeros in spectrum when requested
@@ -437,8 +448,8 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             ymax = max(spectrum)
             dy = ymax - ymin
             if dy > 0:
-                ymin -= dy/20
-                ymax += dy/20
+                ymin -= dy / 20
+                ymax += dy / 20
             else:
                 ymin -= 0.5
                 ymax += 0.5
@@ -447,48 +458,52 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
             ax1.set_ylim(ymin, ymax)
             ax1.plot(xwv, spectrum)
             if npeaks > 0:
-                ax1.plot(ixpeaks_wv, spectrum[ixpeaks], 'o',
-                         fillstyle='none', label="initial location")
-                ax1.plot(fxpeaks_wv, spectrum[ixpeaks], 'o',
-                         fillstyle='none', label="refined location")
+                ax1.plot(ixpeaks_wv, spectrum[ixpeaks], "o", fillstyle="none", label="initial location")
+                ax1.plot(fxpeaks_wv, spectrum[ixpeaks], "o", fillstyle="none", label="refined location")
                 lok = wv_verified_all_peaks > 0
-                ax1.plot(fxpeaks_wv[lok], spectrum[ixpeaks][lok], 'go',
-                         label="valid line")
+                ax1.plot(fxpeaks_wv[lok], spectrum[ixpeaks][lok], "go", label="valid line")
             if local_ylogscale:
-                ax1.set_ylabel('~ log10(number of counts)')
+                ax1.set_ylabel("~ log10(number of counts)")
             else:
-                ax1.set_ylabel('number of counts')
+                ax1.set_ylabel("number of counts")
             ax1.yaxis.label.set_size(10)
             ax1.xaxis.tick_top()
-            ax1.xaxis.set_label_position('top')
+            ax1.xaxis.set_label_position("top")
             for i in range(len(ixpeaks)):
                 # identified lines
                 if wv_verified_all_peaks[i] > 0:
-                    ax1.text(fxpeaks_wv[i], spectrum[ixpeaks[i]],
-                             str(wv_verified_all_peaks[i]) +
-                             '(' + str(i + 1) + ')',
-                             fontsize=8,
-                             horizontalalignment='center')
+                    ax1.text(
+                        fxpeaks_wv[i],
+                        spectrum[ixpeaks[i]],
+                        str(wv_verified_all_peaks[i]) + "(" + str(i + 1) + ")",
+                        fontsize=8,
+                        horizontalalignment="center",
+                    )
                 else:
-                    ax1.text(fxpeaks_wv[i], spectrum[ixpeaks[i]],
-                             '(' + str(i + 1) + ')',
-                             fontsize=8,
-                             horizontalalignment='center')
+                    ax1.text(
+                        fxpeaks_wv[i],
+                        spectrum[ixpeaks[i]],
+                        "(" + str(i + 1) + ")",
+                        fontsize=8,
+                        horizontalalignment="center",
+                    )
                 # estimated wavelength from initial calibration
                 if npeaks > 0:
-                    estimated_wv = fun_wv(fxpeaks[i] + 1,
-                                          crpix1, crval1, cdelt1)
+                    estimated_wv = fun_wv(fxpeaks[i] + 1, crpix1, crval1, cdelt1)
                     estimated_wv = str(round(estimated_wv, 4))
-                    ax1.text(fxpeaks_wv[i], ymin,  # spmedian[ixpeaks[i]],
-                             estimated_wv, fontsize=8, color='grey',
-                             rotation='vertical',
-                             horizontalalignment='center',
-                             verticalalignment='top')
+                    ax1.text(
+                        fxpeaks_wv[i],
+                        ymin,  # spmedian[ixpeaks[i]],
+                        estimated_wv,
+                        fontsize=8,
+                        color="grey",
+                        rotation="vertical",
+                        horizontalalignment="center",
+                        verticalalignment="top",
+                    )
             if len(missing_wv) > 0:
                 tmp = [float(wv) for wv in missing_wv]
-                ax1.vlines(tmp, ymin=ymin, ymax=ymax,
-                           colors='grey', linestyles='dotted',
-                           label='missing lines')
+                ax1.vlines(tmp, ymin=ymin, ymax=ymax, colors="grey", linestyles="dotted", label="missing lines")
             ax1.legend()
             if pdf is not None:
                 pdf.savefig()
@@ -496,77 +511,57 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
                 if debugplot in [-22, -12, 12, 22]:
                     pause_debugplot(
                         debugplot=debugplot,
-                        optional_prompt='Zoom/Unzoom or ' +
-                                        'press RETURN to continue...',
-                        pltshow=True
+                        optional_prompt="Zoom/Unzoom or " + "press RETURN to continue...",
+                        pltshow=True,
                     )
                 else:
                     pause_debugplot(debugplot=debugplot, pltshow=True)
 
             # display results and request next action
             if interactive:
-                print('Recalibration menu')
-                print('------------------')
-                print('[d] (d)elete all the identified lines')
-                print('[r] (r)estart from begining')
-                print('[a] (a)utomatic line inclusion')
-                print('[l] toggle (l)ogarithmic scale on/off')
-                print('[p] modify (p)olynomial degree')
-                print('[o] (o)utput data with identified line peaks')
-                print('[x] e(x)it without additional changes')
-                print('[#] from 1 to ' + str(len(ixpeaks)) +
-                      ' --> modify line #')
-                ioption = readi('Option', default='x',
-                                minval=1, maxval=len(ixpeaks),
-                                allowed_single_chars='adloprx')
-                if ioption == 'd':
+                print("Recalibration menu")
+                print("------------------")
+                print("[d] (d)elete all the identified lines")
+                print("[r] (r)estart from begining")
+                print("[a] (a)utomatic line inclusion")
+                print("[l] toggle (l)ogarithmic scale on/off")
+                print("[p] modify (p)olynomial degree")
+                print("[o] (o)utput data with identified line peaks")
+                print("[x] e(x)it without additional changes")
+                print("[#] from 1 to " + str(len(ixpeaks)) + " --> modify line #")
+                ioption = readi("Option", default="x", minval=1, maxval=len(ixpeaks), allowed_single_chars="adloprx")
+                if ioption == "d":
                     wv_verified_all_peaks = np.zeros(npeaks)
-                elif ioption == 'r':
+                elif ioption == "r":
                     delta_wv_max = ntimes_match_wv * cdelt1
-                    wv_verified_all_peaks = match_wv_arrays(
-                        wv_master,
-                        fxpeaks_wv,
-                        delta_wv_max=delta_wv_max
-                    )
-                elif ioption == 'a':
+                    wv_verified_all_peaks = match_wv_arrays(wv_master, fxpeaks_wv, delta_wv_max=delta_wv_max)
+                elif ioption == "a":
                     fxpeaks_wv_corrected = np.zeros_like(fxpeaks_wv)
                     for i in range(npeaks):
-                        fxpeaks_wv_corrected[i] = fxpeaks_wv[i] + \
-                            polyres(fxpeaks_wv[i])
+                        fxpeaks_wv_corrected[i] = fxpeaks_wv[i] + polyres(fxpeaks_wv[i])
                     delta_wv_max = ntimes_match_wv * cdelt1
-                    wv_verified_all_peaks = match_wv_arrays(
-                        wv_master,
-                        fxpeaks_wv_corrected,
-                        delta_wv_max=delta_wv_max
-                    )
-                elif ioption == 'l':
+                    wv_verified_all_peaks = match_wv_arrays(wv_master, fxpeaks_wv_corrected, delta_wv_max=delta_wv_max)
+                elif ioption == "l":
                     if local_ylogscale:
                         local_ylogscale = False
                     else:
                         local_ylogscale = True
-                elif ioption == 'p':
-                    poldeg_residuals = readi('New polynomial degree',
-                                             minval=0)
-                elif ioption == 'o':
+                elif ioption == "p":
+                    poldeg_residuals = readi("New polynomial degree", minval=0)
+                elif ioption == "o":
                     for i in range(len(ixpeaks)):
                         # identified lines
                         if wv_verified_all_peaks[i] > 0:
-                            print(wv_verified_all_peaks[i],
-                                  spectrum[ixpeaks[i]])
-                elif ioption == 'x':
+                            print(wv_verified_all_peaks[i], spectrum[ixpeaks[i]])
+                elif ioption == "x":
                     loop = False
                 else:
                     print(wv_master)
-                    expected_value = fxpeaks_wv[ioption -
-                                                1] + polyres(fxpeaks_wv[ioption - 1])
+                    expected_value = fxpeaks_wv[ioption - 1] + polyres(fxpeaks_wv[ioption - 1])
                     print(">>> Current expected wavelength: ", expected_value)
                     delta_wv_max = ntimes_match_wv * cdelt1
-                    close_value = match_wv_arrays(
-                        wv_master,
-                        np.array([expected_value]),
-                        delta_wv_max=delta_wv_max)
-                    newvalue = readf('New value (0 to delete line)',
-                                     default=close_value[0])
+                    close_value = match_wv_arrays(wv_master, np.array([expected_value]), delta_wv_max=delta_wv_max)
+                    newvalue = readf("New value (0 to delete line)", default=close_value[0])
                     wv_verified_all_peaks[ioption - 1] = newvalue
             else:
                 loop = False
@@ -579,24 +574,18 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
         npoints_removed = sum(reject)
         npoints_used = npoints_total - npoints_removed
         if abs(debugplot) >= 10:
-            print('>>> Npoints (total / used / removed)..:',
-                  npoints_total, npoints_used, npoints_removed)
+            print(">>> Npoints (total / used / removed)..:", npoints_total, npoints_used, npoints_removed)
         if npoints_used < min_nlines_to_refine:
-            print('Warning: number of lines insuficient to refine '
-                  'wavelength calibration!')
-            copc = 'n'
+            print("Warning: number of lines insuficient to refine " "wavelength calibration!")
+            copc = "n"
         else:
             if interactive:
-                copc = readc('Refine wavelength calibration coefficients: '
-                             '(y)es, (n)o', default='y', valid='yn')
+                copc = readc("Refine wavelength calibration coefficients: " "(y)es, (n)o", default="y", valid="yn")
             else:
-                copc = 'y'
-        if copc == 'y':
+                copc = "y"
+        if copc == "y":
             coeff_refined = update_poly_wlcalib(
-                coeff_ini=coeff_ini,
-                coeff_residuals=polyres.coef,
-                naxis1_ini=naxis1_ini,
-                debugplot=0
+                coeff_ini=coeff_ini, coeff_residuals=polyres.coef, naxis1_ini=naxis1_ini, debugplot=0
             )
         else:
             coeff_refined = np.array(coeff_ini)
@@ -605,11 +594,9 @@ def check_wlcalib_sp(sp, crpix1, crval1, cdelt1, wv_master,
 
     if abs(debugplot) % 10 != 0:
         if coeff_refined is not None:
-            for idum, fdum in \
-                    enumerate(zip(coeff_ini, coeff_refined)):
-                print(f">>> coef#{idum}:  ", end='')
-                print(
-                    f"{decimal.Decimal(fdum[0]):+.8E}  -->  {decimal.Decimal(fdum[1]):+.8E}")
+            for idum, fdum in enumerate(zip(coeff_ini, coeff_refined)):
+                print(f">>> coef#{idum}:  ", end="")
+                print(f"{decimal.Decimal(fdum[0]):+.8E}  -->  {decimal.Decimal(fdum[1]):+.8E}")
 
     return coeff_refined
 
@@ -679,12 +666,7 @@ def update_poly_wlcalib(coeff_ini, coeff_residuals, naxis1_ini, debugplot):
         poldeg_effective = poldeg_wlcalib
     else:
         poldeg_effective = len(xfit) - 1
-    poly_updated, ydum = polfit_residuals(
-        x=xfit,
-        y=yfit,
-        deg=poldeg_effective,
-        debugplot=debugplot
-    )
+    poly_updated, ydum = polfit_residuals(x=xfit, y=yfit, deg=poldeg_effective, debugplot=debugplot)
 
     # return coefficients of updated polynomial
     return poly_updated.coef
@@ -695,58 +677,48 @@ def main(args=None):
     parser = argparse.ArgumentParser()
 
     # positional parameters
-    parser.add_argument("filename",
-                        help="FITS image containing the spectra",
-                        type=str)
-    parser.add_argument("--scans", required=True,
-                        help="Tuple ns1[,ns2] (from 1 to NAXIS2) to compute "
-                             "median spectrum")
-    parser.add_argument("--wv_master_file", required=True,
-                        help="TXT file containing wavelengths",
-                        type=str)
+    parser.add_argument("filename", help="FITS image containing the spectra", type=str)
+    parser.add_argument(
+        "--scans", required=True, help="Tuple ns1[,ns2] (from 1 to NAXIS2) to compute " "median spectrum"
+    )
+    parser.add_argument("--wv_master_file", required=True, help="TXT file containing wavelengths", type=str)
 
     # optional arguments
-    parser.add_argument("--interactive",
-                        help="Allows the user to modify de residuals fit",
-                        action="store_true")
-    parser.add_argument("--threshold",
-                        help="Minimum signal in the line peaks (default=0)",
-                        default=0, type=float)
-    parser.add_argument("--nwinwidth_initial",
-                        help="Window width where each peak must be found "
-                             "(default=7)",
-                        type=int, default=7)
-    parser.add_argument("--nwinwidth_refined",
-                        help="Window width where each peak must be refined "
-                             "(default=5)",
-                        type=int, default=5)
-    parser.add_argument("--ntimes_match_wv",
-                        help="Times CDELT1 to match measured and expected "
-                             "wavelengths (default 2)",
-                        default=2, type=float)
-    parser.add_argument("--poldeg_residuals",
-                        help="Polynomial degree for fit to residuals "
-                             "(default 1)",
-                        default=1, type=int)
-    parser.add_argument("--times_sigma_reject",
-                        help="Times the standard deviation to reject points "
-                             "iteratively in the fit to residuals ("
-                             "default=5)",
-                        default=5, type=float)
-    parser.add_argument("--use_r",
-                        help="Perform additional statistical analysis with R",
-                        action="store_true")
-    parser.add_argument("--remove_null_borders",
-                        help="Remove leading and trailing zeros in spectrum",
-                        action="store_true")
-    parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy",
-                        default="0,0,640,480")
-    parser.add_argument("--debugplot",
-                        help="integer indicating plotting/debugging" +
-                             " (default=0)",
-                        type=int, default=12,
-                        choices=DEBUGPLOT_CODES)
+    parser.add_argument("--interactive", help="Allows the user to modify de residuals fit", action="store_true")
+    parser.add_argument("--threshold", help="Minimum signal in the line peaks (default=0)", default=0, type=float)
+    parser.add_argument(
+        "--nwinwidth_initial", help="Window width where each peak must be found " "(default=7)", type=int, default=7
+    )
+    parser.add_argument(
+        "--nwinwidth_refined", help="Window width where each peak must be refined " "(default=5)", type=int, default=5
+    )
+    parser.add_argument(
+        "--ntimes_match_wv",
+        help="Times CDELT1 to match measured and expected " "wavelengths (default 2)",
+        default=2,
+        type=float,
+    )
+    parser.add_argument(
+        "--poldeg_residuals", help="Polynomial degree for fit to residuals " "(default 1)", default=1, type=int
+    )
+    parser.add_argument(
+        "--times_sigma_reject",
+        help="Times the standard deviation to reject points " "iteratively in the fit to residuals (" "default=5)",
+        default=5,
+        type=float,
+    )
+    parser.add_argument("--use_r", help="Perform additional statistical analysis with R", action="store_true")
+    parser.add_argument(
+        "--remove_null_borders", help="Remove leading and trailing zeros in spectrum", action="store_true"
+    )
+    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="0,0,640,480")
+    parser.add_argument(
+        "--debugplot",
+        help="integer indicating plotting/debugging" + " (default=0)",
+        type=int,
+        default=12,
+        choices=DEBUGPLOT_CODES,
+    )
 
     args = parser.parse_args(args=args)
 
@@ -783,22 +755,22 @@ def main(args=None):
         naxis2, naxis1 = image2d.shape
     else:
         raise ValueError("Unexpected image dimensions!")
-    crpix1 = image2d_header['crpix1']
-    crval1 = image2d_header['crval1']
-    cdelt1 = image2d_header['cdelt1']
-    print('* Input file:', args.filename)
-    print('>>> NAXIS1:', naxis1)
-    print('>>> NAXIS2:', naxis2)
-    print('>>> CRPIX1:', crpix1)
-    print('>>> CRVAL1:', crval1)
-    print('>>> CDELT1:', cdelt1)
+    crpix1 = image2d_header["crpix1"]
+    crval1 = image2d_header["crval1"]
+    cdelt1 = image2d_header["cdelt1"]
+    print("* Input file:", args.filename)
+    print(">>> NAXIS1:", naxis1)
+    print(">>> NAXIS2:", naxis2)
+    print(">>> CRPIX1:", crpix1)
+    print(">>> CRVAL1:", crval1)
+    print(">>> CDELT1:", cdelt1)
 
     if 1 <= ns1 <= ns2 <= naxis2:
         if ns1 == ns2 == 1 and image2d.ndim == 1:
             spmedian = np.copy(image2d[:])
         else:
             # extract spectrum
-            spmedian = np.median(image2d[(ns1-1):ns2], axis=0)
+            spmedian = np.median(image2d[(ns1 - 1) : ns2], axis=0)
     else:
         raise ValueError("Invalid scan numbers")
 
@@ -806,31 +778,41 @@ def main(args=None):
     master_table = np.genfromtxt(args.wv_master_file)
     wv_master = master_table[:, 0]
     if abs(args.debugplot) in (21, 22):
-        print('wv_master:', wv_master)
+        print("wv_master:", wv_master)
 
     # define plot title
-    title = 'fitsfile: ' + os.path.basename(args.filename) + \
-            ' [' + str(ns1) + ',' + str(ns2) + ']\n' + \
-            'wv_master: ' + os.path.basename(args.wv_master_file)
+    title = (
+        "fitsfile: "
+        + os.path.basename(args.filename)
+        + " ["
+        + str(ns1)
+        + ","
+        + str(ns2)
+        + "]\n"
+        + "wv_master: "
+        + os.path.basename(args.wv_master_file)
+    )
 
     # check the wavelength calibration
-    check_wlcalib_sp(sp=spmedian,
-                     crpix1=crpix1,
-                     crval1=crval1,
-                     cdelt1=cdelt1,
-                     wv_master=wv_master,
-                     interactive=args.interactive,
-                     threshold=args.threshold,
-                     nwinwidth_initial=args.nwinwidth_initial,
-                     nwinwidth_refined=args.nwinwidth_refined,
-                     ntimes_match_wv=args.ntimes_match_wv,
-                     poldeg_residuals=args.poldeg_residuals,
-                     times_sigma_reject=args.times_sigma_reject,
-                     use_r=args.use_r,
-                     title=title,
-                     remove_null_borders=args.remove_null_borders,
-                     geometry=geometry,
-                     debugplot=args.debugplot)
+    check_wlcalib_sp(
+        sp=spmedian,
+        crpix1=crpix1,
+        crval1=crval1,
+        cdelt1=cdelt1,
+        wv_master=wv_master,
+        interactive=args.interactive,
+        threshold=args.threshold,
+        nwinwidth_initial=args.nwinwidth_initial,
+        nwinwidth_refined=args.nwinwidth_refined,
+        ntimes_match_wv=args.ntimes_match_wv,
+        poldeg_residuals=args.poldeg_residuals,
+        times_sigma_reject=args.times_sigma_reject,
+        use_r=args.use_r,
+        title=title,
+        remove_null_borders=args.remove_null_borders,
+        geometry=geometry,
+        debugplot=args.debugplot,
+    )
 
 
 if __name__ == "__main__":

@@ -32,9 +32,7 @@ class VirtualDetector:
 
         # We could use different RON and BIAS in each section
         for section in [self.trim, self.pcol, self.ocol, self.orow]:
-            final[section] = self.readpars.bias + numpy.random.normal(
-                final[section], self.readpars.ron
-            )
+            final[section] = self.readpars.bias + numpy.random.normal(final[section], self.readpars.ron)
 
         return final
 

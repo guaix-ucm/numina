@@ -18,9 +18,7 @@ from numina.array.display.ximplotxy import ximplotxy
 from numina.modeling.gaussbox import gauss_box_model
 
 
-def filtmask(sp, fmin, fmax,
-             sp_label='spectrum',
-             debugplot=0):
+def filtmask(sp, fmin, fmax, sp_label="spectrum", debugplot=0):
     """Filter spectrum in Fourier space.
 
     Parameters
@@ -49,29 +47,39 @@ def filtmask(sp, fmin, fmax,
     yf = np.fft.fft(sp)
     if abs(debugplot) in (21, 22):
         iok = np.where(xf >= 0)
-        ximplotxy(xf[iok], yf[iok].real,
-                  plottype='semilogy',
-                  xlabel='frequency', ylabel='power',
-                  title=sp_label+' (before masking)', debugplot=debugplot)
+        ximplotxy(
+            xf[iok],
+            yf[iok].real,
+            plottype="semilogy",
+            xlabel="frequency",
+            ylabel="power",
+            title=sp_label + " (before masking)",
+            debugplot=debugplot,
+        )
 
-    cut = (np.abs(xf) > fmax)
+    cut = np.abs(xf) > fmax
     yf[cut] = 0.0
-    cut = (np.abs(xf) < fmin)
+    cut = np.abs(xf) < fmin
     yf[cut] = 0.0
     if abs(debugplot) in (21, 22):
         iok = np.where(xf >= 0)
-        ximplotxy(xf[iok], yf[iok].real,
-                  plottype='semilogy',
-                  xlabel='frequency', ylabel='power',
-                  title=sp_label+' (after masking)', debugplot=debugplot)
+        ximplotxy(
+            xf[iok],
+            yf[iok].real,
+            plottype="semilogy",
+            xlabel="frequency",
+            ylabel="power",
+            title=sp_label + " (after masking)",
+            debugplot=debugplot,
+        )
 
     sp_filt = np.fft.ifft(yf).real
     if abs(debugplot) in (21, 22):
         from numina.array.display.matplotlib_qt import plt
+
         xdum = np.arange(1, sp_filt.size + 1)
-        ax = ximplotxy(xdum, sp, title="filtering " + sp_label,
-                       label='original', show=False)
-        ax.plot(xdum, sp_filt, label='filtered')
+        ax = ximplotxy(xdum, sp, title="filtering " + sp_label, label="original", show=False)
+        ax.plot(xdum, sp_filt, label="filtered")
         ax.legend()
         plt.show()
 
@@ -100,8 +108,7 @@ def cosinebell(n, frac_cosbell):
     return mask
 
 
-def convolve_comb_lines(lines_wave, lines_flux, sigma,
-                        crpix1, crval1, cdelt1, naxis1):
+def convolve_comb_lines(lines_wave, lines_flux, sigma, crpix1, crval1, cdelt1, naxis1):
     """Convolve a set of lines of known wavelengths and flux.
 
     Parameters
@@ -138,25 +145,27 @@ def convolve_comb_lines(lines_wave, lines_flux, sigma,
 
     # convolve each line
     for wave, flux in zip(lines_wave, lines_flux):
-        sp_tmp = gauss_box_model(x=xwave, amplitude=flux, mean=wave,
-                                 stddev=sigma)
+        sp_tmp = gauss_box_model(x=xwave, amplitude=flux, mean=wave, stddev=sigma)
         spectrum += sp_tmp
 
     return xwave, spectrum
 
 
-def periodic_corr1d(sp_reference, sp_offset,
-                    remove_mean=False,
-                    frac_cosbell=None,
-                    zero_padding=None,
-                    fminmax=None,
-                    naround_zero=None,
-                    norm_spectra=False,
-                    nfit_peak=7,
-                    sp_label='spectrum',
-                    plottitle=None,
-                    pdf=None,
-                    debugplot=0):
+def periodic_corr1d(
+    sp_reference,
+    sp_offset,
+    remove_mean=False,
+    frac_cosbell=None,
+    zero_padding=None,
+    fminmax=None,
+    naround_zero=None,
+    norm_spectra=False,
+    nfit_peak=7,
+    sp_label="spectrum",
+    plottitle=None,
+    pdf=None,
+    debugplot=0,
+):
     """Periodic correlation between two spectra, implemented using FFT.
 
     Parameters
@@ -217,7 +226,7 @@ def periodic_corr1d(sp_reference, sp_offset,
         nfit_peak += 1
 
     if plottitle is None:
-        plottitle = ' '
+        plottitle = " "
 
     # remove mean
     if remove_mean:
@@ -230,13 +239,9 @@ def periodic_corr1d(sp_reference, sp_offset,
     # cosine bell
     if frac_cosbell is not None:
         if frac_cosbell < 0.0 or frac_cosbell > 0.5:
-            raise ValueError(f'Invalid frac_cosbell: {frac_cosbell}')
-        sp_reference_mb = sp_reference_m * cosinebell(
-            sp_reference_m.size, frac_cosbell
-        )
-        sp_offset_mb = sp_offset_m * cosinebell(
-            sp_offset_m.size, frac_cosbell
-        )
+            raise ValueError(f"Invalid frac_cosbell: {frac_cosbell}")
+        sp_reference_mb = sp_reference_m * cosinebell(sp_reference_m.size, frac_cosbell)
+        sp_offset_mb = sp_offset_m * cosinebell(sp_offset_m.size, frac_cosbell)
     else:
         sp_reference_mb = sp_reference_m
         sp_offset_mb = sp_offset_m
@@ -244,13 +249,9 @@ def periodic_corr1d(sp_reference, sp_offset,
     # zero padding
     if zero_padding is not None:
         if zero_padding < 0:
-            raise ValueError(f'Invalid zero_padding: {zero_padding}')
-        sp_reference_mbz = np.concatenate(
-            (sp_reference_mb, np.zeros(zero_padding))
-        )
-        sp_offset_mbz = np.concatenate(
-            (sp_offset_mb, np.zeros(zero_padding))
-        )
+            raise ValueError(f"Invalid zero_padding: {zero_padding}")
+        sp_reference_mbz = np.concatenate((sp_reference_mb, np.zeros(zero_padding)))
+        sp_offset_mbz = np.concatenate((sp_offset_mb, np.zeros(zero_padding)))
     else:
         sp_reference_mbz = sp_reference_mb
         sp_offset_mbz = sp_offset_mb
@@ -258,17 +259,11 @@ def periodic_corr1d(sp_reference, sp_offset,
     if fminmax is not None:
         fmin, fmax = fminmax
         sp_reference_filtmask = filtmask(
-            sp_reference_mbz,
-            fmin=fmin,
-            fmax=fmax,
-            sp_label='reference ' + sp_label,
-            debugplot=debugplot)
+            sp_reference_mbz, fmin=fmin, fmax=fmax, sp_label="reference " + sp_label, debugplot=debugplot
+        )
         sp_offset_filtmask = filtmask(
-            sp_offset_mbz,
-            fmin=fmin,
-            fmax=fmax,
-            sp_label='offset ' + sp_label,
-            debugplot=debugplot)
+            sp_offset_mbz, fmin=fmin, fmax=fmax, sp_label="offset " + sp_label, debugplot=debugplot
+        )
     else:
         sp_reference_filtmask = sp_reference_mbz
         sp_offset_filtmask = sp_offset_mbz
@@ -284,33 +279,26 @@ def periodic_corr1d(sp_reference, sp_offset,
 
     if abs(debugplot) in (21, 22):
         from numina.array.display.matplotlib_qt import plt
+
         xdum = np.arange(len(sp_reference)) + 1
         xdumf = np.arange(len(sp_reference_filtmask)) + 1
         # reference spectrum
-        ax = ximplotxy(xdum, sp_reference, show=False,
-                       title='reference ' + sp_label,
-                       label='original ' + sp_label)
+        ax = ximplotxy(xdum, sp_reference, show=False, title="reference " + sp_label, label="original " + sp_label)
         if remove_mean or frac_cosbell or zero_padding or fminmax:
-            ax.plot(xdumf, sp_reference_filtmask,
-                    label='processed ' + sp_label)
+            ax.plot(xdumf, sp_reference_filtmask, label="processed " + sp_label)
         ax.legend()
         plt.show()
         # offset spectrum
-        ax = ximplotxy(xdum, sp_offset, show=False,
-                       title='offset ' + sp_label,
-                       label='original ' + sp_label)
+        ax = ximplotxy(xdum, sp_offset, show=False, title="offset " + sp_label, label="original " + sp_label)
         if remove_mean or frac_cosbell or zero_padding or fminmax:
-            ax.plot(xdumf, sp_offset_filtmask,
-                    label='processed ' + sp_label)
+            ax.plot(xdumf, sp_offset_filtmask, label="processed " + sp_label)
         ax.legend()
         plt.show()
 
     if (abs(debugplot) in (21, 22)) or (pdf is not None):
         xdum = np.arange(naxis1) + 1
-        ax = ximplotxy(xdum, sp_reference_filtmask, show=False,
-                       title=plottitle,
-                       label='reference ' + sp_label)
-        ax.plot(xdum, sp_offset_filtmask, label='offset ' + sp_label)
+        ax = ximplotxy(xdum, sp_reference_filtmask, show=False, title=plottitle, label="reference " + sp_label)
+        ax.plot(xdum, sp_offset_filtmask, label="offset " + sp_label)
         ax.legend()
         if pdf is not None:
             pdf.savefig()
@@ -334,10 +322,10 @@ def periodic_corr1d(sp_reference, sp_offset,
         sp_offset_norm[idum] /= -spmin
         if (abs(debugplot) in (21, 22)) or (pdf is not None):
             xdum = np.arange(naxis1) + 1
-            ax = ximplotxy(xdum, sp_reference_norm, show=False,
-                           title=plottitle + ' [normalized]',
-                           label='reference ' + sp_label)
-            ax.plot(xdum, sp_offset_norm, label='offset ' + sp_label)
+            ax = ximplotxy(
+                xdum, sp_reference_norm, show=False, title=plottitle + " [normalized]", label="reference " + sp_label
+            )
+            ax.plot(xdum, sp_offset_norm, label="offset " + sp_label)
             ax.legend()
             if pdf is not None:
                 pdf.savefig()
@@ -347,8 +335,7 @@ def periodic_corr1d(sp_reference, sp_offset,
         sp_reference_norm = sp_reference_filtmask
         sp_offset_norm = sp_offset_filtmask
 
-    corr = np.fft.ifft(np.fft.fft(sp_offset_norm) *
-                       np.fft.fft(sp_reference_norm).conj()).real
+    corr = np.fft.ifft(np.fft.fft(sp_offset_norm) * np.fft.fft(sp_reference_norm).conj()).real
     corr = corr[isort]
 
     # determine correlation peak
@@ -359,7 +346,7 @@ def periodic_corr1d(sp_reference, sp_offset,
         izero = np.where(xcorr == 0)[0][0]
         iminpeak = max(izero - naround_zero, 0)
         imaxpeak = min(izero + naround_zero, naxis1 - 1)
-    ixpeak = corr[iminpeak:(imaxpeak + 1)].argmax() + iminpeak
+    ixpeak = corr[iminpeak : (imaxpeak + 1)].argmax() + iminpeak
 
     # fit correlation peak with 2nd order polynomial
     nmed = nfit_peak // 2
@@ -374,8 +361,8 @@ def periodic_corr1d(sp_reference, sp_offset,
         lpeak_ok = False
         poly_peak = Polynomial([0.0])
     else:
-        x_fit = xcorr[imin:(imax+1)].astype(float)
-        y_fit = corr[imin:(imax+1)]
+        x_fit = xcorr[imin : (imax + 1)].astype(float)
+        y_fit = corr[imin : (imax + 1)]
         poly_peak = Polynomial.fit(x_fit, y_fit, 2)
         poly_peak = Polynomial.cast(poly_peak)
         coef = poly_peak.coef
@@ -389,30 +376,23 @@ def periodic_corr1d(sp_reference, sp_offset,
     fpeak = y_refined_peak
 
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
-        ax = ximplotxy(xcorr, corr,
-                       xlabel='offset (pixels)',
-                       ylabel='cross-correlation function',
-                       title=plottitle,
-                       xlim=(-naxis1/2, naxis1/2), show=False)
-        ax.axvline(offset, color='grey', linestyle='dashed')
+        ax = ximplotxy(
+            xcorr,
+            corr,
+            xlabel="offset (pixels)",
+            ylabel="cross-correlation function",
+            title=plottitle,
+            xlim=(-naxis1 / 2, naxis1 / 2),
+            show=False,
+        )
+        ax.axvline(offset, color="grey", linestyle="dashed")
         coffset = f"(offset:{offset:6.2f} pixels)"
-        ax.text(0.01, 0.99, coffset,
-                horizontalalignment='left',
-                verticalalignment='top',
-                transform=ax.transAxes)
+        ax.text(0.01, 0.99, coffset, horizontalalignment="left", verticalalignment="top", transform=ax.transAxes)
         if naround_zero is not None:
             cwindow = f"(peak region: [{-naround_zero},{naround_zero}] pixels)"
-            ax.text(0.01, 0.93, cwindow,
-                    horizontalalignment='left',
-                    verticalalignment='top',
-                    transform=ax.transAxes)
+            ax.text(0.01, 0.93, cwindow, horizontalalignment="left", verticalalignment="top", transform=ax.transAxes)
         # inset plot
-        inset_ax = inset_axes(
-            ax,
-            width="40%",
-            height="40%",
-            loc=1
-        )
+        inset_ax = inset_axes(ax, width="40%", height="40%", loc=1)
         inset_ax.plot(xcorr, corr)
         if naround_zero is not None:
             inset_ax.set_xlim([-naround_zero, naround_zero])
@@ -421,29 +401,34 @@ def periodic_corr1d(sp_reference, sp_offset,
         if lpeak_ok:
             xplot = np.linspace(xcorr[imin], xcorr[imax], num=50)
             yplot = poly_peak(xplot)
-            inset_ax.plot(xplot, yplot, '-')
-            inset_ax.plot(x_fit, y_fit, 'o')
-            inset_ax.plot([x_refined_peak], [y_refined_peak], 'o')
-        inset_ax.axvline(offset, color='grey', linestyle='dashed')
+            inset_ax.plot(xplot, yplot, "-")
+            inset_ax.plot(x_fit, y_fit, "o")
+            inset_ax.plot([x_refined_peak], [y_refined_peak], "o")
+        inset_ax.axvline(offset, color="grey", linestyle="dashed")
         if pdf is not None:
             pdf.savefig()
         else:
-            pause_debugplot(debugplot=debugplot,
-                            tight_layout=False, pltshow=True)
+            pause_debugplot(debugplot=debugplot, tight_layout=False, pltshow=True)
 
     return offset, fpeak
 
 
-def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
-                       sigmalist,
-                       remove_mean=False,
-                       frac_cosbell=None,
-                       zero_padding=None,
-                       fminmax=None,
-                       naround_zero=None,
-                       nfit_peak=None,
-                       ax1=None, ax2=None,
-                       debugplot=0):
+def compute_broadening(
+    wv_obj,
+    sp_obj,
+    wv_ref,
+    sp_ref,
+    sigmalist,
+    remove_mean=False,
+    frac_cosbell=None,
+    zero_padding=None,
+    fminmax=None,
+    naround_zero=None,
+    nfit_peak=None,
+    ax1=None,
+    ax2=None,
+    debugplot=0,
+):
     """Compute broadening to match 'sp_obj' with 'sp_ref'.
 
     The reference spectrum 'sp_ref' should have a better spectral
@@ -542,16 +527,16 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         nsamples = int((wv_max - wv_min) / min_delta_wv + 0.5) + 1
         wv = np.linspace(wv_min, wv_max, num=nsamples)
         if abs(debugplot) >= 10:
-            print('WARNING (compute_broadening): Interpolation required:')
-            print(f'  wv_min..: {wv_min}')
-            print(f'  wv_max..: {wv_max}')
-            print(f'  step....: {min_delta_wv}')
-            print(f'  nsamples: {nsamples}')
+            print("WARNING (compute_broadening): Interpolation required:")
+            print(f"  wv_min..: {wv_min}")
+            print(f"  wv_max..: {wv_max}")
+            print(f"  step....: {min_delta_wv}")
+            print(f"  nsamples: {nsamples}")
 
     # linear interpolation of input spectrum using the merged
     # wavelength sampling
-    funinterp_obj = interp1d(wv_obj, sp_obj, kind='linear')
-    funinterp_ref = interp1d(wv_ref, sp_ref, kind='linear')
+    funinterp_obj = interp1d(wv_obj, sp_obj, kind="linear")
+    funinterp_ref = interp1d(wv_ref, sp_ref, kind="linear")
     flux_obj = funinterp_obj(wv)
     flux_ref = funinterp_ref(wv)
 
@@ -561,11 +546,10 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
 
     # plot initial resampled spectra
     if abs(debugplot) in (21, 22):
-        ax = ximplotxy(wv, flux_ref,
-                       xlabel='wavelength (Angstrom)',
-                       ylabel='flux (arbitrary units)',
-                       label='flux_ref', show=False)
-        ax.plot(wv, flux_obj, label='flux_obj')
+        ax = ximplotxy(
+            wv, flux_ref, xlabel="wavelength (Angstrom)", ylabel="flux (arbitrary units)", label="flux_ref", show=False
+        )
+        ax.plot(wv, flux_obj, label="flux_obj")
         ax.legend()
         pause_debugplot(debugplot=debugplot, pltshow=True)
 
@@ -577,17 +561,22 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
         flux_ref_broad = gaussian_filter(flux_ref, sigma)
         # plot the two spectra
         if abs(debugplot) in (21, 22):
-            ax = ximplotxy(wv, flux_ref_broad,
-                           xlabel='wavelength (Angstrom)',
-                           ylabel='flux (arbitrary units)',
-                           label='flux_ref', show=False)
-            ax.plot(wv, flux_obj, label='flux_obj')
-            ax.set_title('sigma: ' + str(sigma) + ' pixels')
+            ax = ximplotxy(
+                wv,
+                flux_ref_broad,
+                xlabel="wavelength (Angstrom)",
+                ylabel="flux (arbitrary units)",
+                label="flux_ref",
+                show=False,
+            )
+            ax.plot(wv, flux_obj, label="flux_obj")
+            ax.set_title("sigma: " + str(sigma) + " pixels")
             ax.legend()
             pause_debugplot(debugplot=debugplot, pltshow=True)
         # periodic correlation between the two spectra
         offset[i], fpeak[i] = periodic_corr1d(
-            flux_ref_broad, flux_obj,
+            flux_ref_broad,
+            flux_obj,
             remove_mean=remove_mean,
             frac_cosbell=frac_cosbell,
             zero_padding=zero_padding,
@@ -595,29 +584,27 @@ def compute_broadening(wv_obj, sp_obj, wv_ref, sp_ref,
             naround_zero=naround_zero,
             nfit_peak=nfit_peak,
             norm_spectra=True,
-            debugplot=debugplot
+            debugplot=debugplot,
         )
 
     if ax1 is not None:
-        ax1.plot(sigmalist, offset,
-                 color='C0', marker='o', linestyle='', label='offset')
-        ax1.set_xlabel('sigma (pixels)')
-        ax1.set_ylabel('offset (pixels)', color='C0')
+        ax1.plot(sigmalist, offset, color="C0", marker="o", linestyle="", label="offset")
+        ax1.set_xlabel("sigma (pixels)")
+        ax1.set_ylabel("offset (pixels)", color="C0")
         ax1_ = ax1.twinx()
-        ax1_.plot(sigmalist, fpeak,
-                  color='C1', marker='o', linestyle='', label='fpeak')
-        ax1_.set_ylabel('fpeak', color='C1')
+        ax1_.plot(sigmalist, fpeak, color="C1", marker="o", linestyle="", label="fpeak")
+        ax1_.set_ylabel("fpeak", color="C1")
 
     offset_broad = offset[np.argmax(fpeak)]
     sigma_broad = sigmalist[np.argmax(fpeak)]
     sp_ref_broad = gaussian_filter(sp_ref, sigma_broad)
 
     if ax2 is not None:
-        ax2.plot(wv_obj, sp_obj, label='sp_obj')
-        ax2.plot(wv_ref, sp_ref, color='#aaaaaa', label='sp_ref')
-        ax2.plot(wv_ref, sp_ref_broad, label='sp_ref_broad')
-        ax2.set_xlabel('wavelength (Angstrom)')
-        ax2.set_ylabel('flux (arbitrary units)')
+        ax2.plot(wv_obj, sp_obj, label="sp_obj")
+        ax2.plot(wv_ref, sp_ref, color="#aaaaaa", label="sp_ref")
+        ax2.plot(wv_ref, sp_ref_broad, label="sp_ref_broad")
+        ax2.set_xlabel("wavelength (Angstrom)")
+        ax2.set_ylabel("flux (arbitrary units)")
         ax2.legend()
 
     return offset_broad, sigma_broad, sp_ref_broad

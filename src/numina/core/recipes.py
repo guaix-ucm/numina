@@ -51,25 +51,26 @@ class BaseRecipe(metaclass=RecipeType):
          recipe logger
 
     """
+
     RecipeResult = RecipeResultClass
     RecipeInput = RecipeInputClass
     datamodel = DataModel()
     # Recipe own logger
-    logger = logging.getLogger('numina.recipes.numina')
+    logger = logging.getLogger("numina.recipes.numina")
 
     def __new__(cls, *args, **kwargs):
         recipe = super(BaseRecipe, cls).__new__(cls)
-        recipe.instrument = kwargs.get('instrument', 'UNKNOWN')
-        recipe.mode = kwargs.get('mode', 'UNKNOWN')
-        recipe.pipeline = kwargs.get('pipeline', 'default')
-        recipe.intermediate_results = kwargs.get('intermediate_results', False)
-        recipe.validate_inputs = kwargs.get('validate_inputs', False)
-        recipe.validate_results = kwargs.get('validate_results', False)
+        recipe.instrument = kwargs.get("instrument", "UNKNOWN")
+        recipe.mode = kwargs.get("mode", "UNKNOWN")
+        recipe.pipeline = kwargs.get("pipeline", "default")
+        recipe.intermediate_results = kwargs.get("intermediate_results", False)
+        recipe.validate_inputs = kwargs.get("validate_inputs", False)
+        recipe.validate_results = kwargs.get("validate_results", False)
         recipe.runinfo = cls.create_default_runinfo()
-        recipe.runinfo.update(kwargs.get('runinfo', {}))
+        recipe.runinfo.update(kwargs.get("runinfo", {}))
         recipe.environ = {}
         recipe.__version__ = 1
-        recipe.query_options = kwargs.get('query_options', {})
+        recipe.query_options = kwargs.get("query_options", {})
         recipe.configure(**kwargs)
         return recipe
 
@@ -78,11 +79,10 @@ class BaseRecipe(metaclass=RecipeType):
         self.configure(**kwargs)
 
     def configure(self, **kwds):
-        if 'version' in kwds:
-            self.__version__ = kwds['version']
+        if "version" in kwds:
+            self.__version__ = kwds["version"]
 
-        base_kwds = ['instrument', 'mode', 'runinfo', 'intermediate_results',
-                     'validate_inputs']
+        base_kwds = ["instrument", "mode", "runinfo", "intermediate_results", "validate_inputs"]
         for kwd in base_kwds:
             if kwd in kwds:
                 setattr(self, kwd, kwds[kwd])
@@ -93,13 +93,13 @@ class BaseRecipe(metaclass=RecipeType):
     @staticmethod
     def create_default_runinfo():
         runinfo = {
-            'data_dir': None,
-            'results_dir': None,
-            'work_dir': None,
-            'pipeline': 'default',
-            'runner': 'unknown-runner',
-            'runner_version': 'unknown-version',
-            'taskid': 'unknown-id'
+            "data_dir": None,
+            "results_dir": None,
+            "work_dir": None,
+            "pipeline": "default",
+            "runner": "unknown-runner",
+            "runner_version": "unknown-version",
+            "taskid": "unknown-id",
         }
         return runinfo
 
@@ -163,13 +163,13 @@ class BaseRecipe(metaclass=RecipeType):
         return result
 
     def validate_input(self, recipe_input):
-        """"Validate the input of the recipe"""
-        self.logger.debug('start validating input')
+        """ "Validate the input of the recipe"""
+        self.logger.debug("start validating input")
         recipe_input.validate()
 
     def validate_result(self, recipe_result):
         """Validate the result of the recipe"""
-        self.logger.debug('start validating result')
+        self.logger.debug("start validating result")
         recipe_result.validate()
 
     def save_intermediate_img(self, img, name):
@@ -184,21 +184,21 @@ class BaseRecipe(metaclass=RecipeType):
 
     def save_structured_as_json(self, structured, name):
         if self.intermediate_results:
-            if hasattr(structured, '__getstate__'):
+            if hasattr(structured, "__getstate__"):
                 state = structured.__getstate__()
             elif isinstance(structured, dict):
                 state = structured
             else:
                 state = structured.__dict__
 
-            with open(name, 'w') as fd:
+            with open(name, "w") as fd:
                 json.dump(state, fd, indent=2, cls=ExtEncoder)
 
     def set_base_headers(self, hdr):
         """Set metadata in FITS headers."""
-        hdr['NUMXVER'] = (__version__, 'Numina package version')
-        hdr['NUMRNAM'] = (self.__class__.__name__, 'Numina recipe name')
-        hdr['NUMRVER'] = (self.__version__, 'Numina recipe version')
+        hdr["NUMXVER"] = (__version__, "Numina package version")
+        hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
+        hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
         return hdr
 
     def build_recipe_input(self, ob, dal):
@@ -210,10 +210,11 @@ class BaseRecipe(metaclass=RecipeType):
         #
         # it has to contain the tags corresponding to the observing modes...
         ob_query_skip = False
-        ob_query_field = 'obresult'
+        ob_query_field = "obresult"
 
         if isinstance(ob, ObservingBlock):
             import numina.types.obsresult as obtype
+
             # We have to build an Obsres
             for key, req in self.requirements().items():
                 if isinstance(req.type, obtype.ObservationResultType):
@@ -233,13 +234,12 @@ class BaseRecipe(metaclass=RecipeType):
             obsres = ob
 
         qfields = self.tag_names()
-        self.logger.debug(
-            'running recipe tagger with query fields: %s', qfields)
+        self.logger.debug("running recipe tagger with query fields: %s", qfields)
         if qfields:
             obsres.tags = extract_tags_from_obsres(obsres, qfields, self.datamodel, strict=True)
         else:
             obsres.tags = {}
-        self.logger.debug('obsres tags are: %s', obsres.tags)
+        self.logger.debug("obsres tags are: %s", obsres.tags)
 
         for key, req in self.requirements().items():
 
@@ -262,7 +262,7 @@ class BaseRecipe(metaclass=RecipeType):
 
         used_getters = []
         for rtype, getter in zip(imgtypes, getters):
-            self.logger.debug('get_filters, %s  %s', rtype, getter)
+            self.logger.debug("get_filters, %s  %s", rtype, getter)
             if rtype is None:
                 # Unconditional
                 if isinstance(getter, collections.abc.Iterable):
@@ -288,19 +288,18 @@ class BaseRecipe(metaclass=RecipeType):
 
         # with BPM, bias, dark, flat and sky
         if numina.ext.gtc.check_gtc():
-            self.logger.debug('running in GTC environment')
+            self.logger.debug("running in GTC environment")
         else:
-            self.logger.debug('running outside of GTC environment')
+            self.logger.debug("running outside of GTC environment")
 
         meta = self.gather_info(rinput)
-        self.logger.debug('obresult info')
-        for entry in meta['obresult']:
-            self.logger.debug('frame info is %s', entry)
+        self.logger.debug("obresult info")
+        for entry in meta["obresult"]:
+            self.logger.debug("frame info is %s", entry)
 
         reduction_flows = []
         for getters in getters_seq:
-            correctors = [getter(rinput, meta, ins, self.datamodel)
-                          for getter in getters]
+            correctors = [getter(rinput, meta, ins, self.datamodel) for getter in getters]
             reduction_flow = flowmod.SerialFlow(correctors)
             reduction_flows.append(reduction_flow)
 
@@ -328,7 +327,7 @@ class BaseRecipe(metaclass=RecipeType):
             if isinstance(val, DataFrame):
                 metadata[key] = self.datamodel.gather_info_dframe(val)
             # elif isinstance(val, ObservationResult):
-            elif hasattr(val, 'frames'):
+            elif hasattr(val, "frames"):
                 metadata[key] = self.datamodel.gather_info_oresult(val)
             else:
                 pass
@@ -347,7 +346,7 @@ def timeit(method):
         result = method(self, rinput)
         time_end = datetime.datetime.now(datetime.timezone.utc)
         result.time_it(time_start, time_end)
-        self.logger.info('total time measured')
+        self.logger.info("total time measured")
         return result
 
     return timed_method

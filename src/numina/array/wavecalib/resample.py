@@ -49,12 +49,12 @@ def oversample1d(sp, crval1, cdelt1, oversampling=1, debugplot=0):
     """
 
     if sp.ndim != 1:
-        raise ValueError('Unexpected array dimensions')
+        raise ValueError("Unexpected array dimensions")
 
     naxis1 = sp.size
     naxis1_over = naxis1 * oversampling
     cdelt1_over = cdelt1 / oversampling
-    xmin = crval1 - cdelt1/2   # left border of first pixel
+    xmin = crval1 - cdelt1 / 2  # left border of first pixel
     crval1_over = xmin + cdelt1_over / 2
 
     sp_over = np.zeros(naxis1_over)
@@ -67,9 +67,8 @@ def oversample1d(sp, crval1, cdelt1, oversampling=1, debugplot=0):
         crvaln = crval1 + (naxis1 - 1) * cdelt1
         crvaln_over = crval1_over + (naxis1_over - 1) * cdelt1_over
         xover = np.linspace(crval1_over, crvaln_over, naxis1_over)
-        ax = ximplotxy(np.linspace(crval1, crvaln, naxis1), sp, 'bo',
-                       label='original', show=False)
-        ax.plot(xover, sp_over, 'r+', label='resampled')
+        ax = ximplotxy(np.linspace(crval1, crvaln, naxis1), sp, "bo", label="original", show=False)
+        ax.plot(xover, sp_over, "r+", label="resampled")
         pause_debugplot(debugplot, pltshow=True)
 
     return sp_over, crval1_over, cdelt1_over
@@ -93,11 +92,14 @@ def rebin(a, *args):
     #           ['args[%d], factor[%d], ' % (i, i) for i in range(len_shape)] + \
     #           [')'] + ['.mean(%d)' % (i+1) for i in range(len_shape)]
     # FIXME: this construction is weird
-    ev_list = ['a.reshape('] + \
-              [f'args[{idx}], factor[{idx}], ' for idx in range(len_shape)] + \
-              [')'] + [f'.mean({idx + 1})' for idx in range(len_shape)]
+    ev_list = (
+        ["a.reshape("]
+        + [f"args[{idx}], factor[{idx}], " for idx in range(len_shape)]
+        + [")"]
+        + [f".mean({idx + 1})" for idx in range(len_shape)]
+    )
     # print(''.join(ev_list))
-    return eval(''.join(ev_list))
+    return eval("".join(ev_list))
 
 
 def shiftx_image2d_flux(image2d_orig, xoffset):
@@ -122,19 +124,13 @@ def shiftx_image2d_flux(image2d_orig, xoffset):
     elif image2d_orig.ndim == 2:
         naxis2, naxis1 = image2d_orig.shape
     else:
-        print('>>> image2d_orig.shape:', image2d_orig.shape)
-        raise ValueError('Unexpected number of dimensions')
+        print(">>> image2d_orig.shape:", image2d_orig.shape)
+        raise ValueError("Unexpected number of dimensions")
 
-    return resample_image2d_flux(image2d_orig,
-                                 naxis1=naxis1,
-                                 cdelt1=1,
-                                 crval1=1,
-                                 crpix1=1,
-                                 coeff=[xoffset, 1])
+    return resample_image2d_flux(image2d_orig, naxis1=naxis1, cdelt1=1, crval1=1, crpix1=1, coeff=[xoffset, 1])
 
 
-def resample_image2d_flux(image2d_orig,
-                          naxis1, cdelt1, crval1, crpix1, coeff):
+def resample_image2d_flux(image2d_orig, naxis1, cdelt1, crval1, crpix1, coeff):
     """Resample a 1D/2D image using NAXIS1, CDELT1, CRVAL1, and CRPIX1.
 
     The same NAXIS1, CDELT1, CRVAL1, and CRPIX1 are employed for all
@@ -178,8 +174,8 @@ def resample_image2d_flux(image2d_orig,
         nscan, nchan = image2d_orig.shape
         image2d = np.copy(image2d_orig)
     else:
-        print('>>> image2d_orig.shape:', image2d_orig.shape)
-        raise ValueError('Unexpected number of dimensions')
+        print(">>> image2d_orig.shape:", image2d_orig.shape)
+        raise ValueError("Unexpected number of dimensions")
 
     new_x = np.arange(naxis1)
     new_wl = crval1 + cdelt1 * new_x
@@ -199,11 +195,7 @@ def resample_image2d_flux(image2d_orig,
     for iscan in range(nscan):
         # We need a monotonic interpolator
         # linear would work, we use a cubic interpolator
-        interpolator = SteffenInterpolator(
-            old_wl_borders,
-            accum_flux[iscan],
-            extrapolate='border'
-        )
+        interpolator = SteffenInterpolator(old_wl_borders, accum_flux[iscan], extrapolate="border")
         fl_borders = interpolator(new_borders)
         image2d_resampled[iscan] = fl_borders[1:] - fl_borders[:-1]
 

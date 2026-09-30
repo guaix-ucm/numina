@@ -1,4 +1,3 @@
-
 import astropy.io.fits as fits
 import pytest
 

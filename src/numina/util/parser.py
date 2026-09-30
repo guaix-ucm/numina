@@ -12,15 +12,15 @@ import ast
 
 
 def split_type_name(name):
-    fp = name.find('(')
-    sp = name.find(')')
+    fp = name.find("(")
+    sp = name.find(")")
     if (fp == -1) or (sp == -1) or (sp < fp):
         # paren not found
         klass = name
         fargs = ""
     else:
         klass = name[:fp]
-        fargs = name[fp + 1:sp]
+        fargs = name[fp + 1 : sp]
     return klass, fargs
 
 
@@ -33,10 +33,10 @@ def parse_arg_line(fargs):
 
     # Convert to literal dict
     fargs = fargs.strip()
-    if fargs == '':
+    if fargs == "":
         return {}
 
-    pairs = [s.strip() for s in fargs.split(',')]
+    pairs = [s.strip() for s in fargs.split(",")]
     # find first "="
     result = []
     for p in pairs:
@@ -45,10 +45,10 @@ def parse_arg_line(fargs):
             # no equal
             raise ValueError("malformed")
         key = p[:fe]
-        val = p[fe + 1:]
+        val = p[fe + 1 :]
         tok = f"'{key}': {val}"
         result.append(tok)
-    tokj = ','.join(result)
+    tokj = ",".join(result)
     result = f"{{ {tokj} }}"
     state = ast.literal_eval(result)
     return state

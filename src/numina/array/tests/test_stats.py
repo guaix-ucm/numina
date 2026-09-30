@@ -25,17 +25,17 @@ def test_summary():
     result = summary(xdata)
 
     expected_result = {
-        'npoints': 50,
-        'minimum': 0,
-        'percentile25': 12.25,
-        'median': 24.5,
-        'mean': 24.5,
-        'percentile75': 36.75,
-        'maximum': 49,
-        'std': 14.430869689661812,
-        'robust_std': 18.161849999999998,
-        'percentile15': 7.7741097000000003,
-        'percentile84': 41.225890299999996
+        "npoints": 50,
+        "minimum": 0,
+        "percentile25": 12.25,
+        "median": 24.5,
+        "mean": 24.5,
+        "percentile75": 36.75,
+        "maximum": 49,
+        "std": 14.430869689661812,
+        "robust_std": 18.161849999999998,
+        "percentile15": 7.7741097000000003,
+        "percentile84": 41.225890299999996,
     }
 
     for key, val in result.items():

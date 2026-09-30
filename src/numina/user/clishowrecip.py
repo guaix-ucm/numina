@@ -18,28 +18,16 @@ from numina.user.clishowins import print_no_instrument
 
 
 def register(subparsers, config):
-    parser_show_rec = subparsers.add_parser(
-        'show-recipes',
-        help='show information of recipes'
-    )
+    parser_show_rec = subparsers.add_parser("show-recipes", help="show information of recipes")
 
     parser_show_rec.set_defaults(command=show_recipes, template=False)
 
-    parser_show_rec.add_argument(
-        '-i', '--instrument',
-        help='filter recipes by instrument'
-    )
-    parser_show_rec.add_argument(
-        '-m', '--mode',
-        help='filter recipes by mode name'
-    )
-# Note that argparse.FileType is deprecated
-#    parser_show_rec.add_argument('--output', type=argparse.FileType('wb', 0))
+    parser_show_rec.add_argument("-i", "--instrument", help="filter recipes by instrument")
+    parser_show_rec.add_argument("-m", "--mode", help="filter recipes by mode name")
+    # Note that argparse.FileType is deprecated
+    #    parser_show_rec.add_argument('--output', type=argparse.FileType('wb', 0))
 
-    parser_show_rec.add_argument(
-        'name', nargs='*', default=None,
-        help='filter recipes by name'
-    )
+    parser_show_rec.add_argument("name", nargs="*", default=None, help="filter recipes by name")
 
     return parser_show_rec
 
@@ -62,10 +50,16 @@ def show_recipes(args, extra_args, config):
     # predicates
     preds = []
     if args.name:
-        def pred1(mode_rec): return mode_rec[1]['class'] in args.name  # noqa: E731
+
+        def pred1(mode_rec):
+            return mode_rec[1]["class"] in args.name  # noqa: E731
+
         preds.append(pred1)
     if args.mode:
-        def pred1(mode_rec): return mode_rec[0] == args.mode  # noqa: E731
+
+        def pred1(mode_rec):
+            return mode_rec[0] == args.mode  # noqa: E731
+
         preds.append(pred1)
 
     for name, theins in res:
@@ -79,19 +73,16 @@ def show_recipes(args, extra_args, config):
                         if not pre(mod_rec):
                             break
                     else:
-                        recipe_fqn = recipe_entry['class']
+                        recipe_fqn = recipe_entry["class"]
                         recipe = pipe.get_recipe_object(mode)
                         print_recipe(
-                            recipe.__class__, name=recipe_fqn,
-                            insname=theins.name,
-                            pipename=pipe.name,
-                            modename=mode
+                            recipe.__class__, name=recipe_fqn, insname=theins.name, pipename=pipe.name, modename=mode
                         )
         else:
             print_no_instrument(name)
 
 
-def print_requirements(recipe, pad=''):
+def print_requirements(recipe, pad=""):
 
     for req in recipe.requirements().values():
         if req.hidden:
@@ -100,33 +91,30 @@ def print_requirements(recipe, pad=''):
         dispname = req.dest
 
         if req.optional:
-            dispname = dispname + '(optional)'
+            dispname = dispname + "(optional)"
 
         if req.default is not None:
-            dispname = dispname + '=' + str(req.default)
+            dispname = dispname + "=" + str(req.default)
         typ = req.type.descriptive_name()
 
         print(f"{pad}{dispname} type={typ!r} [{req.description}]")
 
 
-def print_recipe(recipe, name=None, insname=None,
-                 pipename=None, modename=None):
+def print_recipe(recipe, name=None, insname=None, pipename=None, modename=None):
     try:
         if name is None:
-            name = recipe.__module__ + '.' + recipe.__name__
-        print('Recipe:', name)
+            name = recipe.__module__ + "." + recipe.__name__
+        print("Recipe:", name)
         if recipe.__doc__:
-            print(' summary:',
-                  recipe.__doc__.lstrip().expandtabs().splitlines()[0]
-                  )
+            print(" summary:", recipe.__doc__.lstrip().expandtabs().splitlines()[0])
         if insname:
-            print(' instrument:', insname)
+            print(" instrument:", insname)
         if pipename:
-            print('  pipeline:', pipename)
+            print("  pipeline:", pipename)
         if modename:
-            print('  obs mode:', modename)
-        print(' requirements:')
-        print_requirements(recipe, pad='  ')
+            print("  obs mode:", modename)
+        print(" requirements:")
+        print_requirements(recipe, pad="  ")
         print()
     except Exception as error:
-        warnings.warn(f'problem {error} with recipe {recipe!r}')
+        warnings.warn(f"problem {error} with recipe {recipe!r}")

@@ -10,7 +10,6 @@
 
 """Constants for the numina package."""
 
-
 # Factor to obtain FWHM in Gaussian profile from sigma
 FWHM_G = 2.3548200450309493
 

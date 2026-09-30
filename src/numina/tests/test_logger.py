@@ -22,7 +22,7 @@ from numina.types.dataframe import DataFrame
 @pytest.fixture(scope="function")
 def logger_fits(request):
 
-    logger = logging.getLogger('numina_test_logger')
+    logger = logging.getLogger("numina_test_logger")
     logger.setLevel(logging.DEBUG)
     history_header = fits.Header()
     fh = FITSHistoryHandler(history_header)
@@ -40,11 +40,11 @@ def logger_fits(request):
 def test_fits_history_handler(logger_fits):
 
     logger, history_header = logger_fits
-    logtext1 = 'Test1'
+    logtext1 = "Test1"
     logger.info(logtext1)
-    logtext2 = 100 * 't'
+    logtext2 = 100 * "t"
     logger.info(logtext2)
-    hheaders = history_header['HISTORY']
+    hheaders = history_header["HISTORY"]
 
     assert hheaders[0] == logtext1
     assert hheaders[1] == logtext2[:72]
@@ -53,7 +53,7 @@ def test_fits_history_handler(logger_fits):
 
 def test_logger_decorator():
 
-    _logger = logging.getLogger('numina_test_logger')
+    _logger = logging.getLogger("numina_test_logger")
 
     class RecipeResult:
         pass
@@ -74,5 +74,5 @@ def test_logger_decorator():
 
     rr = recipe.decorated_method(None)
     h = rr.some.open()[0].header
-    assert h['history'][0] == 'some'
-    assert h['history'][1] == 'other'
+    assert h["history"][0] == "some"
+    assert h["history"][1] == "other"

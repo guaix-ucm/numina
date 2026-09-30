@@ -19,7 +19,6 @@ from .metaclass import RecipeInputType, RecipeResultType
 import numina.store.dump
 import numina.types.qc
 
-
 _logger = logging.getLogger(__name__)
 
 
@@ -29,13 +28,13 @@ class RecipeInOut(object):
         super(RecipeInOut, self).__init__()
         # Used to hold set values
         # Use this to avoid infinite recursion
-        super(RecipeInOut, self).__setattr__('_numina_desc_val', {})
+        super(RecipeInOut, self).__setattr__("_numina_desc_val", {})
         # instead of this
         # self._numina_desc_val = {}
         all_msg_errors = []
 
         # memorize aliases
-        super(RecipeInOut, self).__setattr__('_aliases', {})
+        super(RecipeInOut, self).__setattr__("_aliases", {})
 
         for key, req in self.stored().items():
             if req.alias:
@@ -53,13 +52,13 @@ class RecipeInOut(object):
         sclass = type(self).__name__
         full = []
         for key, val in self.stored().items():
-            full.append(f'{key}={val!r}')
+            full.append(f"{key}={val!r}")
         return f"{sclass}({', '.join(full)})"
 
     def __getattr__(self, item):
         # This method might be called before _aliases is initialized
-        if item in self.__dict__.get('_aliases', {}):
-            ref = self.__dict__['_aliases'][item]
+        if item in self.__dict__.get("_aliases", {}):
+            ref = self.__dict__["_aliases"][item]
             return getattr(self, ref.dest)
         else:
             msg = f"'{self.__class__.__name__}' object has no attribute '{item}'"
@@ -67,8 +66,8 @@ class RecipeInOut(object):
 
     def __setattr__(self, item, value):
         # This method might be called before _aliases is initialized
-        if item in self.__dict__.get('_aliases', {}):
-            ref = self.__dict__['_aliases'][item]
+        if item in self.__dict__.get("_aliases", {}):
+            ref = self.__dict__["_aliases"][item]
             return setattr(self, ref.dest, value)
         else:
             super(RecipeInOut, self).__setattr__(item, value)
@@ -104,18 +103,18 @@ class RecipeInOut(object):
 
         for key, req in self.stored().items():
             val = getattr(self, key)
-            _logger.info('validate %s with a value of %s', req, val)
+            _logger.info("validate %s with a value of %s", req, val)
             try:
                 req.validate(val)
-                _logger.info('validation passed')
+                _logger.info("validation passed")
             except Exception as error:
-                _logger.warning('validation failed with error %s', error)
+                _logger.warning("validation failed with error %s", error)
 
         # Run checks defined in __checkers__
         self._run_checks()
 
     def _run_checks(self):
-        checkers = getattr(self, '__checkers__', [])
+        checkers = getattr(self, "__checkers__", [])
 
         for check in checkers:
             check.check(self)
@@ -131,6 +130,7 @@ class RecipeInOut(object):
 
 class RecipeInput(RecipeInOut, metaclass=RecipeInputType):
     """RecipeInput base class"""
+
     pass
 
 
@@ -140,7 +140,7 @@ class RecipeResultBase(RecipeInOut, metaclass=RecipeResultType):
     def store_to(self, where):
 
         saveres = dict(values={})
-        saveres_v = saveres['values']
+        saveres_v = saveres["values"]
         for key, prod in self.stored().items():
             val = getattr(self, key)
             saveres_v[key] = numina.store.dump(prod.type, val, prod.dest)
@@ -157,21 +157,22 @@ class RecipeResult(RecipeResultBase):
         self.uuid = uuid.uuid1()
 
         # qc is not passed further
-        if 'qc' in kwds:
-            self.qc = kwds['qc']
-            del kwds['qc']
+        if "qc" in kwds:
+            self.qc = kwds["qc"]
+            del kwds["qc"]
 
         super(RecipeResult, self).__init__(*args, **kwds)
 
     def store_to(self, where):
         saveres = super(RecipeResult, self).store_to(where)
 
-        saveres['qc'] = self.qc.name
-        saveres['uuid'] = str(self.uuid)
+        saveres["qc"] = self.qc.name
+        saveres["uuid"] = str(self.uuid)
         return saveres
 
     def time_it(self, time1, time2):
         import numina.types.dataframe as dataframe
+
         values = self.attrs()
         for k, spec in self.stored().items():
             value = values[k]
@@ -181,8 +182,8 @@ class RecipeResult(RecipeResultBase):
                 self.add_computation_time(hdul, time1, time2)
 
     def add_computation_time(self, img, time1, time2):
-        img[0].header['NUMUTC1'] = time1.isoformat()
-        img[0].header['NUMUTC2'] = time2.isoformat()
+        img[0].header["NUMUTC1"] = time1.isoformat()
+        img[0].header["NUMUTC2"] = time2.isoformat()
         return img
 
 
@@ -191,7 +192,7 @@ class define_result(object):
 
     def __init__(self, resultClass):
         if not issubclass(resultClass, RecipeResult):
-            msg = f'{resultClass!r} does not derive from RecipeResult'
+            msg = f"{resultClass!r} does not derive from RecipeResult"
             raise TypeError(msg)
         self.klass = resultClass
 
@@ -205,7 +206,7 @@ class define_input(object):
 
     def __init__(self, input_class):
         if not issubclass(input_class, RecipeInput):
-            msg = f'{input_class!r} does not derive from RecipeInput'
+            msg = f"{input_class!r} does not derive from RecipeInput"
             raise TypeError(msg)
         self.klass = input_class
 

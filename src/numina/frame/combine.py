@@ -24,7 +24,7 @@ def _m_base(calc, img, mask, region):
     arr = full_f[region]
     if mask is not None:
         mask_sub = mask[region]
-        invalid = (mask_sub > 0)
+        invalid = mask_sub > 0
         arr = arr[~invalid]
     return calc(arr)
 
@@ -39,14 +39,11 @@ def _m_median(img, mask, region):
 
 def _m_mode(img, mask, region):
     from numina.array.mode import mode_half_sample
+
     return _m_base(mode_half_sample, img, mask, region)
 
 
-_method_map = {
-    'mean': _m_mean,
-    'median': _m_median,
-    'mode': _m_mode
-}
+_method_map = {"mean": _m_mean, "median": _m_median, "mode": _m_mode}
 
 
 class Extension(object):
@@ -69,7 +66,7 @@ def _inspect_method(value):
         try:
             return _method_map[value], True
         except KeyError:
-            print(f'invalid method {value}')
+            print(f"invalid method {value}")
             raise
     elif isinstance(value, collections.abc.Sequence):
         return value, False
@@ -78,12 +75,22 @@ def _inspect_method(value):
     elif callable(value):
         return value, True
     else:
-        raise TypeError('no callable')
+        raise TypeError("no callable")
 
 
-def combine(method, images, masks=None, dtype=None,
-            region=None, zeros=None, scales=None, weights=None,
-            include_variance=True, datamodel=None, method_name=""):
+def combine(
+    method,
+    images,
+    masks=None,
+    dtype=None,
+    region=None,
+    zeros=None,
+    scales=None,
+    weights=None,
+    include_variance=True,
+    datamodel=None,
+    method_name="",
+):
     """Combine HDUList objects using algorithm 'method'"""
 
     import numina.datamodel
@@ -98,10 +105,10 @@ def combine(method, images, masks=None, dtype=None,
     elif isinstance(masks, collections.abc.Sequence):
         intl_masks = [mask[0].data for mask in masks]
     else:
-        raise TypeError('mask in invalid')
+        raise TypeError("mask in invalid")
 
     if len(intl_masks) != nimages:
-        raise TypeError('len(masks) != len(images)')
+        raise TypeError("len(masks) != len(images)")
 
     # Processing region
     if region is None:
@@ -115,8 +122,7 @@ def combine(method, images, masks=None, dtype=None,
         arg = arg_values[key]  # locals()[key]
         value_arg, arg_is_func = _inspect_method(arg)
         if arg_is_func:
-            num_values[key] = [value_arg(img, mask, region)
-                               for img, mask in zip(images, intl_masks)]
+            num_values[key] = [value_arg(img, mask, region) for img, mask in zip(images, intl_masks)]
         else:
             num_values[key] = value_arg
         if num_values[key] is not None:
@@ -130,9 +136,15 @@ def combine(method, images, masks=None, dtype=None,
         fmasks = intl_masks
 
     out = C.generic_combine(
-        method, arrays, masks=fmasks, dtype=dtype, out=None,
-        zeros=num_values['zeros'], scales=num_values['scales'],
-        weights=num_values['weights'])
+        method,
+        arrays,
+        masks=fmasks,
+        dtype=dtype,
+        out=None,
+        zeros=num_values["zeros"],
+        scales=num_values["scales"],
+        weights=num_values["weights"],
+    )
 
     # Build HDUList
     headers = [img[0].header for img in images]
@@ -145,36 +157,36 @@ def combine(method, images, masks=None, dtype=None,
     prolog = ""
     if prolog:
         # _logger.debug('write prolog')
-        hdu1.header['history'] = prolog
+        hdu1.header["history"] = prolog
 
     if method_name != "":
         # _logger.info("Combined %d images using '%s'", nimages, method.__name__)
-        hdu1.header['history'] = f"Combined {nimages:d} images using '{method}'"
+        hdu1.header["history"] = f"Combined {nimages:d} images using '{method}'"
     else:
-        hdu1.header['history'] = f"Combined {nimages:d} images"
+        hdu1.header["history"] = f"Combined {nimages:d} images"
 
     t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
-    hdu1.header['history'] = f'Combination time {t_str}'
+    hdu1.header["history"] = f"Combination time {t_str}"
 
     if datamodel is None:
         datamodel = numina.datamodel.DataModel()
 
     for idx, img in enumerate(images, start=1):
-        hdu1.header['history'] = f"Image{idx} {datamodel.get_imgid(img)}"
+        hdu1.header["history"] = f"Image{idx} {datamodel.get_imgid(img)}"
 
-    prevnum = base_header.get('NUM-NCOM', 1)
+    prevnum = base_header.get("NUM-NCOM", 1)
 
-    hdu1.header['NUM-NCOM'] = prevnum * nimages
-    hdu1.header['UUID'] = str(uuid.uuid1())
+    hdu1.header["NUM-NCOM"] = prevnum * nimages
+    hdu1.header["UUID"] = str(uuid.uuid1())
 
     # Headers of last image
     # hdu1.header['TSUTC2'] = headers[-1]['TSUTC2']
 
     if include_variance:
-        varhdu = fits.ImageHDU(out[1], name='VARIANCE')
+        varhdu = fits.ImageHDU(out[1], name="VARIANCE")
         list_of_hdu.append(varhdu)
 
-    num = fits.ImageHDU(out[2].astype('uint8'), name='MAP')
+    num = fits.ImageHDU(out[2].astype("uint8"), name="MAP")
     list_of_hdu.append(num)
 
     result = fits.HDUList(list_of_hdu)

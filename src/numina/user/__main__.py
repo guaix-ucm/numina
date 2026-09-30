@@ -9,7 +9,7 @@
 
 """User command line interface of Numina."""
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     from numina.user.cli import main
 

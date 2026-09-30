@@ -10,7 +10,7 @@
 import os
 
 
-def arg_file_is_new(parser, arg, mode='w'):
+def arg_file_is_new(parser, arg, mode="w"):
     """Auxiliary function to give an error if the file already exists.
 
     Parameters
@@ -30,8 +30,7 @@ def arg_file_is_new(parser, arg, mode='w'):
 
     """
     if os.path.exists(arg):
-        parser.error(
-            f"\nThe file \"{arg}\"\nalready exists and cannot be overwritten!")
+        parser.error(f'\nThe file "{arg}"\nalready exists and cannot be overwritten!')
     else:
         # return an open file handle
         handler = open(arg, mode=mode)

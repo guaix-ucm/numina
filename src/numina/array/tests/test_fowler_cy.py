@@ -22,8 +22,8 @@ class FowlerTestCase(unittest.TestCase):
         self.fdata = numpy.empty((10, 1, 1))
         rows = 3
         columns = 4
-        self.emptybp = numpy.zeros((rows, columns), dtype='uint8')
-        self.data = numpy.arange(10, dtype='int32')
+        self.emptybp = numpy.zeros((rows, columns), dtype="uint8")
+        self.data = numpy.arange(10, dtype="int32")
         self.data = numpy.tile(self.data, (columns, rows, 1)).T
         self.blank = 1
         self.saturation = 65536
@@ -34,30 +34,20 @@ class FowlerTestCase(unittest.TestCase):
         """Test we raise exceptions for invalid inputs in Fowler mode."""
 
         # Dimension must be 3
-        self.assertRaises(ValueError, fowler_array,
-                          numpy.empty((2,)))
-        self.assertRaises(ValueError, fowler_array,
-                          numpy.empty((2, 2)))
-        self.assertRaises(ValueError, fowler_array,
-                          numpy.empty((2, 3, 4, 5)))
+        self.assertRaises(ValueError, fowler_array, numpy.empty((2,)))
+        self.assertRaises(ValueError, fowler_array, numpy.empty((2, 2)))
+        self.assertRaises(ValueError, fowler_array, numpy.empty((2, 3, 4, 5)))
         # saturation in good shape
-        self.assertRaises(ValueError, fowler_array,
-                          self.fdata, saturation=-100)
-        self.assertRaises(ValueError, fowler_array,
-                          self.fdata, saturation=0)
+        self.assertRaises(ValueError, fowler_array, self.fdata, saturation=-100)
+        self.assertRaises(ValueError, fowler_array, self.fdata, saturation=0)
         # 0-axis must be even
-        self.assertRaises(ValueError, fowler_array,
-                          numpy.empty((5, 2, 0)))
+        self.assertRaises(ValueError, fowler_array, numpy.empty((5, 2, 0)))
         # gain must be positive
-        self.assertRaises(ValueError, fowler_array,
-                          self.fdata, gain=-1.0)
-        self.assertRaises(ValueError, fowler_array,
-                          self.fdata, gain=0)
+        self.assertRaises(ValueError, fowler_array, self.fdata, gain=-1.0)
+        self.assertRaises(ValueError, fowler_array, self.fdata, gain=0)
         # RON must be positive
-        self.assertRaises(ValueError, fowler_array,
-                          self.fdata, ron=-1.0)
-        self.assertRaises(ValueError, fowler_array,
-                          self.fdata, ron=0)
+        self.assertRaises(ValueError, fowler_array, self.fdata, ron=-1.0)
+        self.assertRaises(ValueError, fowler_array, self.fdata, ron=0)
 
     def test_saturation0(self):
         """Test we count correctly saturated pixels in Fowler mode."""
@@ -90,9 +80,7 @@ class FowlerTestCase(unittest.TestCase):
         saturation = 50000
         self.data[7:, ...] = saturation
 
-        res = fowler_array(self.data,
-                           saturation=saturation,
-                           blank=self.blank)
+        res = fowler_array(self.data, saturation=saturation, blank=self.blank)
 
         for nn in res[2].flat:
             self.assertEqual(nn, 2)
@@ -101,19 +89,22 @@ class FowlerTestCase(unittest.TestCase):
             self.assertEqual(n, MASK_GOOD)
 
         for v in res[1].flat:
-            self.assertAlmostEqual(v, 2.0/2)
+            self.assertAlmostEqual(v, 2.0 / 2)
 
         for v in res[0].flat:
             self.assertAlmostEqual(v, 5)
 
     def test_dtypes0(self):
         """Test output is float64 by default"""
-        inttypes = ['int8', 'int16', 'int32', 'uint8', 'uint16', 'uint32']
-        floattypes = ['float32', 'float64', ]
-        if hasattr(numpy, 'float128'):
-            floattypes.append('float128')
-        mdtype = numpy.dtype('uint8')
-        ddtype = numpy.dtype('float64')
+        inttypes = ["int8", "int16", "int32", "uint8", "uint16", "uint32"]
+        floattypes = [
+            "float32",
+            "float64",
+        ]
+        if hasattr(numpy, "float128"):
+            floattypes.append("float128")
+        mdtype = numpy.dtype("uint8")
+        ddtype = numpy.dtype("float64")
         rows = 3
         columns = 4
         for dtype in inttypes:
@@ -141,10 +132,7 @@ class FowlerTestCase(unittest.TestCase):
         mask_val = 2
         self.emptybp[...] = mask_val
 
-        res = fowler_array(self.data,
-                           saturation=self.saturation,
-                           badpixels=self.emptybp,
-                           blank=self.blank)
+        res = fowler_array(self.data, saturation=self.saturation, badpixels=self.emptybp, blank=self.blank)
 
         for nn in res[2].flat:
             self.assertEqual(nn, 0)
@@ -161,18 +149,14 @@ class FowlerTestCase(unittest.TestCase):
     def test_badpixel1(self):
         """Test we handle correctly None badpixel mask."""
         self.emptybp[...] = 0
-        values = [2343, 2454, 2578, 2661, 2709, 24311, 24445,
-                  24405, 24612, 24707]
-        self.data = numpy.empty((10, 3, 4), dtype='int32')
+        values = [2343, 2454, 2578, 2661, 2709, 24311, 24445, 24405, 24612, 24707]
+        self.data = numpy.empty((10, 3, 4), dtype="int32")
         for i in range(10):
             self.data[i, ...] = values[i]
         arr = self.data[5:, 0, 0] - self.data[:5, 0, 0]
         mean = arr.mean()
 
-        res = fowler_array(self.data,
-                           saturation=self.saturation,
-                           badpixels=self.emptybp,
-                           blank=self.blank)
+        res = fowler_array(self.data, saturation=self.saturation, badpixels=self.emptybp, blank=self.blank)
 
         for nn in res[2].flat:
             self.assertEqual(nn, 5)
@@ -189,10 +173,7 @@ class FowlerTestCase(unittest.TestCase):
             self.assertAlmostEqual(v, mean)
 
         self.emptybp = None
-        res = fowler_array(self.data,
-                           saturation=self.saturation,
-                           badpixels=self.emptybp,
-                           blank=self.blank)
+        res = fowler_array(self.data, saturation=self.saturation, badpixels=self.emptybp, blank=self.blank)
 
         for nn in res[2].flat:
             self.assertEqual(nn, 5)
@@ -201,14 +182,12 @@ class FowlerTestCase(unittest.TestCase):
             self.assertEqual(n, 0)
 
         for v in res[1].flat:
-            self.assertAlmostEqual(v, 2.0/5)
+            self.assertAlmostEqual(v, 2.0 / 5)
 
         for v in res[0].flat:
             self.assertAlmostEqual(v, mean)
 
-        res = fowler_array(self.data,
-                           saturation=self.saturation,
-                           blank=self.blank)
+        res = fowler_array(self.data, saturation=self.saturation, blank=self.blank)
 
         for nn in res[2].flat:
             self.assertEqual(nn, 5)
@@ -217,27 +196,24 @@ class FowlerTestCase(unittest.TestCase):
             self.assertEqual(n, 0)
 
         for v in res[1].flat:
-            self.assertAlmostEqual(v, 2.0/5)
+            self.assertAlmostEqual(v, 2.0 / 5)
 
         for v in res[0].flat:
             self.assertAlmostEqual(v, mean)
 
     def test_badpixel2(self):
         """Test we don't accept badpixel mask with incompatible shape."""
-        self.assertRaises(ValueError, fowler_array, self.fdata,
-                          badpixels=numpy.empty((10, 10)))
-        self.assertRaises(ValueError, fowler_array, self.fdata,
-                          badpixels=numpy.empty((1, 1, 1)))
+        self.assertRaises(ValueError, fowler_array, self.fdata, badpixels=numpy.empty((10, 10)))
+        self.assertRaises(ValueError, fowler_array, self.fdata, badpixels=numpy.empty((1, 1, 1)))
 
     def test_badpixel3(self):
         """Test we don't accept badpixel mask with incompatible dtype."""
-        self.assertRaises(ValueError, fowler_array, self.fdata,
-                          badpixels=numpy.empty((1, 1), dtype='int'))
+        self.assertRaises(ValueError, fowler_array, self.fdata, badpixels=numpy.empty((1, 1), dtype="int"))
 
     def test_results1(self):
         """Test we obtain correct values in Fowler mode"""
 
-        data = numpy.zeros((10, 4, 5), dtype='int32')
+        data = numpy.zeros((10, 4, 5), dtype="int32")
         vals = numpy.array([10, 13, 15, 17, 20, 411, 412, 414, 417, 422])
         ovals = vals[5:] - vals[:5]
         mean = ovals.mean()
@@ -246,9 +222,7 @@ class FowlerTestCase(unittest.TestCase):
         for i in range(10):
             data[i, ...] = vals[i]
 
-        res = fowler_array(data,
-                           saturation=self.saturation,
-                           blank=self.blank)
+        res = fowler_array(data, saturation=self.saturation, blank=self.blank)
 
         for nn in res[2].flat:
             self.assertEqual(nn, 5)

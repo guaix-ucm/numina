@@ -1,11 +1,10 @@
-
 from ..diskfiledal import FileFinder
 from ..diskfiledal import FileFinderGTC
 
 
 def test_candidates_ff(tmpdir):
 
-    subd = ['sub1', 'sub2', 'sub3']
+    subd = ["sub1", "sub2", "sub3"]
     for s in subd:
         tmpdir.mkdir(s)
 
@@ -16,17 +15,17 @@ def test_candidates_ff(tmpdir):
 
 def test_check_ff(tmpdir):
 
-    dirname = 'sub1'
+    dirname = "sub1"
     fname1 = "hello.txt"
     fname2 = ".hidden"
     fname3 = "dir"
 
     newdir = tmpdir.mkdir(dirname)
     newfile1 = newdir.join(fname1)
-    newfile1.write('content')
+    newfile1.write("content")
 
     newfile2 = newdir.join(fname2)
-    newfile2.write('content')
+    newfile2.write("content")
 
     newdir.mkdir(fname3)
 
@@ -44,8 +43,8 @@ def test_check_ff(tmpdir):
 
 def test_candidates_ffg(tmpdir):
 
-    subd = ['sub1', 'sub2', 'sub3']
-    res = [('result.json', 1), ('sub1', 0), ('sub2', 0), ('sub3', 0)]
+    subd = ["sub1", "sub2", "sub3"]
+    res = [("result.json", 1), ("sub1", 0), ("sub2", 0), ("sub3", 0)]
     for s in subd:
         tmpdir.mkdir(s)
 

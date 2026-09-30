@@ -19,6 +19,7 @@ from numina.util.objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
 from .pipeline import InstrumentDRP
+
 # from .instrument.insconf import InstrumentConfiguration, instrument_loader
 from .pipeline import ProductEntry
 from .query import ResultOf
@@ -30,8 +31,7 @@ def check_section(node, section, keys=None):
     if keys:
         for key in keys:
             if key not in node:
-                raise ValueError(
-                    f'Missing key {key!r} inside {section!r} node')
+                raise ValueError(f"Missing key {key!r} inside {section!r} node")
 
 
 def drp_load(package, resource, confclass=None):
@@ -44,9 +44,9 @@ def drp_load_data(package, data, confclass=None):
     """Load the DRPS from data."""
     drpdict = yaml.safe_load(data)
     ins = load_instrument(package, drpdict, confclass=confclass)
-    if ins.version == 'undefined':
+    if ins.version == "undefined":
         pkg = importlib.import_module(package)
-        ins.version = getattr(pkg, '__version__', 'undefined')
+        ins.version = getattr(pkg, "__version__", "undefined")
     return ins
 
 
@@ -86,7 +86,7 @@ def load_mode_tagger(obs_mode, node):
     """Load observing mode OB tagger"""
 
     # handle tagger:
-    ntagger = node.get('tagger')
+    ntagger = node.get("tagger")
 
     if ntagger is None:
         pass
@@ -100,7 +100,7 @@ def load_mode_tagger(obs_mode, node):
         # load function
         obs_mode.tagger = import_object(ntagger)
     else:
-        raise TypeError('tagger must be None, a list or a string')
+        raise TypeError("tagger must be None, a list or a string")
 
     return obs_mode
 
@@ -109,7 +109,7 @@ def load_mode_builder(obs_mode, node):
     """Load observing mode OB builder"""
 
     # Check 'builder' and 'builder_options'
-    nval1 = node.get('builder')
+    nval1 = node.get("builder")
 
     if nval1 is not None:
         if isinstance(nval1, str):
@@ -117,20 +117,20 @@ def load_mode_builder(obs_mode, node):
             newmethod = import_object(nval1)
             obs_mode.build_ob = newmethod.__get__(obs_mode)
         else:
-            raise TypeError('builder must be None or a string')
+            raise TypeError("builder must be None or a string")
     else:
-        nval2 = node.get('builder_options')
+        nval2 = node.get("builder_options")
 
         if nval2 is not None:
             if isinstance(nval2, list):
                 for opt_dict in nval2:
 
-                    if 'result_of' in opt_dict:
-                        fields = opt_dict['result_of']
+                    if "result_of" in opt_dict:
+                        fields = opt_dict["result_of"]
                         obs_mode.build_ob_options = ResultOf(**fields)
                         break
             else:
-                raise TypeError('builder_options must be None or a list')
+                raise TypeError("builder_options must be None or a list")
 
     return obs_mode
 
@@ -138,7 +138,7 @@ def load_mode_builder(obs_mode, node):
 def load_mode_validator(obs_mode, node):
     """Load observing mode validator"""
 
-    nval = node.get('validator')
+    nval = node.get("validator")
 
     if nval is None:
         pass
@@ -146,14 +146,14 @@ def load_mode_validator(obs_mode, node):
         # load function
         obs_mode.validator = import_object(nval)
     else:
-        raise TypeError('validator must be None or a string')
+        raise TypeError("validator must be None or a string")
 
     return obs_mode
 
 
 def load_pipelines(instrument, node):
-    keys = ['default']
-    check_section(node, 'pipelines', keys=keys)
+    keys = ["default"]
+    check_section(node, "pipelines", keys=keys)
 
     pipelines = {}
     for key in node:
@@ -163,10 +163,11 @@ def load_pipelines(instrument, node):
 
 def load_confs(package, node, confclass=None):
     import numina.instrument.assembly as asbl
-    keys = []
-    check_section(node, 'configurations', keys=keys)
 
-    path = node.get('path')
+    keys = []
+    check_section(node, "configurations", keys=keys)
+
+    path = node.get("path")
     if path:
         modpath = path
     else:
@@ -175,7 +176,7 @@ def load_confs(package, node, confclass=None):
     if confclass is None:
         _loader = DefaultLoader(modpath=modpath)  # noqa: F841
 
-    tagger = node.get('tagger')
+    tagger = node.get("tagger")
     if tagger:
         ins_tagger = import_object(tagger)
     else:
@@ -187,37 +188,36 @@ def load_confs(package, node, confclass=None):
 
 def load_pipeline(instrument, name, node):
 
-    keys = ['recipes', 'version']
-    check_section(node, 'pipeline', keys=keys)
+    keys = ["recipes", "version"]
+    check_section(node, "pipeline", keys=keys)
 
-    recipes = load_base("recipes", node['recipes'])
-    if 'products' in node:
-        products = load_base("products", node['products'])
+    recipes = load_base("recipes", node["recipes"])
+    if "products" in node:
+        products = load_base("products", node["products"])
     else:
         products = {}
-    if 'provides' in node:
-        provides = load_prods(node['provides'], recipes.keys())
+    if "provides" in node:
+        provides = load_prods(node["provides"], recipes.keys())
     else:
         provides = []
-    version = node['version']
-    return Pipeline(instrument, name, recipes, version=version,
-                    products=products, provides=provides)
+    version = node["version"]
+    return Pipeline(instrument, name, recipes, version=version, products=products, provides=provides)
 
 
 def load_recipe(name, node):
 
-    recipe = {'class': ''}
+    recipe = {"class": ""}
 
-    keys = ['class']
+    keys = ["class"]
     if isinstance(node, dict):
         check_section(node, name, keys=keys)
         recipe = node
     else:
-        recipe['class'] = node
-    if 'args' in recipe:
-        recipe['args'] = tuple(recipe['args'])
-    if 'links' in recipe:
-        recipe['links'] = load_link(recipe['links'])
+        recipe["class"] = node
+    if "args" in recipe:
+        recipe["args"] = tuple(recipe["args"])
+    if "links" in recipe:
+        recipe["links"] = load_link(recipe["links"])
     return recipe
 
 
@@ -226,8 +226,8 @@ def load_link(node):
     result = {}
     for key, opt_dict in node.items():
 
-        if 'result_of' in opt_dict:
-            fields = opt_dict['result_of']
+        if "result_of" in opt_dict:
+            fields = opt_dict["result_of"]
             result[key] = ResultOf(**fields)
         else:
             pass
@@ -248,9 +248,9 @@ def load_base(name, node):
 def load_prods(node, allmodes):
     result = []
     for entry in node:
-        name = entry['name']
-        mode_name = entry['mode']
-        field = entry['field']
+        name = entry["name"]
+        mode_name = entry["mode"]
+        field = entry["field"]
         for mode_key in allmodes:
             if mode_key == mode_name:
                 prod = ProductEntry(name, mode_key, field)
@@ -265,27 +265,26 @@ def load_prods(node, allmodes):
 
 def load_instrument(package, node, confclass=None):
     # Verify keys...
-    keys = ['name', 'configurations', 'modes', 'pipelines']
-    check_section(node, 'root', keys=keys)
+    keys = ["name", "configurations", "modes", "pipelines"]
+    check_section(node, "root", keys=keys)
 
     # name = node['name']
-    pipe_node = node['pipelines']
-    mode_node = node['modes']
-    conf_node = node['configurations']
+    pipe_node = node["pipelines"]
+    mode_node = node["modes"]
+    conf_node = node["configurations"]
 
-    trans = {'name': node['name'], 'version': 'undefined'}
-    if 'datamodel' in node:
-        trans['datamodel'] = import_object(node['datamodel'])
+    trans = {"name": node["name"], "version": "undefined"}
+    if "datamodel" in node:
+        trans["datamodel"] = import_object(node["datamodel"])
     else:
-        trans['datamodel'] = None
-    if 'version' in node:
-        trans['version'] = node['version']
-    trans['pipelines'] = load_pipelines(node['name'], pipe_node)
-    trans['modes'] = load_modes(mode_node, confclass)
-    confs, custom_selector, modpath = load_confs(
-        package, conf_node, confclass=confclass)
+        trans["datamodel"] = None
+    if "version" in node:
+        trans["version"] = node["version"]
+    trans["pipelines"] = load_pipelines(node["name"], pipe_node)
+    trans["modes"] = load_modes(mode_node, confclass)
+    confs, custom_selector, modpath = load_confs(package, conf_node, confclass=confclass)
     # trans['configurations'] = confs
-    trans['configurations'] = confs
+    trans["configurations"] = confs
     ins = InstrumentDRP(**trans)
     # idiom to add a bound method
     if custom_selector:
@@ -302,14 +301,14 @@ class DefaultLoader(object):
         self.modpath = modpath
 
     def build_component_fp(self, key):
-        fname = f'component-{key}.json'
+        fname = f"component-{key}.json"
         return self.build_type_fp(fname)
 
     def build_instrument_fp(self, key):
-        fname = f'instrument-{key}.json'
+        fname = f"instrument-{key}.json"
         return self.build_type_fp(fname)
 
     def build_type_fp(self, fname):
         data = pkgutil.get_data(self.modpath, fname)
-        fcomp = StringIO(data.decode('utf-8'))
+        fcomp = StringIO(data.decode("utf-8"))
         return fcomp

@@ -53,7 +53,7 @@ def input_number(
         The function used to obtain input (useful for testing).
     number_format : str | None, default None
         Optional format string for displaying the number in prompts
-        (e.g., ".2f" for two decimal places). If None, default string 
+        (e.g., ".2f" for two decimal places). If None, default string
         conversion is used.
 
     Returns
@@ -180,7 +180,7 @@ def input_number(
         # Enforce type: if expected int, default must be an integer value
         if expected_type == "int" and not float(default).is_integer():
             raise ValueError("Default must be an integer for expected_type='int'.")
-        
+
     # --- Helper to format numbers ---
     def _format_number(n: Number) -> str:
         if number_format is None:
@@ -269,7 +269,9 @@ def input_number(
         # Check constraints
         if not _valid(n):
             if min_val is not None and max_val is not None:
-                print(f"Out of range or invalid. Enter a value between {_format_number(min_val)} and {_format_number(max_val)}.")
+                print(
+                    f"Out of range or invalid. Enter a value between {_format_number(min_val)} and {_format_number(max_val)}."
+                )
             elif min_val is not None:
                 print(f"Out of range or invalid. Enter a value ≥ {_format_number(min_val)}.")
             elif max_val is not None:

@@ -58,10 +58,7 @@ def test_error6():
         _c.generic_combine(_c.mean_method(), [data], out_res=out[0], out_var=out[1], out_pix=out[2])
 
 
-@pytest.mark.parametrize("bad_par", [
-    [[1, 2]],
-    [1, 2]
-])
+@pytest.mark.parametrize("bad_par", [[[1, 2]], [1, 2]])
 def test_scales_error(bad_par):
     data = numpy.array([[1, 2], [1, 2]])
 
@@ -69,20 +66,14 @@ def test_scales_error(bad_par):
         _c.generic_combine(_c.mean_method(), [data], scales=bad_par)
 
 
-@pytest.mark.parametrize("bad_par", [
-    [[1, 2]],
-    [1, 2]
-])
+@pytest.mark.parametrize("bad_par", [[[1, 2]], [1, 2]])
 def test_zeros_error(bad_par):
     data = numpy.array([[1, 2], [1, 2]])
     with pytest.raises(ValueError):
         _c.generic_combine(_c.mean_method(), [data], zeros=bad_par)
 
 
-@pytest.mark.parametrize("bad_par", [
-    [[1, 2]],
-    [1, 2]
-])
+@pytest.mark.parametrize("bad_par", [[[1, 2]], [1, 2]])
 def test_weights_error(bad_par):
     data = numpy.array([[1, 2], [1, 2]])
     with pytest.raises(ValueError):
@@ -96,27 +87,20 @@ def test_combine_mask_average():
     input3 = numpy.array([[7, 2, 1, 4], [1, 2, 0, 4], [44, 2, 2, 0]])
     inputs = [input1, input2, input3]
 
-    mask1 = numpy.array([[False, False, False, True],
-                         [False, True, False, False],
-                         [False, True, False, False]])
-    mask2 = numpy.array([[False, False, False, False],
-                         [False, True, False, False],
-                         [False, True, False, False]])
-    mask3 = numpy.array([[False, False, False, False],
-                         [False, True, False, False],
-                         [False, False, True, False]])
+    mask1 = numpy.array([[False, False, False, True], [False, True, False, False], [False, True, False, False]])
+    mask2 = numpy.array([[False, False, False, False], [False, True, False, False], [False, True, False, False]])
+    mask3 = numpy.array([[False, False, False, False], [False, True, False, False], [False, False, True, False]])
     masks = [mask1, mask2, mask3]
-    rres = numpy.array([[3.66666667, 2., 4., 4.],
-                        [2.6666666666666665, 0., 1., 4.],
-                        [18., 2., 1.5, 2.66666667]])
-    rvar = numpy.array([[3 * 3.11111111, 0., 3 * 4.33333333, 0.],
-                        [3 * 2.77777778, 0., 3 * 1.,  0.],
-                        [3 * 174.33333333, 0., 2 * 2.25, 3 * 1.77777778]
-                        ])
+    rres = numpy.array([[3.66666667, 2.0, 4.0, 4.0], [2.6666666666666665, 0.0, 1.0, 4.0], [18.0, 2.0, 1.5, 2.66666667]])
+    rvar = numpy.array(
+        [
+            [3 * 3.11111111, 0.0, 3 * 4.33333333, 0.0],
+            [3 * 2.77777778, 0.0, 3 * 1.0, 0.0],
+            [3 * 174.33333333, 0.0, 2 * 2.25, 3 * 1.77777778],
+        ]
+    )
 
-    rnum = numpy.array([[3, 3, 3, 2],
-                        [3, 0, 3, 3],
-                        [3, 1, 2, 3]])
+    rnum = numpy.array([[3, 3, 3, 2], [3, 0, 3, 3], [3, 1, 2, 3]])
 
     out0, out1, out2 = _c.generic_combine(_c.mean_method(), inputs, masks=masks)
     assert numpy.allclose(out0, rres)
@@ -132,13 +116,20 @@ def test_combine_average():
     inputs = [input1, input2, input3]
 
     # Results
-    rres = numpy.array([[3.66666667, 2., 4., 4.0],
-                        [2.6666666666666665, 2., 1., 4.],
-                        [18., 2.33333333, 1.666666667, 2.66666667]])
-    rvar = 3 * numpy.array([[9.3333333333333339, 0., 13.0, 0.],
-                            [8.3333333333333339, 0., 3.00000000, 0.],
-                            [523.0, 0.33333333333333337, 2.333333333333333,
-                             5.3333333333333339]]) / len(inputs)
+    rres = numpy.array(
+        [[3.66666667, 2.0, 4.0, 4.0], [2.6666666666666665, 2.0, 1.0, 4.0], [18.0, 2.33333333, 1.666666667, 2.66666667]]
+    )
+    rvar = (
+        3
+        * numpy.array(
+            [
+                [9.3333333333333339, 0.0, 13.0, 0.0],
+                [8.3333333333333339, 0.0, 3.00000000, 0.0],
+                [523.0, 0.33333333333333337, 2.333333333333333, 5.3333333333333339],
+            ]
+        )
+        / len(inputs)
+    )
     rnum = numpy.array([[3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]])
 
     out0, out1, out2 = _c.generic_combine(_c.mean_method(), inputs)
@@ -155,14 +146,10 @@ def test_combine_sum():
     input3 = numpy.array([[1, 2, 1, 4], [1, 2, 0, 4], [44, 2, 2, 0]])
     inputs = [input1, input2, input3]
     # Results
-    rres = numpy.array([[4, 6, 12, 12],
-                        [8, 6, 3, 12],
-                        [54, 7, 5, 8]])
+    rres = numpy.array([[4, 6, 12, 12], [8, 6, 3, 12], [54, 7, 5, 8]])
     # The variance result is not useful
 
-    rvar = numpy.array([[1, 0, 39, 0],
-                        [25, 0, 9, 0],
-                        [1569, 1, 7, 16]]) * 3
+    rvar = numpy.array([[1, 0, 39, 0], [25, 0, 9, 0], [1569, 1, 7, 16]]) * 3
     rnum = numpy.array([[3, 3, 3, 3], [3, 3, 3, 3], [3, 3, 3, 3]])
 
     out0, out1, out2 = _c.generic_combine(_c.sum_method(), inputs)
@@ -182,10 +169,11 @@ def test_combine_median1():
     inputs = [input1, input2, input3, input4, input5]
 
     rres = input3
-    rvar = [[16.954474097331239, 0.0, 1.2558869701726849, 0.0],
-            [0.0, 0.0, 2.8257456828885403, 0.0],
-            [384.61538461538458, 0.0, 1.2558869701726847,
-            5.0235478806907397]]
+    rvar = [
+        [16.954474097331239, 0.0, 1.2558869701726849, 0.0],
+        [0.0, 0.0, 2.8257456828885403, 0.0],
+        [384.61538461538458, 0.0, 1.2558869701726847, 5.0235478806907397],
+    ]
 
     out0, out1, out2 = _c.generic_combine(_c.median_method(), inputs)
 
@@ -203,9 +191,8 @@ def test_combine_median2():
     input4 = numpy.array([[7, 2, 3, 4]])
     inputs = [input1, input2, input3, input4]
 
-    rres = numpy.array([[4, 2, 4.5, 0.0]], dtype='float')
-    rvar = [18.838304552590266, 0.39246467817896391, 9.419152276295133,
-            33.490319204604916]
+    rres = numpy.array([[4, 2, 4.5, 0.0]], dtype="float")
+    rvar = [18.838304552590266, 0.39246467817896391, 9.419152276295133, 33.490319204604916]
 
     out0, out1, out2 = _c.generic_combine(_c.median_method(), inputs)
 

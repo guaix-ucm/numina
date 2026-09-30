@@ -9,8 +9,8 @@
 
 
 def default_dialect_info(obj):
-    key = obj.__module__ + '.' + obj.__class__.__name__
-    result = {'base': {'fqn': key, 'python': obj.internal_type}}
+    key = obj.__module__ + "." + obj.__class__.__name__
+    result = {"base": {"fqn": key, "python": obj.internal_type}}
     return result
 
 

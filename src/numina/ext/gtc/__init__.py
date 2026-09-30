@@ -14,12 +14,13 @@ _ignore_gtc_check = False
 
 try:
     import DF
+
     _run_in_gtc = True
 except ImportError:
     import types
     import enum
 
-    DF = types.ModuleType('DF')
+    DF = types.ModuleType("DF")
 
     class AdaptedOrbTypes(enum.Enum):
         TYPE_FRAME = 1

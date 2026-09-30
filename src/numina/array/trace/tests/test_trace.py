@@ -15,7 +15,6 @@ from ..traces import trace
 from ..traces import axis_to_dispaxis
 from ..traces import tracing_limits
 
-
 _test_data = [
     np.ones((100, 100), dtype=">f4"),
     np.ones((100, 100), dtype="<f4"),

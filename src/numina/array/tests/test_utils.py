@@ -31,7 +31,7 @@ def test_wctopix():
     assert_array_equal(cpix, pix)
 
 
-@pytest.mark.skipif(reason='Not clear if this is the interface')
+@pytest.mark.skipif(reason="Not clear if this is the interface")
 def test_wctopixnp():
 
     xin = np.array([[0, 1], [2, 3], [4, 5]])

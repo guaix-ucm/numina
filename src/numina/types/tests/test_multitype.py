@@ -35,7 +35,7 @@ class TypeA(DataType):
         return TypeA()
 
     def tag_names(self):
-        return ['domeA', 'domeA2']
+        return ["domeA", "domeA2"]
 
 
 class TypeB(DataType):
@@ -47,7 +47,7 @@ class TypeB(DataType):
         return TypeB()
 
     def tag_names(self):
-        return ['domeB']
+        return ["domeB"]
 
 
 class Structured1(BaseStructuredCalibration):
@@ -57,12 +57,12 @@ class Structured1(BaseStructuredCalibration):
 
     def __getstate__(self):
         state = super(Structured1, self).__getstate__()
-        state['struct1'] = self.struct1
+        state["struct1"] = self.struct1
         return state
 
     def __setstate__(self, state):
         super(Structured1, self).__setstate__(state)
-        self.struct1 = state['struct1']
+        self.struct1 = state["struct1"]
 
 
 class Structured2(BaseStructuredCalibration):
@@ -72,12 +72,12 @@ class Structured2(BaseStructuredCalibration):
 
     def __getstate__(self):
         state = super(Structured2, self).__getstate__()
-        state['struct2'] = self.struct2
+        state["struct2"] = self.struct2
         return state
 
     def __setstate__(self, state):
         super(Structured2, self).__setstate__(state)
-        self.struct2 = state['struct2']
+        self.struct2 = state["struct2"]
 
 
 class Structured3(BaseStructuredCalibration):
@@ -87,12 +87,12 @@ class Structured3(BaseStructuredCalibration):
 
     def __getstate__(self):
         state = super(Structured3, self).__getstate__()
-        state['struct3'] = self.struct3
+        state["struct3"] = self.struct3
         return state
 
     def __setstate__(self, state):
         super(Structured3, self).__setstate__(state)
-        self.struct3 = state['struct3']
+        self.struct3 = state["struct3"]
 
 
 # def test_convert_in():
@@ -142,7 +142,7 @@ def test_tag_names1():
 
     multi = MultiType(TypeA, TypeB)
 
-    assert multi.tag_names() == ['domeA', 'domeA2', 'domeB']
+    assert multi.tag_names() == ["domeA", "domeA2", "domeB"]
 
 
 def test_tag_names2():
@@ -150,7 +150,7 @@ def test_tag_names2():
     multi = MultiType(TypeA, TypeB)
     multi.current_node = multi.node_type[1]
 
-    assert multi.tag_names() == ['domeB']
+    assert multi.tag_names() == ["domeB"]
 
 
 def test_internal_default():
@@ -178,13 +178,13 @@ def test_load_multitype(tmpdir):
 
     multi = MultiType(Structured1, Structured2)
 
-    prefix1 = 'some1'
-    prefix2 = 'some2'
-    prefix3 = 'some3'
+    prefix1 = "some1"
+    prefix2 = "some2"
+    prefix3 = "some3"
 
-    filename1 = prefix1 + '.json'
-    filename2 = prefix2 + '.json'
-    filename3 = prefix3 + '.json'
+    filename1 = prefix1 + ".json"
+    filename2 = prefix2 + ".json"
+    filename3 = prefix3 + ".json"
 
     obj1 = Structured1()
     obj2 = Structured2()

@@ -24,8 +24,7 @@ from .query import Ignore
 
 
 class EntryHolder(object):
-    def __init__(self, tipo, description, destination, optional,
-                 default, choices=None, validation=True, alias=None):
+    def __init__(self, tipo, description, destination, optional, default, choices=None, validation=True, alias=None):
 
         super(EntryHolder, self).__init__()
 
@@ -61,19 +60,19 @@ class EntryHolder(object):
         try:
             cval = self.convert(value)
             if self.choices and (cval not in self.choices):
-                errmsg = f'{cval} not in {self.choices}'
+                errmsg = f"{cval} not in {self.choices}"
                 raise numina.exceptions.ValidationError(errmsg)
         except (ValueError, TypeError, numina.exceptions.ValidationError) as err:
 
             if len(err.args) == 0:
-                errmsg = 'UNDEFINED ERROR'
+                errmsg = "UNDEFINED ERROR"
                 rem = ()
             else:
                 errmsg = err.args[0]
                 rem = err.args[1:]
 
             msg = f'"{self.dest}": {errmsg}'
-            newargs = (msg, ) + rem
+            newargs = (msg,) + rem
             err.args = newargs
             raise
 
@@ -95,7 +94,7 @@ class EntryHolder(object):
         if self.optional:
             return None
         else:
-            fmt = 'Required {0!r} of type {1!r} is not defined'
+            fmt = "Required {0!r} of type {1!r} is not defined"
             msg = fmt.format(self.dest, self.type)
             raise ValueError(msg)
 
@@ -103,18 +102,24 @@ class EntryHolder(object):
 class Result(EntryHolder):
     """Result holder for RecipeResult."""
 
-    def __init__(self, ptype, description="", validation=True,
-                 destination=None, optional=False, default=None, choices=None):
+    def __init__(
+        self, ptype, description="", validation=True, destination=None, optional=False, default=None, choices=None
+    ):
         super(Result, self).__init__(
-            ptype, description, destination=destination, optional=optional,
-            default=default, choices=choices, validation=validation
+            ptype,
+            description,
+            destination=destination,
+            optional=optional,
+            default=default,
+            choices=choices,
+            validation=validation,
         )
 
-#        if not isinstance(self.type, DataProductType):
-#            raise TypeError('type must be of class DataProduct')
+    #        if not isinstance(self.type, DataProductType):
+    #            raise TypeError('type must be of class DataProduct')
 
     def __repr__(self):
-        return f'Result(type={self.type!r}, dest={self.dest!r})'
+        return f"Result(type={self.type!r}, dest={self.dest!r})"
 
     def convert(self, val):
         return self.type.convert_out(val)
@@ -128,8 +133,9 @@ class Product(Result):
             be removed in 1.0
     """
 
-    def __init__(self, ptype, description="", validation=True,
-                 destination=None, optional=False, default=None, choices=None):
+    def __init__(
+        self, ptype, description="", validation=True, destination=None, optional=False, default=None, choices=None
+    ):
         super(Product, self).__init__(
             ptype,
             description=description,
@@ -137,14 +143,13 @@ class Product(Result):
             destination=destination,
             optional=optional,
             default=default,
-            choices=choices
+            choices=choices,
         )
 
-        warnings.warn("The 'Product' class was renamed to 'Result'",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning, stacklevel=2)
 
     def __repr__(self):
-        return f'Product(type={self.type!r}, dest={self.dest!r})'
+        return f"Product(type={self.type!r}, dest={self.dest!r})"
 
 
 @contextlib.contextmanager
@@ -197,13 +202,27 @@ class Requirement(EntryHolder):
         Alternative name of the field in the RecipeInput object.
     """
 
-    def __init__(self, rtype, description, destination=None, optional=False,
-                 default=None, choices=None, validation=True, query_opts=None,
-                 alias=None):
+    def __init__(
+        self,
+        rtype,
+        description,
+        destination=None,
+        optional=False,
+        default=None,
+        choices=None,
+        validation=True,
+        query_opts=None,
+        alias=None,
+    ):
         super(Requirement, self).__init__(
-            rtype, description, destination=destination,
-            optional=optional, default=default, choices=choices,
-            validation=validation, alias=alias
+            rtype,
+            description,
+            destination=destination,
+            optional=optional,
+            default=default,
+            choices=choices,
+            validation=validation,
+            alias=alias,
         )
 
         self.query_opts = query_opts
@@ -223,9 +242,9 @@ class Requirement(EntryHolder):
 
     def _check_dest_is_set(self):
         if self.dest is None:
-            raise ValueError("destination value is not set, "
-                             "use the constructor to set destination='value' "
-                             "explicitly")
+            raise ValueError(
+                "destination value is not set, " "use the constructor to set destination='value' " "explicitly"
+            )
 
     def query(self, dal, obsres, options=None):
         from numina.core.query import ResultOf
@@ -244,9 +263,7 @@ class Requirement(EntryHolder):
             pass
 
         if isinstance(q_options, ResultOf):
-            value = dal.search_result_relative(
-                self.dest, self.type, obsres, result_desc=q_options
-            )
+            value = dal.search_result_relative(self.dest, self.type, obsres, result_desc=q_options)
             return value.content
 
         return self.query_on_dal(dal, obsres, options=q_options)
@@ -266,8 +283,7 @@ class Requirement(EntryHolder):
             for next_type in this_type.node_type:
 
                 try:
-                    result = self.query_on_dal_rec(
-                        next_type, dal, obsres, options=options)
+                    result = self.query_on_dal_rec(next_type, dal, obsres, options=options)
                     this_type._current = next_type
                     return result
                 except NoResultFound as notfound:
@@ -285,23 +301,19 @@ class Requirement(EntryHolder):
                 result = []
                 for idx, tags in enumerate(query_tags):
                     obsres.tags = tags
-                    res = self.query_on_dal_rec(
-                        next_type, dal, obsres, options=options)
+                    res = self.query_on_dal_rec(next_type, dal, obsres, options=options)
                     result.append(res)
                 return result
         else:
             with tags_as_scalar(obsres) as obsres:
-                result = self.query_on_dal_base(
-                    this_type, dal, obsres, options=options)
+                result = self.query_on_dal_base(this_type, dal, obsres, options=options)
                 return result
 
     def query_on_dal_base(self, next_type, dal, obsres, options=None):
         if next_type.isproduct():
-            value = dal.search_product(
-                self.dest, next_type, obsres, options=options)
+            value = dal.search_product(self.dest, next_type, obsres, options=options)
         else:
-            value = dal.search_parameter(
-                self.dest, next_type, obsres, options=options)
+            value = dal.search_parameter(self.dest, next_type, obsres, options=options)
         return value.content
 
     def on_query_not_found(self, notfound):
@@ -338,11 +350,8 @@ class Requirement(EntryHolder):
 
     def __repr__(self):
         sclass = type(self).__name__
-        fmt = ("%s(dest=%r, description='%s', "
-               "default=%s, optional=%s, type=%s, choices=%r)"
-               )
-        return fmt % (sclass, self.dest, self.description, self.default,
-                      self.optional, self.type, self.choices)
+        fmt = "%s(dest=%r, description='%s', " "default=%s, optional=%s, type=%s, choices=%r)"
+        return fmt % (sclass, self.dest, self.description, self.default, self.optional, self.type, self.choices)
 
     def query_constraints(self):
         return self.type.query_constraints()
@@ -357,12 +366,12 @@ def _process_nelem(nlem):
     if isinstance(nlem, int):
         return True, (nlem, nlem)
     if isinstance(nlem, str):
-        if nlem == '*':
+        if nlem == "*":
             return True, (0, None)
-        if nlem == '+':
+        if nlem == "+":
             return True, (1, None)
 
-    raise ValueError(f'value {nlem} is invalid')
+    raise ValueError(f"value {nlem} is invalid")
 
 
 def _recursive_type(value, nmin=None, nmax=None, accept_scalar=True):
@@ -421,12 +430,20 @@ class Parameter(Requirement):
         Alternative name of the field in the RecipeInput object.
     """
 
-    def __init__(self, value, description, destination=None, optional=True,
-                 choices=None, validation=True, validator=None,
-                 accept_scalar=False,
-                 as_list=False, nelem=None,
-                 alias=None
-                 ):
+    def __init__(
+        self,
+        value,
+        description,
+        destination=None,
+        optional=True,
+        choices=None,
+        validation=True,
+        validator=None,
+        accept_scalar=False,
+        as_list=False,
+        nelem=None,
+        alias=None,
+    ):
 
         if nelem is not None:
             decl_list, (nmin, nmax) = _process_nelem(nelem)
@@ -456,18 +473,19 @@ class Parameter(Requirement):
             else:
                 self.custom_validator = validator
         else:
-            raise TypeError('validator must be callable or None')
+            raise TypeError("validator must be callable or None")
 
-        mtype = _recursive_type(value,
-                                nmin=nmin, nmax=nmax,
-                                accept_scalar=accept_scalar
-                                )
+        mtype = _recursive_type(value, nmin=nmin, nmax=nmax, accept_scalar=accept_scalar)
 
         super(Parameter, self).__init__(
-            mtype, description, destination=destination,
-            optional=optional, default=default,
-            choices=choices, validation=validation,
-            alias=alias
+            mtype,
+            description,
+            destination=destination,
+            optional=optional,
+            default=default,
+            choices=choices,
+            validation=validation,
+            alias=alias,
         )
 
     def convert(self, val):

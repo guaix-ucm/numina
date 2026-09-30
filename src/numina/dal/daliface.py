@@ -22,7 +22,7 @@ class DALInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def search_recipe_from_ob(self, ob, pipeline='default'):
+    def search_recipe_from_ob(self, ob, pipeline="default"):
         # returns RecipeClass
         pass
 

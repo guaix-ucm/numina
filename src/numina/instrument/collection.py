@@ -22,7 +22,6 @@ import attrs
 
 from .configorigin import ElementOrigin
 
-
 FileLike = str | os.PathLike
 
 

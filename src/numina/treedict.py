@@ -21,14 +21,14 @@ class TreeDict(collections.abc.MutableMapping):
         self._data = dict(*args, **keywords)
 
     def __getitem__(self, key):
-        keys = key.split('.')
+        keys = key.split(".")
         return self._rec_getitem(self._data, keys[0], keys[1:])
 
     def __iter__(self):
         return iter(self._data)
 
     def __setitem__(self, key, value):
-        keys = key.split('.')
+        keys = key.split(".")
         return self._rec_setitem(self._data, value, keys[0], keys[1:])
 
     def __delitem__(self, key):

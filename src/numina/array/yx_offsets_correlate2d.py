@@ -49,34 +49,14 @@ def yx_offsets_correlate2d(reference_image, moving_image, refine_box=3):
 
     """
 
-    corr_self = correlate2d(
-        in1=reference_image,
-        in2=reference_image,
-        mode='full',
-        boundary='fill',
-        fillvalue=0
-    )
-    corr = correlate2d(
-        in1=reference_image,
-        in2=moving_image,
-        mode='full',
-        boundary='fill',
-        fillvalue=0
-    )
+    corr_self = correlate2d(in1=reference_image, in2=reference_image, mode="full", boundary="fill", fillvalue=0)
+    corr = correlate2d(in1=reference_image, in2=moving_image, mode="full", boundary="fill", fillvalue=0)
     maxindex_self = np.unravel_index(np.argmax(corr_self), corr_self.shape)
     maxindex = np.unravel_index(np.argmax(corr), corr.shape)
-    region_refine_self = utils.image_box(
-        maxindex_self,
-        corr_self.shape,
-        box=(refine_box, refine_box)
-    )
-    region_refine = utils.image_box(
-        maxindex,
-        corr.shape,
-        box=(refine_box, refine_box)
-    )
-    coeffs_self, = imsurfit.imsurfit(corr_self[region_refine_self], order=2)
-    coeffs, = imsurfit.imsurfit(corr[region_refine], order=2)
+    region_refine_self = utils.image_box(maxindex_self, corr_self.shape, box=(refine_box, refine_box))
+    region_refine = utils.image_box(maxindex, corr.shape, box=(refine_box, refine_box))
+    (coeffs_self,) = imsurfit.imsurfit(corr_self[region_refine_self], order=2)
+    (coeffs,) = imsurfit.imsurfit(corr[region_refine], order=2)
     xm, ym = vertex_of_quadratic(coeffs_self)
     maxindex_self += np.asarray([ym, xm])
     xm, ym = vertex_of_quadratic(coeffs)

@@ -15,12 +15,12 @@ import warnings
 
 def import_object(path):
     """Import an object given its fully qualified name."""
-    spl = path.split('.')
+    spl = path.split(".")
     if len(spl) == 1:
         return importlib.import_module(path)
     # avoid last part for the moment
     cls = spl[-1]
-    mods = '.'.join(spl[:-1])
+    mods = ".".join(spl[:-1])
 
     mm = importlib.import_module(mods)
     # try to get the last part as an attribute
@@ -35,12 +35,9 @@ def import_object(path):
     return rr
 
 
-def fully_qualified_name(obj, sep='.'):
+def fully_qualified_name(obj, sep="."):
 
-    warnings.warn(
-        "use numina.util.fqn.fully_qualified_name instead",
-        DeprecationWarning, stacklevel=2
-    )
+    warnings.warn("use numina.util.fqn.fully_qualified_name instead", DeprecationWarning, stacklevel=2)
     import numina.util.fqn as fqn
 
     return fqn.fully_qualified_name(obj, sep)

@@ -52,11 +52,11 @@ class SteffenInterpolator(object):
 
     """
 
-    def __init__(self, x, y, yp_0=0.0, yp_N=0.0, extrapolate='raise', fill_value=np.nan):
+    def __init__(self, x, y, yp_0=0.0, yp_N=0.0, extrapolate="raise", fill_value=np.nan):
 
         # 'zeros' is a shortcut
-        if extrapolate == 'zeros':
-            extrapolate = 'const'
+        if extrapolate == "zeros":
+            extrapolate = "const"
             fill_value = 0.0
 
         self.fill_value = fill_value
@@ -75,27 +75,26 @@ class SteffenInterpolator(object):
 
         # Check monotonicity given borders
         if yp_0 * s[0] < 0:
-            raise ValueError('monotonicity not guaranteed')
+            raise ValueError("monotonicity not guaranteed")
 
-        if abs(yp_0) > 3*abs_s[0]:
-            raise ValueError('monotonicity not guaranteed')
+        if abs(yp_0) > 3 * abs_s[0]:
+            raise ValueError("monotonicity not guaranteed")
 
         if yp_N * s[-2] < 0:
-            raise ValueError('monotonicity not guaranteed')
+            raise ValueError("monotonicity not guaranteed")
 
-        if abs(yp_N) > 3*abs_s[-2]:
-            raise ValueError('monotonicity not guaranteed')
+        if abs(yp_N) > 3 * abs_s[-2]:
+            raise ValueError("monotonicity not guaranteed")
 
         p = self._create_p(s, h)
 
         # Derivatives
-        yp = np.zeros((N+1,))
+        yp = np.zeros((N + 1,))
         yp[0] = yp_0
         yp[N] = yp_N
         sign_s = np.sign(s)
         min_abs_s = np.minimum(abs_s[1:], abs_s[:-1])
-        yp[1:-1] = (sign_s[1:] + sign_s[:-1]) * \
-            np.minimum(min_abs_s, 0.5 * np.abs(p[1:]))
+        yp[1:-1] = (sign_s[1:] + sign_s[:-1]) * np.minimum(min_abs_s, 0.5 * np.abs(p[1:]))
 
         # Polynomial coefficients
         self._d = y
@@ -107,15 +106,12 @@ class SteffenInterpolator(object):
 
     def _extrapolation(self, extrapolate):
         """Check permitted values of extrapolation."""
-        modes = ['extrapolate',
-                 'raise',
-                 'const',
-                 'border']
+        modes = ["extrapolate", "raise", "const", "border"]
         if extrapolate not in modes:
-            msg = f'invalid extrapolation mode {extrapolate}'
+            msg = f"invalid extrapolation mode {extrapolate}"
             raise ValueError(msg)
 
-        if extrapolate == 'raise':
+        if extrapolate == "raise":
             self.bounds_error = True
             self.extrapolate = False
         else:
@@ -144,13 +140,13 @@ class SteffenInterpolator(object):
     def _create_p(s, h):
         """Parabolic derivative"""
         p = np.zeros_like(s)
-        p[1:] = (s[:-1]*h[1:] + s[1:] * h[:-1]) / (h[1:] + h[:-1])
+        p[1:] = (s[:-1] * h[1:] + s[1:] * h[:-1]) / (h[1:] + h[:-1])
         return p
 
     def _eval(self, v, in_bounds, der):
         """Eval polynomial inside bounds."""
-        result = np.zeros_like(v, dtype='float')
-        x_indices = np.searchsorted(self._x, v, side='right')
+        result = np.zeros_like(v, dtype="float")
+        x_indices = np.searchsorted(self._x, v, side="right")
         ids = x_indices[in_bounds] - 1
         u = v[in_bounds] - self._x[ids]
         result[in_bounds] = self._poly_eval(u, ids, der)
@@ -158,12 +154,12 @@ class SteffenInterpolator(object):
 
     def _extrapolate(self, result, v, below_bounds, above_bounds, der):
         """Extrapolate result based on extrapolation mode."""
-        if self.extrapolate_mode == 'const':
+        if self.extrapolate_mode == "const":
             fill_b = fill_a = self.fill_value
-        elif self.extrapolate_mode == 'border':
+        elif self.extrapolate_mode == "border":
             fill_b = self._poly_eval(0, 0, der)
             fill_a = self._poly_eval(0, -1, der)
-        elif self.extrapolate_mode == 'extrapolate':
+        elif self.extrapolate_mode == "extrapolate":
             u = v[above_bounds] - self._x[-2]
             fill_a = self._poly_eval(u, -2, der)
             u = v[below_bounds] - self._x[0]
@@ -225,11 +221,11 @@ class SteffenInterpolator(object):
 
     def _poly_eval_1(self, u, ids):
         """Evaluate internal polynomial."""
-        return u * (3*self._a[ids] * u + 2*self._b[ids]) + self._c[ids]
+        return u * (3 * self._a[ids] * u + 2 * self._b[ids]) + self._c[ids]
 
     def _poly_eval_2(self, u, ids):
         """Evaluate internal polynomial."""
-        return 6 * self._a[ids] * u + 2*self._b[ids]
+        return 6 * self._a[ids] * u + 2 * self._b[ids]
 
     def _poly_eval_3(self, u, ids):
         """Evaluate internal polynomial."""
@@ -251,13 +247,12 @@ class SteffenInterpolator(object):
         above_bounds = v > self._x[-1]
 
         if self.bounds_error and below_bounds.any():
-            raise ValueError("A value in x_new is below the interpolation "
-                             "range.")
+            raise ValueError("A value in x_new is below the interpolation " "range.")
         if self.bounds_error and above_bounds.any():
-            raise ValueError("A value in x_new is above the interpolation "
-                             "range.")
+            raise ValueError("A value in x_new is above the interpolation " "range.")
 
         return below_bounds, above_bounds
+
 
 # A possible optimization if the points are in a regular grid
 # Is a bit faster (~2 times)

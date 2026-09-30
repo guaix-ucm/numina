@@ -17,8 +17,8 @@ from ..recipeinout import RecipeInput
 def create_input_class():
 
     class BB(RecipeInput):
-        param1 = Parameter(1, 'something1', alias='param3')
-        param2 = Parameter(2, 'something2')
+        param1 = Parameter(1, "something1", alias="param3")
+        param2 = Parameter(2, "something2")
 
     return BB
 
@@ -49,7 +49,7 @@ def test_ins_attr_access():
 
     bb = BB(param1=80)
 
-    values = {'param2': 2, 'param1': 80}
+    values = {"param2": 2, "param1": 80}
 
     for key, val in bb.attrs().items():
         assert val == values[key]
@@ -62,7 +62,7 @@ def test_setter1():
     bb = BB()
     bb.param1 = 80
 
-    values = {'param1': 80, 'param2': 2, 'param3': 80}
+    values = {"param1": 80, "param2": 2, "param3": 80}
 
     for key, val in values.items():
         assert val == getattr(bb, key)
@@ -75,7 +75,7 @@ def test_setter2():
     bb = BB()
     bb.param3 = 80
 
-    values = {'param1': 80, 'param2': 2, 'param3': 80}
+    values = {"param1": 80, "param2": 2, "param3": 80}
 
     for key, val in bb.attrs().items():
         assert val == values[key]

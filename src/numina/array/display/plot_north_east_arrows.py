@@ -14,18 +14,18 @@ import numpy as np
 
 
 def plot_north_east_arrows(
-        ax,
-        wcs2d,
-        arrow_length=None,
-        scale_length=None,
-        scale_location=1,
-        parangle=None,
-        fits_criterion=False,
-        color='grey',
-        color_scale=None,
-        color_parangle=None,
-        fontsize_scale_relative_factor=0.8,
-        verbose=False
+    ax,
+    wcs2d,
+    arrow_length=None,
+    scale_length=None,
+    scale_location=1,
+    parangle=None,
+    fits_criterion=False,
+    color="grey",
+    color_scale=None,
+    color_parangle=None,
+    fontsize_scale_relative_factor=0.8,
+    verbose=False,
 ):
     """Display North & East arrow using WCS information.
 
@@ -87,15 +87,15 @@ def plot_north_east_arrows(
 
     pixel_scales = proj_plane_pixel_scales(wcs2d)
     if not np.isclose(pixel_scales[0], pixel_scales[1]):
-        raise ValueError(f'{pixel_scales[0]=} must be equal to {pixel_scales[1]=} to draw NE arrows')
-    pixel_scale = pixel_scales[0] * Unit('deg')
+        raise ValueError(f"{pixel_scales[0]=} must be equal to {pixel_scales[1]=} to draw NE arrows")
+    pixel_scale = pixel_scales[0] * Unit("deg")
 
     # origin of the NE arrows
     x_center, y_center = wcs2d.wcs.crpix
     center_coord = wcs2d.pixel_to_world(x_center - 1, y_center - 1)
     if verbose:
-        print(f'{x_center=}, {y_center=} (FITS criterion)')
-        print(f'{center_coord=}')
+        print(f"{x_center=}, {y_center=} (FITS criterion)")
+        print(f"{center_coord=}")
 
     # current plot limits
     xmin, xmax = ax.get_xlim()
@@ -109,15 +109,14 @@ def plot_north_east_arrows(
         arrow_length = Angle(diagonal_pixels / 8 * pixel_scale)
     if scale_length is None:
         scale_length = arrow_length
-    parangle_length = Angle(diagonal_pixels / 1.5 * pixel_scale)   # 1.5 < sqrt(2)=1.41
-
+    parangle_length = Angle(diagonal_pixels / 1.5 * pixel_scale)  # 1.5 < sqrt(2)=1.41
 
     # define North and East direction
     tgap = 1.10
     north = SkyCoord(ra=center_coord.ra, dec=center_coord.dec + arrow_length)
     north_text = SkyCoord(ra=center_coord.ra, dec=center_coord.dec + tgap * arrow_length)
-    east = SkyCoord(ra=center_coord.ra + arrow_length/np.cos(center_coord.dec), dec=center_coord.dec)
-    east_text = SkyCoord(ra=center_coord.ra + tgap * arrow_length/np.cos(center_coord.dec), dec=center_coord.dec)
+    east = SkyCoord(ra=center_coord.ra + arrow_length / np.cos(center_coord.dec), dec=center_coord.dec)
+    east_text = SkyCoord(ra=center_coord.ra + tgap * arrow_length / np.cos(center_coord.dec), dec=center_coord.dec)
 
     # convert celestial coordinates to pixel coordinates
     north_pix = wcs2d.world_to_pixel(north)
@@ -131,37 +130,45 @@ def plot_north_east_arrows(
     east_pix = (east_pix[0] + 1, east_pix[1] + 1)
     east_text_pix = (east_text_pix[0] + 1, east_text_pix[1] + 1)
     if verbose:
-        print(f'North pixel.....: {north_pix} (FITS criterion)')
-        print(f'North text pixel: {north_text_pix} (FITS criterion)')
-        print(f'East  pixel: {east_pix} (FITS criterion)')
-        print(f'East  text pixel: {east_text_pix} (FITS criterion)')
+        print(f"North pixel.....: {north_pix} (FITS criterion)")
+        print(f"North text pixel: {north_text_pix} (FITS criterion)")
+        print(f"East  pixel: {east_pix} (FITS criterion)")
+        print(f"East  text pixel: {east_text_pix} (FITS criterion)")
 
     # North and East vectors
     if fits_criterion:
         xyoffset = 0
     else:
         xyoffset = 1
-    ax.plot(np.array([x_center - xyoffset, north_pix[0] - xyoffset]),
-            np.array([y_center - xyoffset, north_pix[1] - xyoffset]), '-', color=color)
-    ax.text(north_text_pix[0] - xyoffset, north_text_pix[1] - xyoffset,
-            'N', color=color, ha='center', va='center')
-    ax.plot(np.array([x_center - xyoffset, east_pix[0] - xyoffset]),
-            np.array([y_center - xyoffset, east_pix[1] - xyoffset]), '-', color=color)
-    ax.text(east_text_pix[0] - xyoffset, east_text_pix[1] - xyoffset,
-            'E', color=color, ha='center', va='center')
+    ax.plot(
+        np.array([x_center - xyoffset, north_pix[0] - xyoffset]),
+        np.array([y_center - xyoffset, north_pix[1] - xyoffset]),
+        "-",
+        color=color,
+    )
+    ax.text(north_text_pix[0] - xyoffset, north_text_pix[1] - xyoffset, "N", color=color, ha="center", va="center")
+    ax.plot(
+        np.array([x_center - xyoffset, east_pix[0] - xyoffset]),
+        np.array([y_center - xyoffset, east_pix[1] - xyoffset]),
+        "-",
+        color=color,
+    )
+    ax.text(east_text_pix[0] - xyoffset, east_text_pix[1] - xyoffset, "E", color=color, ha="center", va="center")
 
     # parallactic angle
     if parangle is not None:
         for theta in [0, 180]:
             new_north = center_coord.directional_offset_by(
-                position_angle=parangle + theta * Unit('degree'),
-                separation=parangle_length / 2
+                position_angle=parangle + theta * Unit("degree"), separation=parangle_length / 2
             )
             new_north_pix = wcs2d.world_to_pixel(new_north)
             new_north_pix = (new_north_pix[0] + 1, new_north_pix[1] + 1)
-            ax.plot(np.array([x_center - xyoffset, new_north_pix[0] - xyoffset]),
-                    np.array([y_center - xyoffset, new_north_pix[1] - xyoffset]),
-                    linestyle='--', color=color_parangle)
+            ax.plot(
+                np.array([x_center - xyoffset, new_north_pix[0] - xyoffset]),
+                np.array([y_center - xyoffset, new_north_pix[1] - xyoffset]),
+                linestyle="--",
+                color=color_parangle,
+            )
 
     # scale
     if scale_location != 0:
@@ -183,15 +190,13 @@ def plot_north_east_arrows(
 
         if color_scale is None:
             color_scale = color
-        ax.plot(np.array([x_scale_min, x_scale_max]),
-                np.array([y_scale, y_scale]),
-                color=color_scale)
-        ax.plot(np.array([x_scale_min, x_scale_min]),
-                np.array([y_scale-dy/80, y_scale+dy/80]),
-                color=color_scale)
-        ax.plot(np.array([x_scale_max, x_scale_max]),
-                np.array([y_scale-dy/80, y_scale+dy/80]),
-                color=color_scale)
+        ax.plot(np.array([x_scale_min, x_scale_max]), np.array([y_scale, y_scale]), color=color_scale)
+        ax.plot(
+            np.array([x_scale_min, x_scale_min]), np.array([y_scale - dy / 80, y_scale + dy / 80]), color=color_scale
+        )
+        ax.plot(
+            np.array([x_scale_max, x_scale_max]), np.array([y_scale - dy / 80, y_scale + dy / 80]), color=color_scale
+        )
         scale_font_size = ax.xaxis.get_label().get_fontsize() * fontsize_scale_relative_factor
         if diagonal_deg.value * 3600 < 60:
             label = f"{scale_length.to(Unit('arcsec')):.2f}"
@@ -199,5 +204,12 @@ def plot_north_east_arrows(
             label = f"{scale_length.to(Unit('arcmin')):.2f}"
         else:
             label = f"{scale_length.to(Unit('degree')):.2f}"
-        ax.text((x_scale_min + x_scale_max) / 2, y_scale + 0.02*dy, label,
-                fontsize=scale_font_size, ha='center', va='bottom', color=color_scale)
+        ax.text(
+            (x_scale_min + x_scale_max) / 2,
+            y_scale + 0.02 * dy,
+            label,
+            fontsize=scale_font_size,
+            ha="center",
+            va="bottom",
+            color=color_scale,
+        )

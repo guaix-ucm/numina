@@ -13,7 +13,7 @@
 import inspect
 
 
-def fully_qualified_name(obj, sep='.'):
+def fully_qualified_name(obj, sep="."):
     """Return fully qualified name from object"""
     if inspect.isclass(obj):
         return obj.__module__ + sep + obj.__name__

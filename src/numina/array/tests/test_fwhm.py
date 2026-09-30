@@ -21,8 +21,7 @@ def test_fwhm_2d_simple():
     ycenter = 122.3
     xsig = 25.2
     ysig = 12.8
-    g2d_model = Gaussian2D(amplitude=1.0, x_mean=xcenter,
-                           y_mean=ycenter, x_stddev=xsig, y_stddev=ysig)
+    g2d_model = Gaussian2D(amplitude=1.0, x_mean=xcenter, y_mean=ycenter, x_stddev=xsig, y_stddev=ysig)
     y, x = np.mgrid[:250, :250]
     img = g2d_model(x, y)
     _peak, fwhmx, fwhmy = compute_fwhm_2d_simple(img, xcenter, ycenter)
@@ -47,7 +46,7 @@ def test_fwhm_1d_simple():
     rad = np.arange(0, 250, 1.0)
     center = 120.2
     sigma = 25.3
-    Fr_ref = np.exp(-0.5 * ((rad - center) / sigma)**2)
+    Fr_ref = np.exp(-0.5 * ((rad - center) / sigma) ** 2)
 
     peak, fwhm = compute_fwhm_1d_simple(Fr_ref, center)
     assert_allclose(fwhm, FWHM_G * sigma, rtol=1e-4)
@@ -56,7 +55,7 @@ def test_fwhm_1d_simple():
     rad = np.arange(10, 260, 1.0)
     center = 130.2
     sigma = 25.3
-    Fr_ref = np.exp(-0.5 * ((rad - center) / sigma)**2)
+    Fr_ref = np.exp(-0.5 * ((rad - center) / sigma) ** 2)
 
     peak, fwhm = compute_fwhm_1d_simple(Fr_ref, center, rad)
     assert_allclose(fwhm, FWHM_G * sigma, rtol=1e-4)

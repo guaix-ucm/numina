@@ -36,9 +36,9 @@ def readc(prompt, default=None, valid=None, question_mark=True):
 
     # question mark
     if question_mark:
-        cquestion_mark = ' ? '
+        cquestion_mark = " ? "
     else:
-        cquestion_mark = ''
+        cquestion_mark = ""
 
     # main loop
     loop = True
@@ -46,15 +46,15 @@ def readc(prompt, default=None, valid=None, question_mark=True):
 
         # display prompt
         if default is None:
-            print(prompt + cquestion_mark, end='')
+            print(prompt + cquestion_mark, end="")
             sys.stdout.flush()
         else:
-            print(prompt + ' [' + str(default) + ']' + cquestion_mark, end='')
+            print(prompt + " [" + str(default) + "]" + cquestion_mark, end="")
             sys.stdout.flush()
 
         # read user's input
         cresult = sys.stdin.readline().strip()
-        if cresult == '' and default is not None:
+        if cresult == "" and default is not None:
             cresult = str(default)
 
         if len(cresult) == 1:
@@ -63,18 +63,17 @@ def readc(prompt, default=None, valid=None, question_mark=True):
             if valid is not None:
                 for c in cresult:
                     if c not in str(valid):
-                        print('*** Error: invalid characters found.')
-                        print('*** Valid characters are:', valid)
-                        print('*** Try again!')
+                        print("*** Error: invalid characters found.")
+                        print("*** Valid characters are:", valid)
+                        print("*** Try again!")
                         loop = True
         else:
-            print('*** Error: invalid string length. Try again!')
+            print("*** Error: invalid string length. Try again!")
 
     return cresult
 
 
-def readi(prompt, default=None, minval=None, maxval=None,
-          allowed_single_chars=None, question_mark=True):
+def readi(prompt, default=None, minval=None, maxval=None, allowed_single_chars=None, question_mark=True):
     """Return integer value read from keyboard
 
     Parameters
@@ -99,17 +98,18 @@ def readi(prompt, default=None, minval=None, maxval=None,
 
     """
 
-    return read_value(ftype=int,
-                      prompt=prompt,
-                      default=default,
-                      minval=minval,
-                      maxval=maxval,
-                      allowed_single_chars=allowed_single_chars,
-                      question_mark=question_mark)
+    return read_value(
+        ftype=int,
+        prompt=prompt,
+        default=default,
+        minval=minval,
+        maxval=maxval,
+        allowed_single_chars=allowed_single_chars,
+        question_mark=question_mark,
+    )
 
 
-def readf(prompt, default=None, minval=None, maxval=None,
-          allowed_single_chars=None, question_mark=True):
+def readf(prompt, default=None, minval=None, maxval=None, allowed_single_chars=None, question_mark=True):
     """Return integer value read from keyboard
 
     Parameters
@@ -134,17 +134,18 @@ def readf(prompt, default=None, minval=None, maxval=None,
 
     """
 
-    return read_value(ftype=float,
-                      prompt=prompt,
-                      default=default,
-                      minval=minval,
-                      maxval=maxval,
-                      allowed_single_chars=allowed_single_chars,
-                      question_mark=question_mark)
+    return read_value(
+        ftype=float,
+        prompt=prompt,
+        default=default,
+        minval=minval,
+        maxval=maxval,
+        allowed_single_chars=allowed_single_chars,
+        question_mark=question_mark,
+    )
 
 
-def read_value(ftype, prompt, default=None, minval=None, maxval=None,
-               allowed_single_chars=None, question_mark=True):
+def read_value(ftype, prompt, default=None, minval=None, maxval=None, allowed_single_chars=None, question_mark=True):
     """Return value read from keyboard
 
     Parameters
@@ -176,17 +177,16 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
 
     # question mark
     if question_mark:
-        cquestion_mark = ' ? '
+        cquestion_mark = " ? "
     else:
-        cquestion_mark = ''
+        cquestion_mark = ""
 
     # check minimum value
     if minval is not None:
         try:
             iminval = ftype(minval)
         except ValueError:
-            raise ValueError("'" + str(minval) + "' cannot " +
-                             "be used as an minval in readi()")
+            raise ValueError("'" + str(minval) + "' cannot " + "be used as an minval in readi()")
     else:
         iminval = None
 
@@ -195,20 +195,19 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
         try:
             imaxval = ftype(maxval)
         except ValueError:
-            raise ValueError("'" + str(maxval) + "' cannot " +
-                             "be used as an maxval in readi()")
+            raise ValueError("'" + str(maxval) + "' cannot " + "be used as an maxval in readi()")
     else:
         imaxval = None
 
     # minimum and maximum values
     if minval is None and maxval is None:
-        cminmax = ''
+        cminmax = ""
     elif minval is None:
-        cminmax = ' (number <= ' + str(imaxval) + ')'
+        cminmax = " (number <= " + str(imaxval) + ")"
     elif maxval is None:
-        cminmax = ' (number >= ' + str(iminval) + ')'
+        cminmax = " (number >= " + str(iminval) + ")"
     else:
-        cminmax = ' (' + str(minval) + ' <= number <= ' + str(maxval) + ')'
+        cminmax = " (" + str(minval) + " <= number <= " + str(maxval) + ")"
 
     # main loop
     loop = True
@@ -216,16 +215,15 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
 
         # display prompt
         if default is None:
-            print(prompt + cminmax + cquestion_mark, end='')
+            print(prompt + cminmax + cquestion_mark, end="")
             sys.stdout.flush()
         else:
-            print(prompt + cminmax + ' [' + str(default) + ']' +
-                  cquestion_mark, end='')
+            print(prompt + cminmax + " [" + str(default) + "]" + cquestion_mark, end="")
             sys.stdout.flush()
 
         # read user's input
         cresult = sys.stdin.readline().strip()
-        if cresult == '' and default is not None:
+        if cresult == "" and default is not None:
             cresult = str(default)
 
         # if valid allowed single character, return character
@@ -264,32 +262,32 @@ def read_value(ftype, prompt, default=None, minval=None, maxval=None,
 
 def main():
 
-    c = readc("1 Enter character", default='y')
-    print('>>>', c)
-    c = readc("2 Enter character", default='y', valid='ynx')
-    print('>>>', c)
-    c = readc("3 Enter character", default='oso')
-    print('>>>', c)
-    c = readc("4 Enter character", default='oso', valid='yn')
-    print('>>>', c)
+    c = readc("1 Enter character", default="y")
+    print(">>>", c)
+    c = readc("2 Enter character", default="y", valid="ynx")
+    print(">>>", c)
+    c = readc("3 Enter character", default="oso")
+    print(">>>", c)
+    c = readc("4 Enter character", default="oso", valid="yn")
+    print(">>>", c)
 
     i = readi("1 Enter integer", default=8)
-    print('>>>', i)
+    print(">>>", i)
     i = readi("2 Enter integer", minval=0)
-    print('>>>', i)
+    print(">>>", i)
     i = readi("3 Enter integer", default=7, maxval=10)
-    print('>>>', i)
+    print(">>>", i)
     i = readi("4 Enter integer", default=101, minval=5, maxval=10)
-    print('>>>', i)
+    print(">>>", i)
 
     f = readf("1 Enter float", default=8)
-    print('>>>', f)
+    print(">>>", f)
     f = readf("2 Enter float", minval=0)
-    print('>>>', f)
+    print(">>>", f)
     f = readf("3 Enter float", default=7, maxval=10)
-    print('>>>', f)
+    print(">>>", f)
     f = readf("4 Enter float", default=101, minval=5, maxval=10)
-    print('>>>', f)
+    print(">>>", f)
 
 
 if __name__ == "__main__":

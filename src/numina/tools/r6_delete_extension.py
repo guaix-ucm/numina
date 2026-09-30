@@ -8,6 +8,7 @@
 #
 
 """Remove extension from FITS file"""
+
 import argparse
 from astropy.io import fits
 import sys
@@ -26,7 +27,7 @@ def remove_extension(filename, extension, verbose=True):
     verbose : bool
         If True, display additional information.
     """
-    hdul = fits.open(filename, mode='update')
+    hdul = fits.open(filename, mode="update")
     num_extensions = len(hdul)
     if verbose:
         print(hdul.info())
@@ -49,7 +50,7 @@ def remove_extension(filename, extension, verbose=True):
                 if hdu.name == extname:
                     if verbose:
                         print(f"Removing {i} {hdul[extension].name} from {filename}")
-                    del hdul[i]   # programming tip: using hdul.pop(i) does not work!
+                    del hdul[i]  # programming tip: using hdul.pop(i) does not work!
                     break
         else:
             raise ValueError(f"Extension '{extname}' not found")
@@ -59,7 +60,7 @@ def remove_extension(filename, extension, verbose=True):
     if verbose:
         print("Flushing the changes...")
 
-    hdul.flush(output_verify='fix+warn', verbose=verbose)
+    hdul.flush(output_verify="fix+warn", verbose=verbose)
 
     if verbose:
         print(hdul.info())
@@ -86,10 +87,10 @@ def main(args=None):
 
     if not args.noverbose:
         for arg, value in vars(args).items():
-            print(f'{arg}: {value}')
+            print(f"{arg}: {value}")
 
     if args.echo:
-        print('[bold red]Executing:\n' + ' '.join(sys.argv) + '[/bold red]')
+        print("[bold red]Executing:\n" + " ".join(sys.argv) + "[/bold red]")
 
     if args.extnum is None:
         if args.extname is None:

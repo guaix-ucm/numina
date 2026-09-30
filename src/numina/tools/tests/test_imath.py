@@ -1,13 +1,11 @@
-
-
 from ..imath import main
 
 
 def test_imath_works(capsys):
-    """"Test that imath displays its help msg"""
+    """ "Test that imath displays its help msg"""
 
     try:
-        main(['--help'])
+        main(["--help"])
     except SystemExit:
         pass
 

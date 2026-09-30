@@ -1,5 +1,3 @@
-
-
 import numpy
 
 import numina.array.combine as c

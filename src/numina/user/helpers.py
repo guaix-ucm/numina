@@ -27,7 +27,6 @@ from numina.types.frame import DataFrameType
 from numina.types.qc import QC
 from numina.util.context import working_directory
 
-
 _logger = logging.getLogger(__name__)
 
 

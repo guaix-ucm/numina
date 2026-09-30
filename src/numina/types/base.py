@@ -14,14 +14,12 @@ from numina.datamodel import DataModel
 
 
 class DataTypeBase(object):
-    """Base class for input/output types of recipes.
-
-    """
+    """Base class for input/output types of recipes."""
 
     def __init__(self, *args, **kwds):
         import numina.core.tagexpr as tagexpr
 
-        datamodel = kwds.get('datamodel')
+        datamodel = kwds.get("datamodel")
 
         if datamodel is not None:
             if inspect.isclass(datamodel):
@@ -34,22 +32,22 @@ class DataTypeBase(object):
         my_tag_table = self.datamodel.query_attrs
         self.query_expr = tagexpr.ConstExprTrue
 
-        if hasattr(self, '__tags__'):
+        if hasattr(self, "__tags__"):
             # FIXME:
             if isinstance(self.__tags__, list):
                 objtags = [my_tag_table[t] for t in self.__tags__]
             elif isinstance(self.__tags__, dict):
                 objtags = [t for t in self.__tags__.values()]
             else:
-                raise TypeError('type not supported in tags')
+                raise TypeError("type not supported in tags")
 
             self.query_expr = tagexpr.query_expr_from_attr(objtags)
-        if 'query_expr' in kwds:
-            self.query_expr = kwds['query_expr']
+        if "query_expr" in kwds:
+            self.query_expr = kwds["query_expr"]
 
-        if 'tags' in kwds:
+        if "tags" in kwds:
             # Create expresion from tags
-            objtags = [my_tag_table[t] for t in kwds['tags']]
+            objtags = [my_tag_table[t] for t in kwds["tags"]]
             self.query_expr = tagexpr.query_expr_from_attr(objtags)
 
         self.names_t = self.query_expr.tags()
@@ -70,6 +68,7 @@ class DataTypeBase(object):
 
     def query_constraints(self):
         from numina.core.query import Constraint
+
         return Constraint()
 
     @classmethod
@@ -89,8 +88,8 @@ class DataTypeBase(object):
     def from_name(cls, name):
         # name is in the form Class(arg1=val1, arg2=val2)
         # find first (
-        fp = name.find('(')
-        sp = name.find(')')
+        fp = name.find("(")
+        sp = name.find(")")
         if (fp == -1) or (sp == -1) or (sp < fp):
             # paren not found
             klass = name
@@ -98,7 +97,7 @@ class DataTypeBase(object):
         else:
             # parse things between parens
             klass = name[:fp]
-            fargs = name[fp+1:sp]
+            fargs = name[fp + 1 : sp]
             kwargs = parse_arg_line(fargs)
 
         if klass == cls.__name__:
@@ -114,13 +113,13 @@ class DataTypeBase(object):
     def create_db_info():
         """Create metadata structure"""
         result = {}
-        result['instrument'] = ''
-        result['uuid'] = ''
-        result['tags'] = {}
-        result['type'] = ''
-        result['mode'] = ''
-        result['observation_date'] = ""
-        result['origin'] = {}
+        result["instrument"] = ""
+        result["uuid"] = ""
+        result["tags"] = {}
+        result["type"] = ""
+        result["mode"] = ""
+        result["observation_date"] = ""
+        result["origin"] = {}
         return result
 
     def extract_db_info(self, obj, db_info_keys):

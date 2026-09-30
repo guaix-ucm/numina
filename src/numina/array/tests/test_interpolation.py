@@ -22,7 +22,7 @@ def test_extrapolation_raise_by_default():
     with pytest.raises(ValueError):
         stfi(200)
 
-    stfi1 = SteffenInterpolator(xi, yi, extrapolate='raise')
+    stfi1 = SteffenInterpolator(xi, yi, extrapolate="raise")
     with pytest.raises(ValueError):
         stfi1(200)
 
@@ -32,33 +32,33 @@ def test_extrapolation_check_unknown_mode():
     yi = 3 * xi
 
     with pytest.raises(ValueError):
-        SteffenInterpolator(xi, yi, extrapolate='kisjd')
+        SteffenInterpolator(xi, yi, extrapolate="kisjd")
 
 
 def test_extrapolation_check_known_mode():
     xi = np.arange(0, 10, 0.5)
     yi = 3 * xi
 
-    m = SteffenInterpolator(xi, yi, extrapolate='raise')
+    m = SteffenInterpolator(xi, yi, extrapolate="raise")
     assert isinstance(m, SteffenInterpolator)
 
-    m = SteffenInterpolator(xi, yi, extrapolate='zeros')
+    m = SteffenInterpolator(xi, yi, extrapolate="zeros")
     assert isinstance(m, SteffenInterpolator)
 
-    m = SteffenInterpolator(xi, yi, extrapolate='const')
+    m = SteffenInterpolator(xi, yi, extrapolate="const")
     assert isinstance(m, SteffenInterpolator)
 
-    m = SteffenInterpolator(xi, yi, extrapolate='border')
+    m = SteffenInterpolator(xi, yi, extrapolate="border")
     assert isinstance(m, SteffenInterpolator)
 
-    m = SteffenInterpolator(xi, yi, extrapolate='extrapolate')
+    m = SteffenInterpolator(xi, yi, extrapolate="extrapolate")
     assert isinstance(m, SteffenInterpolator)
 
 
 def test_interpolation():
 
     def function(x):
-        return x * (12*np.sin(x)-3)-0.3*x**2*(8*np.cos(3.1*x)-3) / (x+23.4)
+        return x * (12 * np.sin(x) - 3) - 0.3 * x**2 * (8 * np.cos(3.1 * x) - 3) / (x + 23.4)
 
     xi = np.arange(0, 6.5, 0.5)
     yi = function(xi)
@@ -69,8 +69,20 @@ def test_interpolation():
 
     xnew = np.linspace(1.2, 1.4, 10)
 
-    expected = np.array([9.94082135,  10.2539533,  10.56475383,  10.87191933, 11.1741462,
-                         11.47013086, 11.7585697, 12.03815913, 12.30759555,  12.56557537])
+    expected = np.array(
+        [
+            9.94082135,
+            10.2539533,
+            10.56475383,
+            10.87191933,
+            11.1741462,
+            11.47013086,
+            11.7585697,
+            12.03815913,
+            12.30759555,
+            12.56557537,
+        ]
+    )
     result = sti(xnew)
 
     assert np.allclose(result, expected)
@@ -79,12 +91,12 @@ def test_interpolation():
 def test_extrapolation_zeros():
 
     def function(x):
-        return x * (12*np.sin(x)-3)-0.3*x**2*(8*np.cos(3.1*x)-3) / (x+23.4)
+        return x * (12 * np.sin(x) - 3) - 0.3 * x**2 * (8 * np.cos(3.1 * x) - 3) / (x + 23.4)
 
     xi = np.arange(0, 6.0)
     yi = 1.0 + 3 * xi
 
-    sti = SteffenInterpolator(xi, yi, extrapolate='zeros')
+    sti = SteffenInterpolator(xi, yi, extrapolate="zeros")
 
     xnew = [6.0, 7.0]
     result = sti(xnew)
@@ -103,7 +115,7 @@ def test_extrapolation_const():
     yi = 1.0 + 3 * xi
 
     fill = 12.0
-    sti = SteffenInterpolator(xi, yi, extrapolate='const', fill_value=fill)
+    sti = SteffenInterpolator(xi, yi, extrapolate="const", fill_value=fill)
 
     xnew = [6.0, 7.0]
     result = sti(xnew)
@@ -121,7 +133,7 @@ def test_extrapolation_border():
     xi = np.arange(0, 6.0)
     yi = 1.0 + 3 * xi
 
-    sti = SteffenInterpolator(xi, yi, extrapolate='border')
+    sti = SteffenInterpolator(xi, yi, extrapolate="border")
 
     xnew = [6.0, 7.0]
     result = sti(xnew)
@@ -139,7 +151,7 @@ def test_extrapolation_extrapolate():
     xi = np.arange(0, 6.0)
     yi = 1.0 + 3 * xi
 
-    sti = SteffenInterpolator(xi, yi, extrapolate='extrapolate')
+    sti = SteffenInterpolator(xi, yi, extrapolate="extrapolate")
 
     xnew = [6.0, 7.0]
     result = sti(xnew)
@@ -155,7 +167,7 @@ def test_extrapolation_extrapolate():
 def test_conditions_in_borders():
 
     def function(x):
-        return x * (12*np.sin(x)-3)-0.3*x**2*(8*np.cos(3.1*x)-3) / (x+23.4)
+        return x * (12 * np.sin(x) - 3) - 0.3 * x**2 * (8 * np.cos(3.1 * x) - 3) / (x + 23.4)
 
     xi = np.arange(0, 6.0)
     yi = 1.0 + 3 * xi

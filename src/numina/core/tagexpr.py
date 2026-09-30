@@ -155,6 +155,7 @@ class Expression(object):
 
     def fill_placeholders(self, **kwargs):
         """Substitute Placeholder nodes by its value in tags"""
+
         def change_p_node_tags(node, children):
             if isinstance(node, Placeholder) and (node.name in kwargs):
                 return ConstExpr(kwargs[node.name])
@@ -182,7 +183,7 @@ class Expression(object):
 
 
 class AtomicExpr(Expression):
-    """"Atomic expression"""
+    """ "Atomic expression"""
 
     def __init__(self, name, value):
         super(AtomicExpr, self).__init__()
@@ -247,6 +248,7 @@ ConstExprFalse = ConstExpr(False)
 
 class CompoundExpr(Expression):
     """Compound expression"""
+
     pass
 
 
@@ -279,12 +281,12 @@ class BinaryExpr(CompoundExpr):
 
 class PredAnd(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredAnd, self).__init__(lhs, rhs, operator.and_, 'AND')
+        super(PredAnd, self).__init__(lhs, rhs, operator.and_, "AND")
 
 
 class PredOr(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredOr, self).__init__(lhs, rhs, operator.or_, 'OR')
+        super(PredOr, self).__init__(lhs, rhs, operator.or_, "OR")
 
 
 class PredNot(UnaryExpr):
@@ -294,32 +296,32 @@ class PredNot(UnaryExpr):
 
 class PredEq(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredEq, self).__init__(lhs, rhs, operator.eq, '==')
+        super(PredEq, self).__init__(lhs, rhs, operator.eq, "==")
 
 
 class PredGt(BinaryExpr):
     def __init__(self, key, value):
-        super(PredGt, self).__init__(key, value, operator.gt, '>')
+        super(PredGt, self).__init__(key, value, operator.gt, ">")
 
 
 class PredGe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredGe, self).__init__(key, value, operator.ge, '>=')
+        super(PredGe, self).__init__(key, value, operator.ge, ">=")
 
 
 class PredLe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredLe, self).__init__(key, value, operator.le, '<=')
+        super(PredLe, self).__init__(key, value, operator.le, "<=")
 
 
 class PredLt(BinaryExpr):
     def __init__(self, key, value):
-        super(PredLt, self).__init__(key, value, operator.lt, '<')
+        super(PredLt, self).__init__(key, value, operator.lt, "<")
 
 
 class PredNe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredNe, self).__init__(key, value, operator.ne, '!=')
+        super(PredNe, self).__init__(key, value, operator.ne, "!=")
 
 
 class ConstraintAdapter(object):
@@ -355,9 +357,9 @@ def query_expr_from_attr(attrs):
     exprs = []
     # for name, dtype in descs:
     for attr in attrs:
-        metadata = {'type': attr.type, 'description': attr.description}
+        metadata = {"type": attr.type, "description": attr.description}
         lhs = TagRepr(attr.name, metadata=metadata)
         rhs = Placeholder(attr.name)
-        expr = (lhs == rhs)
+        expr = lhs == rhs
         exprs.append(expr)
     return reduce(operator.and_, exprs)

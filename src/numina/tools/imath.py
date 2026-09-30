@@ -55,12 +55,12 @@ def compute_operation(
     extname2,
     output,
     overwrite=True,
-    dtype='float32',
-    display='none',
+    dtype="float32",
+    display="none",
     args_z1z2=None,
     args_bbox=None,
     args_keystitle=None,
-    args_geometry=None
+    args_geometry=None,
 ):
     """Compute output = file1 operation file2.
 
@@ -100,18 +100,21 @@ def compute_operation(
     with fits.open(file1) as hdulist:
         image_header1 = hdulist[extname1].header
         image1 = hdulist[extname1].data.astype(dtype)
-    naxis = image_header1['naxis']
-    naxis1 = image_header1['naxis1']
-    naxis2 = image_header1['naxis2']
+    naxis = image_header1["naxis"]
+    naxis1 = image_header1["naxis1"]
+    naxis2 = image_header1["naxis2"]
 
     # if required, display file1
-    if display == 'all':
-        ximshow_file(file1,
-                     extnum=extnum_from_extname(file1, extname1)+1,  # extnum is 1-based in ximshow_file
-                     args_z1z2=args_z1z2, args_bbox=args_bbox,
-                     args_keystitle=args_keystitle,
-                     args_geometry=args_geometry,
-                     debugplot=12)
+    if display == "all":
+        ximshow_file(
+            file1,
+            extnum=extnum_from_extname(file1, extname1) + 1,  # extnum is 1-based in ximshow_file
+            args_z1z2=args_z1z2,
+            args_bbox=args_bbox,
+            args_keystitle=args_keystitle,
+            args_geometry=args_geometry,
+            debugplot=12,
+        )
 
     # read second FITS file or number
     file2_is_a_file = True
@@ -119,39 +122,38 @@ def compute_operation(
         with fits.open(file2) as hdulist:
             image_header2 = hdulist[extname2].header
             image2 = hdulist[extname2].data.astype(dtype)
-            naxis_ = image_header2['naxis']
-            naxis1_ = image_header2['naxis1']
-            naxis2_ = image_header2['naxis2']
+            naxis_ = image_header2["naxis"]
+            naxis1_ = image_header2["naxis1"]
+            naxis2_ = image_header2["naxis2"]
             filename = file2
     except FileNotFoundError:
         file2_is_a_file = False
         image2 = np.zeros((naxis2, naxis1), dtype=dtype)
-        if 'int' in dtype:
+        if "int" in dtype:
             image2 += int(file2)
-        elif 'float' in dtype:
+        elif "float" in dtype:
             image2 += float(file2)
         else:
             raise ValueError(f"Unsupported dtype: {dtype}. Use an integer or float type.")
         naxis_ = naxis
         naxis1_ = naxis1
         naxis2_ = naxis2
-        filename = 'constant=' + str(file2)
+        filename = "constant=" + str(file2)
 
     # if required, display file2
-    if display == 'all':
+    if display == "all":
         if file2_is_a_file:
-            ximshow_file(file2,
-                         extnum=extnum_from_extname(file2, extname2)+1,  # extnum is 1-based in ximshow_file
-                         args_z1z2=args_z1z2, args_bbox=args_bbox,
-                         args_keystitle=args_keystitle,
-                         args_geometry=args_geometry,
-                         debugplot=12)
+            ximshow_file(
+                file2,
+                extnum=extnum_from_extname(file2, extname2) + 1,  # extnum is 1-based in ximshow_file
+                args_z1z2=args_z1z2,
+                args_bbox=args_bbox,
+                args_keystitle=args_keystitle,
+                args_geometry=args_geometry,
+                debugplot=12,
+            )
         else:
-            ximshow(image2,
-                    title=filename,
-                    z1z2=args_z1z2, image_bbox=args_bbox,
-                    geometry=args_geometry,
-                    debugplot=12)
+            ximshow(image2, title=filename, z1z2=args_z1z2, image_bbox=args_bbox, geometry=args_geometry, debugplot=12)
 
     # second image is a single image row
     if naxis1 == naxis1_ and naxis2 > naxis2_:
@@ -192,74 +194,60 @@ def compute_operation(
     hdu.writeto(output, overwrite=overwrite)
 
     # if required, display result
-    if display in ['all', 'result']:
-        ximshow_file(output,
-                     args_z1z2=args_z1z2, args_bbox=args_bbox,
-                     args_keystitle=args_keystitle,
-                     args_geometry=args_geometry,
-                     debugplot=12)
+    if display in ["all", "result"]:
+        ximshow_file(
+            output,
+            args_z1z2=args_z1z2,
+            args_bbox=args_bbox,
+            args_keystitle=args_keystitle,
+            args_geometry=args_geometry,
+            debugplot=12,
+        )
 
 
 def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser(
-        description="description: binary image arithmetic",
-        formatter_class=RichHelpFormatter
+        description="description: binary image arithmetic", formatter_class=RichHelpFormatter
     )
     # positional parameters
-    parser.add_argument("file1",
-                        help="First FITS image",
-                        type=str)
-    parser.add_argument("operation",
-                        help="Arithmetic operation",
-                        type=str,
-                        choices=['+', '-', 'x', '/', '='])
-    parser.add_argument("file2",
-                        help="Second FITS image or number",
-                        type=str)
-    parser.add_argument("output",
-                        help="Output FITS image",
-                        type=str)
+    parser.add_argument("file1", help="First FITS image", type=str)
+    parser.add_argument("operation", help="Arithmetic operation", type=str, choices=["+", "-", "x", "/", "="])
+    parser.add_argument("file2", help="Second FITS image or number", type=str)
+    parser.add_argument("output", help="Output FITS image", type=str)
     # optional arguments
-    parser.add_argument("--extname1", type=str,
-                        help="Extension name of the first FITS file (default: 'PRIMARY').",
-                        default='PRIMARY')
-    parser.add_argument("--extname2", type=str,
-                        help="Extension name of the second FITS file (default: 'PRIMARY').",
-                        default='PRIMARY')
-    parser.add_argument("--overwrite",
-                        help="Overwrite output file if already exists",
-                        action="store_true")
-    parser.add_argument("--dtype",
-                        help="Data type of the output image (default: float32)",
-                        type=str,
-                        choices=['uint8', 'int8', 'uint16', 'int16', 'uint32', 'int32', 'uint64', 'int64',
-                                 'float32', 'float64'],
-                        default='float32')
-    parser.add_argument("--display",
-                        help="Display images: all, result, none (default)",
-                        default="none",
-                        type=str,
-                        choices=['all', 'result', 'none'])
-    parser.add_argument("--z1z2",
-                        help="tuple z1,z2, minmax or None (use zscale)")
-    parser.add_argument("--bbox",
-                        help="bounding box tuple: nc1,nc2,ns1,ns2")
-    parser.add_argument("--keystitle",
-                        help="tuple of FITS keywords.format: " +
-                             "key1,key2,...keyn.'format'")
-    parser.add_argument("--geometry",
-                        help="Tuple x,y,dx,dy indicating window geometry",
-                        default="0,0,640,480")
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument(
+        "--extname1", type=str, help="Extension name of the first FITS file (default: 'PRIMARY').", default="PRIMARY"
+    )
+    parser.add_argument(
+        "--extname2", type=str, help="Extension name of the second FITS file (default: 'PRIMARY').", default="PRIMARY"
+    )
+    parser.add_argument("--overwrite", help="Overwrite output file if already exists", action="store_true")
+    parser.add_argument(
+        "--dtype",
+        help="Data type of the output image (default: float32)",
+        type=str,
+        choices=["uint8", "int8", "uint16", "int16", "uint32", "int32", "uint64", "int64", "float32", "float64"],
+        default="float32",
+    )
+    parser.add_argument(
+        "--display",
+        help="Display images: all, result, none (default)",
+        default="none",
+        type=str,
+        choices=["all", "result", "none"],
+    )
+    parser.add_argument("--z1z2", help="tuple z1,z2, minmax or None (use zscale)")
+    parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
+    parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
+    parser.add_argument("--geometry", help="Tuple x,y,dx,dy indicating window geometry", default="0,0,640,480")
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args(args=args)
 
     if args.echo:
-        print('\033[1m\033[31mExecuting: ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31mExecuting: " + " ".join(sys.argv) + "\033[0m\n")
 
     if not args.overwrite and pathlib.Path(args.output).exists():
         print(f"Output file {args.output} already exists. Use --overwrite to overwrite it.")
@@ -279,7 +267,7 @@ def main(args=None):
         args_z1z2=args.z1z2,
         args_bbox=args.bbox,
         args_keystitle=args.keystitle,
-        args_geometry=args.geometry
+        args_geometry=args.geometry,
     )
 
 

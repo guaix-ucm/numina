@@ -77,8 +77,7 @@ def rescale_array_from_z1z2(array_rs, coef_rs=None):
     """
 
     if type(array_rs) is not np.ndarray:
-        raise ValueError(
-            "array_rs=" + str(array_rs) + "must be a numpy.ndarray")
+        raise ValueError("array_rs=" + str(array_rs) + "must be a numpy.ndarray")
 
     b_flux, c_flux = coef_rs
 

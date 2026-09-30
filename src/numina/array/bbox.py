@@ -27,7 +27,7 @@ class PixelInterval1D(object):
 
     def __init__(self, pix1, pix2, axis=0):
 
-        for name in ['pix1', 'pix2']:
+        for name in ["pix1", "pix2"]:
             value = locals()[name]
             if not isinstance(value, numbers.Integral):
                 raise TypeError(f"'{name}' must be integer in axis {axis}")
@@ -39,7 +39,7 @@ class PixelInterval1D(object):
         self.pix2 = pix2
         self.ndim = 1
         self.axis = axis
-        self._empty = (self.pix2 == self.pix1)
+        self._empty = self.pix2 == self.pix1
 
     @property
     def shape(self):
@@ -119,8 +119,7 @@ class PixelInterval(object):
 
     def __init__(self, *args):
         self.ndim = len(args)
-        self.intervals = [PixelInterval1D(a, b, axis)
-                          for axis, (a, b) in enumerate(args)]
+        self.intervals = [PixelInterval1D(a, b, axis) for axis, (a, b) in enumerate(args)]
 
     @property
     def shape(self):
@@ -132,8 +131,7 @@ class PixelInterval(object):
 
     @classmethod
     def pixel_range(cls, *args):
-        return tuple(PixelInterval1D.pixel_range(*arg)
-                     for arg in args)
+        return tuple(PixelInterval1D.pixel_range(*arg) for arg in args)
 
     @classmethod
     def from_coordinates(cls, *args):
@@ -152,16 +150,14 @@ class PixelInterval(object):
 
     def union(self, other):
         if self.ndim == other.ndim:
-            intl = [s.union(o)
-                    for s, o in zip(self.intervals, other.intervals)]
+            intl = [s.union(o) for s, o in zip(self.intervals, other.intervals)]
             return self.from_intervals(intl)
         else:
             raise NotImplementedError
 
     def intersection(self, other):
         if self.ndim == other.ndim:
-            intl = [s.intersection(o) for s, o in zip(
-                self.intervals, other.intervals)]
+            intl = [s.intersection(o) for s, o in zip(self.intervals, other.intervals)]
             return self.from_intervals(intl)
         else:
             raise NotImplementedError

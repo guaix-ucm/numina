@@ -18,11 +18,12 @@ import weakref
 
 class StoreType(type):
     """Metaclass for storing members."""
+
     def __new__(cls, classname, parents, attributes):
 
         n_stored = weakref.WeakValueDictionary()
         for p in parents:
-            stored = getattr(p, '__numina_stored__', None)
+            stored = getattr(p, "__numina_stored__", None)
             if stored:
                 n_stored.update(stored)
 
@@ -35,7 +36,7 @@ class StoreType(type):
             else:
                 new_attributes[name] = val
 
-        new_attributes['__numina_stored__'] = n_stored
+        new_attributes["__numina_stored__"] = n_stored
 
         return super(StoreType, cls).__new__(cls, classname, parents, new_attributes)
 
@@ -64,6 +65,7 @@ class StoreType(type):
 
 class RecipeInputType(StoreType):
     """Metaclass for RecipeInput."""
+
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Requirement)
@@ -71,6 +73,7 @@ class RecipeInputType(StoreType):
 
 class RecipeResultType(StoreType):
     """Metaclass for RecipeResult."""
+
     @classmethod
     def exclude(cls, name, value):
         return isinstance(value, Result)

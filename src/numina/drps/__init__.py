@@ -9,7 +9,6 @@
 
 """DRP system wide initialization"""
 
-
 from .drpsystem import DrpSystem
 
 _system_drps = None

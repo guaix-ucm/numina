@@ -11,12 +11,12 @@ import logging
 
 import numina.util.node as node
 
-
 _logger = logging.getLogger(__name__)
 
 
 class FlowError(Exception):
     """Error base class for flows."""
+
     pass
 
 

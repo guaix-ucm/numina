@@ -1,4 +1,3 @@
-
 from ..frame import DataFrameType
 from ..dataframe import DataFrame
 
@@ -14,7 +13,7 @@ def test_dataframe_convert_string():
 
     datatype = DataFrameType()
 
-    obj = 'filename.fits'
+    obj = "filename.fits"
 
     result = datatype.convert(obj)
 

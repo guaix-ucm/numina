@@ -35,7 +35,7 @@ class StoredResult(object):
 
     def __init__(self):
         self.qc = QC.UNKNOWN
-        self.uuid = uuid.UUID('00000000-0000-0000-0000-000000000000')
+        self.uuid = uuid.UUID("00000000-0000-0000-0000-000000000000")
 
     @classmethod
     def load_data(cls, state):
@@ -44,13 +44,13 @@ class StoredResult(object):
         return obj
 
     def _from_dict(self, state):
-        self.qc = QC[state.get('qc', 'UNKNOWN')]
-        if 'uuid' in state:
-            self.uuid = uuid.UUID(state['uuid'])
+        self.qc = QC[state.get("qc", "UNKNOWN")]
+        if "uuid" in state:
+            self.uuid = uuid.UUID(state["uuid"])
 
-        values = state.get('values', {})
+        values = state.get("values", {})
         if isinstance(values, list):
-            values = {o['name']: o['content'] for o in values}
+            values = {o["name"]: o["content"] for o in values}
         for key, val in values.items():
             loaded = unserial(val)
             setattr(self, key, loaded)

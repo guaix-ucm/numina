@@ -81,6 +81,7 @@ def test_only_positive2():
 
 def test_as_list1():
     """Test as_list decorator"""
+
     @as_list
     def some_test(value):
         return value
@@ -91,10 +92,11 @@ def test_as_list1():
 
 def test_as_list2():
     """Test as_list decorator raises ValidationError"""
+
     @as_list
     def some_test(value):
         if value > 1:
-            raise numina.exceptions.ValidationError('must be <= 1')
+            raise numina.exceptions.ValidationError("must be <= 1")
         return value
 
     values = [0, 1, 2, 50, 400]
@@ -102,12 +104,15 @@ def test_as_list2():
         some_test(values)
 
 
-@pytest.mark.parametrize("validator, allowed, not_allowed", [
-    (range_validator(), [-1, 2.0, 34.0, 4, -5], []),
-    (range_validator(minval=3), [3, 34.0, 4], [2.99, -1]),
-    (range_validator(maxval=3), [3, -1, -100], [3.1, 34.0, 4]),
-    (range_validator(minval=2, maxval=3), [2, 2.5, 3], [-4, -1, 100])
-])
+@pytest.mark.parametrize(
+    "validator, allowed, not_allowed",
+    [
+        (range_validator(), [-1, 2.0, 34.0, 4, -5], []),
+        (range_validator(minval=3), [3, 34.0, 4], [2.99, -1]),
+        (range_validator(maxval=3), [3, -1, -100], [3.1, 34.0, 4]),
+        (range_validator(minval=2, maxval=3), [2, 2.5, 3], [-4, -1, 100]),
+    ],
+)
 def test_range_validator3(validator, allowed, not_allowed):
     """Range validators"""
 

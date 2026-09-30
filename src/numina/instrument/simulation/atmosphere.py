@@ -67,25 +67,17 @@ def generate_gaussian_profile(seeing_fwhm):
     FWHM_G = 2 * math.sqrt(2 * math.log(2))
     sigma = seeing_fwhm / FWHM_G
     amplitude = 1.0 / (2 * math.pi * sigma * sigma)
-    seeing_model = Gaussian2D(amplitude=amplitude,
-                              x_mean=0.0,
-                              y_mean=0.0,
-                              x_stddev=sigma,
-                              y_stddev=sigma)
+    seeing_model = Gaussian2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, x_stddev=sigma, y_stddev=sigma)
     return seeing_model
 
 
 def generate_moffat_profile(seeing_fwhm, alpha):
     """Generate a normalized Moffat profile from its FWHM and alpha"""
 
-    scale = 2 * math.sqrt(2**(1.0 / alpha) - 1)
+    scale = 2 * math.sqrt(2 ** (1.0 / alpha) - 1)
     gamma = seeing_fwhm / scale
     amplitude = 1.0 / math.pi * (alpha - 1) / gamma**2
-    seeing_model = Moffat2D(amplitude=amplitude,
-                            x_mean=0.0,
-                            y_mean=0.0,
-                            gamma=gamma,
-                            alpha=alpha)
+    seeing_model = Moffat2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, gamma=gamma, alpha=alpha)
     return seeing_model
 
 

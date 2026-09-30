@@ -40,29 +40,29 @@ class Pipeline:
 
     def get_recipe(self, mode):
         node = self.recipes[mode]
-        return node['class']
+        return node["class"]
 
     def _get_base_class(self, entry):
 
-        recipe_fqn = entry['class']
+        recipe_fqn = entry["class"]
         return numina.util.objimport.import_object(recipe_fqn)
 
     def _get_base_object(self, entry):
 
         Cls = self._get_base_class(entry)
 
-        args = entry.get('args', ())
-        kwargs = entry.get('kwargs', {})
-        links = entry.get('links', {})
+        args = entry.get("args", ())
+        kwargs = entry.get("kwargs", {})
+        links = entry.get("links", {})
         if links:
-            kwargs['query_options'] = links
+            kwargs["query_options"] = links
 
         recipe = Cls.__new__(Cls, *args, **kwargs)
         recipe.__init__(*args, **kwargs)
 
         # Like pickle protocol
-        if 'state' in entry:
-            recipe.__setstate__(entry['state'])
+        if "state" in entry:
+            recipe.__setstate__(entry["state"])
 
         return recipe
 
@@ -198,7 +198,7 @@ class InstrumentDRP:
 
     """
 
-    def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None, version='undefined'):
+    def __init__(self, name, configurations, modes, pipelines, products=None, datamodel=None, version="undefined"):
         self.name = name
         self.configurations = configurations
         self.modes = modes
@@ -209,7 +209,7 @@ class InstrumentDRP:
             self.datamodel = numina.datamodel.DataModel()
         self.version = version
 
-    def query_provides(self, product, pipeline='default', search=False):
+    def query_provides(self, product, pipeline="default", search=False):
         """Return the mode that provides a given product"""
 
         if search:
@@ -219,9 +219,9 @@ class InstrumentDRP:
         try:
             return pipe.who_provides(product)
         except KeyError:
-            raise ValueError(f'no mode provides {product}')
+            raise ValueError(f"no mode provides {product}")
 
-    def search_mode_provides(self, product, pipeline='default'):
+    def search_mode_provides(self, product, pipeline="default"):
         """Search the mode that provides a given product"""
 
         pipeline = self.pipelines[pipeline]
@@ -230,7 +230,7 @@ class InstrumentDRP:
             if obj.name() == product:
                 return ProductEntry(obj.name(), mode.key, field)
         else:
-            raise ValueError(f'no mode provides {product}')
+            raise ValueError(f"no mode provides {product}")
 
     def iterate_mode_provides(self, modes, pipeline):
         """Return the mode that provides a given product"""
@@ -242,11 +242,12 @@ class InstrumentDRP:
                     if provide.type.isproduct():
                         yield provide.type, mode, key
             except KeyError:
-                warnings.warn(f'Mode {mode_key} has not recipe')
+                warnings.warn(f"Mode {mode_key} has not recipe")
 
     def configuration_selector(self, obsres):
-        warnings.warn("configuration_selector is deprecated, use 'select_configuration' instead",
-                      DeprecationWarning, stacklevel=2)
+        warnings.warn(
+            "configuration_selector is deprecated, use 'select_configuration' instead", DeprecationWarning, stacklevel=2
+        )
         return self.select_configuration_old(obsres)
 
     def product_label(self, tipo):
@@ -256,18 +257,18 @@ class InstrumentDRP:
         """Select instrument configuration based on OB"""
 
         logger = logging.getLogger(__name__)
-        logger.debug('calling default configuration selector')
+        logger.debug("calling default configuration selector")
 
         # get first possible image
         ref_frame = obresult.get_sample_frame()
         ref = ref_frame.open()
-        extr = self.datamodel.extractor_map['fits']
+        extr = self.datamodel.extractor_map["fits"]
         if ref:
             # get INSCONF configuration
-            result = extr.extract('insconf', ref)
+            result = extr.extract("insconf", ref)
             if result:
                 # found the keyword, try to match
-                logger.debug('found insconf config uuid=%s', result)
+                logger.debug("found insconf config uuid=%s", result)
                 # Use insconf as uuid key
                 if result in self.configurations:
                     return self.configurations[result]
@@ -277,13 +278,12 @@ class InstrumentDRP:
                         if conf.name == result:
                             return conf
                     else:
-                        raise KeyError(
-                            f'insconf {result} does not match any config')
+                        raise KeyError(f"insconf {result} does not match any config")
 
             # If not, try to match by DATE
-            date_obs = extr.extract('observation_date', ref)
+            date_obs = extr.extract("observation_date", ref)
             for key, conf in self.configurations.items():
-                if key == 'default':
+                if key == "default":
                     # skip default
                     continue
                 if conf.date_end is not None:
@@ -291,11 +291,11 @@ class InstrumentDRP:
                 else:
                     upper_t = True
                 if upper_t and (date_obs >= conf.date_start):
-                    logger.debug('found date match, config uuid=%s', key)
+                    logger.debug("found date match, config uuid=%s", key)
                     return conf
         else:
-            logger.debug('no match, using default configuration')
-            return self.configurations['default']
+            logger.debug("no match, using default configuration")
+            return self.configurations["default"]
 
     def select_configuration(self, obresult):
         return self.select_profile(obresult)
@@ -304,21 +304,21 @@ class InstrumentDRP:
         """Select instrument profile based on OB"""
 
         logger = logging.getLogger(__name__)
-        logger.debug('calling default profile selector')
+        logger.debug("calling default profile selector")
         # check configuration
         insconf = obresult.profile
-        if insconf != 'default' and insconf != '00000000-0000-0000-0000-000000000000':
+        if insconf != "default" and insconf != "00000000-0000-0000-0000-000000000000":
             # Using profile as a UUID
             key = insconf
             date_obs = None
-            keyname = 'uuid'
+            keyname = "uuid"
         else:
             # get first possible image
             sample_frame = obresult.get_sample_frame()
             if sample_frame is None:
                 key = obresult.instrument
                 date_obs = None
-                keyname = 'name'
+                keyname = "name"
             else:
                 return self.select_profile_image(sample_frame.open())
         return key, date_obs, keyname
@@ -326,19 +326,19 @@ class InstrumentDRP:
     def select_profile_image(self, img):
         """Select instrument profile based on FITS"""
 
-        extr = self.datamodel.extractor_map['fits']
+        extr = self.datamodel.extractor_map["fits"]
 
-        date_obs = extr.extract('observation_date', img)
-        key = extr.extract('insconf', img)
+        date_obs = extr.extract("observation_date", img)
+        key = extr.extract("insconf", img)
         if key is not None:
-            keyname = 'uuid'
+            keyname = "uuid"
         else:
-            key = extr.extract('instrument', img)
-            keyname = 'name'
+            key = extr.extract("instrument", img)
+            keyname = "name"
 
         return key, date_obs, keyname
 
-    def get_recipe_object(self, mode_name, pipeline_name='default'):
+    def get_recipe_object(self, mode_name, pipeline_name="default"):
         """Build a recipe object from a given mode name"""
         active_mode = self.modes[mode_name]
         active_pipeline = self.pipelines[pipeline_name]
@@ -352,26 +352,25 @@ class ProductEntry:
         self.mode = mode
         self.field = field
         if alias is None:
-            split_name = name.split('.')
+            split_name = name.split(".")
             self.alias = split_name[-1]
         else:
             self.alias = alias
 
     def __repr__(self):
-        msg = 'ProductEntry(name="{}", mode="{}", field="{}")'.format(
-            self.name, self.mode, self.field)
+        msg = 'ProductEntry(name="{}", mode="{}", field="{}")'.format(self.name, self.mode, self.field)
         return msg
 
 
 class ObservingMode:
     """Observing modes of an Instrument."""
 
-    def __init__(self, instrument=''):
-        self.name = ''
-        self.key = ''
+    def __init__(self, instrument=""):
+        self.name = ""
+        self.key = ""
         self.instrument = instrument
-        self.summary = ''
-        self.description = ''
+        self.summary = ""
+        self.description = ""
         self.tagger = None
         self.validator = None
         self.build_ob_options = None
@@ -386,9 +385,8 @@ class ObservingMode:
 
         if isinstance(mod, numina.core.query.ResultOf):
             result_type = mod.result_type
-            name = 'relative_result'
-            val = backend.search_result_relative(
-                name, result_type, partial_ob, result_desc=mod)
+            name = "relative_result"
+            val = backend.search_result_relative(name, result_type, partial_ob, result_desc=mod)
             for r in val:
                 partial_ob.results[r.id] = r.content
 
@@ -396,8 +394,11 @@ class ObservingMode:
 
     def tag_ob(self, partial):
         if self.tagger is not None:
-            warnings.warn("per mode taggers are deprecated, recipe requirements provide al required information",
-                          DeprecationWarning, stacklevel=2)
+            warnings.warn(
+                "per mode taggers are deprecated, recipe requirements provide al required information",
+                DeprecationWarning,
+                stacklevel=2,
+            )
             partial.tags = self.tagger(partial)
         return partial
 

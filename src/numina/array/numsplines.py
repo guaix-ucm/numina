@@ -20,14 +20,7 @@ def fun_residuals(params, xnor, ynor, w, bbox, k, ext):
     """Compute fit residuals"""
 
     spl = LSQUnivariateSpline(
-        x=xnor,
-        y=ynor,
-        t=[item.value for item in params.values()],
-        w=w,
-        bbox=bbox,
-        k=k,
-        ext=ext,
-        check_finite=False
+        x=xnor, y=ynor, t=[item.value for item in params.values()], w=w, bbox=bbox, k=k, ext=ext, check_finite=False
     )
     return spl.get_residual()
 
@@ -106,9 +99,9 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
 
     """
 
-    def __init__(self, x, y, t, w=None, bbox=(None, None),
-                 k=3, ext=0, check_finite=False, adaptive=True,
-                 tolerance=1E-7):
+    def __init__(
+        self, x, y, t, w=None, bbox=(None, None), k=3, ext=0, check_finite=False, adaptive=True, tolerance=1e-7
+    ):
         """One-dimensional spline with explicit internal knots."""
 
         if check_finite:
@@ -116,22 +109,20 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
             # (note that in the call to super(...).__init(...) the
             # parameter check_finite is set to False)
             w_finite = np.isfinite(x).all() if w is not None else True
-            if not np.isfinite(x).all() or not np.isfinite(y).all() or \
-                    not w_finite:
-                raise ValueError('Input(s) must not contain '
-                                 'NaNs or infs.')
+            if not np.isfinite(x).all() or not np.isfinite(y).all() or not w_finite:
+                raise ValueError("Input(s) must not contain " "NaNs or infs.")
 
             if np.asarray(x).ndim != 1:
-                raise ValueError('x array must have dimension 1')
+                raise ValueError("x array must have dimension 1")
 
             if np.asarray(y).ndim != 1:
-                raise ValueError('y array must have dimension 1')
+                raise ValueError("y array must have dimension 1")
 
             if np.asarray(x).shape != np.asarray(y).shape:
-                raise ValueError('x and y arrays must have the same length')
+                raise ValueError("x and y arrays must have the same length")
 
             if not all(np.diff(x) > 0.0):
-                raise ValueError('x array must be strictly increasing')
+                raise ValueError("x array must be strictly increasing")
 
         # initial inner knot location (equidistant or fixed)
         try:
@@ -142,17 +133,16 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
                 deltax = (xmax - xmin) / float(nknots + 1)
                 xknot = np.zeros(nknots)
                 for i in range(nknots):
-                    xknot[i] = (xmin + float(i + 1) * deltax)
+                    xknot[i] = xmin + float(i + 1) * deltax
             else:
                 xknot = np.array([])
         except (ValueError, TypeError):
             xknot = np.asarray(t)
             if check_finite:
                 if not np.isfinite(xknot).all():
-                    raise ValueError('Interior knots must not contain '
-                                     'NaNs or infs.')
+                    raise ValueError("Interior knots must not contain " "NaNs or infs.")
                 if xknot.ndim != 1:
-                    raise ValueError('t array must have dimension 1')
+                    raise ValueError("t array must have dimension 1")
             nknots = len(xknot)
 
         # adaptive knots
@@ -178,36 +168,22 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
                     if nknots == 1:
                         xmaxknot = xnor[-1]
                     else:
-                        xmaxknot = (xknotnor[i] + xknotnor[i+1]) / 2.0
+                        xmaxknot = (xknotnor[i] + xknotnor[i + 1]) / 2.0
                 elif i == nknots - 1:
-                    xminknot = (xknotnor[i-1] + xknotnor[i]) / 2.0
+                    xminknot = (xknotnor[i - 1] + xknotnor[i]) / 2.0
                     xmaxknot = xnor[-1]
                 else:
-                    xminknot = (xknotnor[i-1] + xknotnor[i]) / 2.0
-                    xmaxknot = (xknotnor[i] + xknotnor[i+1]) / 2.0
-                params.add(
-                    name=f'xknot{i:03d}',
-                    value=xknotnor[i],
-                    min=xminknot,
-                    max=xmaxknot,
-                    vary=True
-                )
+                    xminknot = (xknotnor[i - 1] + xknotnor[i]) / 2.0
+                    xmaxknot = (xknotnor[i] + xknotnor[i + 1]) / 2.0
+                params.add(name=f"xknot{i:03d}", value=xknotnor[i], min=xminknot, max=xmaxknot, vary=True)
             self._params = params.copy()
-            fitter = Minimizer(
-                userfcn=fun_residuals,
-                params=params,
-                fcn_args=(xnor, ynor, w, bbox, k, ext)
-            )
+            fitter = Minimizer(userfcn=fun_residuals, params=params, fcn_args=(xnor, ynor, w, bbox, k, ext))
             try:
-                self._result = fitter.scalar_minimize(
-                    method='Nelder-Mead',
-                    tol=tolerance
-                )
+                self._result = fitter.scalar_minimize(method="Nelder-Mead", tol=tolerance)
                 xknot = [item.value for item in self._result.params.values()]
                 xknot = (np.asarray(xknot) + cx) / bx
             except ValueError:
-                print('Error when fitting adaptive splines. '
-                      'Reverting to initial knot location.')
+                print("Error when fitting adaptive splines. " "Reverting to initial knot location.")
                 xknot = xknot_backup.copy()
                 self._result = None
         else:
@@ -216,14 +192,7 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
 
         # final fit
         super(AdaptiveLSQUnivariateSpline, self).__init__(
-            x=x,
-            y=y,
-            t=xknot,
-            w=w,
-            bbox=bbox,
-            k=k,
-            ext=ext,
-            check_finite=False
+            x=x, y=y, t=xknot, w=w, bbox=bbox, k=k, ext=ext, check_finite=False
         )
 
     def get_params(self):
@@ -301,16 +270,13 @@ def spline_positive_derivative(x, y, w=None, n_total_knots=2, derivative_thresho
     # Define weighted loss function (weighted mean squared error)
     def weighted_loss(c):
         y_pred = B @ c
-        return np.mean(w * (y - y_pred)**2)
+        return np.mean(w * (y - y_pred) ** 2)
 
     # Define constraint: derivative must be strictly positive
     def make_constraints():
         x_dense = np.linspace(x.min(), x.max(), 100)
         return [
-            {
-                'type': 'ineq',
-                'fun': lambda c, xi=xi: BSpline(t, c, degree).derivative()(xi) - derivative_threshold
-            }
+            {"type": "ineq", "fun": lambda c, xi=xi: BSpline(t, c, degree).derivative()(xi) - derivative_threshold}
             for xi in x_dense
         ]
 
@@ -319,7 +285,7 @@ def spline_positive_derivative(x, y, w=None, n_total_knots=2, derivative_thresho
 
     # Perform constrained optimization
     constraints = make_constraints()
-    result = minimize(weighted_loss, c0, constraints=constraints, method='SLSQP')
+    result = minimize(weighted_loss, c0, constraints=constraints, method="SLSQP")
 
     # Evaluate fitted spline
     c_opt = result.x

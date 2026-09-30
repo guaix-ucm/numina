@@ -130,9 +130,7 @@ def register(subparsers, config):
         action="store_true",
         help="save the modified task control file",
     )
-    parser_run.add_argument(
-        "--session", action="store_true", help="use the obresult file as a session file"
-    )
+    parser_run.add_argument("--session", action="store_true", help="use the obresult file as a session file")
     parser_run.add_argument(
         "--validate",
         action="store_const",
@@ -152,9 +150,7 @@ def register(subparsers, config):
         dest="strict_reqs",
         help="warn if a requirement name is not matched by the recipe",
     )
-    parser_run.add_argument(
-        "obsresult", nargs="+", help="file with the observation result"
-    )
+    parser_run.add_argument("obsresult", nargs="+", help="file with the observation result")
 
     parser_run.set_defaults(command=mode_run_obsmode, strict_reqs=True)
 

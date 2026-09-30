@@ -13,9 +13,9 @@ from .matplotlib_qt import set_window_geometry
 from .pause_debugplot import pause_debugplot
 
 
-def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
-            geometry=(0, 0, 640, 480), tight_layout=True,
-            debugplot=None):
+def ximplot(
+    ycut, title=None, show=True, plot_bbox=(0, 0), geometry=(0, 0, 640, 480), tight_layout=True, debugplot=None
+):
     """Auxiliary function to display 1d plot.
 
     Parameters
@@ -52,25 +52,23 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
 
     # protections
     if type(ycut) is not np.ndarray:
-        raise ValueError("ycut=" + str(ycut) +
-                         " must be a numpy.ndarray")
+        raise ValueError("ycut=" + str(ycut) + " must be a numpy.ndarray")
     elif ycut.ndim != 1:
-        raise ValueError("ycut.ndim=" + str(ycut.dim) +
-                         " must be 1")
+        raise ValueError("ycut.ndim=" + str(ycut.dim) + " must be 1")
 
     # read bounding box limits
     nc1, nc2 = plot_bbox
-    plot_coord = (nc1 == 0 and nc2 == 0)
+    plot_coord = nc1 == 0 and nc2 == 0
 
     naxis1_ = ycut.size
     if not plot_coord:
         # check that ycut size corresponds to bounding box size
         if naxis1_ != nc2 - nc1 + 1:
-            raise ValueError("ycut.size=" + str(ycut.size) +
-                             " does not correspond to bounding box size")
+            raise ValueError("ycut.size=" + str(ycut.size) + " does not correspond to bounding box size")
 
     # display image
     from numina.array.display.matplotlib_qt import plt
+
     if not show:
         plt.ioff()
 
@@ -83,17 +81,17 @@ def ximplot(ycut, title=None, show=True, plot_bbox=(0, 0),
         xmin = -0.5
         xmax = (naxis1_ - 1) + 0.5
         xcut = np.arange(naxis1_, dtype=float)
-        ax.set_xlabel('image array index in the X direction')
-        ax.set_ylabel('pixel value')
+        ax.set_xlabel("image array index in the X direction")
+        ax.set_ylabel("pixel value")
     else:
         xmin = float(nc1) - 0.5
         xmax = float(nc2) + 0.5
         xcut = np.linspace(start=nc1, stop=nc2, num=nc2 - nc1 + 1)
-        ax.set_xlabel('image pixel in the X direction')
-        ax.set_ylabel('pixel value')
+        ax.set_xlabel("image pixel in the X direction")
+        ax.set_ylabel("pixel value")
     ax.set_xlim(xmin, xmax)
     ax.set_ylim(ymin, ymax)
-    ax.plot(xcut, ycut, '-')
+    ax.plot(xcut, ycut, "-")
     if title is not None:
         ax.set_title(title)
 

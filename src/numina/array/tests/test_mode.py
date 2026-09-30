@@ -1,4 +1,3 @@
-
 import numpy
 from ..mode import mode_half_sample, mode_sex
 

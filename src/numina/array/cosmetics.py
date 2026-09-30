@@ -15,7 +15,6 @@ import scipy.stats
 import scipy.ndimage
 from numina.array.blocks import max_blk_coverage, blk_nd_short
 
-
 # Values stored in integer masks
 PIXEL_HOT = 1
 PIXEL_DEAD = 1
@@ -38,8 +37,9 @@ def update_mask(mask, gmask, newmask, value):
 
 
 # IRAF task
-def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
-            siglev=1.0, mode='region', nmed=(7, 7), nsig=(15, 15)):
+def ccdmask(
+    flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0, siglev=1.0, mode="region", nmed=(7, 7), nsig=(15, 15)
+):
     """Find cosmetic defects in a detector using two flat field images.
 
     Two arrays representing flat fields of different exposure times are
@@ -96,7 +96,7 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
         flat1 = numpy.ones_like(flat2)
 
     if mask is None:
-        mask = numpy.zeros_like(flat1, dtype='int')
+        mask = numpy.zeros_like(flat1, dtype="int")
 
     ratio = numpy.zeros_like(flat1)
     invalid = numpy.zeros_like(flat1)
@@ -104,9 +104,9 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
     invalid[mask == PIXEL_DEAD] = LOW_SIGMA
 
     gmask = mask == PIXEL_VALID
-    _logger.info('valid points in input mask %d', numpy.count_nonzero(gmask))
+    _logger.info("valid points in input mask %d", numpy.count_nonzero(gmask))
     smask = mask != PIXEL_VALID
-    _logger.info('invalid points in input mask %d', numpy.count_nonzero(smask))
+    _logger.info("invalid points in input mask %d", numpy.count_nonzero(smask))
 
     # check if there are zeros in flat1 and flat2
     zero_mask = numpy.logical_or(flat1[gmask] <= 0, flat2[gmask] <= 0)
@@ -121,34 +121,34 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
     ratio[gmask] = flat2[gmask] / flat1[gmask]
     ratio[smask] = invalid[smask]
 
-    if mode == 'region':
-        _logger.info('computing median in boxes of %r', nmed)
+    if mode == "region":
+        _logger.info("computing median in boxes of %r", nmed)
         ratio_med = scipy.ndimage.median_filter(ratio, size=nmed)
         # subtracting the median map
         ratio[gmask] -= ratio_med[gmask]
     else:
-        _logger.info('computing median in full array')
+        _logger.info("computing median in full array")
         ratio_med = numpy.median(ratio[gmask])
         ratio[gmask] -= ratio_med
 
     # Quantiles that contain nsig sigma in normal distribution
     qns = 100 * scipy.stats.norm.cdf(siglev)
     pns = 100 - qns
-    _logger.info('percentiles at siglev=%f', siglev)
-    _logger.info('low %f%% high %f%%', pns, qns)
+    _logger.info("percentiles at siglev=%f", siglev)
+    _logger.info("low %f%% high %f%%", pns, qns)
 
     # in several blocks of shape nsig
     # we estimate sigma
     sigma = numpy.zeros_like(ratio)
 
-    if mode == 'region':
+    if mode == "region":
         mshape = max_blk_coverage(blk=nsig, shape=ratio.shape)
-        _logger.info('estimating sigma in boxes of %r', nsig)
-        _logger.info('shape covered by boxes is  %r', mshape)
+        _logger.info("estimating sigma in boxes of %r", nsig)
+        _logger.info("shape covered by boxes is  %r", mshape)
         block_gen = blk_nd_short(blk=nsig, shape=ratio.shape)
     else:
         mshape = ratio.shape
-        _logger.info('estimating sigma in full array')
+        _logger.info("estimating sigma in full array")
         # slice(None) is equivalent to [:]
         block_gen = itertools.repeat(slice(None), 1)
 
@@ -159,12 +159,12 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
         ls = scipy.stats.scoreatpercentile(valid_points, pns)
         hs = scipy.stats.scoreatpercentile(valid_points, qns)
 
-        _logger.debug('score at percentiles')
-        _logger.debug('low %f high %f', ls, hs)
+        _logger.debug("score at percentiles")
+        _logger.debug("low %f high %f", ls, hs)
 
         # sigma estimation
         sig = (hs - ls) / (2 * siglev)
-        _logger.debug('sigma estimation is %f ', sig)
+        _logger.debug("sigma estimation is %f ", sig)
 
         # normalized points
         sigma[blk] = sig
@@ -173,12 +173,12 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
     fill0 = ratio.shape[0] - mshape[0]
     fill1 = ratio.shape[1] - mshape[1]
     if fill0 > 0:
-        _logger.info('filling %d rows in sigma image', fill0)
-        sigma[:, mshape[0]:] = sigma[:, mshape[0] - fill0:mshape[0]]
+        _logger.info("filling %d rows in sigma image", fill0)
+        sigma[:, mshape[0] :] = sigma[:, mshape[0] - fill0 : mshape[0]]
 
     if fill1 > 0:
-        _logger.info('filling %d columns in sigma image', fill1)
-        sigma[mshape[1]:, :] = sigma[mshape[1] - fill1:mshape[1], :]
+        _logger.info("filling %d columns in sigma image", fill1)
+        sigma[mshape[1] :, :] = sigma[mshape[1] - fill1 : mshape[1], :]
 
     # invalid_sigma = sigma <= 0.0
     # if numpy.any(invalid_sigma):
@@ -199,6 +199,7 @@ def ccdmask(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0,
 
 def robust_std(valid, central, siglev):
     import scipy.stats
+
     qns = 100 * scipy.stats.norm.cdf(siglev)
     pns = 100 - qns
 
@@ -216,7 +217,7 @@ def comp_ratio(img1, img2, mask):
     mask1 = img1 <= 0
     mask2 = img2 <= 0
     mask3 = mask1 | mask2 | mask
-    with numpy.errstate(divide='ignore', invalid='ignore'):
+    with numpy.errstate(divide="ignore", invalid="ignore"):
         ratio = img1 / img2
     ratio[mask3] = 0.0
     return ratio, mask3
@@ -256,7 +257,7 @@ def cosmetics(flat1, flat2=None, mask=None, lowercut=6.0, uppercut=6.0, siglev=2
         flat1 = numpy.ones_like(flat2)
 
     if type(mask) is not numpy.ndarray:
-        mask = numpy.zeros(flat1.shape, dtype='int')
+        mask = numpy.zeros(flat1.shape, dtype="int")
 
     ratio, mask = comp_ratio(flat1, flat2, mask)
     fratio1 = ratio[~mask]

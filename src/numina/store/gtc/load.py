@@ -17,26 +17,26 @@ import numina.types.dataframe as dataframe
 
 def process_node(node):
     """Process a node in result.json structure"""
-    value = node['value']
-    mname = node['name']
-    typeid = node['typeid']
+    value = node["value"]
+    mname = node["name"]
+    typeid = node["typeid"]
     if typeid == 52:  # StructDataValue
         obj = {}
-        for el in value['elements']:
+        for el in value["elements"]:
             key, val = process_node(el)
             obj[key] = val
 
-        if value['struct_type'] != 'dict':
+        if value["struct_type"] != "dict":
             # Value is not a dict
-            klass = objimp.import_object(value['struct_type'])
+            klass = objimp.import_object(value["struct_type"])
             newobj = klass.__new__(klass)
-            if hasattr(newobj, '__setstate__'):
+            if hasattr(newobj, "__setstate__"):
                 newobj.__setstate__(obj)
             else:
                 newobj.__dict__ = obj
             obj = newobj
     elif typeid == 9:
-        data = value['data']
+        data = value["data"]
         # dim = value['dimension']
         # shape = dim['height'], dim['width']
         obj = data
@@ -44,13 +44,13 @@ def process_node(node):
         obj = []
         for el in value:
             sobj = {}
-            for sel in el['elements']:
+            for sel in el["elements"]:
                 key, val = process_node(sel)
                 sobj[key] = val
             obj.append(sobj)
 
     elif typeid == 45:  # Frame
-        obj = dataframe.DataFrame(frame=os.path.abspath(value['path']))
+        obj = dataframe.DataFrame(frame=os.path.abspath(value["path"]))
     else:
         obj = value
 
@@ -61,7 +61,7 @@ def build_result(data):
     """Create a dictionary with the contents of result.json"""
     more = {}
     for key, value in data.items():
-        if key != 'elements':
+        if key != "elements":
             newnode = value
         else:
             newnode = {}
@@ -74,7 +74,7 @@ def build_result(data):
     return more
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import json
 

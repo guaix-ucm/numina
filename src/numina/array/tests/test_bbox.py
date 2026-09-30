@@ -1,4 +1,3 @@
-
 import pytest
 
 import numina.array.bbox as bbox
@@ -161,6 +160,7 @@ def test_pixin5():
     assert bb.slice == (slice(2, 2, None), slice(1, 1, None))
 
     import numpy as np
+
     a = np.zeros((10, 10))
     assert (a[bb.slice].shape) == bb.shape
 

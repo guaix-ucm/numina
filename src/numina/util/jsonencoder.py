@@ -17,7 +17,7 @@ import numina.types.qc
 
 
 class ExtEncoder(json.JSONEncoder):
-    """"Encode numpy.floats and numpy.integer"""
+    """ "Encode numpy.floats and numpy.integer"""
 
     def default(self, obj):
         if isinstance(obj, numpy.integer):

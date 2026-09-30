@@ -69,10 +69,10 @@ def compute_fw_at_frac_max_1d_simple(Y, xc, X=None, f=0.5):
     yy = np.asarray(Y)
 
     if yy.ndim != 1:
-        raise ValueError('array must be 1-d')
+        raise ValueError("array must be 1-d")
 
     if yy.size == 0:
-        raise ValueError('array is empty')
+        raise ValueError("array is empty")
 
     if X is None:
         xx = np.arange(yy.shape[0])
@@ -84,15 +84,15 @@ def compute_fw_at_frac_max_1d_simple(Y, xc, X=None, f=0.5):
     try:
         peak = yy[xpix]
     except IndexError:
-        raise ValueError('peak is out of array')
+        raise ValueError("peak is out of array")
 
     fwhm_x, _codex, _msgx = compute_fwhm_1d(xx, yy - f * peak, xc, xpix)
     return peak, fwhm_x
 
 
 def _fwhm_side_lineal(uu, vv):
-    '''Compute r12 using linear interpolation.'''
-    res1, = np.nonzero(vv < 0)
+    """Compute r12 using linear interpolation."""
+    (res1,) = np.nonzero(vv < 0)
     if len(res1) == 0:
         return 0, 1  # error, no negative value
     else:
@@ -118,19 +118,19 @@ def compute_fwhm_1d(uu, vv, uc, upix):
     if errorm == 1:
         if errorp == 1:
             fwhm = -99  # No way
-            msg = 'Failed to compute FWHM'
+            msg = "Failed to compute FWHM"
             code = 2
         else:
             fwhm = 2 * (r12p - uc)
             code = 1
-            msg = 'FWHM computed from right zero'
+            msg = "FWHM computed from right zero"
     else:
         if errorp == 1:
             fwhm = 2 * (uc - r12m)
-            msg = 'FWHM computed from left zero'
+            msg = "FWHM computed from left zero"
             code = 1
         else:
-            msg = 'FWHM computed from left and right zero'
+            msg = "FWHM computed from left and right zero"
             code = 0
             fwhm = r12p - r12m
 

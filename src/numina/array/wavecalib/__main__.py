@@ -29,9 +29,7 @@ from .peaks_spectrum import refine_peaks_spectrum
 from ..display.pause_debugplot import DEBUGPLOT_CODES
 
 
-def collapsed_spectrum(fitsfile, ns1, ns2,
-                       method='mean', nwin_background=0,
-                       reverse=False, out_sp=None, debugplot=0):
+def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None, debugplot=0):
     """Compute a collapsed spectrum from a 2D image using scans in [ns1,ns2].
 
     Parameters
@@ -72,16 +70,16 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
         image2d = hdulist[0].data
     naxis2, naxis1 = image2d.shape
     if abs(debugplot) >= 10:
-        print('>>> Reading file:', fitsfile)
-        print('>>> NAXIS1:', naxis1)
-        print('>>> NAXIS2:', naxis2)
+        print(">>> Reading file:", fitsfile)
+        print(">>> NAXIS1:", naxis1)
+        print(">>> NAXIS2:", naxis2)
 
     if 1 <= ns1 <= ns2 <= naxis2:
         # extract spectrum
         if method == "mean":
-            sp = np.mean(image2d[(ns1 - 1):ns2], axis=0)
+            sp = np.mean(image2d[(ns1 - 1) : ns2], axis=0)
         elif method == "median":
-            sp = np.median(image2d[(ns1 - 1):ns2], axis=0)
+            sp = np.median(image2d[(ns1 - 1) : ns2], axis=0)
         else:
             raise ValueError("Invalid method '" + str(method) + "'")
 
@@ -91,9 +89,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
 
         # fit and subtract background
         if nwin_background > 0:
-            background = ndimage.filters.median_filter(
-                sp, size=nwin_background
-            )
+            background = ndimage.filters.median_filter(sp, size=nwin_background)
             sp -= background
 
         # save spectrum before wavelength calibration in external
@@ -102,13 +98,12 @@ def collapsed_spectrum(fitsfile, ns1, ns2,
             hdu = fits.PrimaryHDU(sp)
             hdu.writeto(out_sp, overwrite=True)
     else:
-        raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) +
-                         " values")
+        raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) + " values")
 
     return sp
 
 
-def read_wv_master_from_array(master_table, lines='brightest', debugplot=0):
+def read_wv_master_from_array(master_table, lines="brightest", debugplot=0):
     """read arc line wavelengths from numpy array
 
     Parameters
@@ -134,8 +129,8 @@ def read_wv_master_from_array(master_table, lines='brightest', debugplot=0):
     """
 
     # protection
-    if lines not in ['brightest', 'all']:
-        raise ValueError('Unexpected lines=' + str(lines))
+    if lines not in ["brightest", "all"]:
+        raise ValueError("Unexpected lines=" + str(lines))
 
     # determine wavelengths according to the number of columns
     if master_table.ndim == 1:
@@ -145,14 +140,13 @@ def read_wv_master_from_array(master_table, lines='brightest', debugplot=0):
         if master_table.shape[1] == 2:  # assume old format
             wv_master = np.copy(wv_master_all)
         elif master_table.shape[1] == 3:  # assume new format
-            if lines == 'brightest':
+            if lines == "brightest":
                 wv_flag = master_table[:, 1]
                 wv_master = wv_master_all[np.where(wv_flag == 1)]
             else:
                 wv_master = np.copy(wv_master_all)
         else:
-            raise ValueError('Lines_catalog file does not have the '
-                             'expected number of columns')
+            raise ValueError("Lines_catalog file does not have the " "expected number of columns")
 
     if abs(debugplot) >= 10:
         print("Reading master table from numpy array")
@@ -161,7 +155,7 @@ def read_wv_master_from_array(master_table, lines='brightest', debugplot=0):
     return wv_master
 
 
-def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
+def read_wv_master_file(wv_master_file, lines="brightest", debugplot=0):
     """read arc line wavelengths from external file.
 
     Parameters
@@ -187,8 +181,8 @@ def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
     """
 
     # protection
-    if lines not in ['brightest', 'all']:
-        raise ValueError('Unexpected lines=' + str(lines))
+    if lines not in ["brightest", "all"]:
+        raise ValueError("Unexpected lines=" + str(lines))
 
     # read table from txt file
     master_table = np.genfromtxt(wv_master_file)
@@ -202,18 +196,20 @@ def read_wv_master_file(wv_master_file, lines='brightest', debugplot=0):
     return wv_master
 
 
-def find_fxpeaks(sp,
-                 times_sigma_threshold,
-                 minimum_threshold,
-                 nwinwidth_initial,
-                 nwinwidth_refined,
-                 npix_avoid_border,
-                 nbrightlines,
-                 sigma_gaussian_filtering,
-                 minimum_gaussian_filtering,
-                 plottitle=None,
-                 geometry=None,
-                 debugplot=0):
+def find_fxpeaks(
+    sp,
+    times_sigma_threshold,
+    minimum_threshold,
+    nwinwidth_initial,
+    nwinwidth_refined,
+    npix_avoid_border,
+    nbrightlines,
+    sigma_gaussian_filtering,
+    minimum_gaussian_filtering,
+    plottitle=None,
+    geometry=None,
+    debugplot=0,
+):
     """Locate line peaks in array coordinates (from 0 to naxis1-1).
 
     Parameters
@@ -269,10 +265,7 @@ def find_fxpeaks(sp,
 
     # apply gaussian filtering when requested
     if sigma_gaussian_filtering > 0:
-        spf = ndimage.filters.gaussian_filter(
-            sp,
-            sigma=sigma_gaussian_filtering
-        )
+        spf = ndimage.filters.gaussian_filter(sp, sigma=sigma_gaussian_filtering)
         lpreserve = sp < minimum_gaussian_filtering
         spf[lpreserve] = sp[lpreserve]
     else:
@@ -293,18 +286,16 @@ def find_fxpeaks(sp,
         print("final threshold..:", threshold)
 
     # initial location of the peaks (integer values)
-    ixpeaks = find_peaks_spectrum(spf,
-                                  nwinwidth=nwinwidth_initial,
-                                  threshold=threshold)
+    ixpeaks = find_peaks_spectrum(spf, nwinwidth=nwinwidth_initial, threshold=threshold)
 
     # select a maximum number of brightest lines in each region
     if len(nbrightlines) == 1 and nbrightlines[0] == 0:
         pass
     else:
         if abs(debugplot) >= 10:
-            print('nbrightlines =', nbrightlines)
-            print('ixpeaks in whole spectrum:\n', ixpeaks)
-        region_size = (naxis1-1)/len(nbrightlines)
+            print("nbrightlines =", nbrightlines)
+            print("ixpeaks in whole spectrum:\n", ixpeaks)
+        region_size = (naxis1 - 1) / len(nbrightlines)
         ixpeaks_filtered = np.array([], dtype=int)
         for iregion, nlines_in_region in enumerate(nbrightlines):
             if nlines_in_region > 0:
@@ -312,20 +303,18 @@ def find_fxpeaks(sp,
                 imax = int((iregion + 1) * region_size)
                 if iregion > 0:
                     imin += 1
-                ixpeaks_region = \
-                    ixpeaks[np.logical_and(ixpeaks >= imin, ixpeaks <= imax)]
+                ixpeaks_region = ixpeaks[np.logical_and(ixpeaks >= imin, ixpeaks <= imax)]
                 if len(ixpeaks_region) > 0:
                     peak_fluxes = spf[ixpeaks_region]
                     spos = peak_fluxes.argsort()
                     ixpeaks_tmp = ixpeaks_region[spos[-nlines_in_region:]]
                     ixpeaks_tmp.sort()  # in-place sort
                     if abs(debugplot) >= 10:
-                        print('ixpeaks in region........:\n', ixpeaks_tmp)
-                    ixpeaks_filtered = np.concatenate((ixpeaks_filtered,
-                                                       ixpeaks_tmp))
+                        print("ixpeaks in region........:\n", ixpeaks_tmp)
+                    ixpeaks_filtered = np.concatenate((ixpeaks_filtered, ixpeaks_tmp))
         ixpeaks = ixpeaks_filtered
         if abs(debugplot) >= 10:
-            print('ixpeaks filtered.........:\n', ixpeaks)
+            print("ixpeaks filtered.........:\n", ixpeaks)
 
     # remove peaks too close to any of the borders of the spectrum
     if npix_avoid_border > 0:
@@ -334,24 +323,21 @@ def find_fxpeaks(sp,
         ixpeaks = ixpeaks[lok_ini * lok_end]
 
     # refined location of the peaks (float values)
-    fxpeaks, sxpeaks = refine_peaks_spectrum(spf, ixpeaks,
-                                             nwinwidth=nwinwidth_refined,
-                                             method="gaussian")
+    fxpeaks, sxpeaks = refine_peaks_spectrum(spf, ixpeaks, nwinwidth=nwinwidth_refined, method="gaussian")
 
     # print peak location and width of fitted lines
     if abs(debugplot) >= 10:
         print(">>> Number of lines found:", len(fxpeaks))
         print("# line_number, channel, width")
         for i, (fx, sx) in enumerate(zip(fxpeaks, sxpeaks)):
-            print(i, fx+1, sx)
+            print(i, fx + 1, sx)
 
     # display median spectrum and peaks
     if abs(debugplot) % 10 != 0:
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        ax = ximplotxy(xplot, sp, show=False, geometry=geometry,
-                       **{'label': 'original spectrum'})
-        ax.set_xlabel('pixel (from 1 to NAXIS1)')
-        ax.set_ylabel('counts')
+        ax = ximplotxy(xplot, sp, show=False, geometry=geometry, **{"label": "original spectrum"})
+        ax.set_xlabel("pixel (from 1 to NAXIS1)")
+        ax.set_ylabel("counts")
         if plottitle is not None:
             ax.set_title(plottitle)
         if sigma_gaussian_filtering > 0:
@@ -359,15 +345,14 @@ def find_fxpeaks(sp,
         ymin = sp.min()
         ymax = sp.max()
         dy = ymax - ymin
-        ymin -= dy/20.
-        ymax += dy/20.
+        ymin -= dy / 20.0
+        ymax += dy / 20.0
         ax.set_ylim([ymin, ymax])
         # display threshold
-        ax.axhline(y=threshold, color="black", linestyle="dotted",
-                   label="detection threshold")
+        ax.axhline(y=threshold, color="black", linestyle="dotted", label="detection threshold")
         # mark peak location
-        ax.plot(ixpeaks + 1, spf[ixpeaks], 'bo', label="initial location")
-        ax.plot(fxpeaks + 1, spf[ixpeaks], 'go', label="refined location")
+        ax.plot(ixpeaks + 1, spf[ixpeaks], "bo", label="initial location")
+        ax.plot(fxpeaks + 1, spf[ixpeaks], "go", label="refined location")
         # legend
         ax.legend(numpoints=1)
         # show plot
@@ -376,10 +361,18 @@ def find_fxpeaks(sp,
     return fxpeaks, sxpeaks
 
 
-def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
-                   wv_ini_search=None, wv_end_search=None,
-                   wvmin_useful=None, wvmax_useful=None,
-                   geometry=None, debugplot=0):
+def wvcal_spectrum(
+    sp,
+    fxpeaks,
+    poly_degree_wfit,
+    wv_master,
+    wv_ini_search=None,
+    wv_end_search=None,
+    wvmin_useful=None,
+    wvmax_useful=None,
+    geometry=None,
+    debugplot=0,
+):
     """Execute wavelength calibration of a spectrum using fixed line peaks.
 
     Parameters
@@ -453,7 +446,7 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         times_sigma_cook=10.0,
         times_sigma_inclusion=10.0,
         geometry=geometry,
-        debugplot=debugplot
+        debugplot=debugplot,
     )
 
     title = "Wavelength calibration"
@@ -465,31 +458,34 @@ def wvcal_spectrum(sp, fxpeaks, poly_degree_wfit, wv_master,
         weighted=False,
         plot_title=title,
         geometry=geometry,
-        debugplot=debugplot
+        debugplot=debugplot,
     )
 
     if abs(debugplot) % 10 != 0:
         # final plot with identified lines
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        ax = ximplotxy(xplot, sp, title=title, show=False,
-                       xlabel='pixel (from 1 to NAXIS1)',
-                       ylabel='number of counts',
-                       geometry=geometry)
+        ax = ximplotxy(
+            xplot,
+            sp,
+            title=title,
+            show=False,
+            xlabel="pixel (from 1 to NAXIS1)",
+            ylabel="number of counts",
+            geometry=geometry,
+        )
         ymin = sp.min()
         ymax = sp.max()
-        dy = ymax-ymin
-        ymin -= dy/20.
-        ymax += dy/20.
+        dy = ymax - ymin
+        ymin -= dy / 20.0
+        ymax += dy / 20.0
         ax.set_ylim([ymin, ymax])
         # plot wavelength of each identified line
         for feature in solution_wv.features:
             xpos = feature.xpos
             reference = feature.reference
-            ax.text(xpos, sp[int(xpos+0.5)-1],
-                    str(reference), fontsize=8,
-                    horizontalalignment='center')
+            ax.text(xpos, sp[int(xpos + 0.5) - 1], str(reference), fontsize=8, horizontalalignment="center")
         # show plot
-        print('Plot with identified lines')
+        print("Plot with identified lines")
         pause_debugplot(12, pltshow=True)
 
     # return the wavelength calibration solution
@@ -500,106 +496,92 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser()
     # required parameters
-    parser.add_argument("fitsfile",
-                        help="FITS image containing the spectra",
-                        type=str)
-    parser.add_argument("--scans", required=True,
-                        help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
-    parser.add_argument("--wv_master_file", required=True,
-                        help="TXT file containing wavelengths")
-    parser.add_argument("--degree", required=True,
-                        help="Polynomial degree", type=int)
+    parser.add_argument("fitsfile", help="FITS image containing the spectra", type=str)
+    parser.add_argument("--scans", required=True, help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
+    parser.add_argument("--wv_master_file", required=True, help="TXT file containing wavelengths")
+    parser.add_argument("--degree", required=True, help="Polynomial degree", type=int)
     # optional arguments
-    parser.add_argument("--wvmin",
-                        help="Minimum expected wavelength",
-                        type=float)
-    parser.add_argument("--wvmax",
-                        help="Maximum expected wavelength",
-                        type=float)
-    parser.add_argument("--wvmin_useful",
-                        help="Minimum useful wavelength",
-                        type=float)
-    parser.add_argument("--wvmax_useful",
-                        help="Maximum useful wavelength",
-                        type=float)
-    parser.add_argument("--nwin_background",
-                        help="window to compute background (0=none)"
-                        " (default=0)",
-                        default=0, type=int)
-    parser.add_argument("--method",
-                        help="collapsing method (default='mean', 'median')",
-                        default='mean',
-                        choices=['mean', 'median'])
-    parser.add_argument("--times_sigma_threshold",
-                        help="Threshold (times robust sigma to detect lines)"
-                             " (default=10)",
-                        default=10, type=float)
-    parser.add_argument("--minimum_threshold",
-                        help="Minimum threshold to detect lines"
-                             " (default=0)",
-                        default=0, type=float)
-    parser.add_argument("--nwinwidth_initial",
-                        help="Initial window width to detect lines"
-                             " (default=7)",
-                        default=7, type=int)
-    parser.add_argument("--nwinwidth_refined",
-                        help="Refined window width to detect lines"
-                             " (default=5)",
-                        default=5, type=int)
-    parser.add_argument("--npix_avoid_border",
-                        help="Number of pixels in the borders to be avoided"
-                             " (default=6)",
-                        default=6, type=int)
-    parser.add_argument("--nbrightlines",
-                        help="Tuple n1,[n2,[n3,...]] with maximum number of "
-                             "brightest lines to be used [0=all] (default=0)",
-                        default=0)
-    parser.add_argument("--degree_refined",
-                        help="Degree of the refined fit using faint lines "
-                             "from wv_master_file (default=None, i.e. no "
-                             "refinement)",
-                        default=None, type=int)
-    parser.add_argument("--sigma_gauss_filt",
-                        help="Sigma (pixels) of gaussian filtering to avoid "
-                             "saturared lines (default=0)",
-                        default=0, type=float)
-    parser.add_argument("--minimum_gauss_filt",
-                        help="Minimum pixel value to use gaussian filtering "
-                             "(default=0)",
-                        default=0, type=float)
-    parser.add_argument("--reverse",
-                        help="Reverse wavelength direction",
-                        action="store_true")
-    parser.add_argument("--out_sp",
-                        help="File name to save the selected spectrum in FITS "
-                             "format before performing the wavelength "
-                             "calibration (default=None)",
-                        default=None,
-                        type=str)
-    parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy (default 0,0,640,480)",
-                        default="0,0,640,480")
-    parser.add_argument("--pdffile",
-                        help="Output PDF file name",
-                        type=lambda x: arg_file_is_new(parser, x, mode='wb'))
-    parser.add_argument("--debugplot",
-                        help="Integer indicating plotting/debugging" +
-                        " (default=0)",
-                        default=0, type=int,
-                        choices=DEBUGPLOT_CODES)
-    parser.add_argument("--echo",
-                        help="Display full command line",
-                        action="store_true")
+    parser.add_argument("--wvmin", help="Minimum expected wavelength", type=float)
+    parser.add_argument("--wvmax", help="Maximum expected wavelength", type=float)
+    parser.add_argument("--wvmin_useful", help="Minimum useful wavelength", type=float)
+    parser.add_argument("--wvmax_useful", help="Maximum useful wavelength", type=float)
+    parser.add_argument(
+        "--nwin_background", help="window to compute background (0=none)" " (default=0)", default=0, type=int
+    )
+    parser.add_argument(
+        "--method", help="collapsing method (default='mean', 'median')", default="mean", choices=["mean", "median"]
+    )
+    parser.add_argument(
+        "--times_sigma_threshold",
+        help="Threshold (times robust sigma to detect lines)" " (default=10)",
+        default=10,
+        type=float,
+    )
+    parser.add_argument(
+        "--minimum_threshold", help="Minimum threshold to detect lines" " (default=0)", default=0, type=float
+    )
+    parser.add_argument(
+        "--nwinwidth_initial", help="Initial window width to detect lines" " (default=7)", default=7, type=int
+    )
+    parser.add_argument(
+        "--nwinwidth_refined", help="Refined window width to detect lines" " (default=5)", default=5, type=int
+    )
+    parser.add_argument(
+        "--npix_avoid_border", help="Number of pixels in the borders to be avoided" " (default=6)", default=6, type=int
+    )
+    parser.add_argument(
+        "--nbrightlines",
+        help="Tuple n1,[n2,[n3,...]] with maximum number of " "brightest lines to be used [0=all] (default=0)",
+        default=0,
+    )
+    parser.add_argument(
+        "--degree_refined",
+        help="Degree of the refined fit using faint lines " "from wv_master_file (default=None, i.e. no " "refinement)",
+        default=None,
+        type=int,
+    )
+    parser.add_argument(
+        "--sigma_gauss_filt",
+        help="Sigma (pixels) of gaussian filtering to avoid " "saturared lines (default=0)",
+        default=0,
+        type=float,
+    )
+    parser.add_argument(
+        "--minimum_gauss_filt",
+        help="Minimum pixel value to use gaussian filtering " "(default=0)",
+        default=0,
+        type=float,
+    )
+    parser.add_argument("--reverse", help="Reverse wavelength direction", action="store_true")
+    parser.add_argument(
+        "--out_sp",
+        help="File name to save the selected spectrum in FITS "
+        "format before performing the wavelength "
+        "calibration (default=None)",
+        default=None,
+        type=str,
+    )
+    parser.add_argument("--geometry", help="tuple x,y,dx,dy (default 0,0,640,480)", default="0,0,640,480")
+    parser.add_argument("--pdffile", help="Output PDF file name", type=lambda x: arg_file_is_new(parser, x, mode="wb"))
+    parser.add_argument(
+        "--debugplot",
+        help="Integer indicating plotting/debugging" + " (default=0)",
+        default=0,
+        type=int,
+        choices=DEBUGPLOT_CODES,
+    )
+    parser.add_argument("--echo", help="Display full command line", action="store_true")
     args = parser.parse_args(args=args)
 
     if args.echo:
-        print('\033[1m\033[31m% ' + ' '.join(sys.argv) + '\033[0m\n')
+        print("\033[1m\033[31m% " + " ".join(sys.argv) + "\033[0m\n")
 
     # ---
 
     # read pdffile
     if args.pdffile is not None:
         from matplotlib.backends.backend_pdf import PdfPages
+
         pdf = PdfPages(args.pdffile.name)
         interactive_refinement = False
     else:
@@ -639,17 +621,19 @@ def main(args=None):
 
     # compute collapsed spectrum
     sp = collapsed_spectrum(
-        fitsfile=args.fitsfile, ns1=ns1, ns2=ns2,
+        fitsfile=args.fitsfile,
+        ns1=ns1,
+        ns2=ns2,
         method=args.method,
         nwin_background=args.nwin_background,
         reverse=args.reverse,
-        debugplot=args.debugplot
+        debugplot=args.debugplot,
     )
 
     # read arc line wavelengths from external file (all the lines)
-    wv_master_all = read_wv_master_file(args.wv_master_file, lines='all')
+    wv_master_all = read_wv_master_file(args.wv_master_file, lines="all")
     # read arc line wavelengths from external file (brightest lines only)
-    wv_master = read_wv_master_file(args.wv_master_file, lines='brightest')
+    wv_master = read_wv_master_file(args.wv_master_file, lines="brightest")
 
     # clip master arc line lists to expected wavelength range
     if args.wvmin is None:
@@ -683,8 +667,7 @@ def main(args=None):
 
     # determine refined peak location in array coordinates, i.e.,
     # from 0 to (naxis - 1)
-    plottitle0 = ' [{}, {}:{}],  line list: {}'.format(
-        args.method, ns1, ns2, os.path.basename(args.wv_master_file))
+    plottitle0 = " [{}, {}:{}],  line list: {}".format(args.method, ns1, ns2, os.path.basename(args.wv_master_file))
     plottitle = os.path.basename(args.fitsfile) + plottitle0
     fxpeaks, sxpeaks = find_fxpeaks(
         sp=sp,
@@ -698,7 +681,7 @@ def main(args=None):
         minimum_gaussian_filtering=args.minimum_gauss_filt,
         plottitle=plottitle,
         geometry=geometry,
-        debugplot=args.debugplot
+        debugplot=args.debugplot,
     )
 
     # perform wavelength calibration
@@ -712,15 +695,12 @@ def main(args=None):
         wvmin_useful=args.wvmin_useful,
         wvmax_useful=args.wvmax_useful,
         geometry=geometry,
-        debugplot=args.debugplot
+        debugplot=args.debugplot,
     )
 
     # apply gaussian filtering
     if args.sigma_gauss_filt > 0:
-        spf = ndimage.filters.gaussian_filter(
-            sp,
-            sigma=args.sigma_gauss_filt
-        )
+        spf = ndimage.filters.gaussian_filter(sp, sigma=args.sigma_gauss_filt)
     else:
         spf = np.copy(sp)
 
@@ -761,7 +741,7 @@ def main(args=None):
             interactive=interactive_refinement,
             geometry=geometry,
             pdf=pdf,
-            debugplot=args.debugplot
+            debugplot=args.debugplot,
         )
 
     if pdf is not None:

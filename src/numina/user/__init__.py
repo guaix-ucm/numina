@@ -7,9 +7,9 @@
 # License-Filename: LICENSE.txt
 #
 
-'''User command line interface of Numina.'''
+"""User command line interface of Numina."""
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     from .cli import main
 

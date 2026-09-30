@@ -1,4 +1,3 @@
-
 import os.path
 
 from ..helpers import WorkEnvironment
@@ -6,11 +5,11 @@ from ..helpers import WorkEnvironment
 
 def test_work1(tmpdir):
     """Test default definitions"""
-    base = 'base'
+    base = "base"
     basedir = str(tmpdir.dirpath(base))
-    data = 'data'
-    workdir = 'a'
-    resultsdir = 'b'
+    data = "data"
+    workdir = "a"
+    resultsdir = "b"
     work = WorkEnvironment(data, basedir, workdir, resultsdir)
     work.sane_work()
 

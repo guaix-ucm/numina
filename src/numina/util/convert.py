@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Convert strings to values in data load """
+"""Convert strings to values in data load"""
 
 import datetime
 
@@ -48,6 +48,7 @@ def convert_qc(value):
 
     """
     from numina.types.qc import QC
+
     if value:
         if isinstance(value, QC):
             return value

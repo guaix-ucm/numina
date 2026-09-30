@@ -19,13 +19,13 @@ class DataFrame(object):
 
     def __init__(self, frame=None, filename=None):
         if frame is None and filename is None:
-            raise ValueError('only one in frame and filename can be None')
+            raise ValueError("only one in frame and filename can be None")
         self.frame = frame
         self.filename = filename
 
     def open(self):
         if self.frame is None:
-            return fits.open(self.filename, mode='readonly')
+            return fits.open(self.filename, mode="readonly")
         else:
             return self.frame
 

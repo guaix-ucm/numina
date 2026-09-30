@@ -15,7 +15,7 @@ from .datatype import DataType
 class ArrayType(DataType):
     """A type of array."""
 
-    def __init__(self, fmt='%.18e', default=None):
+    def __init__(self, fmt="%.18e", default=None):
         super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
         self.fmt = fmt
 
@@ -33,9 +33,9 @@ class ArrayType(DataType):
             # if is a string, it may be a pathname, try to load it
 
             # heuristics, by extension
-            if obj.endswith('.csv'):
+            if obj.endswith(".csv"):
                 # try to open as a CSV file
-                res = numpy.loadtxt(obj, delimiter=',')
+                res = numpy.loadtxt(obj, delimiter=",")
             else:
                 res = numpy.loadtxt(obj)
         else:
@@ -61,11 +61,11 @@ def get_filename_obj(hdul, hint, ext):
 
 
 def get_filename_numpy_array(obj, where):
-    filename = get_filename_obj(obj, where, '.txt')
+    filename = get_filename_obj(obj, where, ".txt")
     return filename
 
 
-def dump_numpy_array(obj, where, fmt='%.18e'):
+def dump_numpy_array(obj, where, fmt="%.18e"):
     filename = get_filename_numpy_array(obj, where)
     numpy.savetxt(filename, obj, fmt=fmt)
     return filename

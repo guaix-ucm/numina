@@ -27,7 +27,7 @@ class LinesCatalog(DataProductType):
         super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
 
     def __numina_load__(self, obj):
-        with open(obj, 'r') as fd:
+        with open(obj, "r") as fd:
             linecat = numpy.loadtxt(fd)
         return linecat
 
@@ -38,12 +38,11 @@ class LinesCatalog(DataProductType):
 
         result = super(LinesCatalog, self).extract_db_info(objl, keys)
 
-        result['tags'] = {}
-        result['type'] = 'LinesCatalog'
-        result['uuid'] = str(uuid.uuid1())
-        result['observation_date'] = datetime.datetime.now(
-            datetime.timezone.utc)
-        result['quality_control'] = QC.GOOD
-        result['origin'] = {}
+        result["tags"] = {}
+        result["type"] = "LinesCatalog"
+        result["uuid"] = str(uuid.uuid1())
+        result["observation_date"] = datetime.datetime.now(datetime.timezone.utc)
+        result["quality_control"] = QC.GOOD
+        result["origin"] = {}
 
         return result

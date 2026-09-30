@@ -18,16 +18,24 @@ from ..display.pause_debugplot import pause_debugplot
 
 
 def polfit_residuals(
-        x, y, deg, reject=None,
-        color='b', size=75,
-        xlim=None, ylim=None, ylimres_with_rejected=False,
-        xlabel=None, ylabel=None, title=None,
-        use_r=False,
-        show=True,
-        geometry=(0, 0, 640, 480),
-        debugplot=0,
-        pdffile=None,
-        fig=None
+    x,
+    y,
+    deg,
+    reject=None,
+    color="b",
+    size=75,
+    xlim=None,
+    ylim=None,
+    ylimres_with_rejected=False,
+    xlabel=None,
+    ylabel=None,
+    title=None,
+    use_r=False,
+    show=True,
+    geometry=(0, 0, 640, 480),
+    debugplot=0,
+    pdffile=None,
+    fig=None,
 ):
     """Polynomial fit with display of residuals and additional work with R.
 
@@ -116,8 +124,7 @@ def polfit_residuals(
         if npoints != reject.size:
             raise ValueError("x.size != reject.size")
     if not isinstance(deg, numbers.Integral):
-        raise ValueError("deg=" + str(deg) +
-                         " is not a valid integer")
+        raise ValueError("deg=" + str(deg) + " is not a valid integer")
 
     # select points for fit
     if reject is None:
@@ -137,12 +144,12 @@ def polfit_residuals(
         nrejected = sum(reject)
 
     if deg > nfitted - 1:
-        raise ValueError("Insufficient nfitted=" + str(nfitted) +
-                         " for deg=" + str(deg))
+        raise ValueError("Insufficient nfitted=" + str(nfitted) + " for deg=" + str(deg))
 
     # polynomial fits using R
     if use_r:
         from ..rutilities import LinearModelYvsX
+
         print("\n>>> Total number of points:", nfitted)
         # using orthogonal polynomials
         myfit = LinearModelYvsX(x=xfitted, y=yfitted, degree=deg, raw=False)
@@ -177,21 +184,19 @@ def polfit_residuals(
         if np.array(color).size == 1:
             mycolor = np.array([color] * npoints)
             if reject is not None:
-                mycolor[reject] = 'r'
+                mycolor[reject] = "r"
         elif np.array(color).size == npoints:
             mycolor = np.copy(np.array(color))
         elif np.array(color).shape[0] == npoints:  # assume rgb color
             mycolor = np.copy(np.array(color))
         else:
-            raise ValueError("color=" + str(color) +
-                             " doesn't have the expected dimension")
+            raise ValueError("color=" + str(color) + " doesn't have the expected dimension")
         if np.array(size).size == 1:
             mysize = np.repeat([size], npoints)
         elif np.array(size).size == npoints:
             mysize = np.copy(np.array(size))
         else:
-            raise ValueError("size=" + str(size) +
-                             " doesn't have the expected dimension")
+            raise ValueError("size=" + str(size) + " doesn't have the expected dimension")
 
         if reject is None:
             cfitted = np.copy(mycolor)
@@ -205,6 +210,7 @@ def polfit_residuals(
             srejected = mysize[reject]
 
         from numina.array.display.matplotlib_qt import plt
+
         if fig is None:
             fig = plt.figure()
 
@@ -213,17 +219,17 @@ def polfit_residuals(
         # residuals
         ax2 = fig.add_subplot(2, 1, 2)
         if xlabel is None:
-            ax2.set_xlabel('x')
+            ax2.set_xlabel("x")
         else:
             ax2.set_xlabel(xlabel)
-        ax2.set_ylabel('residuals')
+        ax2.set_ylabel("residuals")
         if xlim is None:
             xmin = min(x)
             xmax = max(x)
             dx = xmax - xmin
             if dx > 0:
-                xmin -= dx/20
-                xmax += dx/20
+                xmin -= dx / 20
+                xmax += dx / 20
             else:
                 xmin -= 0.5
                 xmax += 0.5
@@ -249,18 +255,14 @@ def polfit_residuals(
             ymax += 0.5
         ax2.set_ylim(ymin, ymax)
         ax2.axhline(y=0.0, color="black", linestyle="dashed")
-        ax2.scatter(xfitted, yres_fitted, color=cfitted,
-                    marker='o',
-                    edgecolor='k', s=sfitted)
+        ax2.scatter(xfitted, yres_fitted, color=cfitted, marker="o", edgecolor="k", s=sfitted)
         if nrejected > 0:
-            ax2.scatter(xrejected, yres_rejected,
-                        marker='x', s=srejected,
-                        color=crejected)
+            ax2.scatter(xrejected, yres_rejected, marker="x", s=srejected, color=crejected)
 
         # original data and polynomial fit
         ax = fig.add_subplot(2, 1, 1, sharex=ax2)
         if ylabel is None:
-            ax.set_ylabel('y')
+            ax.set_ylabel("y")
         else:
             ax.set_ylabel(ylabel)
         ax.set_xlim(xmin, xmax)
@@ -269,24 +271,24 @@ def polfit_residuals(
             ymax = max(y)
             dy = ymax - ymin
             if dy > 0:
-                ymin -= dy/20
-                ymax += dy/20
+                ymin -= dy / 20
+                ymax += dy / 20
             else:
                 ymin -= 0.5
                 ymax += 0.5
         else:
             ymin, ymax = ylim
         ax.set_ylim(ymin, ymax)
-        ax.scatter(xfitted, yfitted,
-                   color=cfitted, marker='o', edgecolor='k',
-                   s=sfitted, label=f"fitted data ({len(xfitted)})")
+        ax.scatter(
+            xfitted, yfitted, color=cfitted, marker="o", edgecolor="k", s=sfitted, label=f"fitted data ({len(xfitted)})"
+        )
         xpol = np.linspace(start=xmin, stop=xmax, num=1000)
         ypol = poly(xpol)
-        ax.plot(xpol, ypol, 'c-', label=f"fit (deg={deg})")
+        ax.plot(xpol, ypol, "c-", label=f"fit (deg={deg})")
         if nrejected > 0:
-            ax.scatter(xrejected, yrejected,
-                       marker='x', s=srejected, color=crejected,
-                       label=f"rejected ({len(xrejected)})")
+            ax.scatter(
+                xrejected, yrejected, marker="x", s=srejected, color=crejected, label=f"rejected ({len(xrejected)})"
+            )
 
         # put a legend
         ax.legend(numpoints=1)
@@ -297,7 +299,7 @@ def polfit_residuals(
 
         # save PDF file
         if pdffile is not None:
-            plt.savefig(pdffile, pad_inches=0.02, bbox_inches='tight')
+            plt.savefig(pdffile, pad_inches=0.02, bbox_inches="tight")
 
         if show:
             pause_debugplot(debugplot, pltshow=show, tight_layout=True)
@@ -307,16 +309,24 @@ def polfit_residuals(
 
 
 def polfit_residuals_with_sigma_rejection(
-        x, y, deg, times_sigma_reject,
-        color='b', size=75,
-        xlim=None, ylim=None, ylimres_with_rejected=False,
-        xlabel=None, ylabel=None, title=None,
-        use_r=None,
-        show=True,
-        geometry=(0, 0, 640, 480),
-        debugplot=0,
-        pdffile=None,
-        fig=None
+    x,
+    y,
+    deg,
+    times_sigma_reject,
+    color="b",
+    size=75,
+    xlim=None,
+    ylim=None,
+    ylimres_with_rejected=False,
+    xlabel=None,
+    ylabel=None,
+    title=None,
+    use_r=None,
+    show=True,
+    geometry=(0, 0, 640, 480),
+    debugplot=0,
+    pdffile=None,
+    fig=None,
 ):
     """Polynomial fit with iterative rejection of points.
 
@@ -405,11 +415,9 @@ def polfit_residuals_with_sigma_rejection(
     if npoints != y.size:
         raise ValueError("x.size != y.size")
     if not isinstance(deg, numbers.Integral):
-        raise ValueError("deg=" + str(deg) +
-                         " is not a valid integer")
+        raise ValueError("deg=" + str(deg) + " is not a valid integer")
     if deg >= npoints:
-        raise ValueError("Polynomial degree=" + str(deg) +
-                         " can't be fitted with npoints=" + str(npoints))
+        raise ValueError("Polynomial degree=" + str(deg) + " can't be fitted with npoints=" + str(npoints))
 
     # initialize boolean rejection array
     reject = np.zeros(npoints, dtype=bool)
@@ -417,16 +425,25 @@ def polfit_residuals_with_sigma_rejection(
     # if there is no room to remove any point, compute a fit without
     # rejection
     if deg == npoints - 1:
-        poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=None,
-                                      color=color, size=size,
-                                      xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
-                                      xlabel=xlabel, ylabel=ylabel,
-                                      title=title,
-                                      use_r=use_r,
-                                      geometry=geometry,
-                                      debugplot=debugplot,
-                                      pdffile=pdffile,
-                                      fig=fig)
+        poly, yres = polfit_residuals(
+            x=x,
+            y=y,
+            deg=deg,
+            reject=None,
+            color=color,
+            size=size,
+            xlim=xlim,
+            ylim=ylim,
+            ylimres_with_rejected=ylimres_with_rejected,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            title=title,
+            use_r=use_r,
+            geometry=geometry,
+            debugplot=debugplot,
+            pdffile=pdffile,
+            fig=fig,
+        )
         return poly, yres, reject
 
     # main loop to reject points iteratively
@@ -435,16 +452,25 @@ def polfit_residuals_with_sigma_rejection(
     yres = None
     while loop_to_reject_points:
         if abs(debugplot) in [21, 22]:
-            poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
-                                          color=color, size=size,
-                                          xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
-                                          xlabel=xlabel, ylabel=ylabel,
-                                          title=title,
-                                          use_r=use_r,
-                                          show=show,
-                                          geometry=geometry,
-                                          debugplot=debugplot,
-                                          fig=fig)
+            poly, yres = polfit_residuals(
+                x=x,
+                y=y,
+                deg=deg,
+                reject=reject,
+                color=color,
+                size=size,
+                xlim=xlim,
+                ylim=ylim,
+                ylimres_with_rejected=ylimres_with_rejected,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                title=title,
+                use_r=use_r,
+                show=show,
+                geometry=geometry,
+                debugplot=debugplot,
+                fig=fig,
+            )
         else:
             poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject)
         # check that there is room to remove a point with the current
@@ -473,52 +499,69 @@ def polfit_residuals_with_sigma_rejection(
                     if np.abs(yres[i]) > times_sigma_reject * rms:
                         index_to_remove.append(i)
                         if abs(debugplot) >= 10:
-                            print('--> suspicious point #', i + 1)
+                            print("--> suspicious point #", i + 1)
             if len(index_to_remove) == 0:
                 if abs(debugplot) >= 10:
-                    print('==> no need to remove any point')
+                    print("==> no need to remove any point")
                 loop_to_reject_points = False
             else:
                 imax = np.argmax(np.abs(yres[index_to_remove]))
                 reject[index_to_remove[imax]] = True
                 if abs(debugplot) >= 10:
-                    print('==> removing point #', index_to_remove[imax] + 1)
+                    print("==> removing point #", index_to_remove[imax] + 1)
         else:
             loop_to_reject_points = False
 
     # plot final fit in case it has not been already shown
     if abs(debugplot) % 10 != 0:
         if abs(debugplot) not in [21, 22]:
-            poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
-                                          color=color, size=size,
-                                          xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
-                                          xlabel=xlabel, ylabel=ylabel,
-                                          title=title,
-                                          use_r=use_r,
-                                          show=show,
-                                          geometry=geometry,
-                                          debugplot=debugplot,
-                                          pdffile=pdffile,
-                                          fig=fig)
+            poly, yres = polfit_residuals(
+                x=x,
+                y=y,
+                deg=deg,
+                reject=reject,
+                color=color,
+                size=size,
+                xlim=xlim,
+                ylim=ylim,
+                ylimres_with_rejected=ylimres_with_rejected,
+                xlabel=xlabel,
+                ylabel=ylabel,
+                title=title,
+                use_r=use_r,
+                show=show,
+                geometry=geometry,
+                debugplot=debugplot,
+                pdffile=pdffile,
+                fig=fig,
+            )
         else:
             if abs(debugplot) >= 10:
-                print(' ')
+                print(" ")
 
     # return result
     return poly, yres, reject
 
 
 def polfit_residuals_with_cook_rejection(
-        x, y, deg, times_sigma_cook,
-        color='b', size=75,
-        xlim=None, ylim=None, ylimres_with_rejected=False,
-        xlabel=None, ylabel=None, title=None,
-        use_r=None,
-        show=True,
-        geometry=(0, 0, 640, 480),
-        debugplot=0,
-        pdffile=None,
-        fig=None
+    x,
+    y,
+    deg,
+    times_sigma_cook,
+    color="b",
+    size=75,
+    xlim=None,
+    ylim=None,
+    ylimres_with_rejected=False,
+    xlabel=None,
+    ylabel=None,
+    title=None,
+    use_r=None,
+    show=True,
+    geometry=(0, 0, 640, 480),
+    debugplot=0,
+    pdffile=None,
+    fig=None,
 ):
     """Polynomial fit with iterative rejection of points.
 
@@ -607,11 +650,9 @@ def polfit_residuals_with_cook_rejection(
     if npoints != y.size:
         raise ValueError("x.size != y.size")
     if not isinstance(deg, numbers.Integral):
-        raise ValueError("deg=" + str(deg) +
-                         " is not a valid integer")
+        raise ValueError("deg=" + str(deg) + " is not a valid integer")
     if deg >= npoints:
-        raise ValueError("Polynomial degree=" + str(deg) +
-                         " can't be fitted with npoints=" + str(npoints))
+        raise ValueError("Polynomial degree=" + str(deg) + " can't be fitted with npoints=" + str(npoints))
 
     # initialize boolean rejection array
     reject = np.zeros(npoints, dtype=bool)
@@ -619,17 +660,26 @@ def polfit_residuals_with_cook_rejection(
     # if there is no room to remove two points, compute a fit without
     # rejection
     if deg == npoints - 1 or deg == npoints - 2:
-        poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=None,
-                                      color=color, size=size,
-                                      xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
-                                      xlabel=xlabel, ylabel=ylabel,
-                                      title=title,
-                                      use_r=use_r,
-                                      show=show,
-                                      geometry=geometry,
-                                      debugplot=debugplot,
-                                      pdffile=pdffile,
-                                      fig=fig)
+        poly, yres = polfit_residuals(
+            x=x,
+            y=y,
+            deg=deg,
+            reject=None,
+            color=color,
+            size=size,
+            xlim=xlim,
+            ylim=ylim,
+            ylimres_with_rejected=ylimres_with_rejected,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            title=title,
+            use_r=use_r,
+            show=show,
+            geometry=geometry,
+            debugplot=debugplot,
+            pdffile=pdffile,
+            fig=fig,
+        )
         return poly, yres, reject
 
     # main loop to reject points iteratively
@@ -640,19 +690,28 @@ def polfit_residuals_with_cook_rejection(
     while loop_to_reject_points:
         # fit to compute residual variance (neglecting already
         # rejected points)
-        poly, yres = polfit_residuals(x=x, y=y, deg=deg, reject=reject,
-                                      color=color, size=size,
-                                      xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
-                                      xlabel=xlabel, ylabel=ylabel,
-                                      title=title,
-                                      use_r=use_r,
-                                      show=show,
-                                      geometry=geometry,
-                                      debugplot=debugplot,
-                                      pdffile=pdffile,
-                                      fig=fig)
+        poly, yres = polfit_residuals(
+            x=x,
+            y=y,
+            deg=deg,
+            reject=reject,
+            color=color,
+            size=size,
+            xlim=xlim,
+            ylim=ylim,
+            ylimres_with_rejected=ylimres_with_rejected,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            title=title,
+            use_r=use_r,
+            show=show,
+            geometry=geometry,
+            debugplot=debugplot,
+            pdffile=pdffile,
+            fig=fig,
+        )
         npoints_effective = npoints - np.sum(reject)
-        residual_variance = np.sum(yres*yres)/float(npoints_effective-deg-1)
+        residual_variance = np.sum(yres * yres) / float(npoints_effective - deg - 1)
         # check that there is room to remove two points with the
         # current polynomial degree
         if deg <= npoints_effective - 2:
@@ -662,22 +721,27 @@ def polfit_residuals_with_cook_rejection(
                     reject_cook = np.copy(reject)
                     reject_cook[i] = True
                     poly_cook, yres_cook = polfit_residuals(
-                        x=x, y=y, deg=deg, reject=reject_cook,
-                        color=color, size=size,
-                        xlim=xlim, ylim=ylim, ylimres_with_rejected=ylimres_with_rejected,
-                        xlabel=xlabel, ylabel=ylabel,
-                        title="Computing Cook's distance for point " +
-                              str(i+1),
+                        x=x,
+                        y=y,
+                        deg=deg,
+                        reject=reject_cook,
+                        color=color,
+                        size=size,
+                        xlim=xlim,
+                        ylim=ylim,
+                        ylimres_with_rejected=ylimres_with_rejected,
+                        xlabel=xlabel,
+                        ylabel=ylabel,
+                        title="Computing Cook's distance for point " + str(i + 1),
                         use_r=False,
-                        debugplot=0)
+                        debugplot=0,
+                    )
                     yres_cook_fitted = yres_cook[np.logical_not(reject)]
-                    cook_distance[i] = \
-                        np.sum(yres_cook_fitted*yres_cook_fitted) / \
-                        (2*residual_variance)
+                    cook_distance[i] = np.sum(yres_cook_fitted * yres_cook_fitted) / (2 * residual_variance)
                 else:
                     cook_distance[i] = np.inf
                 if abs(debugplot) >= 10:
-                    print('i, cook_distance[i]:', i, cook_distance[i])
+                    print("i, cook_distance[i]:", i, cook_distance[i])
             # determine median absolute cook distance, excluding points
             # already rejected
             dist_cook_fitted = np.abs(cook_distance[np.logical_not(reject)])
@@ -704,23 +768,23 @@ def polfit_residuals_with_cook_rejection(
                 n2 = npoints
             for i in range(n1, n2):
                 if not reject[i]:
-                    if np.abs(cook_distance[i]-q50) > times_sigma_cook * rms:
+                    if np.abs(cook_distance[i] - q50) > times_sigma_cook * rms:
                         index_to_remove.append(i)
                         if abs(debugplot) >= 10:
-                            print('--> suspicious point #', i + 1)
+                            print("--> suspicious point #", i + 1)
             if len(index_to_remove) == 0:
                 if abs(debugplot) >= 10:
                     if any_point_removed:
-                        print('==> no need to remove any additional point')
+                        print("==> no need to remove any additional point")
                     else:
-                        print('==> no need to remove any point')
+                        print("==> no need to remove any point")
                 loop_to_reject_points = False
             else:
                 imax = np.argmax(np.abs(cook_distance[index_to_remove]))
                 reject[index_to_remove[imax]] = True
                 any_point_removed = True
                 if abs(debugplot) >= 10:
-                    print('==> removing point #', index_to_remove[imax] + 1)
+                    print("==> removing point #", index_to_remove[imax] + 1)
         else:
             loop_to_reject_points = False
 
@@ -731,32 +795,19 @@ def polfit_residuals_with_cook_rejection(
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='polfit_residuals')
-    parser.add_argument("filename",
-                        help="ASCII file with data in columns")
-    parser.add_argument("col1",
-                        help="Column number for X data",
-                        type=int)
-    parser.add_argument("col2",
-                        help="Column number for Y data",
-                        type=int)
-    parser.add_argument("polydeg",
-                        help="Polynomial degree",
-                        type=int)
-    parser.add_argument("--times_sigma_reject",
-                        help="Times sigma to reject points" +
-                             " (default=None)",
-                        default=None, type=float)
-    parser.add_argument("--times_sigma_cook",
-                        help="Times sigma to reject points" +
-                             " (default=None)",
-                        default=None, type=float)
-    parser.add_argument("--geometry",
-                        help="tuple x,y,dx,dy",
-                        default="0,0,640,480")
-    parser.add_argument("--pdffile",
-                        help="Output PDF file name (default=None)",
-                        default=None, type=str)
+    parser = argparse.ArgumentParser(prog="polfit_residuals")
+    parser.add_argument("filename", help="ASCII file with data in columns")
+    parser.add_argument("col1", help="Column number for X data", type=int)
+    parser.add_argument("col2", help="Column number for Y data", type=int)
+    parser.add_argument("polydeg", help="Polynomial degree", type=int)
+    parser.add_argument(
+        "--times_sigma_reject", help="Times sigma to reject points" + " (default=None)", default=None, type=float
+    )
+    parser.add_argument(
+        "--times_sigma_cook", help="Times sigma to reject points" + " (default=None)", default=None, type=float
+    )
+    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="0,0,640,480")
+    parser.add_argument("--pdffile", help="Output PDF file name (default=None)", default=None, type=str)
     args = parser.parse_args(args)
 
     # ASCII file
@@ -791,8 +842,7 @@ def main(args=None):
 
     # check
     if times_sigma_reject is not None and times_sigma_cook is not None:
-        raise ValueError("ERROR: times_sigma_reject and times_sigma_cook" +
-                         " cannot be employed simultaneously")
+        raise ValueError("ERROR: times_sigma_reject and times_sigma_cook" + " cannot be employed simultaneously")
 
     # read ASCII file
     bigtable = np.genfromtxt(filename)
@@ -801,19 +851,16 @@ def main(args=None):
 
     # plot fit and residuals
     if times_sigma_reject is None and times_sigma_cook is None:
-        polfit_residuals(x, y, polydeg, geometry=geometry,
-                         debugplot=12, pdffile=pdffile)
+        polfit_residuals(x, y, polydeg, geometry=geometry, debugplot=12, pdffile=pdffile)
     elif times_sigma_reject is not None:
         polfit_residuals_with_sigma_rejection(
-            x, y, polydeg, times_sigma_reject,
-            geometry=geometry, debugplot=12, pdffile=pdffile
+            x, y, polydeg, times_sigma_reject, geometry=geometry, debugplot=12, pdffile=pdffile
         )
     elif times_sigma_cook is not None:
         polfit_residuals_with_cook_rejection(
-            x, y, polydeg, times_sigma_cook,
-            geometry=geometry, debugplot=12, pdffile=pdffile
+            x, y, polydeg, times_sigma_cook, geometry=geometry, debugplot=12, pdffile=pdffile
         )
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

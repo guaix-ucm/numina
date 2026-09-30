@@ -47,9 +47,7 @@ def comp_store():
     return comp_store
 
 
-@pytest.mark.parametrize(
-    "date_val", ["2015-05-12T03:04:21", datetime(2015, 5, 12, 3, 4, 21)]
-)
+@pytest.mark.parametrize("date_val", ["2015-05-12T03:04:21", datetime(2015, 5, 12, 3, 4, 21)])
 def test_find_element1(comp_store, date_val):
     etype = ElementEnum.ELEM_COMPONENT
     el = find_element(
@@ -62,9 +60,7 @@ def test_find_element1(comp_store, date_val):
     assert isinstance(el, dict)
 
 
-@pytest.mark.parametrize(
-    "date_val", ["2015-05-12T03:04:21", datetime(2015, 5, 12, 3, 4, 21)]
-)
+@pytest.mark.parametrize("date_val", ["2015-05-12T03:04:21", datetime(2015, 5, 12, 3, 4, 21)])
 def test_find_instrument(comp_store, date_val):
     uuid_str = "43273e8c-4071-4a73-a6b4-40c2f07cf054"
     el = find_instrument(comp_store, uuid_str, date_val, by_key="uuid")

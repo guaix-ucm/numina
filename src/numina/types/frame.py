@@ -16,11 +16,11 @@ from .dataframe import DataFrame
 from .datatype import DataType
 
 _base_schema = {
-    'keywords': {
-        'INSTRUME': {'valid': True},
-        'READMODE': {'valid': True},
-        'EXPTIME': {'value': float},
-        'NUMINAID': {'value': int}
+    "keywords": {
+        "INSTRUME": {"valid": True},
+        "READMODE": {"valid": True},
+        "EXPTIME": {"value": float},
+        "NUMINAID": {"value": int},
     }
 }
 
@@ -29,17 +29,17 @@ class DataFrameType(DataType):
     """A type of DataFrame."""
 
     db_info_keys = [
-        'instrument',
-        'object',
-        'observation_date',
-        'uuid',
-        'type',
-        'mode',
-        'exptime',
-        'darktime',
+        "instrument",
+        "object",
+        "observation_date",
+        "uuid",
+        "type",
+        "mode",
+        "exptime",
+        "darktime",
         # 'insconf',
         # 'blckuuid',
-        'quality_control'
+        "quality_control",
     ]
 
     tags_keys = []
@@ -48,7 +48,7 @@ class DataFrameType(DataType):
         super(DataFrameType, self).__init__(DataFrame, datamodel=datamodel)
         self.headerschema = Schema(_base_schema)
 
-        self.add_dialect_info('gtc', DF.TYPE_FRAME)
+        self.add_dialect_info("gtc", DF.TYPE_FRAME)
 
     def convert(self, obj):
         """Convert"""
@@ -64,7 +64,7 @@ class DataFrameType(DataType):
         elif isinstance(obj, fits.PrimaryHDU):
             return DataFrame(frame=fits.HDUList([obj]))
         else:
-            msg = f'object of type {obj!r} cannot be converted to DataFrame'
+            msg = f"object of type {obj!r} cannot be converted to DataFrame"
             raise TypeError(msg)
 
     def validate(self, value):
@@ -99,13 +99,13 @@ class DataFrameType(DataType):
         objl = self.convert(obj)
 
         result = super(DataFrameType, self).extract_db_info(objl, keys)
-        ext = self.datamodel.extractor_map['fits']
+        ext = self.datamodel.extractor_map["fits"]
         if objl:
             with objl.open() as hdulist:
                 for field in keys:
                     result[field] = ext.extract(field, hdulist)
 
-                tags = result['tags']
+                tags = result["tags"]
                 # for field in self.tags_keys:
                 for field in self.names_t:
                     tags[field] = ext.extract(field, hdulist)
@@ -126,14 +126,14 @@ def get_filename_dataframe(obj, where):
 
 
 def get_filename_hdulist(hdul, hint):
-    ext = '.fits'
+    ext = ".fits"
 
     if isinstance(hint, str):
         filename = hint + ext
     elif callable(hint):
         filename = hint(hdul)
     else:
-        raise ValueError('hint is neither string nor callable')
+        raise ValueError("hint is neither string nor callable")
     return filename
 
 
@@ -144,6 +144,6 @@ def dump_dataframe(obj, where):
 
     if fname:
         with warnings.catch_warnings():
-            warnings.simplefilter('ignore')
-            obj.frame.writeto(fname, overwrite=True, output_verify='warn')
+            warnings.simplefilter("ignore")
+            obj.frame.writeto(fname, overwrite=True, output_verify="warn")
     return fname

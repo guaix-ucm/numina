@@ -65,9 +65,7 @@ def test_create_keys():
     name = "origin"
     cuuid = "c27287cd-90d1-417c-8238-f5ff220f818d"
 
-    origin = ElementOrigin.from_keys(
-        name=name, uuid=cuuid, date_start=date_start, date_end=date_end
-    )
+    origin = ElementOrigin.from_keys(name=name, uuid=cuuid, date_start=date_start, date_end=date_end)
     assert isinstance(origin, ElementOrigin)
     assert origin.name == name
     assert str(origin.uuid) == cuuid

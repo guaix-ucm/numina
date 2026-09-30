@@ -1,4 +1,3 @@
-
 import numpy
 import numpy as np
 
@@ -36,8 +35,14 @@ def test_error3():
     exp_res = numpy.array([[3, 0], [5, 2]])
     exp_var = numpy.array([[28, 7], [9, 4]])
     exp_pix = numpy.array([[3, 3], [3, 3]])
-    a, b, c = _c.generic_combine_miter(_c.mean_method(), [data1, data2, data3], masks=[mask1, mask2, mask3],
-                                       out_res=out_res, out_var=out_var, out_pix=out_pix)
+    a, b, c = _c.generic_combine_miter(
+        _c.mean_method(),
+        [data1, data2, data3],
+        masks=[mask1, mask2, mask3],
+        out_res=out_res,
+        out_var=out_var,
+        out_pix=out_pix,
+    )
     assert np.allclose(a, exp_res)
     assert np.allclose(b, exp_var)
     assert np.allclose(c, exp_pix)
@@ -52,8 +57,9 @@ def test_error4():
     exp_res = numpy.array([[-1, -3], [5, 0]])
     exp_var = numpy.array([[0, 0], [0, 0]])
     exp_pix = 100 * numpy.array([[1, 1], [1, 1]])
-    a, b, c = _c.generic_combine_miter(_c.mean_method(), [data1]*100,
-                                       out_res=out_res, out_var=out_var, out_pix=out_pix)
+    a, b, c = _c.generic_combine_miter(
+        _c.mean_method(), [data1] * 100, out_res=out_res, out_var=out_var, out_pix=out_pix
+    )
     assert np.allclose(a, exp_res)
     assert np.allclose(b, exp_var)
     assert np.allclose(c, exp_pix)
@@ -65,7 +71,7 @@ def test_error5():
     exp_res = numpy.array([[-1, -3], [5, 0]])
     exp_var = numpy.array([[0, 0], [0, 0]])
     exp_pix = 100 * numpy.array([[1, 1], [1, 1]])
-    a, b, c = _c.generic_combine_miter(_c.mean_method(), [data1]*100)
+    a, b, c = _c.generic_combine_miter(_c.mean_method(), [data1] * 100)
     assert np.allclose(a, exp_res)
     assert np.allclose(b, exp_var)
     assert np.allclose(c, exp_pix)

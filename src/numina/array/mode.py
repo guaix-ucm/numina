@@ -9,7 +9,7 @@
 # License-Filename: LICENSE.txt
 #
 
-'''Mode estimators.'''
+"""Mode estimators."""
 
 import math
 
@@ -64,11 +64,11 @@ def mode_half_sample(a, is_sorted=False):
             return sdata[1]
     else:
         N = int(math.ceil(n / 2.0))
-        w = sdata[(N-1):] - sdata[:(n-N+1)]
+        w = sdata[(N - 1) :] - sdata[: (n - N + 1)]
         ar = w.argmin()
-        return mode_half_sample(sdata[ar:ar+N], is_sorted=True)
+        return mode_half_sample(sdata[ar : ar + N], is_sorted=True)
 
 
 def mode_sex(a):
-    '''Estimate the mode as sextractor'''
+    """Estimate the mode as sextractor"""
     return 2.5 * np.median(a) - 1.5 * np.mean(a)

@@ -60,9 +60,8 @@ class FileFinder(object):
 class FileFinderGTC(FileFinder):
 
     def candidates(self, directory):
-        base = [('result.json', 1)]
-        other = [(m, 0)
-                 for m in super(FileFinderGTC, self).candidates(directory)]
+        base = [("result.json", 1)]
+        other = [(m, 0) for m in super(FileFinderGTC, self).candidates(directory)]
         base.extend(other)
         return base
 
@@ -79,7 +78,7 @@ class FileFinderGTC(FileFinder):
 
 def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
 
-    _logger.info('search %s of type %s', name, tipo)
+    _logger.info("search %s of type %s", name, tipo)
 
     file_finder = cls()
 
@@ -95,7 +94,7 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
     vals = [ob.tags[k] for k in sorted(ob.tags.keys())]
     for com in _combinations(vals):
         directory = os.path.join(rootdir, ob.instrument, conf, label, *com)
-        _logger.debug('try directory %s', directory)
+        _logger.debug("try directory %s", directory)
         try:
             for value in file_finder.candidates(directory):
                 if file_finder.check(directory, value):
@@ -103,7 +102,7 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
         except OSError as msg:
             _logger.debug("%s", msg)
     else:
-        msg = f'type {label} compatible with tags {ob.tags!r} not found'
+        msg = f"type {label} compatible with tags {ob.tags!r} not found"
         _logger.info("%s", msg)
         raise NoResultFound(msg)
 
@@ -117,11 +116,11 @@ class DiskFileDAL(object):
         super(DiskFileDAL, self).__init__()
         self.drp = drp
         self.rootdir = rootdir
-        self.conf = 'default'
+        self.conf = "default"
 
     def search_product(self, name, tipo, ob):
         klass = tipo.__class__
-        print('Init search ', name, tipo, tipo.__class__)
+        print("Init search ", name, tipo, tipo.__class__)
 
         try:
             res = self.drp.query_provides(tipo.__class__)
@@ -132,12 +131,10 @@ class DiskFileDAL(object):
         # search results of these OBs
         # build path based in combinations of tags
         for com in _combinations(ob.tags.values()):
-            directory = os.path.join(
-                self.rootdir, ob.instrument, self.conf, label, *com)
-            print('search in', directory)
+            directory = os.path.join(self.rootdir, ob.instrument, self.conf, label, *com)
+            print("search in", directory)
             try:
-                files_s = [filename for filename in sorted(
-                    os.listdir(directory))]
+                files_s = [filename for filename in sorted(os.listdir(directory))]
                 print("files_s", files_s)
                 for fname in files_s:
                     loadpath = os.path.join(directory, fname)
@@ -146,7 +143,7 @@ class DiskFileDAL(object):
                         print("is regular file ", loadpath)
                         if DAL_USE_OFFLINE_CALIBS:
                             content = load(tipo, loadpath)
-                        # else:
+                            # else:
                             # data = json.load(open(loadpath))
                             # result = process_result(data)
                             # key = self._field_to_extract[klass]
@@ -161,6 +158,6 @@ class DiskFileDAL(object):
                 # msg = 'type %s compatible with tags %r not found' % (klass, ob.tags)
                 # raise NoResultFound(msg)
         else:
-            msg = f'type {klass} compatible with tags {ob.tags!r} not found'
+            msg = f"type {klass} compatible with tags {ob.tags!r} not found"
             print(msg)
             raise NoResultFound(msg)

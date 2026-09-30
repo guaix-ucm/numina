@@ -14,30 +14,32 @@ import logging
 
 from numina.util.objimport import import_object
 
-
 _logger = logging.getLogger(__name__)
 
 
 # FIXME: this is already implemented, elsewhere
 # There should be one-- and preferably only one --obvious way to do it.
 
+
 def is_fits(filename, **kwargs):
-    return filename.endswith('.fits')
+    return filename.endswith(".fits")
 
 
 def read_fits(filename):
     import numina.types.dataframe as df
     import astropy.io.fits as fits
+
     return df.DataFrame(frame=fits.open(filename))
 
 
 def read_fits_later(filename):
     import numina.types.dataframe as df
+
     return df.DataFrame(filename=os.path.abspath(filename))
 
 
 def is_json(filename, **kwargs):
-    return filename.endswith('.json')
+    return filename.endswith(".json")
 
 
 def read_json(filename):
@@ -49,7 +51,7 @@ def read_json(filename):
 
 
 def is_yaml(filename, **kwargs):
-    return filename.endswith('.yaml')
+    return filename.endswith(".yaml")
 
 
 def read_yaml(filename):
@@ -61,8 +63,8 @@ def read_yaml(filename):
 
 
 def read_structured(data):
-    if 'type_fqn' in data:
-        type_fqn = data['type_fqn']
+    if "type_fqn" in data:
+        type_fqn = data["type_fqn"]
         cls = import_object(type_fqn)
         obj = cls.__new__(cls)
         obj.__setstate__(data)
@@ -71,8 +73,7 @@ def read_structured(data):
 
 
 def unserial(value):
-    checkers = [(is_fits, read_fits_later),
-                (is_json, read_json), (is_yaml, read_yaml)]
+    checkers = [(is_fits, read_fits_later), (is_json, read_json), (is_yaml, read_yaml)]
     if isinstance(value, str):
         for check_type, conv in checkers:
             if check_type(value):

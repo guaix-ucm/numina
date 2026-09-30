@@ -1,4 +1,3 @@
-
 import pytest
 
 
@@ -11,14 +10,13 @@ def test_split_type_name():
 
     pre, post = split_type_name(label)
 
-    assert pre == 'TraceMap'
+    assert pre == "TraceMap"
     assert post == 'a=1, b="2"'
 
 
 def test_parse_arg():
 
-    assert parse_arg_line("a=1, b='2', c=True") == {
-        "a": 1, "b": "2", "c": True}
+    assert parse_arg_line("a=1, b='2', c=True") == {"a": 1, "b": "2", "c": True}
 
 
 def test_parse_arg_empty():

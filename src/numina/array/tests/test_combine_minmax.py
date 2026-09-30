@@ -50,5 +50,4 @@ class MinMaxTestCase(unittest.TestCase):
         for nmin in range(0, self.nimages):
             nmax = self.nimages - nmin + 1
 
-            self.assertRaises(ValueError, c.minmax, self.data,
-                              nmin=nmin, nmax=nmax)
+            self.assertRaises(ValueError, c.minmax, self.data, nmin=nmin, nmax=nmax)

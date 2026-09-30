@@ -38,15 +38,17 @@ class DataProductMixin(DataTypeBase):
 
     def query_constraints(self):
         import numina.core.query
+
         return numina.core.query.Constraint()
 
     def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""
         import astropy.io.fits as fits
+
         result = {}
         if isinstance(obj, dict):
             try:
-                qc = obj['quality_control']
+                qc = obj["quality_control"]
             except KeyError:
                 qc = QC.UNKNOWN
         elif isinstance(obj, DataFrame):
@@ -57,7 +59,7 @@ class DataProductMixin(DataTypeBase):
         else:
             qc = QC.UNKNOWN
 
-        result['quality_control'] = qc
+        result["quality_control"] = qc
 
         other = super(DataProductMixin, self).extract_db_info(obj, keys)
         result.update(other)
@@ -65,19 +67,19 @@ class DataProductMixin(DataTypeBase):
 
     def update_meta_info(self):
         result = super(DataProductMixin, self).update_meta_info()
-        result['quality_control'] = self.quality_control.name
+        result["quality_control"] = self.quality_control.name
         return result
 
     def __getstate__(self):
         st = {}
-        st['quality_control'] = self.quality_control
+        st["quality_control"] = self.quality_control
 
         other = super(DataProductMixin, self).__getstate__()
         st.update(other)
         return st
 
     def __setstate__(self, state):
-        qcval = state.get('quality_control', 'UNKNOWN')
+        qcval = state.get("quality_control", "UNKNOWN")
         self.quality_control = convert_qc(qcval)
 
         super(DataProductMixin, self).__setstate__(state)
@@ -93,8 +95,7 @@ class DataProductTag(DataProductMixin):
     """
 
     def __init__(self, *args, **kwargs):
-        warnings.warn("The 'DataProductTag' class was renamed to 'DataProductMixin'",
-                      DeprecationWarning)
+        warnings.warn("The 'DataProductTag' class was renamed to 'DataProductMixin'", DeprecationWarning)
         super(DataProductTag, self).__init__(*args, **kwargs)
 
 
@@ -111,7 +112,7 @@ class ConfigurationTag(object):
         return True
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
     import numina.util.namespace as nm
     import numina.core.tagexpr as tagexpr

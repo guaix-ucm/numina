@@ -11,20 +11,13 @@
 
 import logging
 
-
 _logger = logging.getLogger(__name__)
 
 
 def register(subparsers, config):
-    parser_identify = subparsers.add_parser(
-        'identify',
-        help='identify'
-    )
+    parser_identify = subparsers.add_parser("identify", help="identify")
     parser_identify.set_defaults(command=identify)
-    parser_identify.add_argument(
-        'files', nargs='+',
-        help='identify files in CL'
-    )
+    parser_identify.add_argument("files", nargs="+", help="identify files in CL")
 
     return parser_identify
 
@@ -41,18 +34,18 @@ def identify(args, extra_args, config):
 
     for f in args.files:
         with fits.open(f) as hdulist:
-            _logger.debug(f'identify {f}')
+            _logger.debug(f"identify {f}")
             try:
                 # Determine the instrument name
                 hdr = hdulist[0].header
-                instrument = hdr['INSTRUME']
+                instrument = hdr["INSTRUME"]
                 #
                 this_drp = sys_drps.query_by_name(instrument)
-                _logger.debug('assembly instrument model')
+                _logger.debug("assembly instrument model")
                 key, date_obs, keyname = this_drp.select_profile_image(hdulist)
                 config = asbl.assembly_instrument(com_store, key, date_obs, by_key=keyname)
-                print('Instrument:', instrument)
-                print('Instrument profile', config.uuid)
+                print("Instrument:", instrument)
+                print("Instrument profile", config.uuid)
 
             except Exception as ex:
                 print(ex)

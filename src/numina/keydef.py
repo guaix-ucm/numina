@@ -18,9 +18,7 @@ class QueryAttribute:
 
 
 class KeyDefinition:
-    def __init__(
-        self, key: str, ext: int | str | None = None, default=None, convert=None
-    ):
+    def __init__(self, key: str, ext: int | str | None = None, default=None, convert=None):
         self.key = key
         self.ext = 0 if ext is None else ext
         self.default = default
@@ -82,13 +80,9 @@ class FITSKeyExtractor:
                     hduname = 0
                     convert = None
                 else:
-                    raise ValueError(
-                        f"a tuple in FITSKeyExtractor must have 2-3 fields, has {len(entry)} instead"
-                    )
+                    raise ValueError(f"a tuple in FITSKeyExtractor must have 2-3 fields, has {len(entry)} instead")
 
-                newval = KeyDefinition(
-                    keyname, ext=hduname, convert=convert, default=default
-                )
+                newval = KeyDefinition(keyname, ext=hduname, convert=convert, default=default)
             elif isinstance(entry, str):
                 newval = KeyDefinition(entry)
             else:

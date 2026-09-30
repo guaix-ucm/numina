@@ -18,7 +18,7 @@ def test_null_type():
 
     nullt = NullType()
 
-    values = [None, 1, 1.0, [1, 2, 3], {'a': 1, 'b': 2}]
+    values = [None, 1, 1.0, [1, 2, 3], {"a": 1, "b": 2}]
 
     for val in values:
         assert nullt.convert(val) is None

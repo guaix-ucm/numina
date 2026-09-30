@@ -107,9 +107,7 @@ class ComponentBlock(ElementBase):
         properties=None,
         setup=None,
     ) -> "ComponentGeneric":
-        return ComponentGeneric.from_component(
-            name, comp_id, origin, parent, properties, setup
-        )
+        return ComponentGeneric.from_component(name, comp_id, origin, parent, properties, setup)
 
 
 class InstrumentBlock(ElementBase):
@@ -125,17 +123,10 @@ class InstrumentBlock(ElementBase):
         properties=None,
         setup=None,
     ) -> "InstrumentGeneric":
-        return InstrumentGeneric.from_component(
-            name, comp_id, origin, parent, properties, setup
-        )
+        return InstrumentGeneric.from_component(name, comp_id, origin, parent, properties, setup)
 
 
-BlockType: TypeAlias = (
-    Type[InstrumentBlock]
-    | Type[ComponentBlock]
-    | Type[SetupBlock]
-    | Type[PropertiesBlock]
-)
+BlockType: TypeAlias = Type[InstrumentBlock] | Type[ComponentBlock] | Type[SetupBlock] | Type[PropertiesBlock]
 
 
 class ElementEnum(enum.Enum):

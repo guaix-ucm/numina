@@ -1,4 +1,3 @@
-
 import argparse
 import os.path
 
@@ -53,7 +52,7 @@ def subsets_of_fileinfo_from_txt(filename):
     sublist_finished = True
     for line in file_content:
         if len(line) > 0:
-            if line[0] != '#':
+            if line[0] != "#":
                 if label is None:
                     if line[0] == "@":
                         nfiles = int(line[1:].split()[0])
@@ -79,8 +78,8 @@ def subsets_of_fileinfo_from_txt(filename):
                     if ifiles == nfiles:
                         dict_of_subsets_of_fileinfo[idict] = {}
                         tmpdict = dict_of_subsets_of_fileinfo[idict]
-                        tmpdict['label'] = label
-                        tmpdict['list_of_fileinfo'] = sublist_of_fileinfo
+                        tmpdict["label"] = label
+                        tmpdict["list_of_fileinfo"] = sublist_of_fileinfo
                         idict += 1
                         label = None
                         sublist_of_fileinfo = []
@@ -97,17 +96,16 @@ def main(args=None):
 
     # parse command-line options
     parser = argparse.ArgumentParser()
-    parser.add_argument("txt_file",
-                        help="txt file with list of subsets of images")
+    parser.add_argument("txt_file", help="txt file with list of subsets of images")
     args = parser.parse_args(args)
 
     # execute function
     dict_of_subsets = subsets_of_fileinfo_from_txt(args.txt_file)
     for idict in range(len(dict_of_subsets)):
         tmpdict = dict_of_subsets[idict]
-        print('\n>>> Label: ', tmpdict['label'])
-        print('>>> List of FileInfo instances:')
-        for item in tmpdict['list_of_fileinfo']:
+        print("\n>>> Label: ", tmpdict["label"])
+        print(">>> List of FileInfo instances:")
+        for item in tmpdict["list_of_fileinfo"]:
             print(item)
 
 

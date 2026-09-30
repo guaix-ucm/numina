@@ -29,7 +29,12 @@ class RunCounter(object):
 class PersistentRunCounter(RunCounter):
     """Persistent run number counter"""
 
-    def __init__(self, template, last=1, pstore='index.json',):
+    def __init__(
+        self,
+        template,
+        last=1,
+        pstore="index.json",
+    ):
 
         last = self.load(pstore, last)
 
@@ -38,7 +43,7 @@ class PersistentRunCounter(RunCounter):
         self.pstore = pstore
 
     def store(self):
-        with open(self.pstore, 'w') as pkl_file:
+        with open(self.pstore, "w") as pkl_file:
             json.dump(self.last, pkl_file)
 
     @staticmethod
@@ -46,13 +51,13 @@ class PersistentRunCounter(RunCounter):
         file_exists = True
 
         try:
-            with open(pstore, 'rb') as pkl_file:
+            with open(pstore, "rb") as pkl_file:
                 last = json.load(pkl_file)
         except IOError:
             file_exists = False
 
         if not file_exists:
-            with open(pstore, 'wb') as pkl_file:
+            with open(pstore, "wb") as pkl_file:
                 json.dump(last, pkl_file)
 
         return last
@@ -67,7 +72,10 @@ class PersistentRunCounter(RunCounter):
 def extract(header, meta, path, key, selector=None, default=None):
     m = meta
     if selector is None:
-        def selector(x): return x  # noqa: E731
+
+        def selector(x):
+            return x  # noqa: E731
+
     try:
         for part in path:
             m = m[part]
@@ -81,18 +89,21 @@ def extract(header, meta, path, key, selector=None, default=None):
 def extractm(meta, path, selector=None):
     m = meta
     if selector is None:
-        def selector(x): return x  # noqa: E731
+
+        def selector(x):
+            return x  # noqa: E731
+
     for part in path:
         m = m[part]
     return selector(m)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
 
-    with PersistentRunCounter('r00%04d') as p:
+    with PersistentRunCounter("r00%04d") as p:
         for i in range(10):
             print(p.runstring())
 
-    with PersistentRunCounter('r00%04d') as p:
+    with PersistentRunCounter("r00%04d") as p:
         for i in range(10):
             print(p.runstring())

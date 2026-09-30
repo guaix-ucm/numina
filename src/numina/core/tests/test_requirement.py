@@ -1,4 +1,3 @@
-
 import pytest
 
 import numina.core
@@ -12,17 +11,17 @@ from ..dataholders import Requirement
 
 class Dal(object):
     def search_parameter(self, name, type_, obsres, options=None):
-        if name == 'req_null':
+        if name == "req_null":
             return numina.dal.stored.StoredParameter(content=None)
-        elif name == 'req_int':
+        elif name == "req_int":
             return numina.dal.stored.StoredParameter(content=2)
         else:
-            raise numina.exceptions.NoResultFound('value not found')
+            raise numina.exceptions.NoResultFound("value not found")
 
 
 def test_query1():
 
-    req = Requirement(rtype=None, description="", destination='req_null')
+    req = Requirement(rtype=None, description="", destination="req_null")
 
     dal = Dal()
 
@@ -34,8 +33,7 @@ def test_query1():
 
 def test_query11():
 
-    req = Requirement(rtype=numina.types.datatype.PlainPythonType(
-        1), description="", destination='req_int')
+    req = Requirement(rtype=numina.types.datatype.PlainPythonType(1), description="", destination="req_int")
 
     dal = Dal()
 

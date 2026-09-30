@@ -9,39 +9,39 @@
 """IFU simulator
 
 We have avoided using joblib.Parallel for the computation because
-when using "prefer=threads" in joblib, multiple threads write 
-simultaneously to the same shared NumPy arrays 
-(image2d_rss_method0, image2d_detector_method0). 
-Python's GIL does not protect NumPy array writes, so concurrent modifications 
-produce corrupted pixel values that change randomly between runs — the classic 
+when using "prefer=threads" in joblib, multiple threads write
+simultaneously to the same shared NumPy arrays
+(image2d_rss_method0, image2d_detector_method0).
+Python's GIL does not protect NumPy array writes, so concurrent modifications
+produce corrupted pixel values that change randomly between runs — the classic
 signature of a race condition.
 
 The solution: private arrays + final reduction:
-The pattern applied in both worker functions (here and in 
+The pattern applied in both worker functions (here and in
 compute_image2d_rss_from_detector_method1) is identical:
-1. Each worker allocates its own private output arrays (local_rss, local_det) 
+1. Each worker allocates its own private output arrays (local_rss, local_det)
    initialised to zero, works on them independently, and returns them.
-2. Pool.map distributes the slice tasks across physical CPU cores using 
-   separate processes. Since each process has its own memory space, 
-   there is no shared state and no race condition, regardless of whether 
+2. Pool.map distributes the slice tasks across physical CPU cores using
+   separate processes. Since each process has its own memory space,
+   there is no shared state and no race condition, regardless of whether
    slices write to overlapping regions.
-3. The main process reduces the results by accumulating all returned 
-   local arrays into the final output arrays with +=. 
+3. The main process reduces the results by accumulating all returned
+   local arrays into the final output arrays with +=.
    This step is single-threaded and therefore always safe.
 
-The remaining performance bottleneck is the serialisation overhead 
-of passing large NumPy arrays to each worker on every call. 
-The proposed optimisation is to use the initializer argument of Pool 
-to load the large read-only input arrays into each worker process once 
-at startup, so that only the slice index needs to be passed per task. 
-This reduces both serialisation time and memory pressure, and is 
-the most promising avenue for closing the gap between parallel and 
+The remaining performance bottleneck is the serialisation overhead
+of passing large NumPy arrays to each worker on every call.
+The proposed optimisation is to use the initializer argument of Pool
+to load the large read-only input arrays into each worker process once
+at startup, so that only the slice index needs to be passed per task.
+This reduces both serialisation time and memory pressure, and is
+the most promising avenue for closing the gap between parallel and
 sequential execution times.
 
-The timing results show that this workload is memory-bound rather 
-than compute-bound. Each slice computation is fast enough that 
-the bottleneck is not the CPU but the rate at which data can be 
-fetched from RAM. As a consequence, adding more parallel processes 
+The timing results show that this workload is memory-bound rather
+than compute-bound. Each slice computation is fast enough that
+the bottleneck is not the CPU but the rate at which data can be
+fetched from RAM. As a consequence, adding more parallel processes
 beyond a small number does not help — it simply increases contention
 on the memory bus, and the overhead of managing additional processes
 begins to dominate. In fact, in some cases using more than one
@@ -79,25 +79,27 @@ from .save_image2d_rss import save_image2d_rss
 from .set_wavelength_unit_and_range import set_wavelength_unit_and_range
 from .update_image2d_rss_detector_method0 import update_image2d_rss_detector_method0
 
-
 _worker_inputs_method0 = {}
 
-def _worker_init_method0(simulated_x_ifu_all,
-                         simulated_y_ifu_all,
-                         simulated_wave_all,
-                         naxis1_ifu,
-                         naxis1_detector,
-                         naxis2_detector,
-                         nslices,
-                         bins_x_ifu,
-                         bins_wave,
-                         bins_x_detector,
-                         bins_y_detector,
-                         wv_cdelt1,
-                         extra_degradation_spectral_direction,
-                         dict_ifu2detector):
+
+def _worker_init_method0(
+    simulated_x_ifu_all,
+    simulated_y_ifu_all,
+    simulated_wave_all,
+    naxis1_ifu,
+    naxis1_detector,
+    naxis2_detector,
+    nslices,
+    bins_x_ifu,
+    bins_wave,
+    bins_x_detector,
+    bins_y_detector,
+    wv_cdelt1,
+    extra_degradation_spectral_direction,
+    dict_ifu2detector,
+):
     """Initialiser executed once per worker process at Pool startup.
-    
+
     Stores all large input arrays in the module-level global so that
     individual tasks only need to receive the slice index.
     """
@@ -116,37 +118,40 @@ def _worker_init_method0(simulated_x_ifu_all,
         "bins_y_detector": bins_y_detector,
         "wv_cdelt1": wv_cdelt1,
         "extra_degradation_spectral_direction": extra_degradation_spectral_direction,
-        "dict_ifu2detector": dict_ifu2detector
+        "dict_ifu2detector": dict_ifu2detector,
     }
+
 
 def _worker_method0(islice):
     """Worker function for parallel computation of a single slice.
-    
-    Receives only the slice index, and accesses all large input arrays 
-    from the global _worker_inputs_method0. Allocates private output arrays, 
+
+    Receives only the slice index, and accesses all large input arrays
+    from the global _worker_inputs_method0. Allocates private output arrays,
     calls the update function, and returns results."""
     local_rss = np.zeros(
-        (_worker_inputs_method0['naxis1_ifu'].value * _worker_inputs_method0['nslices'],
-        _worker_inputs_method0['naxis1_detector'].value), 
-        dtype=int
+        (
+            _worker_inputs_method0["naxis1_ifu"].value * _worker_inputs_method0["nslices"],
+            _worker_inputs_method0["naxis1_detector"].value,
+        ),
+        dtype=int,
     )
     local_detector = np.zeros(
-        (_worker_inputs_method0['naxis2_detector'].value, 
-         _worker_inputs_method0['naxis1_detector'].value))  # float type to be able to include noise and flatfield effects
+        (_worker_inputs_method0["naxis2_detector"].value, _worker_inputs_method0["naxis1_detector"].value)
+    )  # float type to be able to include noise and flatfield effects
 
     update_image2d_rss_detector_method0(
         islice=islice,
-        simulated_x_ifu_all=_worker_inputs_method0['simulated_x_ifu_all'],
-        simulated_y_ifu_all=_worker_inputs_method0['simulated_y_ifu_all'],
-        simulated_wave_all=_worker_inputs_method0['simulated_wave_all'],
-        naxis1_ifu=_worker_inputs_method0['naxis1_ifu'],
-        bins_x_ifu=_worker_inputs_method0['bins_x_ifu'],
-        bins_wave=_worker_inputs_method0['bins_wave'],
-        bins_x_detector=_worker_inputs_method0['bins_x_detector'],
-        bins_y_detector=_worker_inputs_method0['bins_y_detector'],
-        wv_cdelt1=_worker_inputs_method0['wv_cdelt1'],
-        extra_degradation_spectral_direction=_worker_inputs_method0['extra_degradation_spectral_direction'],
-        dict_ifu2detector=_worker_inputs_method0['dict_ifu2detector'],
+        simulated_x_ifu_all=_worker_inputs_method0["simulated_x_ifu_all"],
+        simulated_y_ifu_all=_worker_inputs_method0["simulated_y_ifu_all"],
+        simulated_wave_all=_worker_inputs_method0["simulated_wave_all"],
+        naxis1_ifu=_worker_inputs_method0["naxis1_ifu"],
+        bins_x_ifu=_worker_inputs_method0["bins_x_ifu"],
+        bins_wave=_worker_inputs_method0["bins_wave"],
+        bins_x_detector=_worker_inputs_method0["bins_x_detector"],
+        bins_y_detector=_worker_inputs_method0["bins_y_detector"],
+        wv_cdelt1=_worker_inputs_method0["wv_cdelt1"],
+        extra_degradation_spectral_direction=_worker_inputs_method0["extra_degradation_spectral_direction"],
+        dict_ifu2detector=_worker_inputs_method0["dict_ifu2detector"],
         image2d_rss_method0=local_rss,
         image2d_detector_method0=local_detector,
     )
@@ -176,7 +181,7 @@ def ifu_simulator(
     faux_dict,
     rng,
     ncores=1,
-    prefix_intermediate_fits='test',
+    prefix_intermediate_fits="test",
     stop_after_ifu_3D_method0=False,
     logger=None,
     console=None,
@@ -301,8 +306,8 @@ def ifu_simulator(
     # Check ncores is a positive integer
     if not isinstance(ncores, int) or ncores < 1:
         raise_ValueError(f"Invalid ncores value: {ncores}. ncores must be a positive integer.")
-    # If ncores > 1, we will use parallel processing. 
-    # We will check the number of available CPU cores and adjust ncores 
+    # If ncores > 1, we will use parallel processing.
+    # We will check the number of available CPU cores and adjust ncores
     # if it exceeds the available cores or if os.cpu_count() returns None.
     if ncores > 1:
         cpu_count = os.cpu_count()
@@ -656,7 +661,7 @@ def ifu_simulator(
                 wv_cdelt1,
                 extra_degradation_spectral_direction,
                 dict_ifu2detector,
-            )
+            ),
         ) as pool:
             results = pool.map(_worker_method0, range(nslices))
         # Final reduction (single-threaded, always safe)

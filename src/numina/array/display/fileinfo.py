@@ -36,10 +36,17 @@ class FileInfo(object):
     def __str__(self):
         """Printable representation of a FileInfo instance."""
 
-        output = "<FileInfo instance>\n" + \
-                 "- filename: " + self.filename + "\n" + \
-                 "- extnum..: " + self.extnum + "\n" + \
-                 "- fileinfo: " + str(self.fileinfo)
+        output = (
+            "<FileInfo instance>\n"
+            + "- filename: "
+            + self.filename
+            + "\n"
+            + "- extnum..: "
+            + self.extnum
+            + "\n"
+            + "- fileinfo: "
+            + str(self.fileinfo)
+        )
 
         return output
 
@@ -62,17 +69,15 @@ def check_extnum(filename):
     """
 
     extnum = None
-    if filename[-1] == ']':
-        leftbracket = filename.rfind('[')
+    if filename[-1] == "]":
+        leftbracket = filename.rfind("[")
         if leftbracket != -1:
-            cdum = filename[(leftbracket + 1):-1]
+            cdum = filename[(leftbracket + 1) : -1]
             if len(cdum) > 0:
                 try:
                     extnum = int(cdum)
                 except ValueError:
-                    raise ValueError("Invalid extension number {}".format(
-                        filename[(leftbracket + 1):-1]
-                    ))
+                    raise ValueError("Invalid extension number {}".format(filename[(leftbracket + 1) : -1]))
                 # remove extension number from file name
                 filename = filename[:leftbracket]
 
@@ -109,8 +114,7 @@ def list_fileinfo_from_txt(filename):
                 raise ValueError("File " + filename + " not found!")
             else:
                 list_fits_files.sort()
-                output = [FileInfo(tmpfile, tmpextnum) for
-                          tmpfile in list_fits_files]
+                output = [FileInfo(tmpfile, tmpextnum) for tmpfile in list_fits_files]
                 return output
         else:
             list_fits_files.sort()
@@ -124,7 +128,7 @@ def list_fileinfo_from_txt(filename):
         output = []
         for line in file_content:
             if len(line) > 0:
-                if line[0] not in ['#', '@']:
+                if line[0] not in ["#", "@"]:
                     tmplist = line.split()
                     tmpfile = tmplist[0]
                     tmpextnum = None
@@ -151,9 +155,8 @@ def list_fileinfo_from_txt(filename):
 def main(args=None):
 
     # parse command-line options
-    parser = argparse.ArgumentParser(prog='fileinfo')
-    parser.add_argument("txt_file",
-                        help="txt file with list files")
+    parser = argparse.ArgumentParser(prog="fileinfo")
+    parser.add_argument("txt_file", help="txt file with list files")
     args = parser.parse_args(args)
 
     # execute function

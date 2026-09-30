@@ -33,7 +33,7 @@ class BiasRecipe(numina.core.BaseRecipe):
 
     def __init__(self, *args, **kwds):
         super(BiasRecipe, self).__init__(*args, **kwds)
-        self.simulate_error = kwds.get('simulate_error', False)
+        self.simulate_error = kwds.get("simulate_error", False)
 
 
 class DarkRecipe(numina.core.BaseRecipe):
@@ -49,6 +49,6 @@ class ImageRecipe(numina.core.BaseRecipe):
 
 class ImageRecipeCom(numina.core.BaseRecipe):
     obresult = reqs.ObservationResultRequirement()
-    accum_in = numina.core.Requirement(ImageTest, 'previous accum')
+    accum_in = numina.core.Requirement(ImageTest, "previous accum")
     result_image = numina.core.Result(ImageTest)
     accum = numina.core.Result(ImageTest)

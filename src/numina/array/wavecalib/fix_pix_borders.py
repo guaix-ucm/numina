@@ -34,7 +34,7 @@ def find_pix_borders(sp, sought_value):
     """
 
     if sp.ndim != 1:
-        raise ValueError('Unexpected number of dimensions:', sp.ndim)
+        raise ValueError("Unexpected number of dimensions:", sp.ndim)
     naxis1 = len(sp)
 
     jborder_min = -1
@@ -86,10 +86,7 @@ def fix_pix_borders(image2d, nreplace, sought_value, replacement_value):
 
     for i in range(naxis2):
         # only spectra with values different from 'sought_value'
-        jborder_min, jborder_max = find_pix_borders(
-            image2d[i, :],
-            sought_value=sought_value
-        )
+        jborder_min, jborder_max = find_pix_borders(image2d[i, :], sought_value=sought_value)
 
         # left border
         if jborder_min != -1:
@@ -140,10 +137,7 @@ def define_mask_borders(image2d, sought_value, nadditional=0):
 
     for i in range(naxis2):
         # only spectra with values different from 'sought_value'
-        jborder_min, jborder_max = find_pix_borders(
-            image2d[i, :],
-            sought_value=sought_value
-        )
+        jborder_min, jborder_max = find_pix_borders(image2d[i, :], sought_value=sought_value)
         borders.append((jborder_min, jborder_max))
         if (jborder_min, jborder_max) != (-1, naxis1):
             if jborder_min != -1:

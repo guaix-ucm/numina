@@ -9,7 +9,6 @@
 
 """User command line interface of Numina."""
 
-
 import logging
 
 from .baserun import run_reduce

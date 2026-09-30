@@ -9,7 +9,6 @@
 
 """User command line interface of Numina."""
 
-
 import argparse
 import configparser
 from importlib import import_module

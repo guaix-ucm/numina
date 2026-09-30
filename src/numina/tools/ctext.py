@@ -10,13 +10,7 @@
 """Auxiliary function to display couloured text."""
 
 
-def ctext(s=None,
-          fg=None,
-          bg=None,
-          under=False,
-          rev=False,
-          faint=False,
-          bold=False):
+def ctext(s=None, fg=None, bg=None, under=False, rev=False, faint=False, bold=False):
     """Return coloured string using ANSI Escape Sequences
 
     See ANSI Escape values in:
@@ -48,52 +42,52 @@ def ctext(s=None,
     """
 
     colour = {
-        'black': 0,
-        'red': 1,
-        'green': 2,
-        'yellow': 3,
-        'blue': 4,
-        'magenta': 5,
-        'cyan': 6,
-        'white': 7,
-        'default': 9,
-        'reset': 0
+        "black": 0,
+        "red": 1,
+        "green": 2,
+        "yellow": 3,
+        "blue": 4,
+        "magenta": 5,
+        "cyan": 6,
+        "white": 7,
+        "default": 9,
+        "reset": 0,
     }
 
     if s is None:
-        print(f'Available colours: {list(colour.keys())}')
+        print(f"Available colours: {list(colour.keys())}")
         return
 
     # foreground
     if fg is not None:
         fg = fg.lower()
         if fg not in colour:
-            raise ValueError(f'Unexpected foreground colour: {fg}')
+            raise ValueError(f"Unexpected foreground colour: {fg}")
 
     # background
     if bg is not None:
         bg = bg.lower()
         if bg not in colour:
-            raise ValueError(f'Unexpected background colour: {bg}')
+            raise ValueError(f"Unexpected background colour: {bg}")
 
     style_list = []
     if under:
-        style_list.append('\x1B[4m')
+        style_list.append("\x1b[4m")
     if rev:
-        style_list.append('\x1B[7m')
+        style_list.append("\x1b[7m")
     if faint:
-        style_list.append('\x1B[2m')
+        style_list.append("\x1b[2m")
     if bold:
-        style_list.append('\x1B[1m')
+        style_list.append("\x1b[1m")
 
     if fg is not None:
-        style_list.append(f'\x1B[3{colour[fg]}m')
+        style_list.append(f"\x1b[3{colour[fg]}m")
 
     if bg is not None:
-        style_list.append(f'\x1B[4{colour[bg]}m')
+        style_list.append(f"\x1b[4{colour[bg]}m")
 
-    final_style = ''.join(style_list)
+    final_style = "".join(style_list)
 
-    result = f'{final_style}{s}\x1B[0m'
+    result = f"{final_style}{s}\x1b[0m"
 
     return result

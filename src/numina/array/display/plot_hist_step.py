@@ -7,14 +7,23 @@
 # License-Filename: LICENSE.txt
 #
 """Plot histogram using the matplotlib step function."""
+
 import numpy as np
 
 
-def plot_hist_step(ax, bins, h, label=None,
-                   linestyle='-',
-                   color='C0', alpha=1.0,
-                   fill_color=None, fill_alpha=0.4,
-                   left_border=True, right_border=True):
+def plot_hist_step(
+    ax,
+    bins,
+    h,
+    label=None,
+    linestyle="-",
+    color="C0",
+    alpha=1.0,
+    fill_color=None,
+    fill_alpha=0.4,
+    left_border=True,
+    right_border=True,
+):
     """Plot a histogram using the step function.
 
     Parameters
@@ -45,11 +54,11 @@ def plot_hist_step(ax, bins, h, label=None,
         Default is True.
     """
     xdum = (bins[:-1] + bins[1:]) / 2
-    ax.step(xdum, h, where='mid', color=color, linestyle=linestyle, label=label)
+    ax.step(xdum, h, where="mid", color=color, linestyle=linestyle, label=label)
     if left_border:
-        ax.plot([bins[0], bins[0], xdum[0]], [0, h[0], h[0]], alpha=alpha, color=f'{color}', linestyle=linestyle)
+        ax.plot([bins[0], bins[0], xdum[0]], [0, h[0], h[0]], alpha=alpha, color=f"{color}", linestyle=linestyle)
     if right_border:
-        ax.plot([xdum[-1], bins[-1], bins[-1]], [h[-1], h[-1], 0], alpha=alpha, color=f'{color}', linestyle=linestyle)
+        ax.plot([xdum[-1], bins[-1], bins[-1]], [h[-1], h[-1], 0], alpha=alpha, color=f"{color}", linestyle=linestyle)
     if fill_color is not None:
         xfill = xdum
         hfill = h
@@ -59,4 +68,4 @@ def plot_hist_step(ax, bins, h, label=None,
         if right_border:
             xfill = np.concatenate((xdum, np.array([bins[-1]])))
             hfill = np.concatenate((h, np.array([h[-1]])))
-        ax.fill_between(xfill, hfill, step='mid', alpha=fill_alpha, color=f'{fill_color}')
+        ax.fill_between(xfill, hfill, step="mid", alpha=fill_alpha, color=f"{fill_color}")

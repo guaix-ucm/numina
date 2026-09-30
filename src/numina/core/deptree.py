@@ -53,4 +53,4 @@ def visit_node(node, visited, level=1):
             continue
         else:
             visited.append(nlk.node.name)
-        visit_node(nlk.node, visited, level+1)
+        visit_node(nlk.node, visited, level + 1)

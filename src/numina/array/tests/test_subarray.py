@@ -1,4 +1,3 @@
-
 import numpy
 
 from .. import combine_shapes
@@ -11,13 +10,13 @@ def test_combine_shapes():
 
     # refs must go in (z,y,x) order...
     refs = [(33, 22), (12, 78), (5, 5)]
-    arrn = [numpy.zeros(shape, dtype='int') for shape in shapes]
+    arrn = [numpy.zeros(shape, dtype="int") for shape in shapes]
 
     for arr, ref in zip(arrn, refs):
         arr[ref] = value
 
     finalshape, slices, finalref = combine_shapes(shapes, refs)
-    final = numpy.zeros(finalshape, dtype='int')
+    final = numpy.zeros(finalshape, dtype="int")
 
     assert len(slices) == len(shapes)
 
@@ -41,7 +40,7 @@ def test_combine_shapes2():
 
     # off = [(ref[0] - refs[0][0], ref[1] - refs[0][1]) for ref in refs]
 
-    arrn = [numpy.zeros(shape, dtype='int') for shape in shapes]
+    arrn = [numpy.zeros(shape, dtype="int") for shape in shapes]
 
     for arr, ref in zip(arrn, refs):
         arr[:] = value1
@@ -51,7 +50,7 @@ def test_combine_shapes2():
 
     assert finalshape == fshape
 
-    final = numpy.zeros(finalshape, dtype='int')
+    final = numpy.zeros(finalshape, dtype="int")
 
     for arr, sl in zip(arrn, slices):
         final[sl] += arr

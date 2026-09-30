@@ -10,7 +10,6 @@
 
 """Numina data processing system."""
 
-
 import logging
 
 from ._version import version

@@ -77,7 +77,7 @@ def imsurfit(data, order, output_fit=False):
     # Moments
     for idx, powers in enumerate(powerlist):
         p1, p2 = powers
-        bb[idx] = (data * xx ** p1 * yy ** p2).sum() / data.size
+        bb[idx] = (data * xx**p1 * yy**p2).sum() / data.size
 
     # Now computing aa matrix
     # it contains \sum x^a y^b
@@ -101,7 +101,7 @@ def imsurfit(data, order, output_fit=False):
             if p1 % 2 == 0 and p2 % 2 == 0:
                 # val = (x ** p1).sum() / len(x) * (y ** p2).sum() / len(y)
                 val = _compute_weight((p1, p2), wg)
-                aa[j, i+j] = val
+                aa[j, i + j] = val
 
     # Making symmetric the array
     aa += numpy.triu(aa, k=1).T
@@ -114,7 +114,7 @@ def imsurfit(data, order, output_fit=False):
         for o in range(order + 1):
             for b in range(o + 1):
                 a = o - b
-                result += polycoeff[index] * (xx ** a) * (yy ** b)
+                result += polycoeff[index] * (xx**a) * (yy**b)
                 index += 1
 
         return polycoeff, result
@@ -131,18 +131,18 @@ def vertex_of_quadratic(coeffs):
 
     det = 4 * A * B - E**2
     if det <= 0:
-        raise ValueError('quadratic has no maximum')
+        raise ValueError("quadratic has no maximum")
 
-    xm = -(2*B*C - D*E) / det
-    ym = -(2*A*D - C*E) / det
+    xm = -(2 * B * C - D * E) / det
+    ym = -(2 * A * D - C * E) / det
     return xm, ym
 
 
 class FitOne(object):
     def __init__(self, x, y, z):
         """Fit a plane to a region using least squares."""
-        x = x.astype('float')
-        y = y.astype('float')
+        x = x.astype("float")
+        y = y.astype("float")
         self.xm = x.mean()
         self.ym = y.mean()
         x -= self.xm
@@ -150,14 +150,14 @@ class FitOne(object):
 
         aa = numpy.zeros(shape=(3, 3))
         aa[0, 0] = 1
-        aa[1, 1] = (x*x).mean()
-        aa[2, 2] = (y*y).mean()
-        aa[1, 2] = aa[2, 1] = (x*y).mean()
-        bb = [z.mean(), (x*z).mean(), (y*z).mean()]
+        aa[1, 1] = (x * x).mean()
+        aa[2, 2] = (y * y).mean()
+        aa[1, 2] = aa[2, 1] = (x * y).mean()
+        bb = [z.mean(), (x * z).mean(), (y * z).mean()]
 
         self.pf = numpy.linalg.solve(aa, bb)
 
     def __call__(self, x, y):
-        xf = x.astype('float') - self.xm
-        yf = y.astype('float') - self.ym
+        xf = x.astype("float") - self.xm
+        yf = y.astype("float") - self.ym
         return self.pf[0] + self.pf[1] * xf + self.pf[2] * yf
