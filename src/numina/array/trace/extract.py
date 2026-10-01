@@ -14,7 +14,7 @@ from ._extract import extract_simple_intl
 from .traces import axis_to_dispaxis
 
 
-class Aperture(object):
+class Aperture:
     """Spectroscopic aperture."""
 
     def __init__(self, bbox, borders, axis=0, id=None):
@@ -50,7 +50,7 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
 
     # Borders contains a list of function objects
     # idx starts in 1
-    for idx, b1, b2 in enumerate(borders):
+    for idx, b1, b2 in borders:
         bb1 = b1(xx)
         bb1[bb1 < -0.5] = -0.5
         bb2 = b2(xx)

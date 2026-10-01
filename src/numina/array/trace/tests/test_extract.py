@@ -13,6 +13,7 @@ import numpy as np
 from numpy.testing import assert_allclose
 import pytest
 
+from ..extract import extract_simple_rss
 from ..extract import extract_simple_rss_apers
 from ..extract import Aperture
 from ..traces import axis_to_dispaxis
@@ -22,6 +23,28 @@ _test_data = [
     np.ones((89, 100), dtype=">f4"),
     np.ones((89, 100), dtype="<f4"),
 ]
+
+
+@pytest.mark.parametrize("img", _test_data)
+def test_extract_simple_rss_flat(img):
+
+    # Check with flat boundaries
+    # axis = 1
+    aa3 = 1.9
+    aa4 = 5.5
+    axis = 1
+    dispaxis = axis_to_dispaxis(axis)
+
+    def b3(x):
+        return aa3 * np.ones_like(x)  # noqa: E731
+
+    def b4(x):
+        return aa4 * np.ones_like(x)  # noqa: E731
+
+    borders = [(1, b3, b4)]
+    out = extract_simple_rss(img, borders, axis=axis)
+
+    assert out.shape[1] == img.shape[dispaxis]
 
 
 @pytest.mark.parametrize("img", _test_data)
