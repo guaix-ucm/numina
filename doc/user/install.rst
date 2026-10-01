@@ -35,6 +35,16 @@ Run::
 Pip will download all the required dependencies and a precompiled versión of numina
 (if it exists for your platform) from `PyPI <https://pypi.org/project/numina/>`__.
 
+The graphical tools (such as ``numina-ximshow`` or ``numina-ximplotxy``) open
+interactive windows using matplotlib, which requires a graphical backend.
+To install the Qt bindings (`PyQt6 <https://pypi.org/project/PyQt6/>`_) run::
+
+    pip install "numina[gui]"
+
+Without Qt, matplotlib uses Tk if ``tkinter`` is available, but some options
+(such as ``--geometry``) only work with Qt. Without any graphical backend
+no windows are shown.
+
 .. note:: If possible, pip will install a precompiled version of numina in wheel format.
             If such a version does not exist, pip will download and compile the source code.
             Numina has some portions of C and C++ code. You will need a C/C++ compiler

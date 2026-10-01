@@ -60,6 +60,11 @@ docs = [
     "sphinx>=7",
     "sphinx_rtd_theme"
 ]
+# Qt bindings for the interactive windows of the graphical
+# tools (numina-ximshow, numina-ximplotxy, numina-wavecalib...)
+gui = [
+    "PyQt6",
+]
 
 [project.urls]
 Homepage = "https://github.com/guaix-ucm/numina"
