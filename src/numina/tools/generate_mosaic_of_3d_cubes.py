@@ -215,9 +215,9 @@ def generate_mosaic_of_3d_cubes(
         time_ini = datetime.now()
         logger.info(f"\n* Working with: {fname}")
         with fits.open(fname) as hdul:
-            hdu = hdul[extname_image]
+            hdu = get_hdu_from_hdul(hdul, extname=extname_image)
             single_hdu3d = resample_wave_3d_cube(
-                hdu3d_image=hdu, crval3out=crval3out, cdelt3out=cdelt3out, naxis3out=naxis3out
+                hdu3d_image=hdu, wcskey=wcskey, crval3out=crval3out, cdelt3out=cdelt3out, naxis3out=naxis3out
             )
         data_ini3d = single_hdu3d.data
         wcs_ini3d = WCS(single_hdu3d.header)

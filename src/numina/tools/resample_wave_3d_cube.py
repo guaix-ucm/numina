@@ -20,10 +20,11 @@ from rich_argparse import RichHelpFormatter
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
+from .hdul_utils import get_wcs_from_hdu
 from .initialize_script_with_args import NuminaScriptDefinition
 
 
-def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
+def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out):
     """Resample a 3D cube to a new wavelength sampling.
 
     The celestial WCS is preserved, and the spectral WCS is modified
@@ -33,6 +34,8 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
     ----------
     hdu3d_image : `astropy.io.fits.ImageHDU`
         HDU instance with the 3D image to be resampled.
+    wcskey : str
+        WCS key to use when multiple WCS are present in the FITS header.
     crval3out : `astropy.units.Quantity`
         Minimum wavelength for the output image.
     cdelt3out : `astropy.units.Quantity`
@@ -66,7 +69,7 @@ def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
     header3d_copy = hdu3d_image.header.copy()
 
     # initial pixel borders in the spectral axis
-    old_wcs1d_spectral = WCS(header3d_copy).spectral
+    old_wcs1d_spectral = get_wcs_from_hdu(hdu3d_image, wcskey=wcskey).spectral
     old_wl_borders = old_wcs1d_spectral.pixel_to_world(np.arange(naxis3 + 1) - 0.5)
     # modify slightly the first and last values to avoid numerical issues
     deltawave = old_wl_borders[1] - old_wl_borders[0]

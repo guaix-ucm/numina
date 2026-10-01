@@ -82,6 +82,9 @@ def add_script_info_to_fits_history(header, args, parser=None, title=None):
             value = value.name if hasattr(value, "name") else str(value)
         option = dest_to_option.get(arg, f"--{arg}")
         if option is not None:
-            header.add_history(f"{option} {value}")
+            if isinstance(value, str):
+                header.add_history(f"{option} '{value}'")
+            else:
+                header.add_history(f"{option} {value}")
         else:
             header.add_history(f"{value}")  # Positional argument
