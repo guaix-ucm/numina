@@ -309,7 +309,6 @@ class ObservingMode:
         self.instrument = instrument
         self.summary = ""
         self.description = ""
-        self.tagger = None
         self.validator = None
         self.build_ob_options = None
         self.rawimage = None
@@ -329,16 +328,6 @@ class ObservingMode:
                 partial_ob.results[r.id] = r.content
 
         return partial_ob
-
-    def tag_ob(self, partial):
-        if self.tagger is not None:
-            warnings.warn(
-                "per mode taggers are deprecated, recipe requirements provide al required information",
-                DeprecationWarning,
-                stacklevel=2,
-            )
-            partial.tags = self.tagger(partial)
-        return partial
 
     def __repr__(self):
         return f"ObservingMode(name={self.name})"

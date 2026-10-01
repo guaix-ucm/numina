@@ -22,7 +22,6 @@ from .pipeline import InstrumentDRP
 # from .instrument.insconf import InstrumentConfiguration, instrument_loader
 from .pipeline import ProductEntry
 from .query import ResultOf
-from .taggers import get_tags_from_full_ob
 
 
 def check_section(node, section, keys=None):
@@ -82,38 +81,15 @@ def load_mode(node, confclass=None):
     if confclass is not None:
         node = confclass.mode_loader(node)
     obs_mode.__dict__.update(node)
+    # per mode taggers are not used, the tags are
+    # extracted by the recipe from its requirements
+    obs_mode.__dict__.pop("tagger", None)
 
     # handle validator
     load_mode_validator(obs_mode, node)
 
     # handle builder
     load_mode_builder(obs_mode, node)
-
-    # handle tagger:
-    load_mode_tagger(obs_mode, node)
-
-    return obs_mode
-
-
-def load_mode_tagger(obs_mode, node):
-    """Load observing mode OB tagger"""
-
-    # handle tagger:
-    ntagger = node.get("tagger")
-
-    if ntagger is None:
-        pass
-    elif isinstance(ntagger, list):
-
-        def full_tagger(obsres):
-            return get_tags_from_full_ob(obsres, reqtags=ntagger)
-
-        obs_mode.tagger = full_tagger
-    elif isinstance(ntagger, str):
-        # load function
-        obs_mode.tagger = import_object(ntagger)
-    else:
-        raise TypeError("tagger must be None, a list or a string")
 
     return obs_mode
 

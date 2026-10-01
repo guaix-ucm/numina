@@ -6,15 +6,10 @@ modes:
       key: success
       name: Success
       summary: Summary of success recipe
-      tagger:
-         - KEY3
-         - KEY4
     - description: A recipe about Dark
       key: dark
       name: Dark
       summary: Dark recipe
-      tagger:
-         - KEY5
 pipelines:
     default:
         recipes:

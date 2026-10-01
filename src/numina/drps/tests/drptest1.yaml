@@ -7,21 +7,14 @@ modes:
     key: fail
     name: Fail
     summary: Summary of fail recipe
-    tagger:
-       - KEY1
-       - KEY2
   - description: Bias
     key: bias
     name: Bias
     summary: Summary of Bias recipe
-    tagger:
-       - KEY3
   - description: Dark
     key: dark
     name: Dark
     summary: Summary of Dark recipe
-    tagger:
-       - KEY3
   - description: Image
     key: image
     name: Image

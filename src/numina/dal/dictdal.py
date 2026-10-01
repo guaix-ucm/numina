@@ -122,9 +122,6 @@ class BaseDictDAL(AbsDrpDAL):
             # if mode.build_ob_options is defined in the mode class
             # seems useless
             obsres = selected_mode.build_ob(obsres, self)
-            # Not needed, all the information is obtained from
-            # the requirements
-            obsres = selected_mode.tag_ob(obsres)
 
         if profile is not None:
             # select_profile uses this uuid instead of the images
