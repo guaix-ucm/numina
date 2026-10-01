@@ -103,25 +103,6 @@ def register(subparsers, config):
     )
 
     parser_run.add_argument(
-        "--resultsdir",
-        action="store",
-        dest="resultsdir",
-        help="path to directory to store results",
-    )
-    parser_run.add_argument(
-        "--workdir",
-        action="store",
-        dest="workdir",
-        help="path to directory containing intermediate files",
-    )
-    parser_run.add_argument(
-        "--cleanup",
-        action="store_true",
-        dest="cleanup",
-        default=False,
-        help="cleanup workdir on exit [disabled]",
-    )
-    parser_run.add_argument(
         "--link-files",
         "--not-copy-files",
         action="store_const",

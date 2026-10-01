@@ -123,6 +123,8 @@ def main(args=None):
     args, unknowns = parser.parse_known_args(args)
 
     extra_args = process_unknown_arguments(unknowns)
+    if extra_args.rejected:
+        parser.error(f"unrecognized arguments: {' '.join(extra_args.rejected)}")
     # logger file
     if args.standalone:
         import numina.ext.gtc
@@ -158,21 +160,24 @@ def main(args=None):
 
 
 def process_unknown_arguments(unknowns):
-    """Process arguments unknown to the parser"""
+    """Process arguments unknown to the parser
+
+    Arguments like --parameter-NAME=VALUE are stored in extra_control,
+    any other argument is stored in rejected.
+    """
 
     result = argparse.Namespace()
     result.extra_control = {}
+    result.rejected = []
     # It would be interesting to use argparse internal
     # machinery for this
+    prefix = "--parameter-"
     for unknown in unknowns:
-        # Check prefixes
-        prefix = "--parameter-"
-        if unknown.startswith(prefix):
-            # process '='
-            values = unknown.split("=")
-            if len(values) == 2:
-                key = values[0][len(prefix) :]
-                val = values[1]
-                if key:
-                    result.extra_control[key] = val
+        if unknown.startswith(prefix) and "=" in unknown:
+            # The value can contain '='
+            key, val = unknown[len(prefix) :].split("=", 1)
+            if key:
+                result.extra_control[key] = val
+                continue
+        result.rejected.append(unknown)
     return result

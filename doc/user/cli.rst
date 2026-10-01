@@ -33,13 +33,19 @@ It is called like this::
 
 .. program:: numina run
 
-.. option:: -i, --instrument INSCONF
+.. option:: --insconf, --profile UUID
 
-   Name of one of the predefined instrument configurations.
+   UUID of one of the instrument configurations. It overrides the
+   configuration selected from the images (keyword INSCONF).
 
-.. option:: --pipeline 'name'
+.. option:: --profile-path path
 
-   Name of one of the predefined pipelines.
+   Directory with additional instrument configurations.
+
+.. option:: -p, --pipeline 'name'
+
+   Name of one of the pipelines of the DRP. It overrides the pipeline
+   of the observation result, the default is 'default'.
 
 .. option::  -r, --requirements filename
 
@@ -52,19 +58,6 @@ It is called like this::
 .. option:: --datadir path
 
    File path to the folder containing the pristine data to be processed.
-
-.. option:: --resultsdir path
-
-   File path to the directory where results are stored.
-
-.. option:: --workdir path
-
-   File path to the a directory where the recipe can write. Files in datadir
-   are copied here.
-
-.. option:: --cleanup
-
-   Remove intermediate and temporal files created by the recipe.
 
 .. option:: --not-copy-files
 
