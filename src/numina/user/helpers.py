@@ -57,23 +57,6 @@ class DataManager:
         self.resultfile_tmpl = check_template(resultfile_tmpl)
         self.taskfile_tmpl = check_template(taskfile_tmpl)
 
-    def insert_obs(self, loaded_obs):
-        self.backend.add_obs(loaded_obs)
-
-    def load_observations(self, obfile):
-
-        loaded_obs = []
-        with open(obfile) as fd:
-            sess = []
-            for doc in yaml.safe_load_all(fd):
-                enabled = doc.get("enabled", True)
-                docid = doc["id"]
-                requirements = doc.get("requirements", {})
-                sess.append(dict(id=docid, enabled=enabled, requirements=requirements))
-                loaded_obs.append(doc)
-        self.insert_obs(loaded_obs)
-        return loaded_obs
-
     def serializer(self, data, fd):
         import json
 
@@ -597,8 +580,8 @@ def load_observations(obfiles, is_session=False):
                 for doc in yaml.safe_load_all(fd):
                     enabled = doc.get("enabled", True)
                     docid = doc["id"]
-                    requirements = doc.get("requirements", {})
-                    sess.append(dict(id=docid, enabled=enabled, requirements=requirements))
+                    # the requirements of the OB are read from the OB table
+                    sess.append(dict(id=docid, enabled=enabled))
                     if enabled:
                         _logger.debug("load observation result with id %s", docid)
                     else:

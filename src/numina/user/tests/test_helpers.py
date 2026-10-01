@@ -146,8 +146,8 @@ def test_load_observations(tmp_path):
 
     assert sessions == [
         [
-            {"id": 1, "enabled": True, "requirements": {}},
-            {"id": 2, "enabled": False, "requirements": {}},
+            {"id": 1, "enabled": True},
+            {"id": 2, "enabled": False},
         ]
     ]
     assert [ob["id"] for ob in loaded_obs] == [1, 2]
