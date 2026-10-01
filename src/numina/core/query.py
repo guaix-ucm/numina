@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2018 Universidad Complutense de Madrid
+# Copyright 2011-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -12,7 +12,7 @@
 import logging
 
 
-class QueryModifier(object):
+class QueryModifier:
     pass
 
 
@@ -21,6 +21,30 @@ class Constraint(QueryModifier):
 
 
 class ResultOf(QueryModifier):
+    """Query the result of other observing blocks
+
+    Parameters
+    ----------
+    field : str
+        Field of the result, as 'MODE.field' or 'field'. The mode
+        is only checked with node='prev' and node='prev-rel'.
+    node : str, optional
+        Observing blocks where the result is searched:
+
+        - 'children': the children of the observing block, one result each.
+        - 'prev': the closest previous observing block with a result,
+          in the order they were loaded.
+        - 'prev-rel': as 'prev', but only among the previous children
+          of the same parent; if there is no parent, as 'prev'.
+        - 'last': not implemented, the query raises NoResultFound.
+    ignore_fail : bool, optional
+        With node='children', skip the children without result
+        instead of raising NoResultFound.
+    id_field : str, optional
+        Not used. The children are always read from the 'children'
+        field of the observing block.
+    """
+
     def __init__(self, field, node="children", ignore_fail=False, id_field=None):
         from numina.types.frame import DataFrameType
 

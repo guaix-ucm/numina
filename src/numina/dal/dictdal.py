@@ -525,19 +525,14 @@ class BaseHybridDAL(Dict2DAL):
                 raise NoResultFound("value not found in any node")
         elif result_node == "last":
             _logger.debug("search last node of %s", result_mode)
-
-            try:
-                st = self.search_result_last(name, tipo, result_desc)
-                return st
-            except NoResultFound:
-                pass
+            return self.search_result_last(name, tipo, result_desc)
         else:
             msg = f"unknown node type {result_node}"
             raise TypeError(msg)
 
     def search_result_last(self, name, tipo, result_desc):
         # FIXME: Implement
-        raise NoResultFound
+        raise NoResultFound(f"result of '{result_desc.field}' not found, node 'last' is not implemented")
 
     def build_product_path(self, drp, conf, name, tipo, obsres):
         path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
