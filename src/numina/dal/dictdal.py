@@ -27,7 +27,7 @@ from .absdal import AbsDrpDAL
 from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter, StoredResult
 from .diskfiledal import build_product_path
-from .utils import tags_are_valid
+from .utils import check_template, fill_template, tags_are_valid
 
 _logger = logging.getLogger(__name__)
 
@@ -204,28 +204,6 @@ class BaseDictDAL(AbsDrpDAL):
     def assembly_instrument(self, keyval, date, by_key="name"):
         return assembly_instrument(self.components, keyval, date, by_key=by_key)
 
-    def search_result_id(self, node_id, tipo, field):
-        cobsres = self.obsres_from_oblock_id(node_id)
-
-        rdir = resultsdir_default(self.basedir, node_id)
-        # FIXME: hardcoded
-        # taskfile = os.path.join(rdir, 'task.yaml')
-        resfile = os.path.join(rdir, "result.yaml")
-        result_contents = yaml.safe_load(open(resfile))
-        # task_contents = yaml.safe_load(open(taskfile))
-
-        try:
-            field_file = result_contents[field]
-            st = StoredProduct(
-                id=node_id,
-                content=numina.store.load(tipo, os.path.join(rdir, field_file)),
-                tags={},
-            )
-            return st
-        except KeyError as err:
-            msg = f"field '{field}' not found in result of mode '{cobsres.mode}' id={node_id}"
-            raise NoResultFound(msg) from err
-
     def search_product(self, name, tipo, obsres, options=None):
         # returns StoredProduct
         ins = obsres.instrument
@@ -272,13 +250,6 @@ class BaseDictDAL(AbsDrpDAL):
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
         # mode field node could go together...
         return []
-
-
-class DictDAL(BaseDictDAL):
-    def __init__(self, drps, base):
-
-        # Check that the structure of 'base' is correct
-        super().__init__(drps, base["oblocks"], base["products"], base["parameters"])
 
 
 class Dict2DAL(BaseDictDAL):
@@ -334,20 +305,6 @@ class Dict2DAL(BaseDictDAL):
         state["requirements"] = self.req_table
         state["oblocks"] = self.ob_table
         return state
-
-
-def workdir_default(basedir, obsid):
-    # FIXME: hardcoded
-    workdir = os.path.join(basedir, f"obsid{obsid}_work")
-    workdir = os.path.abspath(workdir)
-    return workdir
-
-
-def resultsdir_default(basedir, obsid):
-    # FIXME: hardcoded
-    resultsdir = os.path.join(basedir, f"obsid{obsid}_results")
-    resultsdir = os.path.abspath(resultsdir)
-    return resultsdir
 
 
 class BaseHybridDAL(Dict2DAL):
@@ -567,7 +524,14 @@ class HybridDAL(BaseHybridDAL):
         extra_data=None,
         components=None,
         basedir=None,
+        resultdir_tmpl="obsid{obsid}_results",
+        resultfile_tmpl="result.json",
     ):
+
+        # Templates to find the results of other OBs,
+        # the same used by DataManager to store them
+        self.resultdir_tmpl = check_template(resultdir_tmpl)
+        self.resultfile_tmpl = check_template(resultfile_tmpl)
 
         temp_ob_ids = []
         # Preprocessing
@@ -648,22 +612,18 @@ class HybridDAL(BaseHybridDAL):
                 raise NoResultFound(msg)
 
         try:
-            directory = resultsdir_default(self.basedir, node_id)
+            # In format 1, the id of the task is the id of the OB
+            directory = fill_template(self.resultdir_tmpl, obsid=node_id, taskid=node_id)
+            filename = fill_template(self.resultfile_tmpl, obsid=node_id, taskid=node_id)
 
             # change directory to open result file
             with working_directory(os.path.join(self.basedir, directory)):
 
-                # Try to open both
-                filename_yaml = "result.yaml"
-                filename_json = "result.json"
-                if os.path.exists(filename_yaml):
-                    with open(filename_yaml) as fd:
-                        result_data = yaml.safe_load(fd)
-                elif os.path.exists(filename_json):
-                    with open(filename_json) as fd:
+                if os.path.exists(filename):
+                    with open(filename) as fd:
                         result_data = json.load(fd)
                 else:
-                    raise ValueError(f"result.yaml or result.json not found in {directory}")
+                    raise ValueError(f"{filename} not found in {directory}")
 
                 stored_result = StoredResult.load_data(result_data)
 

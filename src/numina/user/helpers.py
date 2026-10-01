@@ -21,6 +21,7 @@ import yaml
 import numina.drps
 from numina.dal.backend import Backend
 from numina.dal.dictdal import HybridDAL
+from numina.dal.utils import check_template, fill_template
 from numina.util.jsonencoder import ExtEncoder
 from numina.types.frame import DataFrameType
 from numina.types.qc import QC
@@ -35,12 +36,26 @@ class DataManager:
         self.datadir = datadir
         self.backend = backend
 
+        # Templates of the names of directories and files, the format 1
+        # of the control file replaces them with the values in the configuration.
+        # They include the taskid, as there can be several tasks for the same OB
         self.workdir_tmpl = "obsid{obsid}_{taskid}_work"
         self.resultdir_tmpl = "obsid{obsid}_{taskid}_result"
-        self.serial_format = "json"
-
         self.resultfile_tmpl = "result.json"
         self.taskfile_tmpl = "task.json"
+
+    def set_templates(self, workdir_tmpl, resultdir_tmpl, resultfile_tmpl, taskfile_tmpl):
+        """Set the templates of the names of directories and files
+
+        Raises
+        ------
+        ValueError
+            If a template uses fields not in numina.dal.utils.TEMPLATE_FIELDS
+        """
+        self.workdir_tmpl = check_template(workdir_tmpl)
+        self.resultdir_tmpl = check_template(resultdir_tmpl)
+        self.resultfile_tmpl = check_template(resultfile_tmpl)
+        self.taskfile_tmpl = check_template(taskfile_tmpl)
 
     def insert_obs(self, loaded_obs):
         self.backend.add_obs(loaded_obs)
@@ -60,22 +75,9 @@ class DataManager:
         return loaded_obs
 
     def serializer(self, data, fd):
-        if self.serial_format == "yaml":
-            self.serializer_yaml(data, fd)
-        elif self.serial_format == "json":
-            self.serializer_json(data, fd)
-        else:
-            raise ValueError("serializer not supported")
-
-    def serializer_json(self, data, fd):
         import json
 
         json.dump(data, fd, indent=2, cls=ExtEncoder)
-
-    def serializer_yaml(self, data, fd):
-        import yaml
-
-        yaml.dump(data, fd)
 
     def store_result_to(self, result):
         saveres = result.store_to(None)
@@ -86,10 +88,9 @@ class DataManager:
         result_dir_rel = task.request_runinfo["results_dir"]
         result_dir = os.path.join(self.basedir, result_dir_rel)
 
-        values = dict(obsid=task.request_params["oblock_id"], taskid=task.id)
-
-        result_file = self.resultfile_tmpl.format(**values)
-        task_file = self.taskfile_tmpl.format(**values)
+        obsid = task.request_params["oblock_id"]
+        result_file = fill_template(self.resultfile_tmpl, obsid=obsid, taskid=task.id)
+        task_file = fill_template(self.taskfile_tmpl, obsid=obsid, taskid=task.id)
 
         with working_directory(result_dir):
 
@@ -129,10 +130,9 @@ class DataManager:
 
     def create_workenv(self, task):
 
-        values = dict(obsid=task.request_params["oblock_id"], taskid=task.id)
-
-        work_dir = self.workdir_tmpl.format(**values)
-        result_dir = self.resultdir_tmpl.format(**values)
+        obsid = task.request_params["oblock_id"]
+        work_dir = fill_template(self.workdir_tmpl, obsid=obsid, taskid=task.id)
+        result_dir = fill_template(self.resultdir_tmpl, obsid=obsid, taskid=task.id)
 
         workenv = WorkEnvironment(self.datadir, self.basedir, work_dir, result_dir)
 
@@ -442,6 +442,8 @@ def process_format_version_1(
     rootdir: str,
     loaded_data,
     loaded_data_extra=None,
+    resultdir_tmpl="obsid{obsid}_results",
+    resultfile_tmpl="result.json",
 ) -> HybridDAL:
     backend = HybridDAL(
         sys_drps,
@@ -451,6 +453,8 @@ def process_format_version_1(
         extra_data=loaded_data_extra,
         basedir=basedir,
         components=components,
+        resultdir_tmpl=resultdir_tmpl,
+        resultfile_tmpl=resultfile_tmpl,
     )
     return backend
 
@@ -531,12 +535,24 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
 
     if control_format == 1:
         merged_data = deep_merge(initial_schema, loaded_data)
-        _backend = process_format_version_1(sys_drps, components, basedir, calibsdir, merged_data, loaded_data_extra)
+        # The backend uses the same templates to find the results of other OBs
+        _backend = process_format_version_1(
+            sys_drps,
+            components,
+            basedir,
+            calibsdir,
+            merged_data,
+            loaded_data_extra,
+            resultdir_tmpl=section["resultdir_tmpl"],
+            resultfile_tmpl=section["resultfile_tmpl"],
+        )
         datamanager = DataManager(basedir, datadir, _backend)
-        datamanager.workdir_tmpl = section["workdir_tmpl"]
-        datamanager.resultdir_tmpl = section["resultdir_tmpl"]
-        datamanager.resultfile_tmpl = section["resultfile_tmpl"]
-        datamanager.taskfile_tmpl = section["taskfile_tmpl"]
+        datamanager.set_templates(
+            section["workdir_tmpl"],
+            section["resultdir_tmpl"],
+            section["resultfile_tmpl"],
+            section["taskfile_tmpl"],
+        )
     elif control_format == 2:
         if persist:
             pname = reqfile
