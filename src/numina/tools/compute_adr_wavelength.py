@@ -17,11 +17,11 @@ import matplotlib.pyplot as plt
 import numpy as np
 from rich import print
 from rich_argparse import RichHelpFormatter
+import sys
 
 from numina.user.console import print_table
 
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 
 def air_refractive_index_15_760(wave_vacuum):
@@ -209,17 +209,24 @@ def main(args=None):
     parser.add_argument("--ndecimal-wave", help="Number of decimal places in wavelength", type=int, default=3)
     parser.add_argument("--ndecimal-adr", help="Number of decimal places in ADR", type=int, default=3)
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
+    console = myscript.console
 
     if args.wave_ini is None:
-        raise ValueError("You must specify --wave-ini")
+        logger.error("You must specify --wave-ini")
+        sys.exit(1)
     if args.wave_end is None:
-        raise ValueError("You must specify --wave-end")
+        logger.error("You must specify --wave-end")
+        sys.exit(1)
     if args.wave_step is None:
-        raise ValueError("You must specify --wave-step")
+        logger.error("You must specify --wave-step")
+        sys.exit(1)
 
     if args.wave_unit is None:
-        raise ValueError("You must specify --wave-unit")
+        logger.error("You must specify --wave-unit")
+        sys.exit(1)
     else:
         try:
             wave_unit = u.Unit(args.wave_unit)
@@ -272,7 +279,7 @@ def main(args=None):
         plt.show()
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

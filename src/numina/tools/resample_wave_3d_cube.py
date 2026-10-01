@@ -20,8 +20,7 @@ from rich_argparse import RichHelpFormatter
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 
 def resample_wave_3d_cube(hdu3d_image, crval3out, cdelt3out, naxis3out):
@@ -143,7 +142,9 @@ def main(args=None):
         "--extname", type=str, help="Extension name of the input HDU (default: 'PRIMARY').", default="PRIMARY"
     )
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
 
     input_file = args.input
     output_file = args.output
@@ -191,7 +192,7 @@ def main(args=None):
     resampled_hdu.writeto(Path(args.output_dir) / output_file, overwrite=True)
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

@@ -35,8 +35,7 @@ from rich_argparse import RichHelpFormatter
 
 from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_cd_keywords
 
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 REPROJECT_METHODS = ["interp", "adaptive", "exact"]
 COMBINATION_FUNCTIONS = ["mean", "median", "sum", "std", "sigmaclip_mean", "sigmaclip_median", "sigmaclip_stddev"]
@@ -243,8 +242,11 @@ def main(args=None):
         choices=COMBINATION_FUNCTIONS,
     )
     parser.add_argument("--output-3D-stack", help="filename for stacked 3D array. Default None", default=None, type=str)
+
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
 
     input_list = args.input_list
     output_filename = args.output_filename
@@ -329,7 +331,7 @@ def main(args=None):
         hdul.writeto(Path(args.output_dir) / output_3d_stack, overwrite="yes")
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

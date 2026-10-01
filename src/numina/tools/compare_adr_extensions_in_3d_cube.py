@@ -16,8 +16,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from rich_argparse import RichHelpFormatter
 
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 
 def plot_reference_wavelengths(ax, refewave1, refewave2, extname1, extname2):
@@ -160,7 +159,8 @@ def main(args=None):
     parser.add_argument("extname1", help="First extension name", type=str)
     parser.add_argument("extname2", help="Second extension name (optional)", type=str)
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
 
     for extname in [args.extname1, args.extname2]:
         if len(extname) > 8:
@@ -171,7 +171,7 @@ def main(args=None):
     )
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

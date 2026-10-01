@@ -44,8 +44,7 @@ import teareduce as tea
 from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 from numina.array.yx_offsets_correlate2d import yx_offsets_correlate2d
 
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 
 def simulate_images(fwhm, amplitude, background, noise, xoffset=0, yoffset=0, num_nans=0, seed=None):
@@ -363,8 +362,11 @@ def main(args=None):
     )
     parser.add_argument("--test-seed", type=int, default=1234, help="Random seed for synthetic images (default: 1234)")
     parser.add_argument("--save-test-images", action="store_true", help="Save synthetic images to FITS files")
+
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
 
     # If test mode is enabled, create synthetic images.
     # Otherwise, read the images from the provided paths.
@@ -427,7 +429,7 @@ def main(args=None):
     logger.info(f"Computed offsets (pixels): x_offset = {x_offset}, y_offset = {y_offset}")
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":
