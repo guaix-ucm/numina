@@ -28,6 +28,7 @@ from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_c
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
 from .file_is_valid_fits import file_is_valid_fits
+from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
 from .initialize_script_with_args import NuminaScriptDefinition
 from .resample_wave_3d_cube import resample_wave_3d_cube
 
@@ -44,6 +45,7 @@ def generate_mosaic_of_3d_cubes(
     reproject_method,
     parallel,
     output_celestial_2d_wcs,
+    wcskey,
     footprint=False,
 ):
     """Combine 3D cubes using their WCS information.
@@ -74,6 +76,8 @@ def generate_mosaic_of_3d_cubes(
         See `reproject` documentation for details.
     output_celestial_2d_wcs : str, file-like, `pathlib.Path` or None
         Path to output 2D celestial WCS.
+    wcskey : str or None
+        WCS key to use when multiple WCS are present in the FITS header.
     footprint : bool
         If True, generate a FOOTPRINT extension with the final footprint.
 
@@ -110,10 +114,10 @@ def generate_mosaic_of_3d_cubes(
             logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
             logger.info(f"Working with file (extension): {fname} ({extname_image})")
             with fits.open(fname) as hdul:
-                hdu = hdul[extname_image]
+                hdu = get_hdu_from_hdul(hdul, extname=extname_image)
             logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
             header3d_copy = hdu.header.copy()
-            wcs2d_celestial = WCS(header3d_copy).celestial
+            wcs2d_celestial = get_wcs_from_hdu(hdu, wcskey=wcskey).celestial
             logger.info(f"{wcs2d_celestial=}")
             scales = proj_plane_pixel_scales(wcs2d_celestial)
             logger.info(f"Image {i+1}: {scales[0]*3600:.3f} arcsec, {scales[1]*3600:.3f} arcsec")
@@ -145,21 +149,19 @@ def generate_mosaic_of_3d_cubes(
     wavemax = None  # maximum wavelength (at the center of the last pixel)
     cdelt3out_ = None
     for i, fname in enumerate(list_of_fits_files):
+        logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
+        logger.info(f"Working with file (extension): {fname} ({extname_image})")
         with fits.open(fname) as hdul:
-            if extname_image not in hdul:
-                raise ValueError(f"Expected {extname_image} extension not found")
-            hdu = hdul[extname_image]
-            logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
-            logger.info(f"Working with file (extension): {fname} ({extname_image})")
-            logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
-            header3d_copy = hdu.header.copy()
-            wcs1d_spectral = WCS(header3d_copy).spectral
-            wave = wcs1d_spectral.pixel_to_world(np.arange(hdu.data.shape[0]))
-            logger.info(f"{wcs1d_spectral=}")
-            logger.info(f"CUNIT : {wcs1d_spectral.wcs.cunit[0]}")
-            logger.debug(f"{wave[0]=}")
-            logger.debug(f"{wave[-1]=}")
-            logger.debug(f"{np.diff(wave).min()=}")
+            hdu = get_hdu_from_hdul(hdul, extname=extname_image)
+            npixels = hdu.data.shape[0]
+        logger.info(f'{hdu.header["NAXIS1"]=}, {hdu.header["NAXIS2"]=}, {hdu.header["NAXIS3"]=}')
+        wcs1d_spectral = get_wcs_from_hdu(hdu, wcskey=wcskey).spectral
+        wave = wcs1d_spectral.pixel_to_world(np.arange(npixels))
+        logger.info(f"{wcs1d_spectral=}")
+        logger.info(f"CUNIT : {wcs1d_spectral.wcs.cunit[0]}")
+        logger.debug(f"{wave[0]=}")
+        logger.debug(f"{wave[-1]=}")
+        logger.debug(f"{np.diff(wave).min()=}")
         if crval3out_ is None:
             crval3out_ = wave[0]
         else:
@@ -310,6 +312,11 @@ def main(args=None):
     parser.add_argument(
         "--footprint", help="Generate a FOOTPRINT extension with the final footprint", action="store_true"
     )
+    parser.add_argument(
+        "--wcskey",
+        help="WCS key to use when multiple WCS are present in the FITS header.",
+        type=str,
+    )
     # Include default arguments for common actions, and initialize console and logging
     myscript = NuminaScriptDefinition(parser)
     args = myscript.args
@@ -334,6 +341,7 @@ def main(args=None):
     if output_celestial_2d_wcs is not None:
         output_celestial_2d_wcs = Path(args.output_dir) / output_celestial_2d_wcs
     footprint = args.footprint
+    wcskey = args.wcskey
 
     # check if input file is a single FITS file or a list
     if input_list.lower().endswith(".fits"):
@@ -366,6 +374,7 @@ def main(args=None):
         reproject_method=reproject_method,
         parallel=parallel,
         output_celestial_2d_wcs=output_celestial_2d_wcs,
+        wcskey=wcskey,
         footprint=footprint,
     )
 
