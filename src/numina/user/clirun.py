@@ -72,7 +72,7 @@ def register(subparsers, config):
         "--profile-path",
         dest="profilepath",
         default=None,
-        help="location of the instrument profiles",
+        help="directory with additional instrument configurations",
     )
     parser_run.add_argument(
         "-p",

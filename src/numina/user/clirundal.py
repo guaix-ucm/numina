@@ -48,7 +48,7 @@ def mode_run_common_obs(args, extra_args, config):
     if hasattr(args, "strict_reqs"):
         config["tool.run"]["strict_reqs"] = str(args.strict_reqs)
 
-    datamanager = create_datamanager(config, args.reqs, extra_args.extra_control)
+    datamanager = create_datamanager(config, args.reqs, extra_args.extra_control, profile_path_extra=args.profilepath)
     datamanager.backend.add_obs(loaded_obs)
 
     # Start processing

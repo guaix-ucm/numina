@@ -23,7 +23,7 @@ def register(subparsers, config):
     )
     # TODO: this could be the same option for run
     parser_show_ins.add_argument(
-        "--profile-path", dest="profilepath", default=None, help="location of the instrument profiles"
+        "--profile-path", dest="profilepath", default=None, help="directory with additional instrument configurations"
     )
     #    parser_show_ins.add_argument('--verbose', '-v', action='count')
 

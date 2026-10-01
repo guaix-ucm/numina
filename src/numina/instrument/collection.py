@@ -10,6 +10,7 @@
 import importlib.resources
 import itertools
 import json
+import logging
 import os
 import pathlib
 import typing
@@ -23,6 +24,8 @@ import attrs
 from .configorigin import ElementOrigin
 
 FileLike = str | os.PathLike
+
+_logger = logging.getLogger(__name__)
 
 
 @attrs.define
@@ -45,12 +48,19 @@ def load_paths_store(
     paths1 = [pathlib.Path(f_path) for f_path in file_paths]
     paths2 = [importlib.resources.files(p_path) for p_path in pkg_paths]
 
+    # Directory where each file was read
+    file_dirs = {}
     for path in itertools.chain(paths1, paths2):
         for obj in path.iterdir():
             if obj.suffix == ".json":
                 with obj.open() as fd:
                     cont = json.load(fd)
                     cont["origin"] = ElementOrigin.from_dict(cont)
+                    if obj.name in comp_store:
+                        _logger.warning(
+                            "configuration file %s in %s replaces the one in %s", obj.name, path, file_dirs[obj.name]
+                        )
                     comp_store[obj.name] = cont
+                    file_dirs[obj.name] = path
 
     return comp_store
