@@ -1,5 +1,5 @@
 #
-# Copyright 2011-2021 Universidad Complutense de Madrid
+# Copyright 2011-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -11,7 +11,6 @@
 
 import pkgutil
 import importlib
-from io import StringIO
 
 import yaml
 
@@ -175,7 +174,7 @@ def load_pipelines(instrument, node):
     return pipelines
 
 
-def load_confs(package, node, confclass=None):
+def load_confs(package, node):
     import numina.instrument.assembly as asbl
 
     keys = []
@@ -187,17 +186,8 @@ def load_confs(package, node, confclass=None):
     else:
         modpath = f"{package}.instrument.configs"
 
-    if confclass is None:
-        _loader = DefaultLoader(modpath=modpath)  # noqa: F841
-
-    tagger = node.get("tagger")
-    if tagger:
-        ins_tagger = import_object(tagger)
-    else:
-        ins_tagger = None
-
     confs = asbl.load_paths_store([modpath])
-    return confs, ins_tagger, modpath
+    return confs, modpath
 
 
 def load_pipeline(instrument, name, node):
@@ -296,26 +286,13 @@ def load_instrument(package, node, confclass=None, default_requirements=None):
         trans["version"] = node["version"]
     trans["pipelines"] = load_pipelines(node["name"], pipe_node)
     trans["modes"] = load_modes(mode_node, confclass)
-    confs, custom_selector, modpath = load_confs(package, conf_node, confclass=confclass)
+    confs, modpath = load_confs(package, conf_node)
     # trans['configurations'] = confs
     trans["configurations"] = confs
     trans["default_requirements"] = default_requirements
     ins = InstrumentDRP(**trans)
-    # idiom to add a bound method
-    if custom_selector:
-        ins.select_configuration = custom_selector.__get__(ins)
     # Add package name
     ins.package = package
     # Add profile path
     ins.profiles = modpath
     return ins
-
-
-class DefaultLoader:
-    def __init__(self, modpath):
-        self.modpath = modpath
-
-    def build_type_fp(self, fname):
-        data = pkgutil.get_data(self.modpath, fname)
-        fcomp = StringIO(data.decode("utf-8"))
-        return fcomp

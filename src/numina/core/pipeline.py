@@ -217,61 +217,8 @@ class InstrumentDRP:
             except KeyError:
                 warnings.warn(f"Mode {mode_key} has not recipe")
 
-    def configuration_selector(self, obsres):
-        warnings.warn(
-            "configuration_selector is deprecated, use 'select_configuration' instead", DeprecationWarning, stacklevel=2
-        )
-        return self.select_configuration_old(obsres)
-
     def product_label(self, tipo):
         return tipo.name()
-
-    def select_configuration_old(self, obresult):
-        """Select instrument configuration based on OB"""
-
-        logger = logging.getLogger(__name__)
-        logger.debug("calling default configuration selector")
-
-        # get first possible image
-        ref_frame = obresult.get_sample_frame()
-        ref = ref_frame.open()
-        extr = self.datamodel.extractor_map["fits"]
-        if ref:
-            # get INSCONF configuration
-            result = extr.extract("insconf", ref)
-            if result:
-                # found the keyword, try to match
-                logger.debug("found insconf config uuid=%s", result)
-                # Use insconf as uuid key
-                if result in self.configurations:
-                    return self.configurations[result]
-                else:
-                    # Additional check for conf.name
-                    for conf in self.configurations.values():
-                        if conf.name == result:
-                            return conf
-                    else:
-                        raise KeyError(f"insconf {result} does not match any config")
-
-            # If not, try to match by DATE
-            date_obs = extr.extract("observation_date", ref)
-            for key, conf in self.configurations.items():
-                if key == "default":
-                    # skip default
-                    continue
-                if conf.date_end is not None:
-                    upper_t = date_obs < conf.date_end
-                else:
-                    upper_t = True
-                if upper_t and (date_obs >= conf.date_start):
-                    logger.debug("found date match, config uuid=%s", key)
-                    return conf
-        else:
-            logger.debug("no match, using default configuration")
-            return self.configurations["default"]
-
-    def select_configuration(self, obresult):
-        return self.select_profile(obresult)
 
     def select_profile(self, obresult):
         """Select instrument profile based on OB"""

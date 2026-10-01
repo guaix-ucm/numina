@@ -3,21 +3,20 @@ import pytest
 from ..pipelineload import load_confs
 
 
-@pytest.mark.xfail(reason="fix this later")
-def test_load_confs_1():
-    """Test the loader returns a valid config when 'values' is empty"""
+def test_load_confs_path():
+    """The configurations are loaded from 'path'"""
 
-    package = "clodiadrp"
-    node = {"values": {}}
+    confs, modpath = load_confs("numina", {"path": "numina.drps.tests.configs"})
 
-    result = load_confs(package, node)
-    assert len(result) == 2
+    assert modpath == "numina.drps.tests.configs"
+    assert "instrument-test1.json" in confs
+    assert confs["instrument-test1.json"]["name"] == "TEST1"
 
-    result1, result2 = result
 
-    assert len(result1) == 1
-    assert "default" in result1
+def test_load_confs_default_path():
+    """Without 'path', the configurations are in package.instrument.configs"""
 
-    insconf = result1["default"]
-    assert insconf.instrument == "EMPTY"
-    assert insconf.name == "EMPTY"
+    with pytest.raises(ModuleNotFoundError) as excinfo:
+        load_confs("numina", {})
+
+    assert excinfo.value.name == "numina.instrument.configs"
