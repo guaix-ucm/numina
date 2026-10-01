@@ -59,13 +59,17 @@ It is called like this::
 
    File path to the folder containing the pristine data to be processed.
 
-.. option:: --not-copy-files
+.. option:: --copy-files
 
-   perform linking instead of copying files in the work dir
+   Copy the files of the observation result and the requirements
+   to the work directory.
 
-.. option:: --link-files
+.. option:: --link-files, --not-copy-files
 
-   perform linking instead of copying files in the work dir
+   Link the files of the observation result and the requirements
+   in the work directory. Without --copy-files or --link-files, the
+   value of copy_files in the configuration is used, by default
+   the files are linked.
 
 .. option:: -e, --enable BLOCKID
 

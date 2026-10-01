@@ -102,13 +102,22 @@ def register(subparsers, config):
         metavar="CALIBSDIR",
     )
 
-    parser_run.add_argument(
+    # If none is used, the value of copy_files in the configuration is used
+    group_copy = parser_run.add_mutually_exclusive_group()
+    group_copy.add_argument(
+        "--copy-files",
+        action="store_true",
+        dest="copy_files",
+        default=None,
+        help="copy observation result and requirement files to the work directory",
+    )
+    group_copy.add_argument(
         "--link-files",
         "--not-copy-files",
-        action="store_const",
+        action="store_false",
         dest="copy_files",
-        const=False,
-        help="do not copy observation result and requirement files",
+        default=None,
+        help="link observation result and requirement files in the work directory",
     )
     parser_run.add_argument(
         "-e",
