@@ -87,7 +87,7 @@ def test_show_no_instruments_i(capsys, monkeypatch, drpsfunc):
 
     expected = ["No instrument named: TEST3", ""]
 
-    main(["show-instruments", "-i", "TEST3"])
+    main(["show-instruments", "TEST3"])
 
     out, err = capsys.readouterr()
     out = out.split("\n")
