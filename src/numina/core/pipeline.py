@@ -39,10 +39,6 @@ class Pipeline:
             self._provides_by_p[k.name] = k
             self._provides_by_r[k.mode] = k
 
-    def get_recipe(self, mode):
-        node = self.recipes[mode]
-        return node["class"]
-
     def _get_base_class(self, entry):
 
         recipe_fqn = entry["class"]

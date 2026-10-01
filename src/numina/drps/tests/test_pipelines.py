@@ -57,10 +57,10 @@ def test_fake_pipeline_alt2(drpmocker):
     drpmocker.add_drp("TEST1", drpdata1)
 
     import yaml
-    from numina.core.oresult import obsres_from_dict
+    from numina.core.oresult import oblock_from_dict
     from numina.tests.recipes import BiasRecipe
 
-    oblock = obsres_from_dict(yaml.safe_load(ob_to_test))
+    oblock = oblock_from_dict(yaml.safe_load(ob_to_test))
 
     drp = DrpSystem().load().query_by_name(oblock.instrument)
 
@@ -70,7 +70,7 @@ def test_fake_pipeline_alt2(drpmocker):
 
     this_pipeline = drp.pipelines[oblock.pipeline]
     expected = "numina.tests.recipes.BiasRecipe"
-    assert this_pipeline.get_recipe(oblock.mode) == expected
+    assert this_pipeline.recipes[oblock.mode]["class"] == expected
 
     recipe = this_pipeline.get_recipe_object(oblock.mode)
     assert isinstance(recipe, BiasRecipe)

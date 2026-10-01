@@ -70,39 +70,32 @@ def hybriddal():
     return base
 
 
-def test_skip_reserved(hybriddal):
-
-    ss_ids = list(hybriddal.search_session_ids())
-
-    assert ss_ids == [2, 3, 4, 5, 30, 40]
-
-
 def test_parent_inserted(hybriddal):
 
-    obsres = hybriddal.search_oblock_from_id(2)
+    obsres = hybriddal.oblock_from_id(2)
     print("OBSR", obsres.__dict__)
     assert obsres.parent == 30
 
-    obsres = hybriddal.search_oblock_from_id(4)
+    obsres = hybriddal.oblock_from_id(4)
     assert obsres.parent == 40
 
-    obsres = hybriddal.search_oblock_from_id(30)
+    obsres = hybriddal.oblock_from_id(30)
     assert obsres.parent == 400
 
-    obsres = hybriddal.search_oblock_from_id(400)
+    obsres = hybriddal.oblock_from_id(400)
     assert obsres.parent is None
 
 
 def test_previous_obsid(hybriddal):
 
-    obsres = hybriddal.search_oblock_from_id(5)
+    obsres = hybriddal.oblock_from_id(5)
     previd = hybriddal.search_previous_obsres(obsres, node="prev")
     assert list(previd) == [4, 3, 2, 1]
 
-    obsres = hybriddal.search_oblock_from_id(5)
+    obsres = hybriddal.oblock_from_id(5)
     previd = hybriddal.search_previous_obsres(obsres, node="prev-rel")
     assert list(previd) == [4]
 
-    obsres = hybriddal.search_oblock_from_id(4)
+    obsres = hybriddal.oblock_from_id(4)
     previd = hybriddal.search_previous_obsres(obsres, node="prev-rel")
     assert list(previd) == []

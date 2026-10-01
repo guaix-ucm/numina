@@ -138,31 +138,3 @@ def oblock_from_dict(values: dict) -> ObservingBlock:
         obsres.frames = []
 
     return obsres
-
-
-def obsres_from_dict(values: dict) -> ObservationResult:
-    """Build a ObservationResult object from a dictionary."""
-
-    obsres = ObservationResult()
-
-    ikey = "frames"
-    # Workaround
-    if "images" in values:
-        ikey = "images"
-
-    obsres.id = values.get("id", 1)
-    obsres.mode = values["mode"]
-    obsres.instrument = values["instrument"]
-    # obsres.configuration = values.get('configuration', 'default')
-    obsres.pipeline = values.get("pipeline", "default")
-    obsres.children = values.get("children", [])
-    obsres.parent = values.get("parent", None)
-    obsres.results = values.get("results", {})
-    obsres.labels = values.get("labels", {})
-    obsres.requirements = values.get("requirements", {})
-    try:
-        obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
-    except Exception:
-        obsres.frames = []
-
-    return obsres

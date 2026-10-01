@@ -14,7 +14,7 @@ from numina.tests.drptest import create_drp_test
 import numina.core
 
 from ..dictdal import BaseDictDAL
-from ..stored import ObservingBlock, StoredProduct
+from ..stored import StoredProduct
 
 
 @pytest.fixture
@@ -41,74 +41,14 @@ def basedictdal():
     return base
 
 
-def test_search_instrument_configuration(basedictdal):
-    import numina.instrument.generic
-
-    res = basedictdal.search_instrument_configuration("TEST1", "2017-10-01 12:00:00")
-
-    assert isinstance(res, numina.instrument.generic.InstrumentGeneric)
-
-    res = basedictdal.search_instrument_configuration("TEST1", "2017-10-01 12:00:00")
-
-    assert isinstance(res, numina.instrument.generic.InstrumentGeneric)
-
-    with pytest.raises(ValueError):
-        basedictdal.search_instrument_configuration("TEST1", "2011-10-01 12:00:00")
-
-    with pytest.raises(KeyError):
-        basedictdal.search_instrument_configuration("TEST2", "2011-10-01 12:00:00")
-
-
-def test_search_instrument_configuration_from_ob(basedictdal):
-    import numina.instrument.generic
-
-    ob = numina.core.ObservationResult(mode=None)
-
-    with pytest.raises(KeyError):
-        basedictdal.search_instrument_configuration_from_ob(ob)
-
-    ob = numina.core.ObservationResult(mode="TEST1")
-    ob.instrument = "TEST1"
-    res = basedictdal.search_instrument_configuration_from_ob(ob)
-
-    assert isinstance(res, numina.instrument.generic.InstrumentGeneric)
-
-    ob = numina.core.ObservationResult(mode="TEST1")
-    ob.instrument = "TEST1"
-    ob.profile = "missing"
-
-    with pytest.raises(ValueError):
-        basedictdal.search_instrument_configuration_from_ob(ob)
-
-
-def test_search_instrument_configuration_from_ob2(basedictdal):
-    import numina.instrument.generic
-
-    ob = numina.core.ObservationResult(instrument="TEST1", mode="TEST1")
-    ob.profile = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
-
-    insconf = basedictdal.search_instrument_configuration_from_ob(ob)
-    assert str(insconf.origin.uuid) == "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
-
-
-def test_search_instrument_configuration_from_ob3(basedictdal):
-    import numina.instrument.generic
-
-    ob = numina.core.ObservationResult(instrument="TEST1", mode="TEST1")
-    ob.profile = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
-
-    insconf = basedictdal.search_instrument_configuration_from_ob(ob)
-    assert str(insconf.origin.uuid) == "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
-
-
 def test_search_oblock(basedictdal):
 
-    with pytest.raises(NoResultFound):
-        basedictdal.search_oblock_from_id(obsid=1)
+    with pytest.raises(KeyError):
+        basedictdal.oblock_from_id(obsid=1)
 
-    res = basedictdal.search_oblock_from_id(obsid=2)
+    res = basedictdal.oblock_from_id(obsid=2)
 
-    assert isinstance(res, ObservingBlock)
+    assert isinstance(res, numina.core.oresult.ObservingBlock)
 
     assert res.id == 2
     assert res.instrument == "TEST1"
@@ -130,19 +70,7 @@ def test_search_recipe(basedictdal):
     assert isinstance(res, AlwaysFailRecipe)
 
 
-def test_search_prod_obsid(basedictdal):
-
-    with pytest.raises(NoResultFound):
-        basedictdal.search_prod_obsid("FAIL", 1, "default")
-
-    with pytest.raises(NoResultFound):
-        basedictdal.search_prod_obsid("TEST1", 1, "default")
-
-    res = basedictdal.search_prod_obsid("TEST1", 2, "default")
-    assert isinstance(res, StoredProduct)
-
-
-def test_search_prod_req_tags1(basedictdal):
+def test_search_prod_type_tags1(basedictdal):
 
     class DemoType1:
         def name(self):
@@ -153,7 +81,7 @@ def test_search_prod_req_tags1(basedictdal):
     version = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
     tags = {}
     pipeline = "default"
-    res = basedictdal.search_prod_req_tags(req, ins, version, tags, pipeline)
+    res = basedictdal.search_prod_type_tags(req.type, ins, version, tags, pipeline)
     assert isinstance(res, StoredProduct)
     assert res.id == 1
     assert res.content == {"demo1": 1}
@@ -161,7 +89,7 @@ def test_search_prod_req_tags1(basedictdal):
     assert res.tags == {}
 
 
-def test_search_prod_req_tags2(basedictdal):
+def test_search_prod_type_tags2(basedictdal):
 
     class DemoType2:
         def name(self):
@@ -172,7 +100,7 @@ def test_search_prod_req_tags2(basedictdal):
     version = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
     tags = {"field2": "A"}
     pipeline = "default"
-    res = basedictdal.search_prod_req_tags(req, ins, version, tags, pipeline)
+    res = basedictdal.search_prod_type_tags(req.type, ins, version, tags, pipeline)
     assert isinstance(res, StoredProduct)
     assert res.id == 2
     assert res.content == {"demo2": 2}
@@ -180,7 +108,7 @@ def test_search_prod_req_tags2(basedictdal):
     assert res.tags == {"field2": "A"}
 
 
-def test_search_prod_req_tags3(basedictdal):
+def test_search_prod_type_tags3(basedictdal):
 
     class DemoType2:
         def name(self):
@@ -192,10 +120,10 @@ def test_search_prod_req_tags3(basedictdal):
     tags = {"field2": "C"}
     pipeline = "default"
     with pytest.raises(NoResultFound):
-        basedictdal.search_prod_req_tags(req, ins, version, tags, pipeline)
+        basedictdal.search_prod_type_tags(req.type, ins, version, tags, pipeline)
 
 
-def test_search_prod_req_tags4(basedictdal):
+def test_search_prod_type_tags4(basedictdal):
     class DemoType2:
         def name(self):
             return "DemoType2"
@@ -205,7 +133,7 @@ def test_search_prod_req_tags4(basedictdal):
     version = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
     tags = {}
     pipeline = "default"
-    res = basedictdal.search_prod_req_tags(req, ins, version, tags, pipeline)
+    res = basedictdal.search_prod_type_tags(req.type, ins, version, tags, pipeline)
     assert isinstance(res, StoredProduct)
     assert res.id == 2
     assert res.content == {"demo2": 2}

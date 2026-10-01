@@ -23,7 +23,6 @@ from numina.instrument.assembly import assembly_instrument
 from numina.util.context import working_directory
 
 from .absdal import AbsDrpDAL
-from .stored import ObservingBlock
 from .stored import StoredProduct, StoredParameter, StoredResult
 from .diskfiledal import build_product_path
 from .utils import check_template, fill_template, tags_are_valid
@@ -44,32 +43,6 @@ class BaseDictDAL(AbsDrpDAL):
         self.req_table = req_table
         self.extra_data = extra_data if extra_data else {}
         self.components = components if components else {}
-
-    def search_oblock_from_id(self, obsid):
-        try:
-            ob = self.ob_table[obsid]
-            return ObservingBlock(**ob)
-        except KeyError:
-            raise NoResultFound(f"oblock with id {obsid} not found")
-
-    def search_prod_obsid(self, ins, obsid, pipeline):
-        """Returns the first coincidence..."""
-        ins_prod = self.prod_table.get(ins, {})
-        for profile, prof_prod in ins_prod.items():
-            for prod in prof_prod:
-                if prod["ob"] == obsid:
-                    # We have found the result, no more checks
-                    return StoredProduct(**prod)
-        else:
-            raise NoResultFound(f"result for ob {obsid} not found")
-
-    def search_prod_req_tags(self, req, ins, profile, tags, pipeline):
-        if req.dest in self.extra_data:
-            val = self.extra_data[req.dest]
-            content = numina.store.load(req.type, val)
-            return StoredProduct(id=0, tags={}, content=content)
-        else:
-            return self.search_prod_type_tags(req.type, ins, profile, tags, pipeline)
 
     def search_prod_type_tags(self, tipo, ins, profile, tags, pipeline):
         """Returns the first coincidence..."""
@@ -431,16 +404,6 @@ class BaseHybridDAL(Dict2DAL):
         path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
         return path
 
-    def search_session_ids(self):
-        for obs_id in self.ob_ids:
-            obdict = self.ob_table[obs_id]
-            enabled = obdict.get("enabled", True)
-            if (not enabled) or obdict["mode"] in self._RESERVED_MODE_NAMES:
-                # ignore these OBs
-                continue
-
-            yield obs_id
-
     def dump_data(self):
         state = super(BaseHybridDAL, self).dump_data()
         state["rootdir"] = self.rootdir
@@ -469,31 +432,16 @@ class HybridDAL(BaseHybridDAL):
         self.resultdir_tmpl = check_template(resultdir_tmpl)
         self.resultfile_tmpl = check_template(resultfile_tmpl)
 
-        temp_ob_ids = []
-        # Preprocessing
-        obdict = {}
-        for ob in obtable:
-            obid = ob["id"]
-            temp_ob_ids.append(obid)
-            obdict[obid] = ob
-
-        # Update parents
-        for ob in obdict.values():
-            children = ob.get("children", [])
-            for ch in children:
-                obdict[ch]["parent"] = ob["id"]
-
         super().__init__(
             drps,
             rootdir,
-            obdict,
+            {},
             base,
             extra_data=extra_data,
             basedir=basedir,
             components=components,
         )
-        # This field does not exist until super is called
-        self.ob_ids = temp_ob_ids
+        self.add_obs(obtable)
 
     def _search_prod_table(self, name, tipo, obsres):
         """Returns the first coincidence..."""

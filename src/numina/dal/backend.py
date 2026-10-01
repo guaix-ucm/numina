@@ -284,25 +284,3 @@ class Backend(BaseHybridDAL):
         except KeyError as err:
             msg = f"field '{field}' not found in result of mode '{cobsres.mode}' id={node_id}"
             raise NoResultFound(msg) from err
-
-    def search_session_ids(self):
-        for obs_id in self.ob_ids:
-            obdict = self.ob_table[obs_id]
-            enabled = obdict.get("enabled", True)
-            if (not enabled) or (obdict["mode"] in self._RESERVED_MODE_NAMES):
-                # ignore these OBs
-                continue
-
-            yield obs_id
-
-    def build_recipe_result(self, result_id):
-        result_reg = self.db_tables["results"][result_id]
-        result_file = result_reg["result_file"]
-        result_dir = result_reg.get("result_dir", "")
-
-        with working_directory(os.path.join(self.basedir, result_dir)):
-            with open(result_file) as fd:
-                import json
-
-                data = json.load(fd)
-                return StoredResult.load_data(data)

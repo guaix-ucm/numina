@@ -9,7 +9,6 @@
 
 import os.path
 import json
-import uuid
 
 import pytest
 
@@ -17,7 +16,6 @@ from numina.util.jsonencoder import ExtEncoder
 from numina.tests.drptest import create_drp_test
 from ..backend import Backend
 from numina.exceptions import NoResultFound
-import numina.types.qc as qc
 import numina.instrument.assembly as asb
 import numina.core.oresult
 from numina.util.context import working_directory
@@ -178,40 +176,33 @@ def backend_empty(tmpdir):
     return base
 
 
-def test_skip_reserved(backend):
-
-    ss_ids = list(backend.search_session_ids())
-
-    assert ss_ids == [2, 3, 4, 5, 30, 40]
-
-
 def test_parent_inserted(backend):
 
-    obsres = backend.search_oblock_from_id(2)
+    obsres = backend.oblock_from_id(2)
     assert obsres.parent == 30
 
-    obsres = backend.search_oblock_from_id(4)
+    obsres = backend.oblock_from_id(4)
     assert obsres.parent == 40
 
-    obsres = backend.search_oblock_from_id(30)
+    obsres = backend.oblock_from_id(30)
     assert obsres.parent == 400
 
-    obsres = backend.search_oblock_from_id(400)
+    obsres = backend.oblock_from_id(400)
     assert obsres.parent is None
 
 
 def test_previous_obsid(backend):
 
-    obsres = backend.search_oblock_from_id(5)
+    obsres = backend.oblock_from_id(5)
     print(type(obsres))
     previd = backend.search_previous_obsres(obsres, node="prev")
     assert list(previd) == [4, 3, 2, 1]
 
-    obsres = backend.search_oblock_from_id(5)
+    obsres = backend.oblock_from_id(5)
     previd = backend.search_previous_obsres(obsres, node="prev-rel")
     assert list(previd) == [4]
 
-    obsres = backend.search_oblock_from_id(4)
+    obsres = backend.oblock_from_id(4)
     previd = backend.search_previous_obsres(obsres, node="prev-rel")
     assert list(previd) == []
 
@@ -239,41 +230,6 @@ def test_search_result_id_notfound(backend):
 
     with pytest.raises(NoResultFound):
         backend.search_result_id(node_id, tipo, field, mode=None)
-
-
-def test_build_recipe_result(backend):
-    from numina.types.dataframe import DataFrame
-    from numina.types.structured import BaseStructuredCalibration
-
-    obj_uuid = "10000000-10000000-10000000-10000000"
-    res = backend.build_recipe_result(result_id=1)
-
-    assert res.qc == qc.QC.GOOD
-
-    assert hasattr(res, "reduced_rss")
-    assert isinstance(res.reduced_rss, DataFrame)
-
-    assert hasattr(res, "reduced_image")
-    assert isinstance(res.reduced_image, DataFrame)
-
-    assert hasattr(res, "calib")
-    assert isinstance(res.calib, BaseStructuredCalibration)
-
-    assert res.uuid == uuid.UUID(obj_uuid)
-
-
-def test_build_recipe_result2(backend):
-    from numina.types.structured import BaseStructuredCalibration
-
-    obj_uuid = "20000000-20000000-20000000-20000000"
-    res = backend.build_recipe_result(result_id=2)
-
-    assert res.qc == qc.QC.BAD
-
-    assert hasattr(res, "calib")
-    assert isinstance(res.calib, BaseStructuredCalibration)
-
-    assert res.uuid == uuid.UUID(obj_uuid)
 
 
 def test_ago(backend_empty):
