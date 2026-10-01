@@ -1,5 +1,5 @@
 #
-# Copyright 2008-2024 Universidad Complutense de Madrid
+# Copyright 2008-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -28,19 +28,23 @@ def run_reduce(
     datastore: DataManager,
     obsid,
     as_mode=None,
+    pipeline=None,
     requirements=None,
     copy_files=False,
     validate_inputs=False,
     validate_results=False,
     strict_inputs=False,
 ) -> ProcessingTask:
-    """Observing mode processing mode of numina."""
+    """Observing mode processing mode of numina.
+
+    If pipeline is None, the pipeline of the observation result is used.
+    """
 
     request = "reduce"
     request_params = dict()
 
     request_params["oblock_id"] = obsid
-    request_params["pipeline"] = "default"  # args.pipe_name
+    request_params["pipeline"] = pipeline
     request_params["instrument_configuration"] = "auto"  # args.insconf
     request_params["intermediate_results"] = True
     request_params["validate_results"] = validate_results
@@ -96,7 +100,10 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
         task.request_params["instrument_configuration"] = obsres.profile
         # Merge requirements passed from above
         obsres.requirements.update(task.request_params["requirements"])
-        obsres.pipeline = task.request_params["pipeline"]
+        # The pipeline of the request overrides the one in the OB
+        if task.request_params["pipeline"] is not None:
+            obsres.pipeline = task.request_params["pipeline"]
+        task.request_params["pipeline"] = obsres.pipeline
         _logger.debug("pipeline is %s", obsres.pipeline)
 
         recipe = datastore.backend.search_recipe_from_ob(obsres)
@@ -228,6 +235,8 @@ def logger_manager(logger_control, result_dir):
     finally:
         for recipe_logger in recipe_loggers:
             recipe_logger.removeHandler(fh)
+        # Close the log file
+        fh.close()
 
 
 @contextlib.contextmanager

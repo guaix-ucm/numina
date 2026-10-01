@@ -353,7 +353,14 @@ class InstrumentDRP:
     def get_recipe_object(self, mode_name, pipeline_name="default"):
         """Build a recipe object from a given mode name"""
         active_mode = self.modes[mode_name]
-        active_pipeline = self.pipelines[pipeline_name]
+        try:
+            active_pipeline = self.pipelines[pipeline_name]
+        except KeyError:
+            msg = (
+                f"pipeline '{pipeline_name}' not found in DRP '{self.name}', "
+                f"available pipelines are {list(self.pipelines)}"
+            )
+            raise KeyError(msg) from None
         recipe = active_pipeline.get_recipe_object(active_mode)
         return recipe
 

@@ -66,6 +66,7 @@ def mode_run_common_obs(args, extra_args, config):
             run_reduce(
                 datamanager,
                 job["id"],
+                pipeline=args.pipe_name,
                 copy_files=copy_files,
                 validate_inputs=validate,
                 validate_results=validate,

@@ -66,8 +66,8 @@ def register(subparsers, config):
         "-p",
         "--pipeline",
         dest="pipe_name",
-        default="default",
-        help="name of a pipeline",
+        default=None,
+        help="name of a pipeline, overrides the pipeline of the observation result ('default' if not defined)",
     )
     parser_run.add_argument(
         "--basedir",
