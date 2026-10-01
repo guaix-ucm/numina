@@ -110,9 +110,16 @@ def get_wcs_from_hdu(hdu, wcskey=None):
         else:
             logger.info(f"Using WCS with key '{wcskey}'")
             if wcskey not in [w.wcs.alt for w in list_wcs]:
-                raise ValueError(f"WCS key '{wcskey}' not found in extension '{hdu.name}'.")
+                logger.error(f"WCS key '{wcskey}' not found in extension '{hdu.name}'.")
+                sys.exit(1)
         wcs = WCS(hdu.header, key=wcskey)
     else:
         wcs = WCS(hdu.header)
-
+        if wcskey is None:
+            logger.info(f"Using unique WCS from extension '{hdu.name}'.")
+        else:
+            if wcs.wcs.alt != wcskey:
+                logger.warning(f"The unique WCS in extension '{hdu.name}' has key '{wcs.wcs.alt}'.")
+                logger.error(f"WCS key '{wcskey}' not found in extension '{hdu.name}'.")
+                sys.exit(1)
     return wcs

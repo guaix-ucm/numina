@@ -34,6 +34,7 @@ def show_wcs_info(list_of_fits_files, extname=None, extnum=None, wcskey=None):
     extnum : int
         Extension number for image in input files.
     wcskey : str
+        WCS key to use when multiple WCS are present in the FITS header.
     """
     logger = logging.getLogger(__name__)
 
