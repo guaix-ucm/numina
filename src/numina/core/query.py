@@ -9,8 +9,6 @@
 
 """Modify how to query results in the storage backend"""
 
-import logging
-
 
 class QueryModifier:
     pass
@@ -82,21 +80,3 @@ class Ignore(QueryModifier):
     """Ignore this parameter"""
 
     pass
-
-
-def basic_mode_builder(mode, partial_ob, backend, options=None):
-    logger = logging.getLogger(__name__)
-
-    logger.debug("builder for mode='%s'", mode.name)
-
-    if isinstance(options, ResultOf):
-        result_type = options.result_type
-        name = "relative_result"
-        logger.debug("query, children id: %s", partial_ob.children)
-        val = backend.search_result_relative(name, result_type, partial_ob, result_desc=options)
-        if val is None:
-            logger.debug("query, children id: %s, no result")
-        for r in val:
-            partial_ob.results[r.id] = r.content
-
-    return partial_ob

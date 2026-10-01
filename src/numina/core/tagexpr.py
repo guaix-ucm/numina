@@ -58,7 +58,7 @@ def filter_tree(condition, tree):
     yield tree
 
 
-class Expression(object):
+class Expression:
     """Base class for expressions"""
 
     def __init__(self, *args):
@@ -335,14 +335,6 @@ class ConstraintAdapter(object):
 
     def __repr__(self):
         return f"ConstraintAdapter(key={self.key}, value={self.value}, {self.oper}, type={self.type})"
-
-
-def condition_terminal(tree):
-    if tree.nodes:
-        term = all(node.is_terminal() for node in tree.nodes)
-        return not term
-    else:
-        return True
 
 
 def adapter(tree):

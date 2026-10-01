@@ -12,7 +12,6 @@
 import os
 import logging
 import json
-from itertools import chain
 
 import yaml
 
@@ -100,44 +99,6 @@ class BaseDictDAL(AbsDrpDAL):
         else:
             msg = f"type {tipo} compatible with tags {tags!r} not found"
             raise NoResultFound(msg)
-
-    def search_param_req(self, req, instrument, profile, mode, pipeline):
-        req_table_ins = self.req_table.get(instrument, {})
-        req_table_ins_p = req_table_ins.get(profile, {})
-        req_table_insi_pipe = req_table_ins_p.get(pipeline, {})
-        mode_keys = req_table_insi_pipe.get(mode, {})
-        if req.dest in self.extra_data:
-            value = self.extra_data[req.dest]
-            content = StoredParameter(value)
-            return content
-        elif req.dest in mode_keys:
-            value = mode_keys[req.dest]
-            content = StoredParameter(value)
-            return content
-        else:
-            raise NoResultFound(f"No parameters for {mode} mode, pipeline {pipeline}")
-
-    def search_param_req_tags(self, req, instrument, profile, mode, tags, pipeline):
-        req_table_ins = self.req_table.get(instrument, {})
-        req_table_ins_p = req_table_ins.get(profile, {})
-        req_table_insi_pipe = req_table_ins_p.get(pipeline, {})
-        mode_list = req_table_insi_pipe.get(mode, [])
-        if req.dest in self.extra_data:
-            value = self.extra_data[req.dest]
-            content = StoredParameter(value)
-            return content
-        else:
-            for prod in mode_list:
-                pn = prod["name"]
-                pt = prod["tags"]
-                if pn == req.dest and tags_are_valid(pt, tags):
-                    # We have found the result, no more checks
-                    value = numina.store.load(req.type, prod["content"])
-                    content = StoredParameter(value)
-                    return content
-            else:
-                msg = f"name {req.dest} compatible with tags {tags!r} not found"
-                raise NoResultFound(msg)
 
     def oblock_from_id(self, obsid):
 
@@ -377,50 +338,6 @@ class BaseHybridDAL(Dict2DAL):
 
     def _search_prod_table(self, name, tipo, obsres):
         raise NotImplementedError
-
-    def search_result(self, name, tipo, obsres, resultid=None):
-
-        if resultid is None:
-            for g in chain([tipo.name()], tipo.generators()):
-                if g in obsres.results:
-                    resultid = obsres.results[g]
-                    break
-            else:
-                raise NoResultFound("resultid not found")
-        prod = self._search_result(name, tipo, obsres, resultid)
-        return prod
-
-    def _search_result(self, name, tipo, obsres, resultid):
-        """Returns the first coincidence..."""
-
-        instrument = obsres.instrument
-        profile = obsres.profile
-
-        drp = self.drps.query_by_name(instrument)
-        # label = drp.product_label(tipo)
-
-        # search results of these OBs
-        ins_tab = self.prod_table.get(instrument, {})
-        ptable = ins_tab.get(profile, [])
-        for prod in ptable:
-            pid = prod["id"]
-            if pid == resultid:
-                # this is a valid product
-                # We have found the result, no more checks
-                # Make a copy
-                rprod = dict(prod)
-
-                if "content" in prod:
-                    path = prod["content"]
-                else:
-                    # Build path
-                    path = build_product_path(drp, self.rootdir, profile, name, tipo, obsres)
-                _logger.debug("searching product in path: %s", path)
-                rprod["content"] = self.product_loader(tipo, name, path)
-                return StoredProduct(**rprod)
-        else:
-            msg = f"result with id {resultid} not found"
-            raise NoResultFound(msg)
 
     def product_loader(self, tipo, name, path):
         path, kind = path

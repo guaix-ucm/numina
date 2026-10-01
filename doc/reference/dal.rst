@@ -18,9 +18,6 @@
 .. automodule:: numina.dal.diskfiledal
    :members:
 
-.. automodule:: numina.dal.mockdal
-   :members:
-
 .. automodule:: numina.dal.stored
    :members:
 

@@ -25,23 +25,6 @@ from .stored import StoredProduct, StoredResult
 _logger = logging.getLogger(__name__)
 
 
-class BackendTable:
-    def __init__(self):
-        self.table_contents = {}
-        self.table_index = []
-
-    def new_id(self):
-        if self.table_index:
-            newidx = self.table_index[-1] + 1
-        else:
-            newidx = 1
-        self.table_index.append(newidx)
-        return newidx
-
-    def insert(self, prodid, prod_reg):
-        self.table_contents[prodid] = prod_reg
-
-
 class Backend(BaseHybridDAL):
 
     def __init__(

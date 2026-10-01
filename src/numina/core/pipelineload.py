@@ -315,14 +315,6 @@ class DefaultLoader:
     def __init__(self, modpath):
         self.modpath = modpath
 
-    def build_component_fp(self, key):
-        fname = f"component-{key}.json"
-        return self.build_type_fp(fname)
-
-    def build_instrument_fp(self, key):
-        fname = f"instrument-{key}.json"
-        return self.build_type_fp(fname)
-
     def build_type_fp(self, fname):
         data = pkgutil.get_data(self.modpath, fname)
         fcomp = StringIO(data.decode("utf-8"))

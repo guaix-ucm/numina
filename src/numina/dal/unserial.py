@@ -25,13 +25,6 @@ def is_fits(filename, **kwargs):
     return filename.endswith(".fits")
 
 
-def read_fits(filename):
-    import numina.types.dataframe as df
-    import astropy.io.fits as fits
-
-    return df.DataFrame(frame=fits.open(filename))
-
-
 def read_fits_later(filename):
     import numina.types.dataframe as df
 

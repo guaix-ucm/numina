@@ -88,15 +88,6 @@ class Pipeline:
 
     load_recipe_object = get_recipe_object
 
-    def load_product_object(self, name):
-        """Load product object, according to name"""
-
-        product_entry = self.products[name]
-
-        product = self._get_base_object(product_entry)
-
-        return product
-
     def load_product_class(self, mode):
         """Load recipe object, according to observing mode"""
 
@@ -104,33 +95,12 @@ class Pipeline:
 
         return self._get_base_class(product_entry)
 
+    # Used by numina-plugin-db
     def load_product_from_name(self, label):
 
         short, _ = numina.util.parser.split_type_name(label)
         klass = self.load_product_class(short)
         return klass.from_name(label)
-
-    def depsolve(self):
-        """Load all recipes to search for products"""
-        # load everything
-        requires = {}
-        provides = {}
-        for mode, r in self.recipes.items():
-            robj = self.load_recipe_object(mode)
-
-            for field, vv in robj.requirements().items():
-                if vv.type.isproduct():
-                    name = vv.type.name()
-                    pe = ProductEntry(name, mode, field)
-                    requires[name] = pe
-
-            for field, vv in robj.products().items():
-                if vv.type.isproduct():
-                    name = vv.type.name()
-                    pe = ProductEntry(name, mode, field)
-                    provides[name] = pe
-
-        return requires, provides
 
     def who_provides(self, product_label):
         """Return the ProductEntry for some requirement"""
@@ -179,11 +149,6 @@ class Pipeline:
                     # No recipe provides this product
                     pass
         return modes
-
-    def query_recipe(self, mode):
-        """Recursive query of all calibrations required by a mode"""
-        allmodes = self._query_recipe(mode, {})
-        return allmodes[mode]
 
 
 class InstrumentDRP:

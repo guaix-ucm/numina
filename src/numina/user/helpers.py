@@ -189,21 +189,10 @@ class WorkEnvironment:
                 self.hashes = pickle.load(fd)
             except EOFError:
                 self.hashes = {}
-        # make_sure_path_doesnot_exist(self.resultsdir)
         make_sure_file_exists(self.index_file)
 
-        # make_sure_path_doesnot_exist(self.resultsdir)
         _logger.debug("check resultsdir to store results %r", self.resultsdir_rel)
         make_sure_path_exists(self.resultsdir)
-
-    def copyfiles(self, obsres, reqs):
-
-        _logger.info("copying files from %r to %r", self.datadir_rel, self.workdir_rel)
-
-        if obsres:
-            self.copyfiles_stage1(obsres)
-
-        self.copyfiles_stage2(reqs)
 
     def installfiles_stage1(self, obsres, action="copy"):
         import astropy.io.fits as fits
@@ -278,11 +267,9 @@ class WorkEnvironment:
 
                 install_if_needed(value.filename, complete, dest)
 
+    # Used by numina-plugin-db
     def copyfiles_stage1(self, obsres):
         return self.installfiles_stage1(obsres, action="copy")
-
-    def linkfiles_stage1(self, obsres):
-        return self.installfiles_stage1(obsres, action="link")
 
     def check_duplicates(self, tails):
         seen = set()
@@ -294,11 +281,9 @@ class WorkEnvironment:
                 seen.add(tail)
         return dupes
 
+    # Used by numina-plugin-db
     def copyfiles_stage2(self, reqs):
         return self.installfiles_stage2(reqs, action="copy")
-
-    def linkfiles_stage2(self, reqs):
-        return self.installfiles_stage2(reqs, action="link")
 
     def copy_if_needed(self, key, src, dest):
 
@@ -360,14 +345,6 @@ def compute_md5sum_file(filename):
         for chunk in iter(lambda: f.read(128 * md5.block_size), b""):
             md5.update(chunk)
     return md5.hexdigest()
-
-
-def make_sure_path_doesnot_exist(path):
-    try:
-        shutil.rmtree(path)
-    except (OSError, IOError) as exception:
-        if exception.errno != errno.ENOENT:
-            raise
 
 
 def make_sure_path_exists(path):

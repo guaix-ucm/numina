@@ -1,5 +1,5 @@
 #
-# Copyright 2017-2020 Universidad Complutense de Madrid
+# Copyright 2017-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,7 +8,7 @@
 #
 
 
-class DepLink(object):
+class DepLink:
     """
     Dependency Link
     """
@@ -18,18 +18,12 @@ class DepLink(object):
         self.weight = weight
 
 
-class DepNode(object):
+class DepNode:
     """Dependency Node"""
 
     def __init__(self, name, links=None):
         self.name = name
         self.links = [] if links is None else links
-
-    def showtree(self):
-        visited = []
-        # print node.name
-        visited.append(self.name)
-        visit_node(self, visited, level=1)
 
 
 def visit_node(node, visited, level=1):

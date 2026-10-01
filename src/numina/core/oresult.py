@@ -74,11 +74,6 @@ class ObservationResult(ObservingBlock):
     def __init__(self, instrument="UNKNOWN", mode="UNKNOWN"):
         super().__init__(instrument, mode)
 
-    def update_with_product(self, prod):
-        self.tags = prod.tags
-        self.frames = [prod.content]
-        self.prodid = prod.id
-
     @property
     def images(self):
         return self.frames

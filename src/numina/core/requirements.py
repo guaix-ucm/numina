@@ -11,7 +11,6 @@
 Recipe requirement holders
 """
 
-import numina.exceptions
 import numina.types.obsresult as obtypes
 
 from .dataholders import Requirement
@@ -64,16 +63,3 @@ class ObservationResultRequirement(Requirement):
                 dest_obj.append(partial.content)
 
         return obsres
-
-    def on_query_not_found_from_type(self, notfound):
-        """
-
-        Parameters
-        ----------
-        notfound
-
-        Returns
-        -------
-
-        """
-        raise numina.exceptions.NoResultFound("unable to complete ObservationResult") from notfound
