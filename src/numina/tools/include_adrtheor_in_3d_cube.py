@@ -18,11 +18,11 @@ from astropy.wcs import WCS
 import io
 import logging
 import numpy as np
+import sys
 
 from .compute_adr_wavelength import compute_adr_wavelength
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 
 def include_adrtheor_in_3d_cube(
@@ -178,15 +178,20 @@ def main(args=None):
     parser.add_argument("--pressure_mm", help="Pressure in Hg mm", type=float, default=600)
     parser.add_argument("--pressure-water-vapor-mm", help="Pressure water vapor in Hg mm", type=float, default=8)
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
+
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
 
     # protections
     extname = args.extname.upper()
     if len(extname) > 8:
-        raise ValueError(f"Extension '{extname}' must be less than 9 characters")
+        logger.error(f"Extension '{extname}' must be less than 9 characters")
+        sys.exit(1)
     if args.output_dir != ".":
-        raise ValueError("--output-dir cannot be used in this script: the input file is updated in place.")
+        logger.error("--output-dir cannot be used in this script: the input file is updated in place.")
+        sys.exit(1)
 
     reference_vacuum_wavelength_angstrom = args.reference_vacuum_wavelength
     if reference_vacuum_wavelength_angstrom is not None:
@@ -204,7 +209,7 @@ def main(args=None):
     )
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

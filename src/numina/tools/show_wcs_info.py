@@ -15,11 +15,11 @@ import io
 import logging
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
+import sys
 
 from .file_is_valid_fits import file_is_valid_fits
 from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 
 def show_wcs_info(list_of_fits_files, extname=None, extnum=None, wcskey=None):
@@ -84,7 +84,9 @@ def main(args=None):
         type=str,
     )
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
 
     input_list = args.input_list
     extnum = args.extnum
@@ -106,9 +108,11 @@ def main(args=None):
         if len(fname) > 0:
             if fname[0] not in ["#"]:
                 if not Path(fname).is_file():
-                    raise ValueError(f"File {fname} does not exist or is not a valid file.")
+                    logger.error(f"File {fname} does not exist or is not a valid file.")
+                    sys.exit(1)
                 if not file_is_valid_fits(fname):
-                    raise ValueError(f"File {fname} is not a valid FITS file.")
+                    logger.error(f"File {fname} is not a valid FITS file.")
+                    sys.exit(1)
                 list_of_fits_files.append(fname)
 
     if len(list_of_fits_files) < 1:
@@ -118,7 +122,7 @@ def main(args=None):
     show_wcs_info(list_of_fits_files, extname, extnum, wcskey)
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

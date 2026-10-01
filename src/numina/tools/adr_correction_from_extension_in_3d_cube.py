@@ -22,8 +22,7 @@ from pathlib import Path
 from reproject.mosaicking import find_optimal_celestial_wcs
 from reproject import reproject_interp, reproject_adaptive, reproject_exact
 
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 from .progressbarlines import ProgressBarLines
 
 REPROJECT_METHODS = ["interp", "adaptive", "exact"]
@@ -293,7 +292,9 @@ def main(args=None):
         default="adaptive",
     )
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
 
     if args.extname_adr is None:
         raise ValueError("You must specify an extension name with --extname_adr")
@@ -327,7 +328,7 @@ def main(args=None):
     output_hdul.writeto(Path(args.output_dir) / args.output, overwrite=True)
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

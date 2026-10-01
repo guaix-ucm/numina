@@ -19,8 +19,7 @@ import numpy as np
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
 
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 
 def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, noplot, output, png=None):
@@ -221,7 +220,8 @@ def main(args=None):
     parser.add_argument("--output", help="Output FITS file")
     parser.add_argument("--png", help="Output PNG file (plot of the result)", type=str)
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
 
     if args.output is not None:
         output_path = Path(args.output_dir) / args.output
@@ -244,7 +244,7 @@ def main(args=None):
     )
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

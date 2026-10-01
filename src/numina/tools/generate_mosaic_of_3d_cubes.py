@@ -28,8 +28,7 @@ from numina.instrument.simulation.ifu.define_3d_wcs import wcs_to_header_using_c
 
 from .add_script_info_to_fits_history import add_script_info_to_fits_history
 from .file_is_valid_fits import file_is_valid_fits
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 from .resample_wave_3d_cube import resample_wave_3d_cube
 
 REPROJECT_METHODS = ["interp", "adaptive", "exact"]
@@ -312,7 +311,9 @@ def main(args=None):
         "--footprint", help="Generate a FOOTPRINT extension with the final footprint", action="store_true"
     )
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
 
     input_list = args.input_list
     extname_image = args.extname_image
@@ -377,7 +378,7 @@ def main(args=None):
     output_hdul.writeto(output_filename, overwrite="yes")
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

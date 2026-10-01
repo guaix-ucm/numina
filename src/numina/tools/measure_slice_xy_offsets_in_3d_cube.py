@@ -25,8 +25,7 @@ from numina.array.rescale_array_z1z2 import rescale_array_to_z1z2
 from numina.array.yx_offsets_correlate2d import yx_offsets_correlate2d
 
 from .compare_adr_extensions_in_3d_cube import compare_adr_extensions_in_3d_cube
-from .initialize_script_with_args import initialize_script_with_args
-from .initialize_script_with_args import goodbye_message_and_save_console
+from .initialize_script_with_args import NuminaScriptDefinition
 
 
 def compute_i1i2(i, naxis3, binning_naxis3):
@@ -267,8 +266,11 @@ def main(args=None):
     parser.add_argument("--iterate", help="Force one iteration", action="store_true")
     parser.add_argument("--method", help="Method (1: skimage, 2: scipy)", type=int, choices=[1, 2], default=1)
     parser.add_argument("--plots", help="Plot intermediate results", action="store_true")
+
     # Include default arguments for common actions, and initialize console and logging
-    args, console, logger, datetime_ini = initialize_script_with_args(parser)
+    myscript = NuminaScriptDefinition(parser)
+    args = myscript.args
+    logger = myscript.logger
 
     # protections
     extname = args.extname.upper()
@@ -338,7 +340,7 @@ def main(args=None):
         compare_adr_extensions_in_3d_cube(args.filename, extname1=extname, extname2=None, suptitle=suptitle)
 
     # Display goodbye message and save console log if recording is enabled
-    goodbye_message_and_save_console(logger, console, datetime_ini, args.record, args.output_dir)
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":
