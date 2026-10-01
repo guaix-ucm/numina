@@ -65,6 +65,8 @@ def find_element(comp_store, etype: ElementEnum, keyval: str, date: str | dateti
 
     If date is None and there are several components,
     the one with the most recent start date is used.
+    If there are several components valid for the date,
+    the first one in the collection is used, with a warning.
 
     Raises
     ------
@@ -98,7 +100,19 @@ def find_element(comp_store, etype: ElementEnum, keyval: str, date: str | dateti
         )
         return selected
 
-    return candidates[0]
+    selected = candidates[0]
+    if len(candidates) > 1:
+        _logger.warning(
+            "%d configurations of %s %s=%s are valid for date=%s (uuids %s), using uuid=%s",
+            len(candidates),
+            element_name,
+            by_key,
+            keyval,
+            date,
+            ", ".join(str(val["origin"].uuid) for val in candidates),
+            selected["origin"].uuid,
+        )
+    return selected
 
 
 def assembly_instrument(comp_store, keyval: str, date: str | datetime, by_key: str = "name") -> CG:
