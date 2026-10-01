@@ -95,9 +95,13 @@ class BaseDictDAL(AbsDrpDAL):
 
         from numina.core.oresult import ObservationResult
 
-        # Internal copy
+        # Copy, the oblock is not modified
+        # results, requirements and labels are modified later
         obsres = ObservationResult.__new__(ObservationResult)
-        obsres.__dict__ = oblock.__dict__
+        obsres.__dict__ = dict(oblock.__dict__)
+        obsres.results = dict(oblock.results)
+        obsres.requirements = dict(oblock.requirements)
+        obsres.labels = dict(oblock.labels)
 
         obsres.mode = as_mode or obsres.mode
         _logger.debug("obsres_from_oblock id='%s', mode='%s' START", obsres.id, obsres.mode)

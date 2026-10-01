@@ -127,11 +127,13 @@ def oblock_from_dict(values: dict) -> ObservingBlock:
     obsres.instrument = values["instrument"]
     # obsres.configuration = values.get('configuration', 'default')
     obsres.pipeline = values.get("pipeline", "default")
-    obsres.children = values.get("children", [])
+    # Copies, so that changes in the ObservingBlock
+    # do not modify values
+    obsres.children = list(values.get("children", []))
     obsres.parent = values.get("parent", None)
-    obsres.results = values.get("results", {})
-    obsres.labels = values.get("labels", {})
-    obsres.requirements = values.get("requirements", {})
+    obsres.results = dict(values.get("results", {}))
+    obsres.labels = dict(values.get("labels", {}))
+    obsres.requirements = dict(values.get("requirements", {}))
     try:
         obsres.frames = [dataframe_from_list(val) for val in values[ikey]]
     except Exception:
