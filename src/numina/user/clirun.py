@@ -9,9 +9,19 @@
 
 """User command line interface of Numina."""
 
+import argparse
 import os
+import uuid
 
 from .clirundal import mode_run_common
+
+
+def profile_uuid(value):
+    """Check that the value of --profile is a UUID"""
+    try:
+        return str(uuid.UUID(value))
+    except ValueError:
+        raise argparse.ArgumentTypeError(f"'{value}' is not a valid UUID")
 
 
 def complete_config(config):
@@ -50,11 +60,13 @@ def register(subparsers, config):
         metavar="FILE",
     )
     parser_run.add_argument(
-        "-i",
-        "--instrument",
-        dest="insconf",
+        "--insconf",
+        "--profile",
+        dest="profile",
+        type=profile_uuid,
         default=None,
-        help="name of an instrument configuration",
+        metavar="UUID",
+        help="uuid of an instrument configuration (INSCONF), overrides the configuration selected from the images",
     )
     parser_run.add_argument(
         "--profile-path",

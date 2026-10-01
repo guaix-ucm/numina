@@ -332,7 +332,13 @@ class InstrumentDRP:
                 date_obs = None
                 keyname = "name"
             else:
-                return self.select_profile_image(sample_frame.open())
+                img = sample_frame.open()
+                try:
+                    return self.select_profile_image(img)
+                finally:
+                    # Close the file only if it was opened here
+                    if sample_frame.frame is None:
+                        img.close()
         return key, date_obs, keyname
 
     def select_profile_image(self, img):

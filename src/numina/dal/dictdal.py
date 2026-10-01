@@ -146,16 +146,18 @@ class BaseDictDAL(AbsDrpDAL):
 
         return oblock
 
-    def obsres_from_oblock_id(self, obsid, as_mode=None, configuration=None):
-        """ "
-        Override instrument configuration if configuration is not None
+    def obsres_from_oblock_id(self, obsid, as_mode=None, profile=None):
+        """Build the observation result of an observing block
+
+        If profile is not None, it is the uuid of the instrument configuration,
+        otherwise the configuration is selected from the images.
         """
 
         oblock = self.oblock_from_id(obsid)
 
-        return self.obsres_from_oblock(oblock, as_mode)
+        return self.obsres_from_oblock(oblock, as_mode, profile=profile)
 
-    def obsres_from_oblock(self, oblock, as_mode=None):
+    def obsres_from_oblock(self, oblock, as_mode=None, profile=None):
 
         from numina.core.oresult import ObservationResult
 
@@ -186,9 +188,20 @@ class BaseDictDAL(AbsDrpDAL):
             # the requirements
             obsres = selected_mode.tag_ob(obsres)
 
-        _logger.debug("assembly instrument model, auto detection")
+        if profile is not None:
+            # select_profile uses this uuid instead of the images
+            obsres.profile = profile
+            _logger.debug("assembly instrument model, profile %s", profile)
+        else:
+            _logger.debug("assembly instrument model, auto detection")
         key, date_obs, keyname = this_drp.select_profile(obsres)
         obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
+        if obsres.configuration.name != obsres.instrument:
+            msg = (
+                f"instrument configuration uuid={obsres.configuration.origin.uuid} is for "
+                f"instrument '{obsres.configuration.name}', not '{obsres.instrument}'"
+            )
+            raise ValueError(msg)
         obsres.profile = str(obsres.configuration.origin.uuid)
         _logger.debug(f"instrument profile is {obsres.profile}")
 
@@ -196,7 +209,13 @@ class BaseDictDAL(AbsDrpDAL):
         sample_frame = obsres.get_sample_frame()
         if auto_configure and sample_frame is not None:
             _logger.debug("configuring instrument model with image from obsres")
-            obsres.configuration.configure_with_image(sample_frame.open())
+            img = sample_frame.open()
+            try:
+                obsres.configuration.configure_with_image(img)
+            finally:
+                # Close the file only if it was opened here
+                if sample_frame.frame is None:
+                    img.close()
         else:
             _logger.debug("no configuring instrument model")
         return obsres

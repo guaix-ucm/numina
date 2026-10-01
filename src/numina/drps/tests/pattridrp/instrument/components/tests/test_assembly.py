@@ -69,7 +69,7 @@ def test_find_instrument(comp_store, date_val):
 
 def test_process_setup(comp_store):
     date_str = "2018-12-12T03:04:21"
-    uuid_str = "a7358f24-6ce7-4851-a197-d6515e0592f5"
+    uuid_str = "5a95baae-fb5e-49a1-bae8-97431867dc48"
     block = [{"uuid": uuid_str, "id": "test_block"}]
     aa = process_setup(comp_store, setup_block=block, setup_id="test", date=date_str)
     assert aa.name == "test"

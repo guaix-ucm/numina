@@ -29,6 +29,7 @@ def run_reduce(
     obsid,
     as_mode=None,
     pipeline=None,
+    profile=None,
     requirements=None,
     copy_files=False,
     validate_inputs=False,
@@ -38,6 +39,8 @@ def run_reduce(
     """Observing mode processing mode of numina.
 
     If pipeline is None, the pipeline of the observation result is used.
+    If profile is None, the instrument configuration is selected
+    from the images of the observation result.
     """
 
     request = "reduce"
@@ -45,7 +48,7 @@ def run_reduce(
 
     request_params["oblock_id"] = obsid
     request_params["pipeline"] = pipeline
-    request_params["instrument_configuration"] = "auto"  # args.insconf
+    request_params["instrument_configuration"] = profile
     request_params["intermediate_results"] = True
     request_params["validate_results"] = validate_results
     request_params["validate_inputs"] = validate_inputs
@@ -95,7 +98,7 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
         # here the configuration object has been updated
         # and configured with one image
         # if we have a ResultOf, ObservingMode.build_ob will insert results
-        obsres = datastore.backend.obsres_from_oblock_id(obsid, as_mode=as_mode, configuration=request_profile)
+        obsres = datastore.backend.obsres_from_oblock_id(obsid, as_mode=as_mode, profile=request_profile)
         _logger.debug("instrument profile is %s", obsres.profile)
         task.request_params["instrument_configuration"] = obsres.profile
         # Merge requirements passed from above

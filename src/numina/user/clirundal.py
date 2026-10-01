@@ -67,6 +67,7 @@ def mode_run_common_obs(args, extra_args, config):
                 datamanager,
                 job["id"],
                 pipeline=args.pipe_name,
+                profile=args.profile,
                 copy_files=copy_files,
                 validate_inputs=validate,
                 validate_results=validate,

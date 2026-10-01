@@ -1,0 +1,12 @@
+{
+ "name": "OtherModel",
+ "description": "Model for the other object",
+ "type": "setup",
+ "date_end": null,
+ "date_start": "2017-11-08T12:00:00",
+ "uuid": "5a95baae-fb5e-49a1-bae8-97431867dc48",
+ "setup": [
+   {"values": {"var1": [-1,-2,-3,-4,-5,-6,-7]}, "id": "a"},
+   {"values": {"var2":  1}, "id": "b"}
+  ]
+}

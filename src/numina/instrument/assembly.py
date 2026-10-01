@@ -8,6 +8,7 @@
 #
 
 from datetime import datetime
+import logging
 from typing import Any, TYPE_CHECKING
 
 if TYPE_CHECKING:
@@ -27,6 +28,8 @@ from .property import (
     PropertyBase,
 )
 from ..keydef import KeyDefinition
+
+_logger = logging.getLogger(__name__)
 
 
 def load_panoply_store(sys_drps=None, defpath=None) -> dict:
@@ -60,6 +63,9 @@ def find_element(comp_store, etype: ElementEnum, keyval: str, date: str | dateti
     """
     Find component of the given type in the component collection
 
+    If date is None and there are several components,
+    the one with the most recent start date is used.
+
     Raises
     ------
     ValueError
@@ -72,15 +78,27 @@ def find_element(comp_store, etype: ElementEnum, keyval: str, date: str | dateti
 
     element_name = ElementEnum.to_str(etype)
 
-    for key, val in comp_store.items():
-        if (keyval == val[by_key]) and (val["type"] == element_name):
-            if val["origin"].is_valid_date(datet):
-                return val
-            else:
-                # print('date not valid', datet, val['origin'].date_start, val['origin'].date_end)
-                pass
-    else:
+    candidates = [
+        val
+        for val in comp_store.values()
+        if (keyval == val[by_key]) and (val["type"] == element_name) and val["origin"].is_valid_date(datet)
+    ]
+    if not candidates:
         raise ValueError(f"Not found {element_name} {by_key}={keyval} for date={date}")
+
+    if datet is None and len(candidates) > 1:
+        # Without date, all the components are valid, use the most recent
+        selected = max(candidates, key=lambda val: val["origin"].date_start or datetime.min)
+        _logger.warning(
+            "no date to select the configuration of %s %s=%s, using the most recent: uuid=%s",
+            element_name,
+            by_key,
+            keyval,
+            selected["origin"].uuid,
+        )
+        return selected
+
+    return candidates[0]
 
 
 def assembly_instrument(comp_store, keyval: str, date: str | datetime, by_key: str = "name") -> CG:
