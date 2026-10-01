@@ -39,3 +39,7 @@ class DALInterface(metaclass=ABCMeta):
     @abstractmethod
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
         pass
+
+    def update_configuration(self, obsres):
+        """Update the instrument configuration, after adding frames to obsres"""
+        pass

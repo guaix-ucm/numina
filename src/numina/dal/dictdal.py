@@ -123,11 +123,26 @@ class BaseDictDAL(AbsDrpDAL):
             # seems useless
             obsres = selected_mode.build_ob(obsres, self)
 
-        if profile is not None:
+        obsres.requested_profile = profile
+        self.assign_configuration(obsres)
+        return obsres
+
+    def assign_configuration(self, obsres):
+        """Select and configure the instrument configuration of obsres
+
+        The configuration is the one in obsres.requested_profile, if it is
+        not None, or it is selected from the first frame of obsres.
+        """
+        from numina.core.oresult import ObservingBlock
+
+        this_drp = self.drps.query_by_name(obsres.instrument)
+        if obsres.requested_profile is not None:
             # select_profile uses this uuid instead of the images
-            obsres.profile = profile
-            _logger.debug("assembly instrument model, profile %s", profile)
+            obsres.profile = obsres.requested_profile
+            _logger.debug("assembly instrument model, profile %s", obsres.profile)
         else:
+            # The default value, so that select_profile uses the images
+            obsres.profile = ObservingBlock().profile
             _logger.debug("assembly instrument model, auto detection")
         key, date_obs, keyname = this_drp.select_profile(obsres)
         obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
@@ -153,7 +168,16 @@ class BaseDictDAL(AbsDrpDAL):
                     img.close()
         else:
             _logger.debug("no configuring instrument model")
-        return obsres
+
+    def update_configuration(self, obsres):
+        """Select again the configuration, after adding frames to obsres
+
+        The frames added from the results of other OBs (ResultOf) were not
+        available when the configuration was selected in obsres_from_oblock.
+        """
+        if obsres.requested_profile is None:
+            _logger.debug("select again the instrument configuration of OB id=%s", obsres.id)
+            self.assign_configuration(obsres)
 
     def assembly_instrument(self, keyval, date, by_key="name"):
         return assembly_instrument(self.components, keyval, date, by_key=by_key)

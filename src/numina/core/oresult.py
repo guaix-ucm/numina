@@ -50,6 +50,8 @@ class ObservingBlock(ObservingBlockBase):
         # Name and object of the instrument configuration
         self.profile = "00000000-0000-0000-0000-000000000000"
         self.configuration = "default"
+        # Profile requested by the user, None if it is selected from the images
+        self.requested_profile = None
         #
         self.prodid = None
         # tags are added by method by Recipe.build_recipe_input

@@ -136,6 +136,9 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
             raise
 
         _logger.debug("recipe input created")
+        # The configuration is selected again if the inputs include
+        # the results of other OBs (ResultOf)
+        task.request_params["instrument_configuration"] = obsres.profile
         # Show the actual inputs
         for key, val in obsres.requirements.items():
             if key not in recipe.requirements():

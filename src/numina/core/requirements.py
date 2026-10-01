@@ -62,4 +62,8 @@ class ObservationResultRequirement(Requirement):
             for partial in values:
                 dest_obj.append(partial.content)
 
+            if values:
+                # The configuration was selected without these frames
+                dal.update_configuration(obsres)
+
         return obsres
