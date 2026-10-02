@@ -177,7 +177,7 @@ def pytest_configure(config):
         if reference_dir is not None:
             reference_dir = os.path.abspath(reference_dir)
         if generate_dir is not None:
-            reference_dir = os.path.abspath(generate_dir)
+            generate_dir = os.path.abspath(generate_dir)
 
         # default_format = config.getoption("--resultcmp-default-format") or 'text'
 
