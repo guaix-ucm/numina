@@ -14,7 +14,7 @@ import pytest
 from .testcache import user_cache_dir
 
 
-@pytest.mark.skipif(sys.platform != "linux2", reason="runs only in linux")
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="runs only in linux")
 def test_user_cache_dir_linux_home(monkeypatch, tmpdir):
 
     home = tmpdir.mkdir("hometest")
@@ -33,7 +33,7 @@ def test_user_cache_dir_linux_home(monkeypatch, tmpdir):
     assert os.path.exists(os.path.join(expected, "astropy"))
 
 
-@pytest.mark.skipif(sys.platform != "linux2", reason="runs only in linux")
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="runs only in linux")
 def test_user_cache_dir_linux_xdg(monkeypatch, tmpdir):
 
     home = tmpdir.mkdir("hometest")
@@ -48,6 +48,38 @@ def test_user_cache_dir_linux_xdg(monkeypatch, tmpdir):
 
     assert user_cache_dir("numina") == expected
     assert os.path.exists(os.path.join(expected, "astropy"))
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="runs only in linux")
+def test_user_cache_dir_linux_xdg_with_appname_inside(monkeypatch, tmpdir):
+    """appname in the middle of XDG_CACHE_HOME does not truncate the path"""
+
+    home = tmpdir.mkdir("hometest")
+    cache = tmpdir.mkdir("numina-work").mkdir(".cache")
+
+    modenviron = {"HOME": home.strpath, "XDG_CACHE_HOME": cache.strpath}
+
+    monkeypatch.setattr(os, "environ", modenviron)
+
+    expected = os.path.join(cache.strpath, "numina")
+
+    assert user_cache_dir("numina") == expected
+    assert os.path.exists(os.path.join(expected, "astropy"))
+
+
+@pytest.mark.skipif(not sys.platform.startswith("linux"), reason="runs only in linux")
+def test_user_cache_dir_linux_xdg_ends_with_appname(monkeypatch, tmpdir):
+    """XDG_CACHE_HOME set by download_cache is not extended again"""
+
+    home = tmpdir.mkdir("hometest")
+    cache = tmpdir.mkdir(".cache").mkdir("numina")
+
+    modenviron = {"HOME": home.strpath, "XDG_CACHE_HOME": cache.strpath}
+
+    monkeypatch.setattr(os, "environ", modenviron)
+
+    assert user_cache_dir("numina") == cache.strpath
+    assert os.path.exists(os.path.join(cache.strpath, "astropy"))
 
 
 @pytest.mark.skipif(sys.platform != "darwin", reason="runs only in darwin")

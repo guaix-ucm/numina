@@ -20,35 +20,19 @@ from astropy.utils import data
 
 
 def user_cache_dir(appname=None):
-    if sys.platform.startswith("java"):
-        import platform
+    """Directory of the cache used to download test data
 
-        os_name = platform.java_ver()[3][0]
-        if os_name.startswith("Windows"):  # "Windows XP", "Windows 7", etc.
-            system = "win32"
-        elif os_name.startswith("Mac"):
-            system = "darwin"
-        else:
-            system = "linux2"
-    else:
-        system = sys.platform
-
-    if system == "darwin":
+    In linux, it is $XDG_CACHE_HOME/appname or ~/.cache/appname.
+    If XDG_CACHE_HOME already ends with appname, as it does
+    inside download_cache, it is used as is.
+    """
+    if sys.platform == "darwin":
         path = os.path.expanduser("~/Library/Caches")
-        if appname:
-            path = os.path.join(path, appname)
     else:
-        if "XDG_CACHE_HOME" not in os.environ.keys():
-            path = os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
-        else:
-            if appname in os.environ["XDG_CACHE_HOME"]:
-                path = os.environ["XDG_CACHE_HOME"].split(appname)[0]
-            else:
-                path = os.getenv("XDG_CACHE_HOME", os.path.expanduser("~/.cache"))
-        if appname:
-            path = os.path.join(path, appname)
-    if not os.path.exists(os.path.join(path, "astropy")):
-        os.makedirs(os.path.join(path, "astropy"))
+        path = os.environ.get("XDG_CACHE_HOME") or os.path.expanduser("~/.cache")
+    if appname and os.path.basename(os.path.normpath(path)) != appname:
+        path = os.path.join(path, appname)
+    os.makedirs(os.path.join(path, "astropy"), exist_ok=True)
     return path
 
 
