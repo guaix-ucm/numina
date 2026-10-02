@@ -16,6 +16,7 @@ import logging
 import numpy as np
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
+import sys
 
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
 
@@ -52,15 +53,20 @@ def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out):
 
     # protections
     if not isinstance(hdu3d_image, fits.ImageHDU) and not isinstance(hdu3d_image, fits.PrimaryHDU):
-        raise ValueError("Input HDU must be an ImageHDU or PrimaryHDU.")
+        logger.error(f"Input HDU type: {type(hdu3d_image)}. It must be an ImageHDU or PrimaryHDU.")
+        sys.exit(1)
     if crval3out is None:
-        raise ValueError("crval3out must be specified.")
+        logger.error("crval3out must be specified.")
+        sys.exit(1)
     if cdelt3out is None:
-        raise ValueError("cdelt3out must be specified.")
+        logger.error("cdelt3out must be specified.")
+        sys.exit(1)
     if naxis3out is None:
-        raise ValueError("naxis3out must be specified.")
+        logger.error("naxis3out must be specified.")
+        sys.exit(1)
     if hdu3d_image.data.ndim != 3:
-        raise ValueError("Input HDU must be a 3D cube.")
+        logger.error(f"Input HDU has {hdu3d_image.data.ndim} dimensions. It must be a 3D cube.")
+        sys.exit(1)
 
     # get shape of the input 3D cube
     naxis3, naxis2, naxis1 = hdu3d_image.data.shape
