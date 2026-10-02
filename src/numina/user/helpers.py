@@ -129,8 +129,9 @@ class ProcessingTask:
         self.id = 1
 
         self.time_create = datetime.datetime.now(datetime.timezone.utc)
-        self.time_start = 0
-        self.time_end = 0
+        # None until the recipe runs
+        self.time_start = None
+        self.time_end = None
         self.request = "reduce"
         self.request_params = {}
         self.request_runinfo = self._init_runinfo()
@@ -458,8 +459,10 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
             initial_schema["requirements"][instrument_name] = reqs_ins
 
     section = config["tool.run"]
-    basedir = section["basedir"]
-    datadir = section["datadir"]
+    # The work and result directories are created inside basedir,
+    # and relative paths are resolved against it
+    basedir = os.path.abspath(section["basedir"])
+    datadir = os.path.join(basedir, section["datadir"])
     calibsdir = section.get("calibsdir")
 
     if reqfile:

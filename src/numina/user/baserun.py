@@ -72,11 +72,18 @@ def run_reduce(
 
     task = datastore.backend.new_task(request, request_params)
 
-    # We should control here any possible failure
     try:
-        return run_task_reduce(task, datastore)
-    finally:
-        datastore.store_task(task)
+        completed_task = run_task_reduce(task, datastore)
+    except Exception:
+        # The task can fail before running the recipe
+        task.state = 3
+        try:
+            datastore.store_task(task)
+        except Exception:
+            _logger.exception("error storing failed task id=%s", task.id)
+        raise
+    datastore.store_task(completed_task)
+    return completed_task
 
 
 def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingTask:

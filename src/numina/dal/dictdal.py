@@ -271,10 +271,6 @@ class Dict2DAL(BaseDictDAL):
     def dump(self, fp):
         state = self.dump_data()
         yaml.dump(state, fp)
-        # yaml.dump(state, fp, default_flow_style=False)
-
-        with open("control_dump.json", "w") as fp:
-            json.dump(state, fp, indent=2)
 
     def dump_data(self):
         state = {}
@@ -318,13 +314,16 @@ class BaseHybridDAL(Dict2DAL):
                 obdict[obid] = ob
             else:
                 _logger.warning("oblock_id=%s is already in table", obid)
-        # Update parents
-        for ob in obdict.values():
-            children = ob.get("children", [])
-            for ch in children:
-                obdict[ch]["parent"] = ob["id"]
-
         self.ob_table.update(obdict)
+
+        # Update parents, the children can be stored previously
+        for ob in obdict.values():
+            for ch in ob.get("children", []):
+                try:
+                    self.ob_table[ch]["parent"] = ob["id"]
+                except KeyError:
+                    msg = f"oblock_id={ch}, child of oblock_id={ob['id']}, not found"
+                    raise ValueError(msg) from None
 
     def search_product(self, name, tipo, obsres, options=None):
         if name in self.extra_data:

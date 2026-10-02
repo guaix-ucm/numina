@@ -13,6 +13,8 @@ import os
 import logging
 import json
 import operator
+import shutil
+import tempfile
 
 import numina.store
 from numina.exceptions import NoResultFound
@@ -23,6 +25,13 @@ from .dictdal import BaseHybridDAL
 from .stored import StoredProduct, StoredResult
 
 _logger = logging.getLogger(__name__)
+
+
+def _format_time(value):
+    """Format a datetime, None if the time was not set"""
+    if value is None:
+        return None
+    return value.strftime("%FT%T")
 
 
 class Backend(BaseHybridDAL):
@@ -90,9 +99,24 @@ class Backend(BaseHybridDAL):
         return state
 
     def dump_to_file(self):
+        """Write the database in the control file
+
+        The file is replaced atomically, so that an interruption
+        does not leave a partially written database
+        """
         if self.filename:
-            with open(self.filename, "w") as fp:
-                self.dump(fp)
+            dirname = os.path.dirname(os.path.abspath(self.filename))
+            fd, tmpname = tempfile.mkstemp(dir=dirname, prefix=".numina-db-", suffix=".tmp")
+            try:
+                with os.fdopen(fd, "w") as fp:
+                    self.dump(fp)
+                # keep the permissions of the existing file
+                if os.path.exists(self.filename):
+                    shutil.copymode(self.filename, tmpname)
+                os.replace(tmpname, self.filename)
+            except BaseException:
+                os.unlink(tmpname)
+                raise
 
     def new_id(self, table_index):
         if table_index:
@@ -100,7 +124,7 @@ class Backend(BaseHybridDAL):
         else:
             newidx = 1
         table_index.append(newidx)
-        self.dump_to_file()
+        # The database is written when the new record is inserted
         return newidx
 
     def new_task_id(self, request, request_params):
@@ -136,8 +160,8 @@ class Backend(BaseHybridDAL):
         _logger.debug("update task=%d in backend", task.id)
         task_reg = self.db_tables["tasks"][task.id]
         task_reg["state"] = task.state
-        task_reg["time_start"] = task.time_start.strftime("%FT%T")
-        task_reg["time_end"] = task.time_end.strftime("%FT%T")
+        task_reg["time_start"] = _format_time(task.time_start)
+        task_reg["time_end"] = _format_time(task.time_end)
         task_reg["request"] = task.request
         task_reg["request_params"] = task.request_params
         task_reg["request_runinfo"] = task.request_runinfo
