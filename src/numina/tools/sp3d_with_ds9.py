@@ -15,10 +15,12 @@ import subprocess
 
 import argparse
 from astropy.io import fits
+import astropy.units as u
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
 from rich_argparse import RichHelpFormatter
+import sys
 
 from .extract_2d_slice_from_3d_cube import extract_slice
 from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
@@ -78,7 +80,7 @@ def init_ds9_plot(fpath, wave):
     return current_plot
 
 
-def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects, firstplot, plot_render):
+def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects, filename, firstplot, plot_render):
     """Update plot with source and continuum spectra.
 
     Parameters
@@ -98,6 +100,8 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
     line_objects : list
         List of ax.plot() instances corresponding to the source,
         continuum and subtrated spectra.
+    filename : str
+        File name.
     firstplot : bool
         If True, the next plot is the first one
     plot_render : str
@@ -178,12 +182,14 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
         old_legend = ax.get_legend()
         if old_legend:
             old_legend.remove()
-        ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.15), ncol=3)
+        ax.legend(title=filename, loc="upper center", bbox_to_anchor=(0.5, 1.35), ncol=3)
         fig.canvas.draw()
         fig.canvas.flush_events()
 
 
-def update_ds9regions(data, source_mask, continuum_mask, tmp_mask, wave, fig, ax, line_objects, firstplot, plot_render):
+def update_ds9regions(
+    data, source_mask, continuum_mask, tmp_mask, wave, fig, ax, line_objects, filename, firstplot, plot_render
+):
     """Update ds9 regions interactively using the source and continuum masks.
 
     Parameters
@@ -206,6 +212,8 @@ def update_ds9regions(data, source_mask, continuum_mask, tmp_mask, wave, fig, ax
     line_objects: list
         List of ax.plot() instances corresponding to the source,
         continuum and subtrated spectra.
+    filename : str
+        File name.
     firstplot = bool
         If True, the next plot is the first one.
     plot_render : str
@@ -247,6 +255,7 @@ def update_ds9regions(data, source_mask, continuum_mask, tmp_mask, wave, fig, ax
         fig=fig,
         ax=ax,
         line_objects=line_objects,
+        filename=filename,
         firstplot=firstplot,
         plot_render=plot_render,
     )
@@ -311,11 +320,19 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
         (line_subtracted,) = ax.plot(wave, sp_subtracted, "C0-", label="subtracted", zorder=3)
         (line_source,) = ax.plot(wave, sp_source, "C1-", label="source", zorder=2)
         (line_continuum,) = ax.plot(wave, sp_continuum, "C2-", label="continuum", zorder=1)
-        ax.legend(loc="upper center", bbox_to_anchor=(0.5, 1.15), ncol=3)
+        npix_extra = 2
+        deltawave_min = wave[1] - wave[0]
+        deltawave_max = wave[-1] - wave[-2]
+        ax.set_xlim(wave[0].value - npix_extra * deltawave_min.value, wave[-1].value + npix_extra * deltawave_max.value)
+        ax.legend(title=filename, loc="upper center", bbox_to_anchor=(0.5, 1.35), ncol=3)
         line_objects = [line_source, line_continuum, line_subtracted]
-        ax.set_title(f"{filename}")
         ax.set_xlabel("Value along NAXIS3 direction")
         ax.set_ylabel("Signal")
+        # display upper horizontal scale in pixel units along NAXIS3
+        ax2 = ax.twiny()
+        ax2.set_xlabel("Pixel along NAXIS3 direction")
+        ax2.set_xlim(1 - npix_extra, len(wave) + npix_extra)
+        plt.tight_layout()
     else:
         fig = None
         ax = None
@@ -330,6 +347,7 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
         fig=fig,
         ax=ax,
         line_objects=line_objects,
+        filename=filename,
         firstplot=True,
         plot_render=plot_render,
     )
@@ -405,6 +423,7 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
                 fig=fig,
                 ax=ax,
                 line_objects=line_objects,
+                filename=filename,
                 firstplot=False,
                 plot_render=plot_render,
             )
@@ -449,6 +468,9 @@ def main(args=None):
     )
     parser.add_argument("--i1", help="First pixel along NAXIS3 (default 1)", type=int, default=1)
     parser.add_argument("--i2", help="Last pixel along NAXIS3 (default NAXIS3)", type=str)
+    parser.add_argument(
+        "--wave-unit", help="Unit of the wavelength axis (default Angstrom)", type=str, default="Angstrom"
+    )
     parser.add_argument("--ds9exec", help="Command line to launch ds9 (default 'ds9')", type=str)
     parser.add_argument(
         "--plot_render",
@@ -468,6 +490,12 @@ def main(args=None):
     file_datacube = args.datacube
     extnum = args.extnum
     extname = args.extname
+
+    # Check wavelength unit is valid
+    wave_unit = u.Unit(args.wave_unit)
+    if not wave_unit.is_equivalent(u.m):
+        logger.error(f"Invalid wavelength unit: {wave_unit}")
+        sys.exit(1)
 
     ds9exec = args.ds9exec
     if ds9exec is None:
@@ -576,7 +604,7 @@ def main(args=None):
 
     # Generate array in the spectral direction
     wcs1d_spectral = wcs.spectral
-    wave = wcs1d_spectral.pixel_to_world(np.arange(naxis3))
+    wave = wcs1d_spectral.pixel_to_world(np.arange(naxis3)).to(wave_unit)
     logger.info(f"Minimum value along NAXIS3: {wave.min()}")
     logger.info(f"Maximum value along NAXIS3: {wave.max()}")
 
