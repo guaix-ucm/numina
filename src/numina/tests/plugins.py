@@ -95,7 +95,7 @@ def datamanager_remote(tmp_path_factory, request):
     TEST_SET_DATADIR
         Directory with the data in the tarball, optional, 'data' by default
     TEST_SET_CONTROL
-        Control file in the tarball, optional, 'control_v2.yaml' by default
+        Control file in the tarball (format 1), optional, 'control.yaml' by default
     TEST_SET_OBS
         File (or list of files) in the tarball with the observing blocks,
         optional. The observing blocks are added to the DataManager
@@ -107,7 +107,7 @@ def datamanager_remote(tmp_path_factory, request):
     req_base = getattr(request.module, "TEST_SET_HOST", req_base_default)
     req_tarname = getattr(request.module, "TEST_SET_FILE")
     req_datadir = getattr(request.module, "TEST_SET_DATADIR", "data")
-    req_control = getattr(request.module, "TEST_SET_CONTROL", "control_v2.yaml")
+    req_control = getattr(request.module, "TEST_SET_CONTROL", "control.yaml")
     req_obs = getattr(request.module, "TEST_SET_OBS", None)
 
     basedir = tmp_path_factory.mktemp("manager")
