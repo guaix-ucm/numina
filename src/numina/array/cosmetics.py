@@ -16,6 +16,8 @@ import scipy.ndimage
 from numina.array.blocks import max_blk_coverage, blk_nd_short
 
 # Values stored in integer masks
+# FIXME: hot and dead pixels have the same value, see
+# https://github.com/guaix-ucm/numina/issues/243
 PIXEL_HOT = 1
 PIXEL_DEAD = 1
 PIXEL_VALID = 0
