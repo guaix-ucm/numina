@@ -293,10 +293,8 @@ def display_hist2d(
             raise ValueError(f"Invalid mm_boundary_fit: {mm_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
 
         if mm_threshold is None:
-            # Use the minimum value of the boundary as the mm_threshold
-            # FIXME: yplot_boundary is not defined yet, this branch raises NameError
-            mm_threshold = np.min(yplot_boundary)  # noqa: F821
-            _logger.info("updated mm_threshold for cosmic-ray detection: %f", mm_threshold)
+            mm_threshold = 0.0
+            _logger.warning("updated mm_threshold for cosmic-ray detection: %f", mm_threshold)
 
         # Apply the criterium to detect coincident cosmic-ray pixels
         flag1 = yplot > boundaryfit(xplot)
