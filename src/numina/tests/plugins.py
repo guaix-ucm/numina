@@ -84,15 +84,31 @@ def run_config(tmp_path):
 
 @pytest.fixture(scope="module")
 def datamanager_remote(tmp_path_factory, request):
-    """Return a DataManager object create from a remote dataset"""
+    """Return a DataManager object create from a remote dataset
+
+    The test module defines:
+
+    TEST_SET_FILE
+        Name of the tarball of the dataset
+    TEST_SET_HOST
+        Base URL of the tarball, optional
+    TEST_SET_DATADIR
+        Directory with the data in the tarball, optional, 'data' by default
+    TEST_SET_CONTROL
+        Control file in the tarball, optional, 'control_v2.yaml' by default
+    TEST_SET_OBS
+        File (or list of files) in the tarball with the observing blocks,
+        optional. The observing blocks are added to the DataManager
+    """
     from numina.user.cli import base_config
-    from numina.user.helpers import create_datamanager
+    from numina.user.helpers import create_datamanager, load_observations
 
     req_base_default = "https://guaix.fis.ucm.es/data/"
     req_base = getattr(request.module, "TEST_SET_HOST", req_base_default)
     req_tarname = getattr(request.module, "TEST_SET_FILE")
     req_datadir = getattr(request.module, "TEST_SET_DATADIR", "data")
     req_control = getattr(request.module, "TEST_SET_CONTROL", "control_v2.yaml")
+    req_obs = getattr(request.module, "TEST_SET_OBS", None)
 
     basedir = tmp_path_factory.mktemp("manager")
 
@@ -122,12 +138,10 @@ def datamanager_remote(tmp_path_factory, request):
     section["datadir"] = str(datadir)
     dm = create_datamanager(config, reqfile)
 
-    # This is not really needed...
-    # If everything is in the file already
-    # with working_directory(basedir):
-    #     obsresults = ['obs_ids.yaml']
-    #     sessions, loaded_obs = load_observations(obsresults, is_session=False)
-    #    dm.backend.add_obs(loaded_obs)
+    if req_obs is not None:
+        obsfiles = [req_obs] if isinstance(req_obs, str) else req_obs
+        _, loaded_obs = load_observations([str(basedir / name) for name in obsfiles])
+        dm.backend.add_obs(loaded_obs)
 
     return dm
 
