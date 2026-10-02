@@ -28,7 +28,7 @@ from .. import __version__
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
 from .metarecipes import RecipeType
-from .oresult import ObservationResult, ObservingBlock
+from .oresult import ObservationResult
 from ..exceptions import NoResultFound
 from numina.core.taggers import extract_tags_from_obsres, extract_tags_from_img
 
@@ -202,36 +202,32 @@ class BaseRecipe(metaclass=RecipeType):
         return hdr
 
     def build_recipe_input(self, ob, dal):
-        """Build a RecipeInput object."""
+        """Build a RecipeInput object.
+
+        The requirements are queried with `ob`, which is modified: a requirement
+        of type ObservationResult adds to it the results of other OBs (ResultOf),
+        and the tags are extracted from it. The caller uses these changes.
+        """
+        import numina.types.obsresult as obtype
+
         result = {}
-        # We have to decide if the ob input
-        # is a plain description (ObservingBlock)
-        # or if it contains the nested results (Obsres)
-        #
-        # it has to contain the tags corresponding to the observing modes...
-        ob_query_skip = False
-        ob_query_field = "obresult"
 
-        if isinstance(ob, ObservingBlock):
-            import numina.types.obsresult as obtype
-
-            # We have to build an Obsres
-            for key, req in self.requirements().items():
-                if isinstance(req.type, obtype.ObservationResultType):
-                    ob_query_field = key
-                    ob_query_skip = True
-                    query_option = self.query_options.get(key)
-
-                    # print('req for ob is named', key, query_option)
-                    new_or = ObservationResult()
-                    new_or.__dict__ = ob.__dict__
-                    obsres = req.query(dal, new_or, options=query_option)
-                    break
-            else:
-                # nothing to do
-                obsres = ob
-        else:
+        if isinstance(ob, ObservationResult):
             obsres = ob
+        else:
+            # A plain ObservingBlock: the ObservationResult shares its
+            # attributes, so that the changes are visible in ob
+            obsres = ObservationResult.__new__(ObservationResult)
+            obsres.__dict__ = ob.__dict__
+
+        # The requirement of the observation result is queried first,
+        # as it can add frames used to extract the tags
+        ob_query_field = None
+        for key, req in self.requirements().items():
+            if isinstance(req.type, obtype.ObservationResultType):
+                ob_query_field = key
+                obsres = req.query(dal, obsres, options=self.query_options.get(key))
+                break
 
         qfields = self.tag_names()
         self.logger.debug("running recipe tagger with query fields: %s", qfields)
@@ -245,7 +241,7 @@ class BaseRecipe(metaclass=RecipeType):
 
             try:
                 query_option = self.query_options.get(key)
-                if key == ob_query_field and ob_query_skip:
+                if key == ob_query_field:
                     result[key] = obsres
                 else:
                     result[key] = req.query(dal, obsres, options=query_option)
