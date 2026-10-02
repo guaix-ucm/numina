@@ -41,6 +41,10 @@ def mode_run_common_obs(args, extra_args, config):
         config["tool.run"]["datadir"] = args.datadir
     if args.calibsdir:
         config["tool.run"]["calibsdir"] = args.calibsdir
+    if args.db:
+        if not config.has_section("tool.db"):
+            config.add_section("tool.db")
+        config["tool.db"]["file"] = args.db
     if args.copy_files is not None:
         config["tool.run"]["copy_files"] = str(args.copy_files)
     if args.validate:

@@ -160,3 +160,22 @@ def test_load_observations_session(tmp_path):
 
     assert sessions == [[{"id": 1, "enabled": True}, {"id": 2, "enabled": False}]]
     assert loaded_obs == []
+
+
+def test_run_templates():
+    from numina.user.cli import base_config
+    from ..helpers import run_templates
+
+    config = base_config()
+    assert run_templates(config["tool.run"]) == {
+        "workdir_tmpl": "obsid{obsid}_work",
+        "resultdir_tmpl": "obsid{obsid}_results",
+        "resultfile_tmpl": "result.json",
+        "taskfile_tmpl": "task.json",
+    }
+    assert run_templates(config["tool.run"], config["tool.db"]) == {
+        "workdir_tmpl": "obsid{obsid}_{taskid}_work",
+        "resultdir_tmpl": "obsid{obsid}_{taskid}_results",
+        "resultfile_tmpl": "result.json",
+        "taskfile_tmpl": "task.json",
+    }

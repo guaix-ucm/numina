@@ -94,6 +94,14 @@ def register(subparsers, config):
         help="path to directory containing pristine data",
     )
     parser_run.add_argument(
+        "--db",
+        action="store",
+        dest="db",
+        metavar="FILE",
+        help="registry of the reductions, relative to basedir (created if it does not exist), "
+        "overrides file in [tool.db]",
+    )
+    parser_run.add_argument(
         "--calibsdir",
         "--rootdir",
         action="store",

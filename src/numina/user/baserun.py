@@ -70,7 +70,7 @@ def run_reduce(
     )
     request_params["logger_control"] = logger_control
 
-    task = datastore.backend.new_task(request, request_params)
+    task = datastore.new_task(request, request_params)
 
     try:
         completed_task = run_task_reduce(task, datastore)

@@ -59,6 +59,15 @@ It is called like this::
 
    File path to the folder containing the pristine data to be processed.
 
+.. option:: --db FILE
+
+   Registry of the reductions, relative to basedir. It is created if it
+   does not exist. The tasks, results and products of the reductions are
+   recorded in it. It overrides the value of ``file`` in the section
+   ``[tool.db]`` of the configuration. With the registry, the templates of
+   the directories are read from ``[tool.db]``, and they include the id of
+   the task.
+
 .. option:: --copy-files
 
    Copy the files of the observation result and the requirements

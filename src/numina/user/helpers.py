@@ -21,6 +21,7 @@ import yaml
 import numina.drps
 from numina.dal.backend import Backend
 from numina.dal.dictdal import HybridDAL
+from numina.dal.registry import Registry
 from numina.dal.utils import check_template, fill_template
 from numina.util.jsonencoder import ExtEncoder
 from numina.types.frame import DataFrameType
@@ -31,10 +32,12 @@ _logger = logging.getLogger(__name__)
 
 
 class DataManager:
-    def __init__(self, basedir, datadir, backend):
+    def __init__(self, basedir, datadir, backend, registry=None):
         self.basedir = basedir
         self.datadir = datadir
         self.backend = backend
+        #: Registry of the reductions (numina.dal.registry.Registry), or None
+        self.registry = registry
 
         # Templates of the names of directories and files, the format 1
         # of the control file replaces them with the values in the configuration.
@@ -65,6 +68,19 @@ class DataManager:
     def store_result_to(self, result):
         saveres = result.store_to(None)
         return saveres
+
+    def new_task(self, request, request_params):
+        """Create a new task
+
+        If there is a registry, the task is recorded in it,
+        and the id of the task is assigned by the registry.
+        """
+        task = self.backend.new_task(request, request_params)
+        if self.registry is not None:
+            oblock_id = request_params.get("oblock_id")
+            oblock = self.backend.ob_table.get(oblock_id)
+            task.id = self.registry.new_task(task, oblock)
+        return task
 
     def store_task(self, task):
 
@@ -110,6 +126,11 @@ class DataManager:
         self.backend.update_task(task)
         if task.result is not None:
             self.backend.update_result(task, result_repr, result_file)
+
+        if self.registry is not None:
+            self.registry.update_task(task)
+            if task.result is not None:
+                self.registry.new_result(task, result_repr, result_file)
 
     def create_workenv(self, task):
 
@@ -443,6 +464,21 @@ def process_format_version_2(
     return backend
 
 
+def run_templates(section, db_section=None):
+    """Templates of the names of directories and files
+
+    The templates are read from `section` ([tool.run]). If `db_section`
+    ([tool.db]) is not None, the templates defined there replace them.
+    """
+    names = ["workdir_tmpl", "resultdir_tmpl", "resultfile_tmpl", "taskfile_tmpl"]
+    templates = {name: section[name] for name in names}
+    if db_section is not None:
+        for name in names:
+            if name in db_section:
+                templates[name] = db_section[name]
+    return templates
+
+
 def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=None, persist=True) -> DataManager:
 
     # This should go before we load CL file
@@ -496,6 +532,12 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
     else:
         calibsdir = ""
 
+    db_section = config["tool.db"] if config.has_section("tool.db") else {}
+    use_registry = bool(db_section.get("file"))
+    if use_registry and control_format != 1:
+        raise ValueError("the registry of reductions requires a control file in format 1")
+    templates = run_templates(section, db_section if use_registry else None)
+
     if control_format == 1:
         merged_data = deep_merge(initial_schema, loaded_data)
         # The backend uses the same templates to find the results of other OBs
@@ -506,15 +548,15 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
             calibsdir,
             merged_data,
             loaded_data_extra,
-            resultdir_tmpl=section["resultdir_tmpl"],
-            resultfile_tmpl=section["resultfile_tmpl"],
+            resultdir_tmpl=templates["resultdir_tmpl"],
+            resultfile_tmpl=templates["resultfile_tmpl"],
         )
         datamanager = DataManager(basedir, datadir, _backend)
         datamanager.set_templates(
-            section["workdir_tmpl"],
-            section["resultdir_tmpl"],
-            section["resultfile_tmpl"],
-            section["taskfile_tmpl"],
+            templates["workdir_tmpl"],
+            templates["resultdir_tmpl"],
+            templates["resultfile_tmpl"],
+            templates["taskfile_tmpl"],
         )
     elif control_format == 2:
         if persist:
@@ -535,6 +577,17 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
     else:
         msg = f"Unsupported format {control_format} in {reqfile}"
         raise ValueError(msg)
+
+    if use_registry:
+        dbpath = os.path.join(basedir, db_section["file"])
+        _logger.info("registry of reductions in %s", dbpath)
+        datamanager.registry = Registry(dbpath, basedir=basedir)
+        if "{taskid}" not in datamanager.resultdir_tmpl:
+            _logger.warning(
+                "resultdir_tmpl=%s does not use {taskid}, the results of a new reduction "
+                "of an OB replace the results of the previous ones in the registry",
+                datamanager.resultdir_tmpl,
+            )
 
     # This should go before we load CL file
     # load additional reduction defaults
