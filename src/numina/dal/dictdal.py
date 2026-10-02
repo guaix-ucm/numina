@@ -73,6 +73,9 @@ class BaseDictDAL(AbsDrpDAL):
             msg = f"type {tipo} compatible with tags {tags!r} not found"
             raise NoResultFound(msg)
 
+    def has_extra(self, name):
+        return name in self.extra_data
+
     def oblock_from_id(self, obsid):
 
         este = self.ob_table[obsid]
@@ -296,6 +299,8 @@ class BaseHybridDAL(Dict2DAL):
 
         self.rootdir = rootdir
         self.ob_ids = []
+        #: Registry of the reductions (numina.dal.registry.Registry), or None
+        self.registry = None
 
         if basedir is None:
             self.basedir = os.getcwd()
@@ -330,8 +335,36 @@ class BaseHybridDAL(Dict2DAL):
             val = self.extra_data[name]
             content = numina.store.load(tipo, val)
             return StoredProduct(id=0, tags={}, content=content)
-        else:
-            return self._search_prod_table(name, tipo, obsres)
+        if self.registry is not None:
+            try:
+                return self._search_registry_product(tipo, obsres)
+            except NoResultFound as err:
+                _logger.debug("%s", err)
+        return self._search_prod_table(name, tipo, obsres)
+
+    def _search_registry_product(self, tipo, obsres):
+        """The most recent product in the registry with QC not BAD
+
+        The product must have the same instrument, profile and type,
+        and tags compatible with those of obsres.
+        """
+        drp = self.drps.query_by_name(obsres.instrument)
+        label = drp.product_label(tipo)
+        labels = {label, label[:-2] if label.endswith("()") else label}
+        pred = tipo.query_expr.fill_placeholders(**obsres.tags)
+
+        def valid(prod):
+            # pred.eval must return True, non bool values mean that it is incomplete
+            return prod["type"] in labels and pred.eval(**prod["tags"]) is True
+
+        prod = self.registry.select_product(obsres.instrument, obsres.profile, valid)
+        if prod is None:
+            msg = f"type {label} compatible with tags {obsres.tags} not found in the registry"
+            raise NoResultFound(msg)
+        _logger.debug("product id=%s from the registry, %s", prod["id"], prod["content"])
+        path = os.path.join(self.registry.basedir, prod["content"])
+        content = numina.store.load(tipo, path)
+        return StoredProduct(id=prod["id"], content=content, tags=prod["tags"])
 
     def _search_prod_table(self, name, tipo, obsres):
         raise NotImplementedError
@@ -519,29 +552,38 @@ class HybridDAL(BaseHybridDAL):
                 msg = f"requested mode '{mode}' and obsmode '{cobsres.mode}' do not match"
                 raise NoResultFound(msg)
 
+        if self.registry is not None:
+            result = self.registry.select_result(node_id)
+            if result is not None:
+                return self._load_result_field(node_id, result["result_dir"], result["result_file"], field)
+            if "{taskid}" in self.resultdir_tmpl:
+                # the directory can not be built without the id of the task
+                raise NoResultFound(f"no result of oblock_id={node_id} in the registry")
+
+        # Without registry, the id of the task is the id of the OB
+        directory = fill_template(self.resultdir_tmpl, obsid=node_id, taskid=node_id)
+        filename = fill_template(self.resultfile_tmpl, obsid=node_id, taskid=node_id)
         try:
-            # In format 1, the id of the task is the id of the OB
-            directory = fill_template(self.resultdir_tmpl, obsid=node_id, taskid=node_id)
-            filename = fill_template(self.resultfile_tmpl, obsid=node_id, taskid=node_id)
-
-            # change directory to open result file
-            with working_directory(os.path.join(self.basedir, directory)):
-
-                if os.path.exists(filename):
-                    with open(filename) as fd:
-                        result_data = json.load(fd)
-                else:
-                    raise ValueError(f"{filename} not found in {directory}")
-
-                stored_result = StoredResult.load_data(result_data)
-
-                try:
-                    content = getattr(stored_result, field)
-                except AttributeError:
-                    raise NoResultFound(f"no field {field} found in result")
-
-                st = StoredProduct(id=node_id, content=content, tags={})
-                return st
+            return self._load_result_field(node_id, directory, filename, field)
         except KeyError as err:
             msg = f"field '{field}' not found in result of mode '{cobsres.mode}' id={node_id}"
             raise NoResultFound(msg) from err
+
+    def _load_result_field(self, node_id, directory, filename, field):
+        """Load field of the result stored in directory/filename"""
+        # change directory to open result file
+        with working_directory(os.path.join(self.basedir, directory)):
+            if os.path.exists(filename):
+                with open(filename) as fd:
+                    result_data = json.load(fd)
+            else:
+                raise ValueError(f"{filename} not found in {directory}")
+
+            stored_result = StoredResult.load_data(result_data)
+
+            try:
+                content = getattr(stored_result, field)
+            except AttributeError:
+                raise NoResultFound(f"no field {field} found in result")
+
+            return StoredProduct(id=node_id, content=content, tags={})

@@ -8,10 +8,12 @@ import astropy.io.fits as fits
 import pytest
 import yaml
 
-from numina.core import BaseRecipe, Result
+from numina.core import BaseRecipe, Requirement, Result
 from numina.core.requirements import ObservationResultRequirement
 from numina.dal.registry import Registry
 from numina.tests.recipes import MasterBias
+from numina.types.qc import QC
+import numina.core.dataholders as dh
 
 from ..cli import base_config, process_unknown_arguments
 from ..clirun import register
@@ -30,17 +32,31 @@ modes:
     name: Fail
     summary: Fail mode
     description: Fail mode
+  - key: image
+    name: Image
+    summary: Image mode
+    description: Image mode
+  - key: param
+    name: Param
+    summary: Param mode
+    description: Param mode
 pipelines:
   default:
     version: 1
     recipes:
       bias: numina.user.tests.test_run_registry.BiasRecipe
       fail: numina.core.utils.AlwaysFailRecipe
+      image: numina.user.tests.test_run_registry.ImageRecipe
+      param: numina.user.tests.test_run_registry.ParamRecipe
 """
+
+# values received by the recipes
+SEEN = []
 
 
 class BiasRecipe(BaseRecipe):
     obresult = ObservationResultRequirement()
+    quality = dh.Parameter("GOOD", "QC of the result")
     master_bias = Result(MasterBias)
 
     def __init__(self, *args, **kwargs):
@@ -50,7 +66,32 @@ class BiasRecipe(BaseRecipe):
         with recipe_input.obresult.frames[0].open() as hdul:
             hdr = hdul[0].header.copy()
         hdr["UUID"] = str(uuid.uuid4())
-        return self.create_result(master_bias=fits.HDUList([fits.PrimaryHDU(header=hdr)]))
+        master_bias = fits.HDUList([fits.PrimaryHDU(header=hdr)])
+        return self.create_result(master_bias=master_bias, qc=QC[recipe_input.quality])
+
+
+class ImageRecipe(BaseRecipe):
+    obresult = ObservationResultRequirement()
+    master_bias = Requirement(MasterBias, "Master bias")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(version=1)
+
+    def run(self, recipe_input):
+        with recipe_input.master_bias.open() as hdul:
+            SEEN.append(hdul[0].header["UUID"])
+        return self.create_result()
+
+
+class ParamRecipe(BaseRecipe):
+    value = dh.Parameter(1, "a value")
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(version=1)
+
+    def run(self, recipe_input):
+        SEEN.append(recipe_input.value)
+        return self.create_result()
 
 
 BIAS = {"id": 1, "mode": "bias", "instrument": "TEST1", "images": ["image1.fits"]}
@@ -59,18 +100,20 @@ BIAS = {"id": 1, "mode": "bias", "instrument": "TEST1", "images": ["image1.fits"
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
     drpmocker.add_drp("TEST1", DRP_TEST1)
+    monkeypatch.setattr(f"{__name__}.SEEN", [])
     datadir = tmp_path / "data"
     datadir.mkdir()
-    for name in ["image1.fits", "image2.fits"]:
+    # image3.fits is only valid for the old profile of TEST1
+    for name, date in [("image1.fits", "2017"), ("image2.fits", "2017"), ("image3.fits", "2015")]:
         hdr = fits.Header()
         hdr["INSTRUME"] = "TEST1"
-        hdr["DATE-OBS"] = "2017-01-01T00:00:00"
+        hdr["DATE-OBS"] = f"{date}-01-01T00:00:00"
         fits.PrimaryHDU(header=hdr).writeto(datadir / name)
     monkeypatch.chdir(tmp_path)
     return tmp_path
 
 
-def run(basedir, obs, *options, run_values=None, db_values=None):
+def run(basedir, obs, *options, run_values=None, db_values=None, extra=None):
     obsfile = basedir / "obsdata.yaml"
     obsfile.write_text(yaml.safe_dump_all(obs))
     parser = argparse.ArgumentParser(prog="numina")
@@ -82,7 +125,8 @@ def run(basedir, obs, *options, run_values=None, db_values=None):
         config["tool.run"][key] = value
     for key, value in (db_values or {}).items():
         config["tool.db"][key] = value
-    mode_run_common_obs(args, process_unknown_arguments([]), config)
+    mode_run_common_obs(args, process_unknown_arguments(extra or []), config)
+    return SEEN
 
 
 def test_no_registry(basedir):
@@ -133,7 +177,7 @@ def test_registry(basedir):
 
     (result,) = registry.results()
     assert result["task_id"] == 1
-    assert result["qc"] == "UNKNOWN"
+    assert result["qc"] == "GOOD"
     assert result["result_dir"] == "obsid1_1_results"
 
     (product,) = registry.products()
@@ -197,3 +241,97 @@ def test_format2_with_registry(basedir):
     control.write_text("version: 2\ndatabase: {}\n")
     with pytest.raises(ValueError, match="requires a control file in format 1"):
         run(basedir, [BIAS], "--db", "numina-db.json", "-r", str(control))
+
+
+# Reading the registry
+
+IMAGE = {"id": 10, "mode": "image", "instrument": "TEST1", "images": ["image1.fits"]}
+
+
+def bias_uuids(basedir):
+    registry = Registry(str(basedir / "numina-db.json"))
+    return [prod["uuid"] for prod in registry.products(type="MasterBias")]
+
+
+def test_product_from_registry(basedir):
+    """A product reduced in a previous run is used"""
+    run(basedir, [BIAS], "--db", "numina-db.json")
+    seen = run(basedir, [IMAGE], "--db", "numina-db.json")
+    assert seen == bias_uuids(basedir)
+
+
+def test_most_recent_product(basedir):
+    run(basedir, [BIAS], "--db", "numina-db.json")
+    run(basedir, [BIAS], "--db", "numina-db.json")
+    seen = run(basedir, [IMAGE], "--db", "numina-db.json")
+    assert seen == bias_uuids(basedir)[-1:]
+
+
+def test_bad_product_not_used(basedir):
+    run(basedir, [BIAS], "--db", "numina-db.json")
+    bad = dict(BIAS, requirements={"quality": "BAD"})
+    run(basedir, [bad], "--db", "numina-db.json")
+    seen = run(basedir, [IMAGE], "--db", "numina-db.json")
+    first, second = bias_uuids(basedir)
+    assert seen == [first]
+
+
+def test_product_of_other_profile_not_used(basedir):
+    """A product of another instrument profile is not used"""
+    old = dict(BIAS, images=["image3.fits"])
+    run(basedir, [old], "--db", "numina-db.json")
+    # no master bias for the profile of image1.fits, not in calibsdir either
+    with pytest.raises(ValueError, match="Required 'master_bias' of type MasterBias"):
+        run(basedir, [IMAGE], "--db", "numina-db.json")
+    assert SEEN == []
+
+
+def test_control_file_without_product_in_registry(basedir):
+    """Without products in the registry, the products of the control file are used"""
+    hdr = fits.Header()
+    hdr["UUID"] = "11111111-1111-1111-1111-111111111111"
+    fits.PrimaryHDU(header=hdr).writeto(basedir / "bias_control.fits")
+    control = basedir / "control.yaml"
+    products = {
+        "TEST1": {
+            "225fcaf2-7f6f-49cc-972a-70fd0aee8e96": [
+                {"id": 1, "type": "MasterBias", "tags": {}, "content": str(basedir / "bias_control.fits")}
+            ]
+        }
+    }
+    control.write_text(yaml.safe_dump({"version": 1, "products": products}))
+    seen = run(basedir, [IMAGE], "--db", "numina-db.json", "-r", str(control))
+    assert seen == [hdr["UUID"]]
+    # with a product in the registry, the registry is used
+    run(basedir, [BIAS], "--db", "numina-db.json", "-r", str(control))
+    seen = run(basedir, [IMAGE], "--db", "numina-db.json", "-r", str(control))
+    assert seen[-1] == bias_uuids(basedir)[-1]
+
+
+def test_ob_over_registry(basedir):
+    """The requirements of the OB have priority over the registry"""
+    run(basedir, [BIAS], "--db", "numina-db.json")
+    run(basedir, [BIAS], "--db", "numina-db.json")
+    first = Registry(str(basedir / "numina-db.json")).products(type="MasterBias")[0]
+    image = dict(IMAGE, requirements={"master_bias": str(basedir / first["content"])})
+    seen = run(basedir, [image], "--db", "numina-db.json")
+    assert seen == [first["uuid"]]
+
+
+def test_cli_over_ob(basedir):
+    """The values given in the command line have priority over the OB"""
+    param = {"id": 20, "mode": "param", "instrument": "TEST1", "images": ["image1.fits"]}
+    assert run(basedir, [param]) == [1]
+    SEEN.clear()
+    assert run(basedir, [dict(param, requirements={"value": 2})]) == [2]
+    SEEN.clear()
+    assert run(basedir, [dict(param, requirements={"value": 2})], extra=["--parameter-value=3"]) == [3]
+
+
+def test_cli_over_registry(basedir):
+    run(basedir, [BIAS], "--db", "numina-db.json")
+    run(basedir, [BIAS], "--db", "numina-db.json")
+    first = Registry(str(basedir / "numina-db.json")).products(type="MasterBias")[0]
+    extra = [f"--parameter-master_bias={basedir / first['content']}"]
+    seen = run(basedir, [IMAGE], "--db", "numina-db.json", extra=extra)
+    assert seen == [first["uuid"]]

@@ -582,6 +582,8 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
         dbpath = os.path.join(basedir, db_section["file"])
         _logger.info("registry of reductions in %s", dbpath)
         datamanager.registry = Registry(dbpath, basedir=basedir)
+        # The backend reads the products and results from the registry
+        datamanager.backend.registry = datamanager.registry
         if "{taskid}" not in datamanager.resultdir_tmpl:
             _logger.warning(
                 "resultdir_tmpl=%s does not use {taskid}, the results of a new reduction "

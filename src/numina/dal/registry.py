@@ -277,6 +277,7 @@ class Registry:
                     "oblock_id": oblock_id,
                     "field": key,
                     "instrument": runinfo["instrument"],
+                    "profile": task.request_params["instrument_configuration"],
                     "type": prod.type.name(),
                     "type_fqn": fully_qualified_name(prod.type),
                     "uuid": meta.get("uuid"),
@@ -288,6 +289,24 @@ class Registry:
                 }
                 self.store.insert("products", prod_doc)
         return result_id
+
+    def select_product(self, instrument, profile, valid=None):
+        """The most recent product, with QC not BAD
+
+        The product has the given instrument and profile, and
+        ``valid(product)`` is True, if `valid` is not None.
+        """
+        candidates = [
+            prod
+            for prod in self.store.find("products", instrument=instrument, profile=profile)
+            if prod["qc"] != "BAD" and (valid is None or valid(prod))
+        ]
+        return _most_recent(candidates)
+
+    def select_result(self, oblock_id):
+        """The most recent result of an OB, with QC not BAD"""
+        candidates = [res for res in self.store.find("results", oblock_id=oblock_id) if res["qc"] != "BAD"]
+        return _most_recent(candidates)
 
     def tasks(self, **equal):
         """Tasks in the registry, filtered by equality of fields"""
@@ -304,3 +323,10 @@ class Registry:
     def oblocks(self, **equal):
         """Observing blocks in the registry, filtered by equality of fields"""
         return self.store.find("oblocks", **equal)
+
+
+def _most_recent(docs):
+    """The document inserted last, None if there are no documents"""
+    if not docs:
+        return None
+    return max(docs, key=lambda doc: doc["id"])

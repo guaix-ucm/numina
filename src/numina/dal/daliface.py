@@ -40,6 +40,10 @@ class DALInterface(metaclass=ABCMeta):
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
         pass
 
+    def has_extra(self, name):
+        """True if a value for requirement `name` was given in the command line"""
+        return False
+
     def update_configuration(self, obsres):
         """Update the instrument configuration, after adding frames to obsres"""
         pass

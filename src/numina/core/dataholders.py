@@ -257,6 +257,13 @@ class Requirement(EntryHolder):
             # we do not perform any query
             return self.default
 
+        # The values given in the command line have the highest priority,
+        # the DAL returns them before searching anywhere else.
+        # DALs that do not derive from DALInterface may not have has_extra
+        has_extra = getattr(dal, "has_extra", None)
+        if has_extra is not None and has_extra(self.dest):
+            return self.query_on_dal(dal, obsres, options=q_options)
+
         try:
             return self.query_on_ob(obsres)
         except NoResultFound:

@@ -63,7 +63,13 @@ It is called like this::
 
    Registry of the reductions, relative to basedir. It is created if it
    does not exist. The tasks, results and products of the reductions are
-   recorded in it. It overrides the value of ``file`` in the section
+   recorded in it, and later reductions use them: a product is the most
+   recent one in the registry with quality control different from BAD,
+   for the same instrument, profile and tags. The values given with
+   ``--parameter-NAME=VALUE`` and in the requirements of the observation
+   result have priority over the registry, and the products of the control
+   file and of calibsdir are used if there is none in the registry.
+   It overrides the value of ``file`` in the section
    ``[tool.db]`` of the configuration. With the registry, the templates of
    the directories are read from ``[tool.db]``, and they include the id of
    the task.
