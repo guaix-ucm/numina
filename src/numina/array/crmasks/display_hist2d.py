@@ -292,10 +292,17 @@ def display_hist2d(
         else:
             raise ValueError(f"Invalid mm_boundary_fit: {mm_boundary_fit}. Valid options are {VALID_BOUNDARY_FITS}.")
 
+        # Detection boundary, used for mm_threshold and in the plot
+        xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
+        yplot_boundary = boundaryfit(xplot_boundary)
+        if mm_boundary_fit == "spline":
+            # For spline fit, force the boundary to be constant outside the knots
+            yplot_boundary[xplot_boundary < knots[0]] = boundaryfit(knots[0])
+            yplot_boundary[xplot_boundary > knots[-1]] = boundaryfit(knots[-1])
+
         if mm_threshold is None:
             # Use the minimum value of the boundary as the mm_threshold
-            # FIXME: yplot_boundary is not defined yet, this branch raises NameError
-            mm_threshold = np.min(yplot_boundary)  # noqa: F821
+            mm_threshold = np.min(yplot_boundary)
             _logger.info("updated mm_threshold for cosmic-ray detection: %f", mm_threshold)
 
         # Apply the criterium to detect coincident cosmic-ray pixels
@@ -354,12 +361,6 @@ def display_hist2d(
         ax1.set_title(tmp_title)
         if mm_niter_boundary_extension > 1:
             ax1.legend(loc=1)
-        xplot_boundary = np.linspace(xdiag_min, xdiag_max, 100)
-        yplot_boundary = boundaryfit(xplot_boundary)
-        if mm_boundary_fit == "spline":
-            # For spline fit, force the boundary to be constant outside the knots
-            yplot_boundary[xplot_boundary < knots[0]] = boundaryfit(knots[0])
-            yplot_boundary[xplot_boundary > knots[-1]] = boundaryfit(knots[-1])
         ax2.plot(xplot_boundary, yplot_boundary, "r-", label="Detection boundary")
         if mm_fixed_points_in_boundary is not None:
             ax2.plot(
