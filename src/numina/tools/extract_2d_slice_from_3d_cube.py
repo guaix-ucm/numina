@@ -19,16 +19,23 @@ import numpy as np
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
 
+from .hdul_utils import get_hdu_from_hdul
 from .initialize_script_with_args import NuminaScriptDefinition
 
 
-def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, noplot, output, png=None):
+def extract_slice(
+    input, extnum, extname, axis, i1, i2, method, wavecal, transpose, vmin, vmax, noplot, output, png=None
+):
     """Extract 2D slice.
 
     Parameters
     ----------
     input : str
         Input FITS file name.
+    extnum : int
+        Extension number for image in input files.
+    extname : str
+        Extension name for image in input files.
     axis : int
         Axis to be collapsed in output.
     i1 : int
@@ -66,8 +73,9 @@ def extract_slice(input, axis, i1, i2, method, wavecal, transpose, vmin, vmax, n
 
     # read first FITS file
     with fits.open(input) as hdulist:
-        header = hdulist[0].header
-        data = hdulist[0].data.astype(float)
+        hdu = get_hdu_from_hdul(hdulist, extnum=extnum, extname=extname)
+        header = hdu.header
+        data = hdu.data.astype(float)
     naxis = header["naxis"]
     if naxis != 3:
         raise ValueError(f"Unexpected input {naxis=} (it must be 3)")
@@ -200,6 +208,17 @@ def main(args=None):
     # parse command-line options
     parser = argparse.ArgumentParser(description="Extract 2D slice from 3D cube", formatter_class=RichHelpFormatter)
     parser.add_argument("input", help="Input FITS file")
+    parser.add_argument(
+        "-e",
+        "--extnum",
+        help="Extension number for image in input files.",
+        type=int,
+    )
+    parser.add_argument(
+        "--extname",
+        help="Extension name for image in input files.",
+        type=str,
+    )
     parser.add_argument("--axis", help="Axis to be collapsed in output", type=int, default=3)
     parser.add_argument("--i1", help="First pixel of the projected axis", type=int, default=1)
     parser.add_argument("--i2", help="Last pixel of the projected axis (0=NAXIS value)", type=int, default=0)
@@ -230,6 +249,8 @@ def main(args=None):
 
     extract_slice(
         input=args.input,
+        extnum=args.extnum,
+        extname=args.extname,
         axis=args.axis,
         i1=args.i1,
         i2=args.i2,

@@ -15,13 +15,13 @@ import subprocess
 
 import argparse
 from astropy.io import fits
-from astropy.wcs import WCS
 import logging
 import matplotlib.pyplot as plt
 import numpy as np
 from rich_argparse import RichHelpFormatter
 
 from .extract_2d_slice_from_3d_cube import extract_slice
+from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
 from .initialize_script_with_args import NuminaScriptDefinition
 
 
@@ -436,6 +436,17 @@ def main(args=None):
     )
 
     parser.add_argument("datacube", help="Input 3D FITS data cube", type=str)
+    parser.add_argument(
+        "-e",
+        "--extnum",
+        help="Extension number for image in input files.",
+        type=int,
+    )
+    parser.add_argument(
+        "--extname",
+        help="Extension name for image in input files.",
+        type=str,
+    )
     parser.add_argument("--i1", help="First pixel along NAXIS3 (default 1)", type=int, default=1)
     parser.add_argument("--i2", help="Last pixel along NAXIS3 (default NAXIS3)", type=str)
     parser.add_argument("--ds9exec", help="Command line to launch ds9 (default 'ds9')", type=str)
@@ -455,6 +466,9 @@ def main(args=None):
     console = myscript.console
 
     file_datacube = args.datacube
+    extnum = args.extnum
+    extname = args.extname
+
     ds9exec = args.ds9exec
     if ds9exec is None:
         # find environment variable DS9EXEC, if not found, use 'ds9'
@@ -495,13 +509,11 @@ def main(args=None):
         )
         raise SystemExit()
 
-    # Get header and data of the FITS file
+    # Get HDU and data of the FITS file
     fpath = Path(file_datacube)
-    header = fits.getheader(fpath)
-    wcs = WCS(header)
-    logger.info(f"WCS: {wcs}")
-
-    data = fits.getdata(fpath)
+    with fits.open(fpath) as hdul:
+        hdu = get_hdu_from_hdul(hdul, extnum=extnum, extname=extname)
+        data = hdu.data
     if len(data.shape) != 3:
         raise ValueError(f"Expected a 3D cube, but got {data.shape}")
 
@@ -520,10 +532,16 @@ def main(args=None):
         if i2 < i1 or i2 > naxis3:
             raise ValueError(f"Invalid last pixel={i2} along NAXIS3={naxis3}")
 
+    # Get WCS of the HDU
+    wcs = get_wcs_from_hdu(hdu)
+    logger.info(f"WCS: {wcs}")
+
     # Collapse the data cube along NAXIS3
     logger.info("Collapsing 3D cubes along NAXIS3... ")
     extract_slice(
         input=file_datacube,
+        extnum=extnum,
+        extname=extname,
         axis=3,
         i1=i1,
         i2=i2,
