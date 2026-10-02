@@ -54,8 +54,8 @@ def test_header_key1_ob():
 
     img2 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img2.header["FILTER"] = "FILTER-A"
-    img1.header["READM"] = "MOD2"
-    frame2 = DataFrame(frame=fits.HDUList(img1))
+    img2.header["READM"] = "MOD2"
+    frame2 = DataFrame(frame=fits.HDUList(img2))
 
     ob = ObservationResult()
     ob.frames = [frame1, frame2]
@@ -91,8 +91,8 @@ def test_header_key2_ob():
 
     img2 = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
     img2.header["FILTER"] = "FILTER-A"
-    img1.header["READM"] = "MOD1"
-    frame2 = DataFrame(frame=fits.HDUList(img1))
+    img2.header["READM"] = "MOD1"
+    frame2 = DataFrame(frame=fits.HDUList(img2))
 
     ob = ObservationResult()
     ob.frames = [frame1, frame2]
