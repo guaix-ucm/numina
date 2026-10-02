@@ -1,6 +1,7 @@
 """ResultOf with a registry of reductions"""
 
 import argparse
+import os
 
 import astropy.io.fits as fits
 import pytest
@@ -35,12 +36,13 @@ def basedir(drpmocker, tmp_path, monkeypatch):
     return tmp_path
 
 
-def run(basedir, obs, *options):
+def run(basedir, obs, *options, db=True):
     obsfile = basedir / "obsdata.yaml"
     obsfile.write_text(yaml.safe_dump_all(obs))
     parser = argparse.ArgumentParser(prog="numina")
     register(parser.add_subparsers(), base_config())
-    args = parser.parse_args(["run", "--db", "numina-db.json", *options, str(obsfile)])
+    db_options = ["--db", "numina-db.json"] if db else []
+    args = parser.parse_args(["run", *db_options, *options, str(obsfile)])
     config = base_config()
     config["tool.run"]["basedir"] = str(basedir)
     mode_run_common_obs(args, process_unknown_arguments([]), config)
@@ -82,3 +84,23 @@ def test_no_result_in_registry(basedir):
     """Without results in the registry, the directory can not be built from the templates"""
     with pytest.raises(NoResultFound, match="no result of oblock_id=1 in the registry"):
         run(basedir, disabled(CHILDREN) + [PARENT])
+
+
+@pytest.mark.parametrize("db", [False, True])
+def test_missing_child(basedir, db):
+    """A child that is not defined is an error"""
+    with pytest.raises(ValueError, match="oblock_id=1, child of oblock_id=3, not found"):
+        run(basedir, [PARENT], db=db)
+
+
+@pytest.mark.parametrize("db", [False, True])
+def test_relative_basedir(basedir, db):
+    """With a relative --basedir, datadir and the results are inside basedir"""
+    workdir = basedir / "base"
+    workdir.mkdir()
+    (basedir / "data").rename(workdir / "data")
+    run(basedir, CHILDREN + [PARENT], "--basedir", "base", db=db)
+
+    for obsid in [1, 2, 3]:
+        assert any(name.startswith(f"obsid{obsid}_") for name in os.listdir(workdir))
+    assert not [name for name in os.listdir(basedir) if name.startswith("obsid")]

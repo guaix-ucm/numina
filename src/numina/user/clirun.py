@@ -140,7 +140,6 @@ def register(subparsers, config):
         action="store_true",
         help="save the modified task control file",
     )
-    parser_run.add_argument("--session", action="store_true", help="use the obresult file as a session file")
     parser_run.add_argument(
         "--validate",
         action="store_const",

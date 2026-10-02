@@ -1,5 +1,5 @@
 #
-# Copyright 2014-2018 Universidad Complutense de Madrid
+# Copyright 2014-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -14,7 +14,7 @@ from numina.types.qc import QC
 from .unserial import unserial
 
 
-class StoredProduct(object):
+class StoredProduct:
     """A product returned from the DAL"""
 
     def __init__(self, id, content, tags, **kwds):
@@ -23,15 +23,15 @@ class StoredProduct(object):
         self.tags = tags
 
 
-class StoredParameter(object):
+class StoredParameter:
     """A parameter returned from the DAL"""
 
     def __init__(self, content):
         self.content = content
 
 
-class StoredResult(object):
-    """Recover the RecipeResult values stored in the Backend"""
+class StoredResult:
+    """Recover the RecipeResult values stored in a file"""
 
     def __init__(self):
         self.qc = QC.UNKNOWN
@@ -59,7 +59,7 @@ class StoredResult(object):
 # A translation of the entries of oblocks
 # Notice that this is different to ObservationResult
 # that contains the results of the reductions
-class ObservingBlock(object):
+class ObservingBlock:
     def __init__(self, id, instrument, mode, images, children, parent=None, facts=None):
         self.id = id
         self.instrument = instrument

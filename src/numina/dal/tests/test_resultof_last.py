@@ -7,19 +7,15 @@ from numina.core.oresult import ObservationResult
 from numina.core.query import ResultOf
 from numina.exceptions import NoResultFound
 
-from ..backend import Backend
 from ..dictdal import HybridDAL
 
 QUERY_LAST = ResultOf("MODE.value", node="last")
 
 
-@pytest.fixture(params=["hybrid", "backend"])
-def dal(request):
-    """The DALs created by numina run, for formats 1 and 2 of the control file"""
-    if request.param == "hybrid":
-        return HybridDAL(None, "", [], {})
-    else:
-        return Backend(None, "", {})
+@pytest.fixture
+def dal():
+    """The DAL created by numina run"""
+    return HybridDAL(None, "", [], {})
 
 
 def test_search_result_relative_last(dal):

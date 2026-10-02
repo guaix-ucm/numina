@@ -98,13 +98,9 @@ def assert_drp_defaults_unchanged(datamanager):
     assert drp.default_requirements() == DRP_DEFAULTS
 
 
-@pytest.mark.parametrize("version", [1, 2])
-def test_create_datamanager_keeps_control_requirements(test1_drp, run_config, tmp_path, version):
+def test_create_datamanager_keeps_control_requirements(test1_drp, run_config, tmp_path):
     """The values in the control file are not replaced by the defaults of the DRP"""
-    if version == 1:
-        control = {"version": 1, "requirements": CONTROL_REQUIREMENTS}
-    else:
-        control = {"version": 2, "database": {"requirements": CONTROL_REQUIREMENTS}}
+    control = {"version": 1, "requirements": CONTROL_REQUIREMENTS}
     reqfile = tmp_path / "control.yaml"
     reqfile.write_text(yaml.safe_dump(control))
 
@@ -179,3 +175,11 @@ def test_run_templates():
         "resultfile_tmpl": "result.json",
         "taskfile_tmpl": "task.json",
     }
+
+
+@pytest.mark.parametrize("version", [2, 3])
+def test_unsupported_control_format(test1_drp, run_config, tmp_path, version):
+    reqfile = tmp_path / "control.yaml"
+    reqfile.write_text(yaml.safe_dump({"version": version, "database": {}}))
+    with pytest.raises(ValueError, match=f"format {version} of the control file .* is not supported"):
+        helpers.create_datamanager(run_config, str(reqfile))

@@ -4,7 +4,6 @@ import json
 import pkgutil
 
 import pytest
-import yaml
 
 from numina.dal.utils import TEMPLATE_FIELDS, check_template, fill_template
 from ..helpers import create_datamanager
@@ -58,15 +57,3 @@ def test_format1_results_found_with_templates(test1_drp, run_config, tmp_path):
 
     stored = datamanager.backend.search_result_id(7, None, "value")
     assert stored.content == 42
-
-
-def test_format2_keeps_datamanager_templates(test1_drp, run_config, tmp_path):
-    """In format 2, the templates include the taskid, the configuration is not used"""
-    run_config["tool.run"]["resultdir_tmpl"] = "res_{obsid}"
-    reqfile = tmp_path / "control.yaml"
-    reqfile.write_text(yaml.safe_dump({"version": 2, "database": {}}))
-
-    datamanager = create_datamanager(run_config, str(reqfile))
-
-    assert datamanager.workdir_tmpl == "obsid{obsid}_{taskid}_work"
-    assert datamanager.resultdir_tmpl == "obsid{obsid}_{taskid}_result"

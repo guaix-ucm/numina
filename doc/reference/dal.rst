@@ -21,7 +21,7 @@
 .. automodule:: numina.dal.stored
    :members:
 
-.. automodule:: numina.dal.backend
+.. automodule:: numina.dal.registry
    :members:
 
 

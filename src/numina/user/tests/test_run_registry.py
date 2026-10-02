@@ -239,7 +239,7 @@ def test_templates_without_taskid(basedir, caplog):
 def test_format2_with_registry(basedir):
     control = basedir / "control.yaml"
     control.write_text("version: 2\ndatabase: {}\n")
-    with pytest.raises(ValueError, match="requires a control file in format 1"):
+    with pytest.raises(ValueError, match="format 2 of the control file .* is not supported"):
         run(basedir, [BIAS], "--db", "numina-db.json", "-r", str(control))
 
 

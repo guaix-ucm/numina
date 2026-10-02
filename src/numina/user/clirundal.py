@@ -32,7 +32,7 @@ def mode_run_common_obs(args, extra_args, config):
     """Observing mode processing mode of numina."""
 
     # Loading observation result if exists
-    sessions, loaded_obs = load_observations(args.obsresult, args.session)
+    sessions, loaded_obs = load_observations(args.obsresult)
 
     # Override like this
     if args.basedir:

@@ -19,7 +19,6 @@ import shutil
 import yaml
 
 import numina.drps
-from numina.dal.backend import Backend
 from numina.dal.dictdal import HybridDAL
 from numina.dal.registry import Registry
 from numina.dal.utils import check_template, fill_template
@@ -39,9 +38,8 @@ class DataManager:
         #: Registry of the reductions (numina.dal.registry.Registry), or None
         self.registry = registry
 
-        # Templates of the names of directories and files, the format 1
-        # of the control file replaces them with the values in the configuration.
-        # They include the taskid, as there can be several tasks for the same OB
+        # Templates of the names of directories and files, create_datamanager
+        # replaces them with the values in the configuration
         self.workdir_tmpl = "obsid{obsid}_{taskid}_work"
         self.resultdir_tmpl = "obsid{obsid}_{taskid}_result"
         self.resultfile_tmpl = "result.json"
@@ -444,29 +442,6 @@ def process_format_version_1(
     return backend
 
 
-def process_format_version_2(
-    sys_drps,
-    components,
-    basedir: str,
-    rootdir: str,
-    loaded_data,
-    loaded_data_extra=None,
-    filename=None,
-) -> Backend:
-    loaded_db = loaded_data["database"]
-    backend = Backend(
-        sys_drps,
-        rootdir,
-        loaded_db,
-        extra_data=loaded_data_extra,
-        basedir=basedir,
-        components=components,
-        filename=filename,
-    )
-
-    return backend
-
-
 def run_templates(section, db_section=None):
     """Templates of the names of directories and files
 
@@ -482,7 +457,7 @@ def run_templates(section, db_section=None):
     return templates
 
 
-def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=None, persist=True) -> DataManager:
+def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=None) -> DataManager:
 
     # This should go before we load CL file
     # load additional reduction defaults
@@ -520,6 +495,11 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
 
     control_format = loaded_data.get("version", 1)
     _logger.info("control format version %d", control_format)
+    if control_format != 1:
+        msg = f"format {control_format} of the control file {reqfile} is not supported, only format 1"
+        if control_format == 2:
+            msg += ", the reductions can be recorded in a registry (numina run --db FILE)"
+        raise ValueError(msg)
 
     components = create_com_store(sys_drps, profile_path_extra)
     # What rootdir are going to use
@@ -537,49 +517,27 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
 
     db_section = config["tool.db"] if config.has_section("tool.db") else {}
     use_registry = bool(db_section.get("file"))
-    if use_registry and control_format != 1:
-        raise ValueError("the registry of reductions requires a control file in format 1")
     templates = run_templates(section, db_section if use_registry else None)
 
-    if control_format == 1:
-        merged_data = deep_merge(initial_schema, loaded_data)
-        # The backend uses the same templates to find the results of other OBs
-        _backend = process_format_version_1(
-            sys_drps,
-            components,
-            basedir,
-            calibsdir,
-            merged_data,
-            loaded_data_extra,
-            resultdir_tmpl=templates["resultdir_tmpl"],
-            resultfile_tmpl=templates["resultfile_tmpl"],
-        )
-        datamanager = DataManager(basedir, datadir, _backend)
-        datamanager.set_templates(
-            templates["workdir_tmpl"],
-            templates["resultdir_tmpl"],
-            templates["resultfile_tmpl"],
-            templates["taskfile_tmpl"],
-        )
-    elif control_format == 2:
-        if persist:
-            pname = reqfile
-        else:
-            pname = None
-        _backend = process_format_version_2(
-            sys_drps,
-            components,
-            basedir,
-            calibsdir,
-            loaded_data,
-            loaded_data_extra,
-            filename=pname,
-        )
-
-        datamanager = DataManager(basedir, datadir, _backend)
-    else:
-        msg = f"Unsupported format {control_format} in {reqfile}"
-        raise ValueError(msg)
+    merged_data = deep_merge(initial_schema, loaded_data)
+    # The backend uses the same templates to find the results of other OBs
+    _backend = process_format_version_1(
+        sys_drps,
+        components,
+        basedir,
+        calibsdir,
+        merged_data,
+        loaded_data_extra,
+        resultdir_tmpl=templates["resultdir_tmpl"],
+        resultfile_tmpl=templates["resultfile_tmpl"],
+    )
+    datamanager = DataManager(basedir, datadir, _backend)
+    datamanager.set_templates(
+        templates["workdir_tmpl"],
+        templates["resultdir_tmpl"],
+        templates["resultfile_tmpl"],
+        templates["taskfile_tmpl"],
+    )
 
     if use_registry:
         dbpath = os.path.join(basedir, db_section["file"])
