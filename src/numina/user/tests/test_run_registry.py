@@ -335,3 +335,23 @@ def test_cli_over_registry(basedir):
     extra = [f"--parameter-master_bias={basedir / first['content']}"]
     seen = run(basedir, [IMAGE], "--db", "numina-db.json", extra=extra)
     assert seen == [first["uuid"]]
+
+
+def test_control_product_in_subdirectory(basedir):
+    """A product of the control file in a subdirectory of datadir"""
+    hdr = fits.Header()
+    hdr["UUID"] = "22222222-2222-2222-2222-222222222222"
+    (basedir / "data" / "calibs").mkdir()
+    fits.PrimaryHDU(header=hdr).writeto(basedir / "data" / "calibs" / "bias.fits")
+    control = basedir / "control.yaml"
+    products = {
+        "TEST1": {
+            "225fcaf2-7f6f-49cc-972a-70fd0aee8e96": [
+                {"id": 1, "type": "MasterBias", "tags": {}, "content": "calibs/bias.fits"}
+            ]
+        }
+    }
+    control.write_text(yaml.safe_dump({"version": 1, "products": products}))
+    seen = run(basedir, [IMAGE], "-r", str(control))
+    assert seen == [hdr["UUID"]]
+    assert (basedir / "obsid10_work" / "bias.fits").is_symlink()

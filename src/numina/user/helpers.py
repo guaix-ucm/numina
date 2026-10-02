@@ -271,6 +271,9 @@ class WorkEnvironment:
                 dest = os.path.join(self.workdir, tail)
 
                 install_if_needed(value.filename, complete, dest)
+                # The recipe runs in the work directory, where the file is installed,
+                # as with the frames in adapt_obsres
+                value.filename = tail
 
     # Used by numina-plugin-db
     def copyfiles_stage1(self, obsres):
