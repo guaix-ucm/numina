@@ -12,6 +12,7 @@ import os
 from pathlib import Path
 import shutil
 import subprocess
+import warnings
 
 import argparse
 from astropy.io import fits
@@ -117,20 +118,31 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
     for i in range(naxis2):
         for j in range(naxis1):
             if source_mask[i, j] == 1:
-                array2d_sp_source[k_source, :] = data[:, i, j]
-                k_source += 1
+                if not np.all(np.isnan(data[:, i, j])):
+                    array2d_sp_source[k_source, :] = data[:, i, j]
+                    k_source += 1
             if continuum_mask[i, j] == 1:
-                array2d_sp_continuum[k_continuum, :] = data[:, i, j]
-                k_continuum += 1
+                if not np.all(np.isnan(data[:, i, j])):
+                    array2d_sp_continuum[k_continuum, :] = data[:, i, j]
+                    k_continuum += 1
 
+    # Compute the mean spectra for source and continuum, handling NaN values
     if k_source > 0:
-        sp_source = np.nanmean(array2d_sp_source[:k_source, :], axis=0)
+        # Use warnings.catch_warnings() to suppress the "Mean of empty slice" warning
+        # when computing the mean of an empty array
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Mean of empty slice", category=RuntimeWarning)
+            sp_source = np.nanmean(array2d_sp_source[:k_source, :], axis=0)
     else:
         sp_source = np.zeros(naxis3)
     sp_source_nonan = np.nan_to_num(sp_source, nan=0.0)
 
     if k_continuum > 0:
-        sp_continuum = np.nanmean(array2d_sp_continuum[:k_continuum, :], axis=0)
+        # Use warnings.catch_warnings() to suppress the "Mean of empty slice" warning
+        # when computing the mean of an empty array
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore", message="Mean of empty slice", category=RuntimeWarning)
+            sp_continuum = np.nanmean(array2d_sp_continuum[:k_continuum, :], axis=0)
     else:
         sp_continuum = np.zeros(naxis3)
     sp_continuum_nonan = np.nan_to_num(sp_continuum, nan=0.0)
