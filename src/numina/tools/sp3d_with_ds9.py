@@ -18,6 +18,7 @@ import argparse
 from astropy.io import fits
 import astropy.units as u
 import logging
+import matplotlib as mpl
 import matplotlib.pyplot as plt
 import numpy as np
 from rich_argparse import RichHelpFormatter
@@ -26,6 +27,10 @@ import sys
 from .extract_2d_slice_from_3d_cube import extract_slice
 from .hdul_utils import get_hdu_from_hdul, get_wcs_from_hdu
 from .initialize_script_with_args import NuminaScriptDefinition
+
+# Store the original quit keys to restore them later
+QUIT_KEYS_MATPLOTLIB_ORIG = list(mpl.rcParams["keymap.quit"])
+mpl.rcParams["keymap.quit"] = []  # Disable the default quit keys in Matplotlib
 
 
 def ds9cmd(cmd, pipe=False):
@@ -354,12 +359,12 @@ def display_help_menu(plot_render):
     logger.info("Click on the ds9 window to select pixels:")
     logger.info("  - Press 's' to select a single source pixel")
     logger.info("  - Press 'c' to select a single continuum pixel")
-    logger.info("  - Press 'x' to remove a single pixel from any mask")
+    logger.info("  - Press 'e' to erase a single pixel from any mask")
     logger.info("  - Press 'r' to reset both masks")
     logger.info("  - Press 'a' to start selecting a rectangular region")
     logger.info("    (then press 's' or 'c' in the opposite corner to define the mask type)")
     if plot_render in ["matplotlib", "both"]:
-        logger.info("  - Press 'p' to pause pixel selection and allow matplotlib interaction")
+        logger.info("  - Press 'x' to exit from pixel selection and allow matplotlib interaction")
     logger.info("  - Press 'q' to quit (stop pixel selection)")
     logger.info("  - Press 'h' to display this help")
 
@@ -488,7 +493,7 @@ def update_masks(filename, data, footprint_data, source_mask, continuum_mask, wa
             key, x, y = ds9cmd("xpaget ds9 iexam key coordinate image").split()
         except ValueError as exc:
             logger.warning(f"WARNING: {exc}")
-        if key in ["s", "c", "r", "a", "x"]:
+        if key in ["s", "c", "r", "a", "e"]:
             x = str(round(float(x)))
             y = str(round(float(y)))
             logger.info(f"key: {key}: selecting pixel {x=}, {y=}")
@@ -504,30 +509,28 @@ def update_masks(filename, data, footprint_data, source_mask, continuum_mask, wa
                 iy1 = min(iy, last_key_pos[2])
                 iy2 = max(iy, last_key_pos[2])
                 last_key_pos = [None, None, None]
-            elif key in ["s", "c", "x"]:
+            elif key in ["s", "c", "e"]:
                 ix1 = ix
                 ix2 = ix
                 iy1 = iy
                 iy2 = iy
                 # last_key_pos = [key, ix, iy]
-            if key in ["s", "c", "x"]:
+            if key in ["s", "c", "e"]:
                 for iy in range(iy1, iy2 + 1):
                     for ix in range(ix1, ix2 + 1):
                         if key == "s":
-                            if continuum_mask[iy, ix] == 0:
-                                source_mask[iy, ix] = 1
-                            else:
+                            if continuum_mask[iy, ix] == 1:
                                 continuum_mask[iy, ix] = 0
-                                source_mask[iy, ix] = 1
+                            source_mask[iy, ix] = 1
                         elif key == "c":
-                            if source_mask[iy, ix] == 0:
-                                continuum_mask[iy, ix] = 1
-                            else:
+                            if source_mask[iy, ix] == 1:
                                 source_mask[iy, ix] = 0
-                                continuum_mask[iy, ix] = 1
-                        elif key == "x":
-                            source_mask[iy, ix] = 0
-                            continuum_mask[iy, ix] = 0
+                            continuum_mask[iy, ix] = 1
+                        elif key == "e":
+                            if source_mask[iy, ix] == 1:
+                                source_mask[iy, ix] = 0
+                            if continuum_mask[iy, ix] == 1:
+                                continuum_mask[iy, ix] = 0
                         else:
                             raise ValueError("Unexpected error")
             elif key == "r":
@@ -557,7 +560,7 @@ def update_masks(filename, data, footprint_data, source_mask, continuum_mask, wa
             )
             if key == "a":
                 tmp_mask = None
-        elif key == "p":
+        elif key == "x":
             if plot_render in ["matplotlib", "both"]:
                 input("Press RETURN to continue with pixel selection...")
         elif key == "h":
@@ -572,6 +575,7 @@ def update_masks(filename, data, footprint_data, source_mask, continuum_mask, wa
         # keep the splot open after updates
         plt.ioff()
         logger.info("Press 'q' to close matplotlib window and stop the program")
+        mpl.rcParams["keymap.quit"] = QUIT_KEYS_MATPLOTLIB_ORIG  # Restore the original quit keys in Matplotlib
         plt.show(block=True)
 
 
