@@ -81,13 +81,28 @@ def init_ds9_plot(fpath, wave):
     return current_plot
 
 
-def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects, filename, firstplot, plot_render):
+def update_splot(
+    data,
+    footprint_data,
+    source_mask,
+    continuum_mask,
+    wave,
+    fig,
+    ax,
+    ax_footprint,
+    line_objects,
+    filename,
+    firstplot,
+    plot_render,
+):
     """Update plot with source and continuum spectra.
 
     Parameters
     ----------
     data : np.ndarray
         Array containing the 3D data cube.
+    footprint_data : nd.ndarray
+        The footprint data to display, if available.
     source_mask : np.ndarray
         The source mask.
     continuum_mask : np.ndarray
@@ -98,6 +113,8 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
         The Figure object containing the plot.
     ax : matplotlib.axes.Axes
         The Axes object of the plot.
+    ax_footprint : matplotlib.axes.Axes or None
+        The Axes object of the footprint plot, if available.
     line_objects : list
         List of ax.plot() instances corresponding to the source,
         continuum and subtrated spectra.
@@ -113,6 +130,7 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
     nmax = naxis2 * naxis1
     array2d_sp_source = np.zeros((nmax, naxis3))
     array2d_sp_continuum = np.zeros((nmax, naxis3))
+    array2d_sp_footprint = np.zeros((nmax, naxis3)) if footprint_data is not None else None
     k_source = 0
     k_continuum = 0
     for i in range(naxis2):
@@ -120,6 +138,8 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
             if source_mask[i, j] == 1:
                 if not np.all(np.isnan(data[:, i, j])):
                     array2d_sp_source[k_source, :] = data[:, i, j]
+                    if footprint_data is not None:
+                        array2d_sp_footprint[k_source, :] = footprint_data[:, i, j]
                     k_source += 1
             if continuum_mask[i, j] == 1:
                 if not np.all(np.isnan(data[:, i, j])):
@@ -133,8 +153,16 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore", message="Mean of empty slice", category=RuntimeWarning)
             sp_source = np.nanmean(array2d_sp_source[:k_source, :], axis=0)
+            if footprint_data is not None:
+                sp_footprint = np.nanmean(array2d_sp_footprint[:k_source, :], axis=0)
+            else:
+                sp_footprint = None
     else:
         sp_source = np.zeros(naxis3)
+        if footprint_data is not None:
+            sp_footprint = np.zeros(naxis3)
+        else:
+            sp_footprint = None
     sp_source_nonan = np.nan_to_num(sp_source, nan=0.0)
 
     if k_continuum > 0:
@@ -148,7 +176,7 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
     sp_continuum_nonan = np.nan_to_num(sp_continuum, nan=0.0)
 
     sp_subtracted = sp_source - sp_continuum
-    sp_subtracted_nonan = sp_source_nonan - sp_continuum_nonan
+    sp_subtracted_nonan = np.nan_to_num(sp_subtracted, nan=0.0)
 
     if plot_render in ["ds9", "both"]:
         if not firstplot:
@@ -169,9 +197,9 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
 
     if plot_render in ["matplotlib", "both"]:
         # recompute global Y-axis limits
-        sp_concatenate = np.concatenate((sp_source, sp_continuum, sp_subtracted))
-        ymin = np.nanmin(sp_concatenate)
-        ymax = np.nanmax(sp_concatenate)
+        sp_concatenate = np.concatenate((sp_source_nonan, sp_continuum_nonan, sp_subtracted_nonan))
+        ymin = np.min(sp_concatenate)
+        ymax = np.max(sp_concatenate)
         dy = ymax - ymin
         if dy == 0:
             dy = 0.1
@@ -179,28 +207,63 @@ def update_splot(data, source_mask, continuum_mask, wave, fig, ax, line_objects,
         ymax += dy / 20
         ax.set_ylim(ymin, ymax)
 
-        line_source, line_continuum, line_subtracted = line_objects
-        line_source.set_ydata(sp_source)
+        line_source, line_continuum, line_subtracted, line_footprint = line_objects
+        line_source.set_ydata(sp_source_nonan)
         line_source.set_label(f"source ({k_source})")
-        line_continuum.set_ydata(sp_continuum)
+        line_continuum.set_ydata(sp_continuum_nonan)
         line_continuum.set_label(f"continuum ({k_continuum})")
-        line_subtracted.set_ydata(sp_subtracted)
+        line_subtracted.set_ydata(sp_subtracted_nonan)
         ax.draw_artist(line_source)
         ax.draw_artist(line_continuum)
         ax.draw_artist(line_subtracted)
+        if sp_footprint is not None:
+            sp_footprint_nonan = np.nan_to_num(sp_footprint, nan=0.0)
+            line_footprint.set_ydata(sp_footprint_nonan)
+            line_footprint.set_label(f"footprint ({k_source})")
+            ax_footprint.draw_artist(line_footprint)
+
         # The legend in Matplotlib is a separate artist that doesn't automatically
         # udpate when you change plot elements unless you explicitly update or redraw it.
         # For that reason it is necessary to remove the old legend and redraw the new one.
         old_legend = ax.get_legend()
         if old_legend:
             old_legend.remove()
-        ax.legend(title=filename, loc="upper center", bbox_to_anchor=(0.5, 1.35), ncol=3)
+        handles1, labels1 = ax.get_legend_handles_labels()
+        if sp_footprint is not None:
+            handles2, labels2 = ax_footprint.get_legend_handles_labels()
+            for handle, label in zip(handles2, labels2):
+                handles1.append(handle)
+                labels1.append(label)
+            ncol_legend = 4
+        else:
+            ncol_legend = 3
+        ax.legend(
+            handles=handles1,
+            labels=labels1,
+            title=filename,
+            loc="upper center",
+            bbox_to_anchor=(0.5, 1.35),
+            ncol=ncol_legend,
+        )
+        plt.tight_layout()
         fig.canvas.draw()
         fig.canvas.flush_events()
 
 
 def update_ds9regions(
-    data, source_mask, continuum_mask, tmp_mask, wave, fig, ax, line_objects, filename, firstplot, plot_render
+    data,
+    footprint_data,
+    source_mask,
+    continuum_mask,
+    tmp_mask,
+    wave,
+    fig,
+    ax,
+    ax_footprint,
+    line_objects,
+    filename,
+    firstplot,
+    plot_render,
 ):
     """Update ds9 regions interactively using the source and continuum masks.
 
@@ -208,6 +271,8 @@ def update_ds9regions(
     ----------
     data : np.array
         Array containing the 3D data cube.
+    footprint_data : np.ndarray or None
+        The footprint data to display, if available.
     source_mask : np.ndarray
         The source mask to update.
     continuum_mask : np.ndarray
@@ -221,6 +286,8 @@ def update_ds9regions(
         The Figure object containing the plot.
     ax : matplotlib.axes.Axes
         The Axes object of the plot.
+    ax_footprint : matplotlib.axes.Axes or None
+        The Axes object of the footprint plot, if available.
     line_objects: list
         List of ax.plot() instances corresponding to the source,
         continuum and subtrated spectra.
@@ -261,11 +328,13 @@ def update_ds9regions(
     # Update splot
     update_splot(
         data=data,
+        footprint_data=footprint_data,
         source_mask=source_mask,
         continuum_mask=continuum_mask,
         wave=wave,
         fig=fig,
         ax=ax,
+        ax_footprint=ax_footprint,
         line_objects=line_objects,
         filename=filename,
         firstplot=firstplot,
@@ -295,7 +364,7 @@ def display_help_menu(plot_render):
     logger.info("  - Press 'h' to display this help")
 
 
-def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render):
+def update_masks(filename, data, footprint_data, source_mask, continuum_mask, wave, plot_render):
     """Update source and continuum masks interactively using ds9.
 
     Parameters
@@ -304,6 +373,8 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
         File name retrieved from ds9.
     data : np.ndarray
         Array containing the 3D data cube.
+    footprint_data : np.ndarray or None
+        The footprint data to display, if available.
     source_mask : np.ndarray
         The source mask to update.
     continuum_mask : np.ndarray
@@ -317,8 +388,8 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
     logger = logging.getLogger(__name__)
 
     if source_mask.shape != continuum_mask.shape:
-        logger.error(f"{source_mask.shape=}")
-        logger.error(f"{continuum_mask.shape=}")
+        logger.error(f"[red]{source_mask.shape=}[/red]")
+        logger.error(f"[red]{continuum_mask.shape=}[/red]")
         raise ValueError("Incompatible mask shapes")
     naxis2, naxis1 = source_mask.shape
     tmp_mask = None
@@ -329,6 +400,7 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
         sp_source = np.zeros(len(wave))
         sp_continuum = np.zeros(len(wave))
         sp_subtracted = np.zeros(len(wave))
+        sp_footprint = np.zeros(len(wave)) if footprint_data is not None else None
         (line_subtracted,) = ax.plot(wave, sp_subtracted, "C0-", label="subtracted", zorder=3)
         (line_source,) = ax.plot(wave, sp_source, "C1-", label="source", zorder=2)
         (line_continuum,) = ax.plot(wave, sp_continuum, "C2-", label="continuum", zorder=1)
@@ -336,28 +408,70 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
         deltawave_min = wave[1] - wave[0]
         deltawave_max = wave[-1] - wave[-2]
         ax.set_xlim(wave[0].value - npix_extra * deltawave_min.value, wave[-1].value + npix_extra * deltawave_max.value)
-        ax.legend(title=filename, loc="upper center", bbox_to_anchor=(0.5, 1.35), ncol=3)
         line_objects = [line_source, line_continuum, line_subtracted]
         ax.set_xlabel("Value along NAXIS3 direction")
-        ax.set_ylabel("Signal")
+        ax.set_ylabel("Mean signal")
         # display upper horizontal scale in pixel units along NAXIS3
         ax2 = ax.twiny()
         ax2.set_xlabel("Pixel along NAXIS3 direction")
         ax2.set_xlim(1 - npix_extra, len(wave) + npix_extra)
         plt.tight_layout()
+        # display the footprint spectrum if available
+        if sp_footprint is not None:
+            ax_footprint = ax.twinx()
+            ax_footprint.spines["right"].set_color("gray")
+            ax_footprint.tick_params(axis="y", colors="gray")
+            ax_footprint.yaxis.label.set_color("gray")
+            ax.spines["right"].set_visible(False)
+            ymin_footprint = np.nanmin(footprint_data)
+            ymax_footprint = np.nanmax(footprint_data)
+            dy_footprint = ymax_footprint - ymin_footprint
+            if dy_footprint == 0:
+                dy_footprint = 0.1
+            ymin_footprint -= dy_footprint / 20
+            ymax_footprint += dy_footprint / 20
+
+            # fix the y-limits of the footprint spectrum to avoid automatic rescaling
+            # when the user zooms in the main plot
+            def fix_ylim_footprint(a):
+                a.set_ylim(ymin_footprint, ymax_footprint, emit=False)
+
+            ax_footprint.callbacks.connect("ylim_changed", fix_ylim_footprint)
+            (line_footprint,) = ax_footprint.plot(
+                wave, sp_footprint, "-", color="gray", alpha=0.5, label="footprint", zorder=0
+            )
+            # add label to the right y-axis for the footprint spectrum
+            ax_footprint.set_ylabel("Mean footprint", color="gray")
+            # add entry to the ax.legend for the footprint spectrum
+            handles1, labels1 = ax.get_legend_handles_labels()
+            handles2, labels2 = ax_footprint.get_legend_handles_labels()
+            for handle, label in zip(handles2, labels2):
+                handles1.append(handle)
+                labels1.append(label)
+            ax.legend(
+                handles=handles1, labels=labels1, title=filename, loc="upper center", bbox_to_anchor=(0.5, 1.35), ncol=4
+            )
+        else:
+            ax_footprint = None
+            line_footprint = None
+            ax.legend(title=filename, loc="upper center", bbox_to_anchor=(0.5, 1.35), ncol=3)
+        line_objects.append(line_footprint)
     else:
         fig = None
         ax = None
+        ax_footprint = None
         line_objects = [None, None, None]
 
     update_ds9regions(
         data=data,
+        footprint_data=footprint_data,
         source_mask=source_mask,
         continuum_mask=continuum_mask,
         tmp_mask=tmp_mask,
         wave=wave,
         fig=fig,
         ax=ax,
+        ax_footprint=ax_footprint,
         line_objects=line_objects,
         filename=filename,
         firstplot=True,
@@ -428,12 +542,14 @@ def update_masks(filename, data, source_mask, continuum_mask, wave, plot_render)
             # update file with regions
             update_ds9regions(
                 data=data,
+                footprint_data=footprint_data,
                 source_mask=source_mask,
                 continuum_mask=continuum_mask,
                 tmp_mask=tmp_mask,
                 wave=wave,
                 fig=fig,
                 ax=ax,
+                ax_footprint=ax_footprint,
                 line_objects=line_objects,
                 filename=filename,
                 firstplot=False,
@@ -480,6 +596,7 @@ def main(args=None):
     )
     parser.add_argument("--i1", help="First pixel along NAXIS3 (default 1)", type=int, default=1)
     parser.add_argument("--i2", help="Last pixel along NAXIS3 (default NAXIS3)", type=str)
+    parser.add_argument("--footprint", help="Plot footprint along NAXIS3 (default False)", action="store_true")
     parser.add_argument(
         "--wave-unit", help="Unit of the wavelength axis (default Angstrom)", type=str, default="Angstrom"
     )
@@ -506,7 +623,7 @@ def main(args=None):
     # Check wavelength unit is valid
     wave_unit = u.Unit(args.wave_unit)
     if not wave_unit.is_equivalent(u.m):
-        logger.error(f"Invalid wavelength unit: {wave_unit}")
+        logger.error(f"[red]Invalid wavelength unit: {wave_unit}[/red]")
         sys.exit(1)
 
     ds9exec = args.ds9exec
@@ -529,7 +646,8 @@ def main(args=None):
     for required_executable in list_required_executables:
         execfile = shutil.which(required_executable)
         if execfile is None:
-            raise SystemExit(f"The program {required_executable} is not available")
+            logger.error(f"[red]Required program {required_executable} is not available[/red]")
+            raise SystemExit(1)
         else:
             logger.info(f"Required program {execfile} found!")
 
@@ -543,19 +661,31 @@ def main(args=None):
         logger.info("No previous ds9 instance found. OK!")
     if len(filename) > 0:
         logger.warning(
-            "A previous instance of ds9 is already running.\n"
+            "[red]A previous instance of ds9 is already running.\n"
             + f"Filename: {filename}\n"
-            + "Please close it before using this program"
+            + "Please close it before using this program[/red]"
         )
-        raise SystemExit()
+        raise SystemExit(1)
 
     # Get HDU and data of the FITS file
     fpath = Path(file_datacube)
     with fits.open(fpath) as hdul:
         hdu = get_hdu_from_hdul(hdul, extnum=extnum, extname=extname)
         data = hdu.data
+        if args.footprint:
+            if "FOOTPRINT" not in hdul:
+                logger.error("[red]FOOTPRINT extension not found in the FITS file[/red]")
+                raise SystemExit(1)
+            footprint_data = hdul["FOOTPRINT"].data
+        else:
+            footprint_data = None
     if len(data.shape) != 3:
         raise ValueError(f"Expected a 3D cube, but got {data.shape}")
+    if footprint_data is not None and footprint_data.shape != data.shape:
+        logger.error(
+            f"[red]FOOTPRINT extension shape {footprint_data.shape} does not match data shape {data.shape}[/red]"
+        )
+        raise SystemExit(1)
 
     naxis3, naxis2, naxis1 = data.shape
     logger.info(f"{naxis1=}")
@@ -603,15 +733,15 @@ def main(args=None):
     # Note: use shell=True below to make the ds9 alias in the system available
     result = subprocess.run(cmd, capture_output=True, text=True, check=False, shell=True)
     if result.stderr != "":
-        logger.error(f"{result.stderr}")
-        raise SystemExit(
-            "ds9 could not be launched! Check environment variable DS9EXEC or the command line provided with --ds9exec"
-        )
+        logger.error(f"[red]{result.stderr}[/red]")
+        logger.error("[red]Check environment variable DS9EXEC or make use of the --ds9exec option[/red]")
+        raise SystemExit(1)
     input("Press RETURN after ds9 has properly started...")
     try:
         filename = ds9cmd("xpaget ds9 file")
     except Exception as exc:
-        raise SystemExit("Fatal error: ds9 is not running") from exc
+        logger.error("[red]Fatal error: ds9 is not running[/red]")
+        raise SystemExit(1) from exc
     logger.info(f"ds9 working with file: {filename}")
 
     # Generate array in the spectral direction
@@ -643,6 +773,7 @@ def main(args=None):
     update_masks(
         filename=file_datacube,
         data=data,
+        footprint_data=footprint_data,
         source_mask=source_mask,
         continuum_mask=continuum_mask,
         wave=wave,
