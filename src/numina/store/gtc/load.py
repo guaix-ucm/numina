@@ -50,7 +50,7 @@ def process_node(node):
             obj.append(sobj)
 
     elif typeid == 45:  # Frame
-        obj = dataframe.DataFrame(frame=os.path.abspath(value["path"]))
+        obj = dataframe.DataFrame(filename=os.path.abspath(value["path"]))
     else:
         obj = value
 
