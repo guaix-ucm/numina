@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2024 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -46,13 +46,14 @@ def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True
     sample = obsres.get_sample_frame()
     if sample is None:
         return {}
-    ref_img = sample.open()
-    final_tags = extract_tags_from_img(ref_img, tag_keys, datamodel, base=obsres.labels)
+    with sample.open() as ref_img:
+        final_tags = extract_tags_from_img(ref_img, tag_keys, datamodel, base=obsres.labels)
     if strict:
         for frame in itertools.chain(obsres.frames, obsres.results.values()):
-            this_tags = extract_tags_from_img(frame.open(), tag_keys, datamodel, base=obsres.labels)
-            if this_tags != final_tags:
-                raise ValueError(f"tags in image {frame} are {this_tags} ! = {final_tags}")
+            with frame.open() as img:
+                this_tags = extract_tags_from_img(img, tag_keys, datamodel, base=obsres.labels)
+                if this_tags != final_tags:
+                    raise ValueError(f"tags in image {frame} are {this_tags} ! = {final_tags}")
 
         for res in obsres.children:
             res_tags = res.tags

@@ -117,3 +117,51 @@ def test_header_key2_ob(my_datamodel):
     tags = extract_tags_from_obsres(ob, tag_keys=["filter", "read_mode"], datamodel=my_datamodel)
 
     assert tags == {"filter": "FILTER-A", "read_mode": "MOD1"}
+
+
+def test_files_are_closed(my_datamodel, tmp_path):
+    """The images opened from files to extract the tags are closed"""
+    import gc
+
+    frames = []
+    for idx in range(3):
+        hdr = fits.Header()
+        hdr["FILTER"] = "FILTER-A"
+        filename = tmp_path / f"image{idx}.fits"
+        fits.PrimaryHDU(data=[1, 2, 3], header=hdr).writeto(filename)
+        frames.append(DataFrame(filename=str(filename)))
+    ob = ObservationResult()
+    ob.frames = frames
+
+    opened = []
+    original_open = fits.open
+
+    def recording_open(*args, **kwargs):
+        hdul = original_open(*args, **kwargs)
+        opened.append(hdul)
+        return hdul
+
+    fits.open = recording_open
+    try:
+        tags = extract_tags_from_obsres(ob, ["filter"], my_datamodel)
+    finally:
+        fits.open = original_open
+
+    assert tags == {"filter": "FILTER-A"}
+    assert len(opened) == 4
+    assert all(hdul._file.closed for hdul in opened)
+    gc.collect()
+
+
+def test_frames_in_memory_are_readable(my_datamodel):
+    """The data of an HDUList created in memory can be read after extracting the tags"""
+    hdr = fits.Header()
+    hdr["FILTER"] = "FILTER-A"
+    hdul = fits.HDUList([fits.PrimaryHDU(data=[1, 2, 3], header=hdr)])
+    ob = ObservationResult()
+    ob.frames = [DataFrame(frame=hdul)]
+
+    tags = extract_tags_from_obsres(ob, ["filter"], my_datamodel)
+
+    assert tags == {"filter": "FILTER-A"}
+    assert hdul[0].data.sum() == 6
