@@ -402,6 +402,13 @@ def update_masks(filename, data, footprint_data, source_mask, continuum_mask, wa
     if plot_render in ["matplotlib", "both"]:
         plt.ion()  # enable interactive mode
         fig, ax = plt.subplots()
+
+        def on_key(event):
+            if event.key == "q":
+                logger.info("\nKey 'q' has been disabled in Matplotlib to avoid closing the window")
+                logger.info("Press RETURN in console to continue with pixel selection in ds9 window...")
+
+        fig.canvas.mpl_connect("key_press_event", on_key)
         sp_source = np.zeros(len(wave))
         sp_continuum = np.zeros(len(wave))
         sp_subtracted = np.zeros(len(wave))
@@ -611,8 +618,8 @@ def main(args=None):
         choices=["matplotlib", "ds9", "both"],
         default="matplotlib",
     )
-    parser.add_argument("--input_masks", help="Path to a FITS file with source and continuum masks", type=str)
-    parser.add_argument("--output_masks", help="Path to the output FITS file with source and continuum masks", type=str)
+    parser.add_argument("--input-masks", help="Path to a FITS file with source and continuum masks", type=str)
+    parser.add_argument("--output-masks", help="Path to the output FITS file with source and continuum masks", type=str)
 
     # Include default arguments for common actions, and initialize console and logging
     myscript = NuminaScriptDefinition(parser)
