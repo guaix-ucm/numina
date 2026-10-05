@@ -202,7 +202,7 @@ def generate_mosaic_of_3d_cubes(
     naxis3_mosaic3d = naxis3out
     naxis2_mosaic3d, naxis1_mosaic3d = shape_mosaic2d
     mosaic3d_cube_by_cube = np.zeros((naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
-    footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d))
+    footprint3d = np.zeros(shape=(naxis3_mosaic3d, naxis2_mosaic3d, naxis1_mosaic3d), dtype=np.uint8)
     logger.info("\n--- BUILDING THE 3D MOSAIC ---\n")
     logger.info(f"NAXIS1, NAXIS2, NAXIS3 of 3D mosaic: {naxis1_mosaic3d}, {naxis2_mosaic3d}, {naxis3_mosaic3d}")
     size_output = array_size_32bits(mosaic3d_cube_by_cube)
@@ -242,9 +242,17 @@ def generate_mosaic_of_3d_cubes(
             )
         else:
             raise ValueError(f"Unexpected {reproject_method=}")
+        # add reprojected cube to mosaic
+        footprint_temp3d = footprint_temp3d.astype(np.uint8)
         valid_region = footprint_temp3d > 0
+        if not np.allclose(footprint_temp3d[valid_region], 1.0):
+            logger.error("Footprint values in valid region are not all 1")
+            raise SystemError(1)
+        if not np.allclose(footprint_temp3d[~valid_region], 0):
+            logger.error("Footprint values in invalid region are not all 0")
+            raise SystemError(1)
         mosaic3d_cube_by_cube[valid_region] += temp3d[valid_region]
-        footprint3d += footprint_temp3d
+        footprint3d[valid_region] += footprint_temp3d[valid_region]
         time_end = datetime.now()
         logger.info(f"Processing time for {fname}: {time_end - time_ini}")
 
