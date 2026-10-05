@@ -925,6 +925,10 @@ def arccalibration_direct(
     funcost_min = min(funcost_search)
     if abs(debugplot) >= 10:
         print("funcost_min:", funcost_min)
+    if not np.isfinite(funcost_min) or funcost_min <= 0:
+        # for example, the other triplets have no solutions,
+        # the cost function can not be normalized
+        raise ValueError(f"Invalid minimum of the cost function: {funcost_min}")
     funcost_search /= funcost_min
 
     # segregate the cost function by arc triplet.
