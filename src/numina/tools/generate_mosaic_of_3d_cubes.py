@@ -47,6 +47,7 @@ def generate_mosaic_of_3d_cubes(
     output_celestial_2d_wcs,
     wcskey,
     footprint=False,
+    connected_zeros_to_nan=False,
 ):
     """Combine 3D cubes using their WCS information.
 
@@ -80,6 +81,9 @@ def generate_mosaic_of_3d_cubes(
         WCS key to use when multiple WCS are present in the FITS header.
     footprint : bool
         If True, generate a FOOTPRINT extension with the final footprint.
+    connected_zeros_to_nan : bool
+        If True, convert connected zeros in the input images to NaN
+        prior to combining.
 
     Returns
     -------
@@ -217,7 +221,12 @@ def generate_mosaic_of_3d_cubes(
         with fits.open(fname) as hdul:
             hdu = get_hdu_from_hdul(hdul, extname=extname_image)
             single_hdu3d = resample_wave_3d_cube(
-                hdu3d_image=hdu, wcskey=wcskey, crval3out=crval3out, cdelt3out=cdelt3out, naxis3out=naxis3out
+                hdu3d_image=hdu,
+                wcskey=wcskey,
+                crval3out=crval3out,
+                cdelt3out=cdelt3out,
+                naxis3out=naxis3out,
+                connected_zeros_to_nan=connected_zeros_to_nan,
             )
         data_ini3d = single_hdu3d.data
         wcs_ini3d = WCS(single_hdu3d.header)
@@ -245,7 +254,7 @@ def generate_mosaic_of_3d_cubes(
         # add reprojected cube to mosaic
         footprint_temp3d = footprint_temp3d.astype(np.uint8)
         valid_region = footprint_temp3d > 0
-        if not np.allclose(footprint_temp3d[valid_region], 1.0):
+        if not np.allclose(footprint_temp3d[valid_region], 1):
             logger.error("Footprint values in valid region are not all 1")
             raise SystemError(1)
         if not np.allclose(footprint_temp3d[~valid_region], 0):
@@ -258,8 +267,8 @@ def generate_mosaic_of_3d_cubes(
 
     valid_region = footprint3d > 0
     mosaic3d_cube_by_cube[valid_region] /= footprint3d[valid_region]
-    invalid_region = footprint3d == 0
-    mosaic3d_cube_by_cube[invalid_region] = np.nan  # set invalid pixels to NaN
+    # invalid_region = footprint3d == 0
+    mosaic3d_cube_by_cube[~valid_region] = np.nan  # set invalid pixels to NaN
 
     # generate result
     hdu = fits.PrimaryHDU(mosaic3d_cube_by_cube.astype(np.float32))
@@ -325,6 +334,9 @@ def main(args=None):
         help="WCS key to use when multiple WCS are present in the FITS header.",
         type=str,
     )
+    parser.add_argument(
+        "--connected-zeros-to-nan", help="Convert connected zeros in input images to NaN", action="store_true"
+    )
     # Include default arguments for common actions, and initialize console and logging
     myscript = NuminaScriptDefinition(parser)
     args = myscript.args
@@ -350,6 +362,7 @@ def main(args=None):
         output_celestial_2d_wcs = Path(args.output_dir) / output_celestial_2d_wcs
     footprint = args.footprint
     wcskey = args.wcskey
+    connected_zeros_to_nan = args.connected_zeros_to_nan
 
     # check if input file is a single FITS file or a list
     if input_list.lower().endswith(".fits"):
@@ -384,6 +397,7 @@ def main(args=None):
         output_celestial_2d_wcs=output_celestial_2d_wcs,
         wcskey=wcskey,
         footprint=footprint,
+        connected_zeros_to_nan=connected_zeros_to_nan,
     )
 
     # save result

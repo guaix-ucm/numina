@@ -16,6 +16,7 @@ import logging
 import numpy as np
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
+from scipy import ndimage
 import sys
 
 from numina.instrument.simulation.ifu.define_3d_wcs import header3d_after_merging_wcs2d_celestial_and_wcs1d_spectral
@@ -25,7 +26,7 @@ from .hdul_utils import get_wcs_from_hdu
 from .initialize_script_with_args import NuminaScriptDefinition
 
 
-def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out):
+def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out, connected_zeros_to_nan=False):
     """Resample a 3D cube to a new wavelength sampling.
 
     The celestial WCS is preserved, and the spectral WCS is modified
@@ -43,6 +44,9 @@ def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out):
         Wavelength step for the output image.
     naxis3out : int
         Number of slices in the output image.
+    connected_zeros_to_nan : bool
+        If True, convert connected zeros in the input image to NaN
+        prior to resampling.
 
     Returns
     -------
@@ -86,11 +90,32 @@ def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out):
     # final pixel borders in the spectral axis
     new_wl_borders = crval3out + cdelt3out * (np.arange(naxis3out + 1) - 0.5) * u.pix
 
+    # copy the input data to avoid modifying the original
+    input_data = hdu3d_image.data.astype(np.float32).copy()
+    if connected_zeros_to_nan:
+        # Convert connected zeros to NaN
+        mask_zeros = input_data == 0
+        if np.any(mask_zeros):
+            # 3D neighbourhood: 26 neighbours (faces, edges, corners)
+            kernel = np.ones((3, 3, 3), dtype=int)
+            kernel[1, 1, 1] = 0  # exclude the center pixel itself
+            num_zeros_neighbors = ndimage.convolve(mask_zeros.astype(int), kernel, mode="constant", cval=0)
+            # Identify connected zeros: pixels that are zero and have at least one zero neighbor
+            mask_connected_zeros = mask_zeros & (num_zeros_neighbors > 0)
+            logger.info(f"Number of pixels in the input cube: {naxis1} x {naxis2} x {naxis3} = {mask_zeros.size}")
+            ldum = len(str(mask_zeros.size))
+            logger.info(f"Found     : {np.sum(mask_zeros):>{ldum}d} zeros in the input cube")
+            logger.info(
+                f"Converting: {np.sum(mask_connected_zeros):>{ldum}d} connected zeros to NaN in the input cube."
+            )
+            if np.any(mask_connected_zeros):
+                input_data[mask_connected_zeros] = np.nan
+
     resample_needed = True
     if naxis3 == naxis3out:
         # if the old and new wavelength borders are the same, just copy the data
         if np.all(np.allclose(old_wl_borders, new_wl_borders)):
-            resampled_data = hdu3d_image.data.astype(np.float32)
+            resampled_data = input_data
             resample_needed = False
             logger.info(
                 "Old and new wavelength borders are the same.\n" "-> Copying original data without spectral resampling."
@@ -102,20 +127,51 @@ def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out):
         logger.debug(f"New wavelength borders:\n{new_wl_borders}")
         # resample the 3D cube (see wavecal.py in teareduce for reference)
         resampled_data = np.zeros((naxis3out, naxis2, naxis1), dtype=np.float32)
-        logger.info(f"{np.isnan(hdu3d_image.data).sum()} NaN values in the original data.")
+        logger.info(f"Number of pixels in the output cube: {naxis1} x {naxis2} x {naxis3out} = {resampled_data.size}")
+        ldum = len(str(resampled_data.size))
+        logger.info(f"{np.isnan(input_data).sum():>{ldum}d} NaN values in the original {input_data.shape} array")
+        # resample each spectrum independently
         for i in range(naxis1):
             for j in range(naxis2):
-                # resample each spectrum independently
-                data_spectrum = hdu3d_image.data[:, j, i].astype(np.float32)
-                accum_flux = np.zeros(naxis3 + 1, dtype=np.float32)
+                # get the original spectrum for this pixel
+                data_spectrum = input_data[:, j, i].astype(np.float32)
                 # the cumulative flux is computed as the cumulative sum of the original spectrum,
                 # with NaN values replaced by 0
-                accum_flux[1:] = np.nancumsum(data_spectrum)
+                accum_data = np.zeros(naxis3 + 1, dtype=np.float32)
+                accum_data[1:] = np.nancumsum(data_spectrum)
+                # the cumulative flux is interpolated to the new wavelength borders, with the flux
+                # outside the original wavelength range set to NaN (note that intermediate NaN values
+                # are replaced by 0 in the cumulative sum, so they do not affect the interpolation,
+                # but their location is lost, so we need to check later how NaN values are propagated
+                # in the resampled data)
                 flux_borders = np.interp(
-                    x=new_wl_borders.value, xp=old_wl_borders.value, fp=accum_flux, left=np.nan, right=np.nan
+                    x=new_wl_borders.value, xp=old_wl_borders.value, fp=accum_data, left=np.nan, right=np.nan
                 )
                 resampled_data[:, j, i] = flux_borders[1:] - flux_borders[:-1]
-        logger.info(f"{np.isnan(resampled_data).sum()} NaN values in the resampled data.")
+                # repeat the same work for the NaN spectrum, where 1 is invalid data and 0 is valid data;
+                # this is necessary because the previous data interpolation is not propagating NaN values
+                # correctly, and we need to set the resampled data to NaN if any of the original data was NaN
+                mask_nan = np.isnan(data_spectrum)  # mask of NaN values in the original spectrum
+                # if any of the original data was NaN, compute a resampled NaN spectrum and set the
+                # affected pixels in the resampled data to NaN
+                if np.any(mask_nan):
+                    # compute the NaN spectrum, where 1 is invalid (NaN) data and 0 is valid data
+                    nan_spectrum = np.zeros(naxis3, dtype=np.float32)
+                    nan_spectrum[mask_nan] = 1.0
+                    # compute the cumulative NaN spectrum
+                    accum_nan = np.zeros(naxis3 + 1, dtype=np.float32)
+                    accum_nan[1:] = np.cumsum(nan_spectrum)
+                    # the cumulative NaN spectrum is interpolated to the new wavelength borders
+                    nan_borders = np.interp(
+                        x=new_wl_borders.value, xp=old_wl_borders.value, fp=accum_nan, left=np.nan, right=np.nan
+                    )
+                    nan_resampled = nan_borders[1:] - nan_borders[:-1]
+                    # if the resampled NaN spectrum is not zero, set the resampled data to NaN
+                    if np.any(nan_resampled > 0):
+                        resampled_data[:, j, i][nan_resampled > 0] = np.nan
+        logger.info(
+            f"{np.isnan(resampled_data).sum():>{ldum}d} NaN values in the resampled {resampled_data.shape} array"
+        )
 
     # create new HDU with resampled data
     resampled_hdu = fits.PrimaryHDU(data=resampled_data.astype(np.float32))
