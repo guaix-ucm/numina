@@ -26,7 +26,9 @@ from .hdul_utils import get_wcs_from_hdu
 from .initialize_script_with_args import NuminaScriptDefinition
 
 
-def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out, connected_zeros_to_nan=False):
+def resample_wave_3d_cube(
+    hdu3d_image, slice_ini, slice_end, wcskey, crval3out, cdelt3out, naxis3out, connected_zeros_to_nan=False
+):
     """Resample a 3D cube to a new wavelength sampling.
 
     The celestial WCS is preserved, and the spectral WCS is modified
@@ -36,6 +38,12 @@ def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out, 
     ----------
     hdu3d_image : `astropy.io.fits.ImageHDU`
         HDU instance with the 3D image to be resampled.
+    slice_ini : int
+        Initial slice index to be resampled. This follows the FITS convention,
+        where the first slice has index 1.
+    slice_end : int
+        Final slice index to be resampled. This follows the FITS convention,
+        where the first slice has index 1.
     wcskey : str
         WCS key to use when multiple WCS are present in the FITS header.
     crval3out : `astropy.units.Quantity`
@@ -75,6 +83,23 @@ def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out, 
     # get shape of the input 3D cube
     naxis3, naxis2, naxis1 = hdu3d_image.data.shape
 
+    # check initial and final slice indices
+    if slice_ini is None:
+        slice_ini = 1
+    else:
+        if slice_ini < 1 or slice_ini > naxis3:
+            logger.error(f"slice_ini={slice_ini} is out of bounds. It must be in [1, {naxis3}].")
+            sys.exit(1)
+    if slice_end is None:
+        slice_end = naxis3
+    else:
+        if slice_end < 1 or slice_end > naxis3:
+            logger.error(f"slice_end={slice_end} is out of bounds. It must be in [1, {naxis3}].")
+            sys.exit(1)
+    if slice_ini > slice_end:
+        logger.error(f"slice_ini={slice_ini} is greater than slice_end={slice_end}.")
+        sys.exit(1)
+
     # create a copy of the header to avoid modifying the original
     header3d_copy = hdu3d_image.header.copy()
 
@@ -92,8 +117,20 @@ def resample_wave_3d_cube(hdu3d_image, wcskey, crval3out, cdelt3out, naxis3out, 
 
     # copy the input data to avoid modifying the original
     input_data = hdu3d_image.data.astype(np.float32).copy()
+    # select only the slices to be resampled, and set the rest to NaN
+    if slice_ini > 1:
+        ldum = len(str(naxis3))
+        logger.info(f"Setting slices {1:>{ldum}d} to {slice_ini - 1:>{ldum}d} to NaN in the input cube.")
+        input_data[: slice_ini - 1, :, :] = np.nan
+    if slice_end < naxis3:
+        ldum = len(str(naxis3))
+        logger.info(f"Setting slices {slice_end + 1:>{ldum}d} to {naxis3:>{ldum}d} to NaN in the input cube.")
+        input_data[slice_end:, :, :] = np.nan
+    logger.info(f"Making use of slices {slice_ini} to {slice_end} of the input cube for resampling.")
+
+    # convert connected zeros to NaN if requested
     if connected_zeros_to_nan:
-        # Convert connected zeros to NaN
+        # create a mask of zeros in the input data
         mask_zeros = input_data == 0
         if np.any(mask_zeros):
             # 3D neighbourhood: 26 neighbours (faces, edges, corners)
@@ -200,11 +237,17 @@ def main(args=None):
     )
     parser.add_argument("input", type=str, help="Input FITS file with the 3D cube.")
     parser.add_argument("output", type=str, help="Output FITS file with the resampled 3D cube.")
+    parser.add_argument(
+        "--extname", type=str, help="Extension name of the input HDU (default: 'PRIMARY').", default="PRIMARY"
+    )
     parser.add_argument("--crval3out", type=float, help="Minimum wavelength for the output image (in meters).")
     parser.add_argument("--cdelt3out", type=float, help="Wavelength step for the output image (in meters).")
     parser.add_argument("--naxis3out", type=int, help="Number of slices in the output image.")
+    parser.add_argument("--slice_ini", type=int, help="Initial slice index to be resampled (1-based).")
+    parser.add_argument("--slice_end", type=int, help="Final slice index to be resampled (1-based).")
+    parser.add_argument("--wcskey", type=str, help="WCS key to use when multiple WCS are present in the FITS header.")
     parser.add_argument(
-        "--extname", type=str, help="Extension name of the input HDU (default: 'PRIMARY').", default="PRIMARY"
+        "--connected_zeros_to_nan", action="store_true", help="Convert connected zeros to NaN before resampling."
     )
     # Include default arguments for common actions, and initialize console and logging
     myscript = NuminaScriptDefinition(parser)
@@ -248,8 +291,12 @@ def main(args=None):
 
     resampled_hdu = resample_wave_3d_cube(
         hdu3d_image=hdu3d_image,
+        slice_ini=args.slice_ini,
+        slice_end=args.slice_end,
+        wcskey=args.wcskey,
         crval3out=crval3out,
         cdelt3out=cdelt3out,
+        connected_zeros_to_nan=args.connected_zeros_to_nan,
         naxis3out=naxis3out,
     )
 

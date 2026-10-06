@@ -53,8 +53,9 @@ def generate_mosaic_of_3d_cubes(
 
     Parameters
     ----------
-    list_of_fits_files : list of str
-        List of paths to FITS files containing the 3D cubes to be combined.
+    list_of_fits_files : list of tuple
+        Each tuple should contain the file path, the minimum slice index,
+        and the maximum slice index.
     extname_image : str
         Extension name for the image in input files.
     crval3out : `astropy.units.Quantity` or None
@@ -106,6 +107,9 @@ def generate_mosaic_of_3d_cubes(
 
     nimages = len(list_of_fits_files)
     logger.info(f"Total number of images to be combined: {nimages}")
+    for i in range(nimages):
+        if not isinstance(list_of_fits_files[i], tuple) or len(list_of_fits_files[i]) != 3:
+            raise TypeError(f"Element {i} of list_of_fits_files must be a tuple of length 3")
 
     if nimages < 1:
         raise ValueError("Number of images = 0")
@@ -114,7 +118,7 @@ def generate_mosaic_of_3d_cubes(
     if desired_celestial_2d_wcs is None:
         # compute final celestial WCS for the ensemble of 3D cubes
         list_of_inputs = []
-        for i, fname in enumerate(list_of_fits_files):
+        for i, (fname, _, _) in enumerate(list_of_fits_files):
             logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
             logger.info(f"Working with file (extension): {fname} ({extname_image})")
             with fits.open(fname) as hdul:
@@ -152,7 +156,7 @@ def generate_mosaic_of_3d_cubes(
     crval3out_ = None
     wavemax = None  # maximum wavelength (at the center of the last pixel)
     cdelt3out_ = None
-    for i, fname in enumerate(list_of_fits_files):
+    for i, (fname, _, _) in enumerate(list_of_fits_files):
         logger.info(f"\n--- Image {i+1}/{nimages} ---\n")
         logger.info(f"Working with file (extension): {fname} ({extname_image})")
         with fits.open(fname) as hdul:
@@ -215,13 +219,15 @@ def generate_mosaic_of_3d_cubes(
     logger.info(f"Combined image will require {size_output:.2f}")
 
     # generate 3D mosaic
-    for i, fname in enumerate(list_of_fits_files):
+    for i, (fname, slice_ini, slice_end) in enumerate(list_of_fits_files):
         time_ini = datetime.now()
         logger.info(f"\n* Working with: {fname}")
         with fits.open(fname) as hdul:
             hdu = get_hdu_from_hdul(hdul, extname=extname_image)
             single_hdu3d = resample_wave_3d_cube(
                 hdu3d_image=hdu,
+                slice_ini=slice_ini,
+                slice_end=slice_end,
                 wcskey=wcskey,
                 crval3out=crval3out,
                 cdelt3out=cdelt3out,
@@ -285,6 +291,53 @@ def generate_mosaic_of_3d_cubes(
         output_hdul = fits.HDUList([hdu])
 
     return output_hdul
+
+
+def extract_filename_and_numbers_from_line(line):
+    """Extract filename from a line in the input list.
+
+    Lines starting with '#' are considered comments and will be ignored.
+
+    Each line can also contain additional information after the filename,
+    in particular two numbers separated by whitespace. This function
+    will return the filename and the two numbers as a tuple. If the numbers
+    are not present, it will return the filename and None for the numbers.
+
+    The numbers correspond to the minimum and maximum slice index along
+    NAXIS3 of the 3D cube to be used in the combination. These numbers
+    are optional and can be used to select a specific range of slices from
+    the 3D cube. If only one number is provided, it will be considered an
+    error, and the function will raise a SystemExit. These numbers follow
+    the FITS convention of starting from 1, not 0. If the numbers are not provided,
+    the entire cube will be used in the combination.
+
+    Parameters
+    ----------
+    line : str
+        Line from the input list.
+
+    Returns
+    -------
+    filename : str
+        Extracted filename.
+    num1 : int or None
+        First number, if present.
+    num2 : int or None
+        Second number, if present.
+    """
+    logger = logging.getLogger(__name__)
+
+    parts = line.split()
+    filename = parts[0]
+    num1 = int(parts[1]) if len(parts) > 1 else None
+    num2 = int(parts[2]) if len(parts) > 2 else None
+    if (num1 is None and num2 is not None) or (num1 is not None and num2 is None):
+        logger.error(f"Line '{line}' has only a number")
+        raise SystemExit(1)
+    if num1 is not None and num2 is not None and num1 > num2:
+        logger.error(f"Line '{line}' has min_slice > max_slice")
+        raise SystemExit(1)
+    return filename, num1, num2
 
 
 def main(args=None):
@@ -372,14 +425,17 @@ def main(args=None):
             file_content = f.read().splitlines()
 
     list_of_fits_files = []
-    for fname in file_content:
-        if len(fname) > 0:
-            if fname[0] not in ["#"]:
+    for line in file_content:
+        if len(line) > 0:
+            if line[0] not in ["#"]:
+                fname, num1, num2 = extract_filename_and_numbers_from_line(line)
                 if not Path(fname).is_file():
-                    raise ValueError(f"File {fname} does not exist or is not a valid file.")
+                    logger.error(f"[red]File {fname} does not exist or is not a valid file[/red].")
+                    raise SystemExit(1)
                 if not file_is_valid_fits(fname):
-                    raise ValueError(f"File {fname} is not a valid FITS file.")
-                list_of_fits_files.append(fname)
+                    logger.error(f"[red]File {fname} is not a valid FITS file[/red].")
+                    raise SystemExit(1)
+                list_of_fits_files.append((fname, num1, num2))
 
     if len(list_of_fits_files) < 1:
         raise ValueError(f"No valid FITS files found in {input_list}. Please check the file content.")
