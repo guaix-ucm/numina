@@ -12,7 +12,7 @@
 import numpy as np
 
 
-class SteffenInterpolator(object):
+class SteffenInterpolator:
     """
     A monotonic piecewise cubic 1-d interpolator.
 

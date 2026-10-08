@@ -21,7 +21,7 @@ class DataProductMixin(DataTypeBase):
     """A type that is a data product."""
 
     def __init__(self, *args, **kwds):
-        super(DataProductMixin, self).__init__(*args, **kwds)
+        super().__init__(*args, **kwds)
         self.quality_control = QC.UNKNOWN
 
     def generators(self):
@@ -61,12 +61,12 @@ class DataProductMixin(DataTypeBase):
 
         result["quality_control"] = qc
 
-        other = super(DataProductMixin, self).extract_db_info(obj, keys)
+        other = super().extract_db_info(obj, keys)
         result.update(other)
         return result
 
     def update_meta_info(self):
-        result = super(DataProductMixin, self).update_meta_info()
+        result = super().update_meta_info()
         result["quality_control"] = self.quality_control.name
         return result
 
@@ -74,7 +74,7 @@ class DataProductMixin(DataTypeBase):
         st = {}
         st["quality_control"] = self.quality_control
 
-        other = super(DataProductMixin, self).__getstate__()
+        other = super().__getstate__()
         st.update(other)
         return st
 
@@ -82,7 +82,7 @@ class DataProductMixin(DataTypeBase):
         qcval = state.get("quality_control", "UNKNOWN")
         self.quality_control = convert_qc(qcval)
 
-        super(DataProductMixin, self).__setstate__(state)
+        super().__setstate__(state)
 
 
 class DataProductTag(DataProductMixin):
@@ -96,15 +96,15 @@ class DataProductTag(DataProductMixin):
 
     def __init__(self, *args, **kwargs):
         warnings.warn("The 'DataProductTag' class was renamed to 'DataProductMixin'", DeprecationWarning)
-        super(DataProductTag, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 class DataProductType(DataProductMixin, DataType):
     def __init__(self, ptype, default=None):
-        super(DataProductType, self).__init__(ptype, default=default)
+        super().__init__(ptype, default=default)
 
 
-class ConfigurationTag(object):
+class ConfigurationTag:
     """A type that is part of the instrument configuration."""
 
     @classmethod
@@ -123,7 +123,7 @@ if __name__ == "__main__":
         def p_(name):
             return tagexpr.Placeholder(name)
 
-    class Tagged(object):
+    class Tagged:
 
         def __init__(self, tags_ids):
             self.tag_ids = tags_ids

@@ -21,7 +21,7 @@ class MultiType(dt.DataType):
                 obj = obj()
             node_type.append(obj)
 
-        super(MultiType, self).__init__(ptype=None, node_type=node_type)
+        super().__init__(ptype=None, node_type=node_type)
         self.current_node = None
 
     def validate(self, obj):

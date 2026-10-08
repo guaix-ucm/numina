@@ -23,10 +23,10 @@ from .validator import as_list as deco_as_list
 from .query import Ignore
 
 
-class EntryHolder(object):
+class EntryHolder:
     def __init__(self, tipo, description, destination, optional, default, choices=None, validation=True, alias=None):
 
-        super(EntryHolder, self).__init__()
+        super().__init__()
 
         if tipo is None:
             self.type = dt.NullType()
@@ -105,7 +105,7 @@ class Result(EntryHolder):
     def __init__(
         self, ptype, description="", validation=True, destination=None, optional=False, default=None, choices=None
     ):
-        super(Result, self).__init__(
+        super().__init__(
             ptype,
             description,
             destination=destination,
@@ -136,7 +136,7 @@ class Product(Result):
     def __init__(
         self, ptype, description="", validation=True, destination=None, optional=False, default=None, choices=None
     ):
-        super(Product, self).__init__(
+        super().__init__(
             ptype,
             description=description,
             validation=validation,
@@ -214,7 +214,7 @@ class Requirement(EntryHolder):
         query_opts=None,
         alias=None,
     ):
-        super(Requirement, self).__init__(
+        super().__init__(
             rtype,
             description,
             destination=destination,
@@ -484,7 +484,7 @@ class Parameter(Requirement):
 
         mtype = _recursive_type(value, nmin=nmin, nmax=nmax, accept_scalar=accept_scalar)
 
-        super(Parameter, self).__init__(
+        super().__init__(
             mtype,
             description,
             destination=destination,
@@ -497,7 +497,7 @@ class Parameter(Requirement):
 
     def convert(self, val):
         """Convert input values to type values."""
-        pre = super(Parameter, self).convert(val)
+        pre = super().convert(val)
 
         if self.custom_validator is not None:
             post = self.custom_validator(pre)

@@ -191,9 +191,7 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
             self._result = None
 
         # final fit
-        super(AdaptiveLSQUnivariateSpline, self).__init__(
-            x=x, y=y, t=xknot, w=w, bbox=bbox, k=k, ext=ext, check_finite=False
-        )
+        super().__init__(x=x, y=y, t=xknot, w=w, bbox=bbox, k=k, ext=ext, check_finite=False)
 
     def get_params(self):
         """Return initial parameters for minimisation process."""

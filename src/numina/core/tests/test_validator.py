@@ -8,7 +8,7 @@ from ..validator import as_list
 from ..validator import range_validator
 
 
-class RecipeIO(object):
+class RecipeIO:
     def __init__(self, valid=True):
         self.valid = valid
         self.was_called = False

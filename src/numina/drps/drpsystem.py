@@ -21,7 +21,7 @@ class DrpSystem(DrpGeneric):
 
     def __init__(self, entry_point="numina.pipeline.1"):
         self.entry = entry_point
-        super(DrpSystem, self).__init__()
+        super().__init__()
 
     def load(self):
         """Load all available DRPs in 'entry_point'."""

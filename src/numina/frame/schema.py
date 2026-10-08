@@ -55,7 +55,7 @@ def _from_ipt(value):
         raise SchemaDefinitionError(value)
 
 
-class SchemaKeyword(object):
+class SchemaKeyword:
     """A keyword in the schema"""
 
     def __init__(self, name, mandatory=False, valid=True, value=None):
@@ -126,7 +126,7 @@ class SchemaKeyword(object):
         return True
 
 
-class Schema(object):
+class Schema:
     """A FITS schema"""
 
     def __init__(self, sc):
@@ -150,7 +150,7 @@ class Schema(object):
 types_table = {"string": str, "number": float, "integer": int, "bool": bool}
 
 
-class SchemaNode(object):
+class SchemaNode:
     def __init__(self, *args, **kwargs):
         self.title = kwargs.get("title", "undefined")
         self.required = kwargs.get("required", True)
@@ -172,7 +172,7 @@ class SchemaNode(object):
 
 class SchemaExtension(SchemaNode):
     def __init__(self, *args, **kwargs):
-        super(SchemaExtension, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
     def validate(self, value):
         # value must be hdulist
@@ -197,7 +197,7 @@ class SchemaExtension(SchemaNode):
 
 class SchemaKeywordII(SchemaNode):
     def __init__(self, *args, **kwargs):
-        super(SchemaKeywordII, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.v_type = kwargs.get("type", None)
         self.enum_t = kwargs.get("enum", None)
@@ -279,7 +279,7 @@ def create_extension_node(node):
     return ext
 
 
-class SchemeKeyword(object):
+class SchemeKeyword:
     def __init__(self, *args, **kwargs):
         types_table = {"string": str, "number": float, "integer": int, "bool": bool}
 
@@ -308,7 +308,7 @@ class SchemeKeyword(object):
 
 class SchemeKeywordString(SchemeKeyword):
     def __init__(self, *args, **kwargs):
-        super(SchemeKeywordString, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
 
 def validate(header, schema):

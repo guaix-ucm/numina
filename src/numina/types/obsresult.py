@@ -33,7 +33,7 @@ class ObservationResultType(DataType):
     """The type of ObservationResult."""
 
     def __init__(self, rawtype=None):
-        super(ObservationResultType, self).__init__(ptype=ObservationResult)
+        super().__init__(ptype=ObservationResult)
         if rawtype:
             self.rawtype = rawtype
         else:

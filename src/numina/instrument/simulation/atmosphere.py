@@ -11,7 +11,7 @@ import math
 from astropy.modeling.functional_models import Gaussian2D, Moffat2D
 
 
-class AtmosphereModel(object):
+class AtmosphereModel:
 
     def __init__(self, twilight, nightsky, seeing, extinction, refraction):
         self.tw_interp = twilight
@@ -36,7 +36,7 @@ class AtmosphereModel(object):
         return self.refraction_model.refraction(z, wl, ref)
 
 
-class SeeingSizeModel(object):
+class SeeingSizeModel:
     def __init__(self, wl, r0):
         self._r0 = r0
         self._wl0 = wl
@@ -51,7 +51,7 @@ class SeeingSizeModel(object):
         return generate_gaussian_profile(fwhm)
 
 
-class ConstSeeing(object):
+class ConstSeeing:
     def __init__(self, seeing):
         self._s = seeing
 

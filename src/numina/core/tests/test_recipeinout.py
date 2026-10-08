@@ -75,7 +75,7 @@ def test_store_to(qc):
         "qc": qc.name,  # 'uuid': '00000000-0000-0000-0000-000000000000'
     }
 
-    class Storage(object):
+    class Storage:
         def __init__(self):
             self.runinfo = {}
 

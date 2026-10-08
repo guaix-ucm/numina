@@ -16,7 +16,7 @@ class ArrayType(DataType):
     """A type of array."""
 
     def __init__(self, fmt="%.18e", default=None):
-        super(ArrayType, self).__init__(ptype=numpy.ndarray, default=default)
+        super().__init__(ptype=numpy.ndarray, default=default)
         self.fmt = fmt
 
     def convert(self, obj):
@@ -45,7 +45,7 @@ class ArrayType(DataType):
 
 class ArrayNType(ArrayType):
     def __init__(self, dimensions, default=None):
-        super(ArrayNType, self).__init__(default=default)
+        super().__init__(default=default)
         self.N = dimensions
 
 

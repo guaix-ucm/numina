@@ -18,7 +18,7 @@ class Node(metaclass=abc.ABCMeta):
     """An elemental operation in a Flow."""
 
     def __init__(self, ninputs=1, noutputs=1):
-        super(Node, self).__init__()
+        super().__init__()
         self._nin = ninputs
         self._nout = noutputs
 
@@ -52,7 +52,7 @@ class AdaptorNode(Node):
 
     def __init__(self, work, ninputs=1, noutputs=1):
         """work is a function object"""
-        super(AdaptorNode, self).__init__(ninputs, noutputs)
+        super().__init__(ninputs, noutputs)
         self.work = work
 
     def run(self, img):
@@ -64,7 +64,7 @@ class IdNode(Node):
 
     def __init__(self):
         """Identity"""
-        super(IdNode, self).__init__()
+        super().__init__()
 
     def run(self, img):
         return img
@@ -75,7 +75,7 @@ class OutputSelector(Node):
 
     def __init__(self, ninputs, indexes):
         noutputs = len(indexes)
-        super(OutputSelector, self).__init__(ninputs, noutputs)
+        super().__init__(ninputs, noutputs)
         self.indexes = indexes
 
     def run(self, arg):

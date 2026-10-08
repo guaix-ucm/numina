@@ -3,7 +3,7 @@ from ..dump import dump
 
 def test_dump_base():
 
-    class A(object):
+    class A:
         pass
 
     tag = A()
@@ -15,7 +15,7 @@ def test_dump_base():
 
 def test_dump_method():
 
-    class A(object):
+    class A:
 
         def _datatype_dump(self, obj, where):
             return obj + 1
@@ -29,7 +29,7 @@ def test_dump_method():
 
 def test_dump_method_deprecated():
 
-    class B(object):
+    class B:
 
         def __numina_dump__(self, obj, where):
             return obj + 2
@@ -43,7 +43,7 @@ def test_dump_method_deprecated():
 
 def test_dump_method_register():
 
-    class C(object):
+    class C:
         pass
 
     def numina_dump_func(tag, obj, where):

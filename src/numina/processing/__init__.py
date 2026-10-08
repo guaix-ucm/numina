@@ -53,7 +53,7 @@ class Corrector(node.Node):
     """A Node that corrects a frame from instrumental signatures."""
 
     def __init__(self, datamodel=None, calibid="calibid-unknown", dtype="float32"):
-        super(Corrector, self).__init__()
+        super().__init__()
         if not datamodel:
             self.datamodel = SimpleDataModel()
         else:
@@ -86,7 +86,7 @@ class BadPixelCorrector(Corrector):
 
     def __init__(self, badpixelmask, datamodel=None, calibid="calibid-unknown", dtype="float32", hwin=2, wwin=2):
 
-        super(BadPixelCorrector, self).__init__(datamodel, calibid, dtype)
+        super().__init__(datamodel, calibid, dtype)
 
         self.bpm = badpixelmask
         self.hwin = hwin
@@ -119,7 +119,7 @@ class BiasCorrector(Corrector):
 
         self.update_variance = True if biasvar else False
 
-        super(BiasCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
+        super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
         self.bias_stats = biasmap.mean()
         self.biasmap = biasmap
         self.biasvar = biasvar
@@ -161,7 +161,7 @@ class DarkCorrector(Corrector):
         if darkvar:
             self.update_variance = True
 
-        super(DarkCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
+        super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 
         self.dark_stats = darkmap.mean()
         self.darkmap = darkmap
@@ -197,7 +197,7 @@ class NonLinearityCorrector(Corrector):
 
         self.update_variance = False
 
-        super(NonLinearityCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
+        super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 
         self.polynomial = polynomial
 
@@ -224,7 +224,7 @@ class FlatFieldCorrector(Corrector):
 
         self.update_variance = False
 
-        super(FlatFieldCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
+        super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 
         self.flatdata = flatdata
         self.flat_stats = flatdata.mean()
@@ -255,7 +255,7 @@ class SkyCorrector(Corrector):
 
         self.update_variance = False
 
-        super(SkyCorrector, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
+        super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 
         self.skydata = skydata
         self.calib_stats = skydata.mean()
@@ -291,7 +291,7 @@ class DivideByExposure(Corrector):
 
         self.update_variance = False
 
-        super(DivideByExposure, self).__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
+        super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 
     def run(self, img):
         imgid = self.get_imgid(img)

@@ -33,4 +33,4 @@ class ExtEncoder(json.JSONEncoder):
         elif isinstance(obj, numina.types.qc.QC):
             return obj.name
         else:
-            return super(ExtEncoder, self).default(obj)
+            return super().default(obj)

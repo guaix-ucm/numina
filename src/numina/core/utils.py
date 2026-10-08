@@ -23,7 +23,7 @@ class AlwaysFailRecipe(BaseRecipe):
     """A Recipe that always fails."""
 
     def __init__(self, *args, **kwargs):
-        super(AlwaysFailRecipe, self).__init__(version="1")
+        super().__init__(version="1")
 
     def run(self, requirements):
         raise TypeError("This Recipe always fails")
@@ -33,7 +33,7 @@ class AlwaysSuccessRecipe(BaseRecipe):
     """A Recipe that always successes."""
 
     def __init__(self, *args, **kwargs):
-        super(AlwaysSuccessRecipe, self).__init__(version=1)
+        super().__init__(version=1)
 
     def run(self, recipe_input):
         return self.create_result()
@@ -45,7 +45,7 @@ class OBSuccessRecipe(BaseRecipe):
     obresult = ObservationResultRequirement()
 
     def __init__(self, *args, **kwargs):
-        super(OBSuccessRecipe, self).__init__(version=1)
+        super().__init__(version=1)
 
     def run(self, recipe_input):
         return self.create_result()

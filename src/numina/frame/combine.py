@@ -46,12 +46,12 @@ def _m_mode(img, mask, region):
 _method_map = {"mean": _m_mean, "median": _m_median, "mode": _m_mode}
 
 
-class Extension(object):
+class Extension:
     def __init__(self, name):
         self.name = name
 
 
-class _ExtractKeyword(object):
+class _ExtractKeyword:
     def __init__(self, keyword):
         self.keyword = keyword
 

@@ -15,7 +15,7 @@ import warnings
 from numpy.polynomial import Polynomial
 
 
-class CrLinear(object):
+class CrLinear:
     """Store information concerning the linear wavelength calibration.
 
     Parameters
@@ -78,7 +78,7 @@ class CrLinear(object):
         return output
 
 
-class WavecalFeature(object):
+class WavecalFeature:
     """Store information concerning a particular line identification.
 
     Parameters
@@ -186,7 +186,7 @@ class WavecalFeature(object):
         return output
 
 
-class SolutionArcCalibration(object):
+class SolutionArcCalibration:
     """Auxiliary class to store the arc calibration solution.
 
     Note that this class only stores the information concerning the

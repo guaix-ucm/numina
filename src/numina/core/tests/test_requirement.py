@@ -9,7 +9,7 @@ import numina.types.datatype
 from ..dataholders import Requirement
 
 
-class Dal(object):
+class Dal:
     def search_parameter(self, name, type_, obsres, options=None):
         if name == "req_null":
             return numina.dal.stored.StoredParameter(content=None)

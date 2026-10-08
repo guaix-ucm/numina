@@ -18,18 +18,18 @@ from ..multitype import MultiType
 from ..structured import BaseStructuredCalibration
 
 
-class AVal(object):
+class AVal:
     pass
 
 
-class BVal(object):
+class BVal:
     pass
 
 
 class TypeA(DataType):
 
     def __init__(self):
-        super(TypeA, self).__init__(ptype=AVal)
+        super().__init__(ptype=AVal)
 
     def convert(self, obj):
         return TypeA()
@@ -41,7 +41,7 @@ class TypeA(DataType):
 class TypeB(DataType):
 
     def __init__(self):
-        super(TypeB, self).__init__(ptype=BVal)
+        super().__init__(ptype=BVal)
 
     def convert(self, obj):
         return TypeB()
@@ -52,46 +52,46 @@ class TypeB(DataType):
 
 class Structured1(BaseStructuredCalibration):
     def __init__(self):
-        super(Structured1, self).__init__()
+        super().__init__()
         self.struct1 = 1
 
     def __getstate__(self):
-        state = super(Structured1, self).__getstate__()
+        state = super().__getstate__()
         state["struct1"] = self.struct1
         return state
 
     def __setstate__(self, state):
-        super(Structured1, self).__setstate__(state)
+        super().__setstate__(state)
         self.struct1 = state["struct1"]
 
 
 class Structured2(BaseStructuredCalibration):
     def __init__(self):
-        super(Structured2, self).__init__()
+        super().__init__()
         self.struct2 = 2
 
     def __getstate__(self):
-        state = super(Structured2, self).__getstate__()
+        state = super().__getstate__()
         state["struct2"] = self.struct2
         return state
 
     def __setstate__(self, state):
-        super(Structured2, self).__setstate__(state)
+        super().__setstate__(state)
         self.struct2 = state["struct2"]
 
 
 class Structured3(BaseStructuredCalibration):
     def __init__(self):
-        super(Structured3, self).__init__()
+        super().__init__()
         self.struct3 = 3
 
     def __getstate__(self):
-        state = super(Structured3, self).__getstate__()
+        state = super().__getstate__()
         state["struct3"] = self.struct3
         return state
 
     def __setstate__(self, state):
-        super(Structured3, self).__setstate__(state)
+        super().__setstate__(state)
         self.struct3 = state["struct3"]
 
 

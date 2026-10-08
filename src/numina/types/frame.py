@@ -45,7 +45,7 @@ class DataFrameType(DataType):
     tags_keys = []
 
     def __init__(self, datamodel=None):
-        super(DataFrameType, self).__init__(DataFrame, datamodel=datamodel)
+        super().__init__(DataFrame, datamodel=datamodel)
         self.headerschema = Schema(_base_schema)
 
         self.add_dialect_info("gtc", DF.TYPE_FRAME)
@@ -98,7 +98,7 @@ class DataFrameType(DataType):
 
         objl = self.convert(obj)
 
-        result = super(DataFrameType, self).extract_db_info(objl, keys)
+        result = super().extract_db_info(objl, keys)
         ext = self.datamodel.extractor_map["fits"]
         if objl:
             with objl.open() as hdulist:

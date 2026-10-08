@@ -10,7 +10,7 @@
 import numpy
 
 
-class Efficiency(object):
+class Efficiency:
 
     def response(self, wl):
         return numpy.ones_like(wl)

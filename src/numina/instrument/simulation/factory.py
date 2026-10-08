@@ -12,7 +12,7 @@
 import json
 
 
-class RunCounter(object):
+class RunCounter:
     """Run number counter"""
 
     def __init__(self, template, last=1):
@@ -38,7 +38,7 @@ class PersistentRunCounter(RunCounter):
 
         last = self.load(pstore, last)
 
-        super(PersistentRunCounter, self).__init__(template, last)
+        super().__init__(template, last)
 
         self.pstore = pstore
 

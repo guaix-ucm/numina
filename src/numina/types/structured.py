@@ -93,7 +93,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
     """
 
     def __init__(self, instrument="unknown", datamodel=None):
-        super(BaseStructuredCalibration, self).__init__(datamodel=datamodel)
+        super().__init__(datamodel=datamodel)
         self.instrument = instrument
         self.tags = {}
         self.uuid = str(uuid.uuid1())
@@ -114,7 +114,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
 
     def __getstate__(self):
 
-        st = super(BaseStructuredCalibration, self).__getstate__()
+        st = super().__getstate__()
 
         keys = ["instrument", "tags", "uuid", "meta_info"]
         for key in keys:
@@ -125,7 +125,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
         return st
 
     def __setstate__(self, state):
-        super(BaseStructuredCalibration, self).__setstate__(state)
+        super().__setstate__(state)
         # self.add_dialect_info('gtc', DF.TYPE_STRUCT)
 
         self.instrument = state["instrument"]
@@ -195,7 +195,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
         except IOError as e:
             raise e
 
-        result = super(BaseStructuredCalibration, self).extract_db_info(state, keys)
+        result = super().extract_db_info(state, keys)
 
         try:
             minfo = state["meta_info"]
@@ -217,7 +217,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
 
     def update_meta_info(self):
         """Extract metadata from myself"""
-        result = super(BaseStructuredCalibration, self).update_meta_info()
+        result = super().update_meta_info()
 
         result["instrument"] = self.instrument
         result["uuid"] = self.uuid

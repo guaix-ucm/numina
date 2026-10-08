@@ -12,7 +12,7 @@ import math
 import numbers
 
 
-class PixelInterval1D(object):
+class PixelInterval1D:
     """One dimensional bounding box with integer indices.
 
     Upper value (pix2) is not included in the
@@ -105,7 +105,7 @@ class PixelInterval1D(object):
         return self.shape
 
 
-class PixelInterval(object):
+class PixelInterval:
     """N-dimensional bounding box with integer indices.
 
     Upper value (pix2) is not included in the
@@ -140,7 +140,7 @@ class PixelInterval(object):
 
     @classmethod
     def from_intervals(cls, intervals):
-        result = super(PixelInterval, cls).__new__(cls)
+        result = super().__new__(cls)
         result.intervals = list(intervals)
         # update axis
         for idx, intl in enumerate(result.intervals):
@@ -202,7 +202,7 @@ class BoundingBox(PixelInterval):
 
     def __init__(self, ix1, ix2, iy1, iy2):
         newargs = (iy1, iy2), (ix1, ix2)
-        super(BoundingBox, self).__init__(*newargs)
+        super().__init__(*newargs)
 
     @classmethod
     def from_coordinates(cls, x1, x2, y1, y2):

@@ -36,7 +36,7 @@ class SerialFlow(node.Node):
         else:
             ninputs = 1
             noutputs = 1
-        super(SerialFlow, self).__init__(ninputs, noutputs)
+        super().__init__(ninputs, noutputs)
 
     def __iter__(self):
         return self.nodeseq.__iter__()
@@ -64,7 +64,7 @@ class ParallelFlow(node.Node):
         self.nodeseq = nodeseq
         nin = sum((f.ninputs for f in nodeseq), 0)
         nout = sum((f.noutputs for f in nodeseq), 0)
-        super(ParallelFlow, self).__init__(nin, nout)
+        super().__init__(nin, nout)
 
     def run(self, args):
         out = []
@@ -94,7 +94,7 @@ class MixerFlow(node.Node):
     def __init__(self, table):
         nin = max(table) + 1
         nout = len(table)
-        super(MixerFlow, self).__init__(nin, nout)
+        super().__init__(nin, nout)
         self.table = table
 
     def run(self, args):

@@ -186,7 +186,7 @@ class AtomicExpr(Expression):
     """ "Atomic expression"""
 
     def __init__(self, name, value):
-        super(AtomicExpr, self).__init__()
+        super().__init__()
         self.name = name
         self.value = value
 
@@ -195,7 +195,7 @@ class TagRepr(AtomicExpr):
     """A representation of a Tag"""
 
     def __init__(self, name, metadata=None):
-        super(TagRepr, self).__init__(name, name)
+        super().__init__(name, name)
         self.metadata = metadata or {}
         self._fields.add(name)
 
@@ -216,7 +216,7 @@ class Placeholder(AtomicExpr):
     """A representation of a value expected to be substituted"""
 
     def __init__(self, name):
-        super(Placeholder, self).__init__(name, name)
+        super().__init__(name, name)
         self._places.add(name)
 
     def __repr__(self):
@@ -230,7 +230,7 @@ class ConstExpr(AtomicExpr):
     """A representation of a constant value"""
 
     def __init__(self, value):
-        super(ConstExpr, self).__init__("ConstExpr", value)
+        super().__init__("ConstExpr", value)
 
     def clone(self, nodes):
         return self
@@ -254,7 +254,7 @@ class CompoundExpr(Expression):
 
 class UnaryExpr(CompoundExpr):
     def __init__(self, pred, oper):
-        super(UnaryExpr, self).__init__(pred)
+        super().__init__(pred)
         self.pred = self.nodes[0]
         self.operator = oper
 
@@ -265,7 +265,7 @@ class UnaryExpr(CompoundExpr):
 
 class BinaryExpr(CompoundExpr):
     def __init__(self, lhs, rhs, oper, op_rep):
-        super(BinaryExpr, self).__init__(lhs, rhs)
+        super().__init__(lhs, rhs)
         self.lhs = self.nodes[0]
         self.rhs = self.nodes[1]
         self.operator = oper
@@ -281,50 +281,50 @@ class BinaryExpr(CompoundExpr):
 
 class PredAnd(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredAnd, self).__init__(lhs, rhs, operator.and_, "AND")
+        super().__init__(lhs, rhs, operator.and_, "AND")
 
 
 class PredOr(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredOr, self).__init__(lhs, rhs, operator.or_, "OR")
+        super().__init__(lhs, rhs, operator.or_, "OR")
 
 
 class PredNot(UnaryExpr):
     def __init__(self, pred):
-        super(PredNot, self).__init__(pred, operator.not_)
+        super().__init__(pred, operator.not_)
 
 
 class PredEq(BinaryExpr):
     def __init__(self, lhs, rhs):
-        super(PredEq, self).__init__(lhs, rhs, operator.eq, "==")
+        super().__init__(lhs, rhs, operator.eq, "==")
 
 
 class PredGt(BinaryExpr):
     def __init__(self, key, value):
-        super(PredGt, self).__init__(key, value, operator.gt, ">")
+        super().__init__(key, value, operator.gt, ">")
 
 
 class PredGe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredGe, self).__init__(key, value, operator.ge, ">=")
+        super().__init__(key, value, operator.ge, ">=")
 
 
 class PredLe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredLe, self).__init__(key, value, operator.le, "<=")
+        super().__init__(key, value, operator.le, "<=")
 
 
 class PredLt(BinaryExpr):
     def __init__(self, key, value):
-        super(PredLt, self).__init__(key, value, operator.lt, "<")
+        super().__init__(key, value, operator.lt, "<")
 
 
 class PredNe(BinaryExpr):
     def __init__(self, key, value):
-        super(PredNe, self).__init__(key, value, operator.ne, "!=")
+        super().__init__(key, value, operator.ne, "!=")
 
 
-class ConstraintAdapter(object):
+class ConstraintAdapter:
     """For GTC"""
 
     def __init__(self, key, value, oper):

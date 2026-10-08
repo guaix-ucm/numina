@@ -21,9 +21,7 @@ class ObservationResultRequirement(Requirement):
 
     def __init__(self, query_opts=None):
 
-        super(ObservationResultRequirement, self).__init__(
-            obtypes.ObservationResultType, "Observation Result", query_opts=query_opts
-        )
+        super().__init__(obtypes.ObservationResultType, "Observation Result", query_opts=query_opts)
 
     def __repr__(self):
         sclass = type(self).__name__

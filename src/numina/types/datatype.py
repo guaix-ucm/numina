@@ -19,7 +19,7 @@ class DataType(DataTypeBase):
     """Base class for input/output types of recipes."""
 
     def __init__(self, ptype, node_type=None, default=None, **kwds):
-        super(DataType, self).__init__(**kwds)
+        super().__init__(**kwds)
         self.node_type = node_type
         self.internal_type = ptype
         self.internal_dialect = dialect_info(self)
@@ -80,14 +80,14 @@ class AutoDataType(DataType):
     """Data type for types that are its own python type"""
 
     def __init__(self, *args, **kwargs):
-        super(AutoDataType, self).__init__(ptype=self.__class__, **kwargs)
+        super().__init__(ptype=self.__class__, **kwargs)
 
 
 class AnyType(DataType):
     """Type representing anything"""
 
     def __init__(self):
-        super(AnyType, self).__init__(ptype=self.__class__)
+        super().__init__(ptype=self.__class__)
 
     def convert(self, obj):
         return obj
@@ -100,7 +100,7 @@ class NullType(DataType):
     """Data type for None."""
 
     def __init__(self):
-        super(NullType, self).__init__(type(None))
+        super().__init__(type(None))
 
     def convert(self, obj):
         return None
@@ -128,7 +128,7 @@ class PlainPythonType(DataType):
         else:
             raise TypeError("validator must be callable or None")
 
-        super(PlainPythonType, self).__init__(stype, default=default)
+        super().__init__(stype, default=default)
 
     def convert(self, obj):
         pre = self.internal_type(obj)
@@ -155,7 +155,7 @@ class ListOfType(DataType):
             node_type = ref()
         else:
             node_type = ref
-        super(ListOfType, self).__init__(stype, node_type=node_type, default=default)
+        super().__init__(stype, node_type=node_type, default=default)
         self.internal_scalar = False
         self.index = index
         self.nmin = nmin

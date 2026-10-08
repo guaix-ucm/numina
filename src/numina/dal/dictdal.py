@@ -36,7 +36,7 @@ class BaseDictDAL(AbsDrpDAL):
     _RESERVED_MODE_NAMES = ["nulo", "container", "root", "raiz"]
 
     def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None, components=None):
-        super(BaseDictDAL, self).__init__(drps)
+        super().__init__(drps)
         # Check that the structure of the base is correct
         self.ob_table = ob_table
         self.prod_table = prod_table
@@ -496,7 +496,7 @@ class BaseHybridDAL(Dict2DAL):
         return path
 
     def dump_data(self):
-        state = super(BaseHybridDAL, self).dump_data()
+        state = super().dump_data()
         state["rootdir"] = self.rootdir
         state["ob_ids"] = self.ob_ids
         return state

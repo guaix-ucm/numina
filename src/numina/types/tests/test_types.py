@@ -29,7 +29,7 @@ def test_null_type():
 
 def test_convert_in_out():
 
-    class AVal(object):
+    class AVal:
         pass
 
     class A(DataType):

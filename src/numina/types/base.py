@@ -13,7 +13,7 @@ from numina.util.parser import parse_arg_line
 from numina.datamodel import DataModel
 
 
-class DataTypeBase(object):
+class DataTypeBase:
     """Base class for input/output types of recipes."""
 
     def __init__(self, *args, **kwds):

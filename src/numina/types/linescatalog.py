@@ -19,12 +19,12 @@ from .product import DataProductMixin
 
 class DataProductType(DataProductMixin, DataType):
     def __init__(self, ptype, default=None):
-        super(DataProductType, self).__init__(ptype, default=default)
+        super().__init__(ptype, default=default)
 
 
 class LinesCatalog(DataProductType):
     def __init__(self):
-        super(LinesCatalog, self).__init__(ptype=numpy.ndarray)
+        super().__init__(ptype=numpy.ndarray)
 
     def __numina_load__(self, obj):
         with open(obj, "r") as fd:
@@ -36,7 +36,7 @@ class LinesCatalog(DataProductType):
 
         objl = self.convert(obj)
 
-        result = super(LinesCatalog, self).extract_db_info(objl, keys)
+        result = super().extract_db_info(objl, keys)
 
         result["tags"] = {}
         result["type"] = "LinesCatalog"

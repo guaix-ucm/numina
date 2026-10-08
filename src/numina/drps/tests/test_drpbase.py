@@ -16,7 +16,7 @@ def test_drpbase():
 
 def test_invalid_instrument1():
 
-    class Something(object):
+    class Something:
         pass
 
     drpbase = DrpBase()

@@ -17,7 +17,7 @@ import numina.util.context as ctx
 from numina.util.jsonencoder import ExtEncoder
 
 
-class ResultCompPlugin(object):
+class ResultCompPlugin:
     """Plugin to compare the results fo reductions"""
 
     def __init__(self, config, reference_dir=None, generate_dir=None, enabled=True):

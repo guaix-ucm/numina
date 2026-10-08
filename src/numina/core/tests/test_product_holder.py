@@ -17,14 +17,14 @@ from ..recipeinout import RecipeResult
 
 def test_product_out():
 
-    class AVal(object):
+    class AVal:
         def __init__(self, val):
             self.val = val
 
     class A(DataType):
 
         def __init__(self):
-            super(A, self).__init__(ptype=AVal)
+            super().__init__(ptype=AVal)
 
         def convert(self, obj):
             return AVal(val=1)

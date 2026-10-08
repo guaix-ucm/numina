@@ -10,7 +10,7 @@
 """Sequences base class"""
 
 
-class Sequence(object):
+class Sequence:
     def __init__(self, instrument, mode):
         self.instrument = instrument
         self.mode = mode

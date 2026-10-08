@@ -8,7 +8,7 @@
 #
 
 
-class Namespace(object):
+class Namespace:
     """Namespace class, like argparse.Namespace
 
     >>> nm = Namespace(a=1, b="field")

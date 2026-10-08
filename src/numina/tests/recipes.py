@@ -32,7 +32,7 @@ class BiasRecipe(numina.core.BaseRecipe):
     master_bias = numina.core.Result(MasterBias)
 
     def __init__(self, *args, **kwds):
-        super(BiasRecipe, self).__init__(*args, **kwds)
+        super().__init__(*args, **kwds)
         self.simulate_error = kwds.get("simulate_error", False)
 
 

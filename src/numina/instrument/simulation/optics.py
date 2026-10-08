@@ -11,7 +11,7 @@
 import numpy
 
 
-class Stop(object):
+class Stop:
     def __init__(self, name):
         self.name = name
 
@@ -19,7 +19,7 @@ class Stop(object):
         return numpy.zeros_like(wl)
 
 
-class Open(object):
+class Open:
     def __init__(self, name):
         self.name = name
 
@@ -27,7 +27,7 @@ class Open(object):
         return numpy.ones_like(wl)
 
 
-class Filter(object):
+class Filter:
     def __init__(self, name, transmission=None):
         self.name = name
 

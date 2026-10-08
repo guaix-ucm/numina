@@ -3,7 +3,7 @@ from ..load import load
 
 def test_load_base():
 
-    class A(object):
+    class A:
         pass
 
     tag = A()
@@ -14,7 +14,7 @@ def test_load_base():
 
 def test_load_method():
 
-    class A(object):
+    class A:
 
         def _datatype_load(self, obj):
             return obj + 1
@@ -27,7 +27,7 @@ def test_load_method():
 
 def test_load_method_deprecated():
 
-    class B(object):
+    class B:
 
         def __numina_load__(self, obj):
             return obj + 2
@@ -40,7 +40,7 @@ def test_load_method_deprecated():
 
 def test_load_method_register():
 
-    class C(object):
+    class C:
         pass
 
     def numina_load_func(tag, obj):

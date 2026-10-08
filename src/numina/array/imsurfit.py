@@ -138,7 +138,7 @@ def vertex_of_quadratic(coeffs):
     return xm, ym
 
 
-class FitOne(object):
+class FitOne:
     def __init__(self, x, y, z):
         """Fit a plane to a region using least squares."""
         x = x.astype("float")

@@ -49,7 +49,7 @@ class ResultOf(QueryModifier):
     def __init__(self, field, node="children", ignore_fail=False, id_field=None):
         from numina.types.frame import DataFrameType
 
-        super(ResultOf, self).__init__()
+        super().__init__()
 
         self.field = field
 

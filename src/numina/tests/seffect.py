@@ -4,7 +4,7 @@ Decorates a function to call another
 """
 
 
-class FuncCall(object):
+class FuncCall:
     """Record a function call"""
 
     def __init__(self):

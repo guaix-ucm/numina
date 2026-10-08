@@ -17,7 +17,7 @@ class Other(BaseStructuredCalibration):
     pass
 
 
-class Dal(object):
+class Dal:
     def search_parameter(self, name, stype, obsres, options=None):
         if name == "req5":
             return numina.dal.stored.StoredParameter(content=[1, 300, 12])

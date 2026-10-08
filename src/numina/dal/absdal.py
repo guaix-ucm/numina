@@ -19,7 +19,7 @@ class AbsDAL(DALInterface):
 
 class AbsDrpDAL(DALInterface):
     def __init__(self, drps, *args, **kwargs):
-        super(AbsDrpDAL, self).__init__()
+        super().__init__()
         self.drps = drps
 
     def search_recipe(self, ins, mode, pipeline):

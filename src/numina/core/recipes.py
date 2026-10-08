@@ -59,7 +59,7 @@ class BaseRecipe(metaclass=RecipeType):
     logger = logging.getLogger("numina.recipes.numina")
 
     def __new__(cls, *args, **kwargs):
-        recipe = super(BaseRecipe, cls).__new__(cls)
+        recipe = super().__new__(cls)
         recipe.instrument = kwargs.get("instrument", "UNKNOWN")
         recipe.mode = kwargs.get("mode", "UNKNOWN")
         recipe.pipeline = kwargs.get("pipeline", "default")
@@ -75,7 +75,7 @@ class BaseRecipe(metaclass=RecipeType):
         return recipe
 
     def __init__(self, *args, **kwargs):
-        super(BaseRecipe, self).__init__()
+        super().__init__()
         self.configure(**kwargs)
 
     def configure(self, **kwds):

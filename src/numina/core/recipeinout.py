@@ -22,19 +22,19 @@ import numina.types.qc
 _logger = logging.getLogger(__name__)
 
 
-class RecipeInOut(object):
+class RecipeInOut:
 
     def __init__(self, *args, **kwds):
-        super(RecipeInOut, self).__init__()
+        super().__init__()
         # Used to hold set values
         # Use this to avoid infinite recursion
-        super(RecipeInOut, self).__setattr__("_numina_desc_val", {})
+        super().__setattr__("_numina_desc_val", {})
         # instead of this
         # self._numina_desc_val = {}
         all_msg_errors = []
 
         # memorize aliases
-        super(RecipeInOut, self).__setattr__("_aliases", {})
+        super().__setattr__("_aliases", {})
 
         for key, req in self.stored().items():
             if req.alias:
@@ -70,7 +70,7 @@ class RecipeInOut(object):
             ref = self.__dict__["_aliases"][item]
             return setattr(self, ref.dest, value)
         else:
-            super(RecipeInOut, self).__setattr__(item, value)
+            super().__setattr__(item, value)
 
     def _finalize(self, all_msg_errors=None):
         """Access all the instance descriptors
@@ -161,10 +161,10 @@ class RecipeResult(RecipeResultBase):
             self.qc = kwds["qc"]
             del kwds["qc"]
 
-        super(RecipeResult, self).__init__(*args, **kwds)
+        super().__init__(*args, **kwds)
 
     def store_to(self, where):
-        saveres = super(RecipeResult, self).store_to(where)
+        saveres = super().store_to(where)
 
         saveres["qc"] = self.qc.name
         saveres["uuid"] = str(self.uuid)
@@ -187,7 +187,7 @@ class RecipeResult(RecipeResultBase):
         return img
 
 
-class define_result(object):
+class define_result:
     """Recipe decorator."""
 
     def __init__(self, resultClass):
@@ -201,7 +201,7 @@ class define_result(object):
         return klass
 
 
-class define_input(object):
+class define_input:
     """Recipe decorator."""
 
     def __init__(self, input_class):

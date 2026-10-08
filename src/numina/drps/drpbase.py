@@ -12,7 +12,7 @@
 import warnings
 
 
-class DrpBase(object):
+class DrpBase:
     """Store DRPs, base class"""
 
     def __init__(self):
@@ -45,7 +45,7 @@ class DrpGeneric(DrpBase):
     """Store DRPs.in a dictionary"""
 
     def __init__(self, drps=None):
-        super(DrpGeneric, self).__init__()
+        super().__init__()
         self.drps = drps
 
     def query_by_name(self, name):

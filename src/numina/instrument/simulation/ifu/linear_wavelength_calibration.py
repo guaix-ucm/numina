@@ -12,7 +12,7 @@
 import astropy.units as u
 
 
-class LinearWaveCal(object):
+class LinearWaveCal:
     """Class to store a linear wavelength calibration.
 
     The parameters are stored making use of astropy units.

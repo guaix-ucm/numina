@@ -12,7 +12,7 @@ import glob
 import os.path
 
 
-class FileInfo(object):
+class FileInfo:
     """Auxiliary class to store filename and associated information.
 
     Parameters

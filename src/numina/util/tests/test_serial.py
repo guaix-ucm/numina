@@ -5,7 +5,7 @@ def test_serial_empty_is_id():
 
     empty_serial = flow.SerialFlow([])
 
-    class Something(object):
+    class Something:
         pass
 
     inp = Something()

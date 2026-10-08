@@ -46,7 +46,7 @@ class RecipeType(type):
         filter_attr[ResultClass.__name__] = ResultClass
         filter_attr[ReqsClass.__name__] = ReqsClass
 
-        return super(RecipeType, cls).__new__(cls, classname, parents, filter_attr)
+        return super().__new__(cls, classname, parents, filter_attr)
 
     @classmethod
     def create_gen_class(cls, classname, baseclass, attributes):

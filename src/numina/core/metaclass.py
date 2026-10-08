@@ -38,7 +38,7 @@ class StoreType(type):
 
         new_attributes["__numina_stored__"] = n_stored
 
-        return super(StoreType, cls).__new__(cls, classname, parents, new_attributes)
+        return super().__new__(cls, classname, parents, new_attributes)
 
     def __setattr__(self, key, value):
         """Define __setattr__ in 'classes' created with this metaclass."""
@@ -49,7 +49,7 @@ class StoreType(type):
             nkey, nvalue = self.transform(key, value)
             self.__numina_stored__[nkey] = nvalue
 
-        super(StoreType, self).__setattr__(key, value)
+        super().__setattr__(key, value)
 
     @classmethod
     def exclude(cls, name, value):

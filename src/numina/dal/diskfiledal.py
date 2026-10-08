@@ -28,7 +28,7 @@ def _combinations(seq):
             yield j
 
 
-class FileFinder(object):
+class FileFinder:
 
     def candidates(self, directory):
         return [filename for filename in sorted(os.listdir(directory))]
@@ -61,19 +61,19 @@ class FileFinderGTC(FileFinder):
 
     def candidates(self, directory):
         base = [("result.json", 1)]
-        other = [(m, 0) for m in super(FileFinderGTC, self).candidates(directory)]
+        other = [(m, 0) for m in super().candidates(directory)]
         base.extend(other)
         return base
 
     def build_path(self, directory, value):
-        return super(FileFinderGTC, self).build_path(directory, value)
+        return super().build_path(directory, value)
 
     def build_final_path(self, directory, value):
         return os.path.join(directory, value[0]), value[1]
 
     def check(self, directory, value):
         fname, kind = value
-        return super(FileFinderGTC, self).check(directory, fname)
+        return super().check(directory, fname)
 
 
 def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
@@ -110,10 +110,10 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
 DAL_USE_OFFLINE_CALIBS = True
 
 
-class DiskFileDAL(object):
+class DiskFileDAL:
 
     def __init__(self, drp, rootdir, *args, **kwargs):
-        super(DiskFileDAL, self).__init__()
+        super().__init__()
         self.drp = drp
         self.rootdir = rootdir
         self.conf = "default"
