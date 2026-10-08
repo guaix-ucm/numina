@@ -600,7 +600,11 @@ def load_observations(obfiles, is_session=False):
             else:
                 _logger.info("observation results from %r", obfile)
                 sess = []
-                for doc in yaml.safe_load_all(fd):
+                for idx, doc in enumerate(yaml.safe_load_all(fd), start=1):
+                    if doc is None:
+                        # an empty document, for example after a final '---'
+                        continue
+                    validate_schema(doc, "oblock", source=f"{obfile} (document {idx})")
                     enabled = doc.get("enabled", True)
                     docid = doc["id"]
                     # the requirements of the OB are read from the OB table

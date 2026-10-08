@@ -14,6 +14,7 @@ import importlib
 
 import yaml
 
+from numina.schemas import validate as validate_schema
 from numina.util.objimport import import_object
 from .pipeline import ObservingMode
 from .pipeline import Pipeline
@@ -35,12 +36,17 @@ def check_section(node, section, keys=None):
 def drp_load(package, resource, confclass=None):
     """Load the DRPS from a resource file."""
     data = pkgutil.get_data(package, resource)
-    return drp_load_data(package, data, confclass=confclass)
+    return drp_load_data(package, data, confclass=confclass, source=f"{package}/{resource}")
 
 
-def drp_load_data(package, data, confclass=None):
-    """Load the DRPS from data."""
+def drp_load_data(package, data, confclass=None, source=None):
+    """Load the DRPS from data.
+
+    The data is validated with the schema of the DRP files, `source`
+    (the name of the file, for example) is used in the errors.
+    """
     drpdict = yaml.safe_load(data)
+    validate_schema(drpdict, "drp", source=source or f"DRP of {package}")
 
     # Read here additional requirements in configs
     pkg = f"{package}.recipes"

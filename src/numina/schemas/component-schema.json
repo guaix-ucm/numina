@@ -1,0 +1,218 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://guaix.fis.ucm.es/numina/component-schema.json",
+  "title": "Component",
+  "description": "An element of an instrument configuration: instrument, component, setup or properties",
+  "type": "object",
+  "properties": {
+    "name": {
+      "type": "string"
+    },
+    "description": {
+      "type": "string"
+    },
+    "type": {
+      "type": "string",
+      "enum": ["component", "properties", "instrument", "setup"]
+    },
+    "uuid": {
+      "$ref": "#/$defs/uuid"
+    },
+    "class": {
+      "description": "Class of the element, by default the class of its type",
+      "type": "string"
+    },
+    "date_start": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "date_end": {
+      "anyOf": [
+        {
+          "$ref": "#/$defs/datetime"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "properties": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/property"
+      }
+    },
+    "components": {
+      "description": "Components of the element, by name or by uuid",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/reference"
+      }
+    },
+    "setup": {
+      "type": "array",
+      "items": {
+        "anyOf": [
+          {
+            "$ref": "#/$defs/setup_values"
+          },
+          {
+            "$ref": "#/$defs/reference"
+          }
+        ]
+      }
+    }
+  },
+  "required": ["name", "description", "uuid", "type", "date_end", "date_start"],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "datetime": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(\\.[0-9]{1,6})?$"
+    },
+    "reference": {
+      "description": "Another element, by name or by uuid, with an optional id",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "uuid": {
+          "$ref": "#/$defs/uuid"
+        }
+      },
+      "oneOf": [
+        {
+          "required": ["name"]
+        },
+        {
+          "required": ["uuid"]
+        }
+      ],
+      "unevaluatedProperties": false
+    },
+    "setup_values": {
+      "description": "Values of the setup",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        },
+        "values": {}
+      },
+      "required": ["values"],
+      "unevaluatedProperties": false
+    },
+    "key_definition": {
+      "description": "FITS keyword that gives the value of the property",
+      "properties": {
+        "default": {},
+        "key": {
+          "type": "string"
+        },
+        "ext": {
+          "type": ["integer", "string"]
+        }
+      }
+    },
+    "property": {
+      "description": "A property of the element",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "string"
+        }
+      },
+      "required": ["id"],
+      "oneOf": [
+        {
+          "description": "Values that depend on other properties",
+          "properties": {
+            "id": true,
+            "depends": {
+              "type": "array",
+              "items": {
+                "type": "string"
+              }
+            },
+            "values": {}
+          },
+          "required": ["depends", "values"],
+          "additionalProperties": false
+        },
+        {
+          "description": "One of a set of values",
+          "$ref": "#/$defs/key_definition",
+          "properties": {
+            "id": true,
+            "one_of": {
+              "type": "array",
+              "minItems": 1
+            }
+          },
+          "required": ["one_of"],
+          "unevaluatedProperties": false
+        },
+        {
+          "description": "A value between limits",
+          "$ref": "#/$defs/key_definition",
+          "properties": {
+            "id": true,
+            "limits": {
+              "type": "array",
+              "maxItems": 2
+            }
+          },
+          "required": ["limits"],
+          "unevaluatedProperties": false
+        },
+        {
+          "description": "A reference to a property of another component, as component.property",
+          "properties": {
+            "id": true,
+            "references": {
+              "type": "string"
+            }
+          },
+          "required": ["references"],
+          "additionalProperties": false
+        },
+        {
+          "description": "The property of a properties element, by name",
+          "properties": {
+            "id": true,
+            "name": {
+              "type": "string"
+            }
+          },
+          "required": ["name"],
+          "additionalProperties": false
+        },
+        {
+          "description": "The property of a properties element, by uuid",
+          "properties": {
+            "id": true,
+            "uuid": {
+              "$ref": "#/$defs/uuid"
+            }
+          },
+          "required": ["uuid"],
+          "additionalProperties": false
+        }
+      ]
+    }
+  }
+}

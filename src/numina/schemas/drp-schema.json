@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://guaix.fis.ucm.es/numina/drp-schema.json",
+  "title": "DRP",
+  "description": "Description of a Data Reduction Pipeline (drp.yaml)",
+  "type": "object",
+  "properties": {
+    "name": {
+      "description": "Name of the instrument",
+      "type": "string"
+    },
+    "version": {
+      "description": "Version of the DRP, by default the version of the package",
+      "type": ["string", "number"]
+    },
+    "datamodel": {
+      "description": "Class of the data model of the instrument",
+      "$ref": "#/$defs/import_name"
+    },
+    "configurations": {
+      "description": "Instrument configurations (profiles)",
+      "type": "object",
+      "properties": {
+        "path": {
+          "description": "Package with the configuration files, by default PACKAGE.instrument.configs",
+          "type": "string"
+        },
+        "values": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/uuid"
+          }
+        },
+        "default": {
+          "$ref": "#/$defs/uuid"
+        }
+      },
+      "unevaluatedProperties": false
+    },
+    "modes": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/mode"
+      }
+    },
+    "pipelines": {
+      "description": "Pipelines of the DRP, by name",
+      "type": "object",
+      "properties": {
+        "default": {
+          "$ref": "#/$defs/pipeline"
+        }
+      },
+      "additionalProperties": {
+        "$ref": "#/$defs/pipeline"
+      },
+      "required": ["default"]
+    }
+  },
+  "required": ["name", "configurations", "modes", "pipelines"],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "uuid": {
+      "type": "string",
+      "pattern": "^[a-fA-F0-9]{8}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{4}-[a-fA-F0-9]{12}$"
+    },
+    "import_name": {
+      "description": "Fully qualified name of a Python object, as package.module.name",
+      "type": "string"
+    },
+    "mode": {
+      "description": "An observing mode",
+      "type": "object",
+      "properties": {
+        "key": {
+          "description": "Key of the mode, used in the observing blocks and the pipelines",
+          "type": "string"
+        },
+        "name": {
+          "type": "string"
+        },
+        "summary": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        },
+        "rawimage": {
+          "description": "Type of the raw images of the mode",
+          "type": "string"
+        },
+        "recipe": {
+          "$ref": "#/$defs/import_name"
+        },
+        "validator": {
+          "description": "Function that validates the observing blocks of the mode",
+          "$ref": "#/$defs/import_name"
+        },
+        "builder": {
+          "description": "Function that builds the observing blocks of the mode",
+          "$ref": "#/$defs/import_name"
+        },
+        "builder_options": {
+          "type": "array",
+          "items": {
+            "type": "object"
+          }
+        },
+        "tagger": {
+          "description": "Not used, the tags are extracted by the recipes"
+        }
+      },
+      "required": ["key", "name"],
+      "unevaluatedProperties": false
+    },
+    "recipe": {
+      "description": "A recipe (or a product), as the name of its class or with arguments",
+      "oneOf": [
+        {
+          "$ref": "#/$defs/import_name"
+        },
+        {
+          "type": "object",
+          "properties": {
+            "class": {
+              "$ref": "#/$defs/import_name"
+            },
+            "args": {
+              "type": "array"
+            },
+            "kwargs": {
+              "type": "object"
+            },
+            "links": {
+              "description": "Query options of the requirements, by name",
+              "type": "object"
+            },
+            "state": {
+              "type": "object"
+            }
+          },
+          "required": ["class"],
+          "unevaluatedProperties": false
+        }
+      ]
+    },
+    "pipeline": {
+      "type": "object",
+      "properties": {
+        "version": {
+          "type": ["string", "number"]
+        },
+        "recipes": {
+          "description": "Recipes, by observing mode",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/recipe"
+          }
+        },
+        "products": {
+          "description": "Types of the products, by name",
+          "type": "object",
+          "additionalProperties": {
+            "$ref": "#/$defs/recipe"
+          }
+        },
+        "provides": {
+          "description": "Products provided by the observing modes",
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "name": {
+                "type": "string"
+              },
+              "mode": {
+                "type": "string"
+              },
+              "field": {
+                "type": "string"
+              }
+            },
+            "required": ["name", "mode", "field"],
+            "unevaluatedProperties": false
+          }
+        }
+      },
+      "required": ["version", "recipes"],
+      "unevaluatedProperties": false
+    }
+  }
+}

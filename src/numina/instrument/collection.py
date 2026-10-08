@@ -21,6 +21,7 @@ if typing.TYPE_CHECKING:
 
 import attrs
 
+from numina.schemas import validate as validate_schema
 from .configorigin import ElementOrigin
 
 FileLike = str | os.PathLike
@@ -55,6 +56,7 @@ def load_paths_store(
             if obj.suffix == ".json":
                 with obj.open() as fd:
                     cont = json.load(fd)
+                    validate_schema(cont, "component", source=str(obj))
                     cont["origin"] = ElementOrigin.from_dict(cont)
                     if obj.name in comp_store:
                         _logger.warning(

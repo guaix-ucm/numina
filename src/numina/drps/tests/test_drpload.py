@@ -129,7 +129,7 @@ def test_drpsys_bad_file(capsys, drpmocker):
     drpsys.load()
     expected_msg = [
         "",
-        "Error is:  Missing key 'modes' inside 'root' node",
+        "Error is:  DRP of numina: invalid drp file, at top level: 'modes' is a required property",
         "Problem loading EntryPoint(name='TEST3', value='TEST3.loader', group='numina.pipeline.1')",
     ]
 

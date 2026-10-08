@@ -1,0 +1,78 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://guaix.fis.ucm.es/numina/oblock-schema.json",
+  "title": "Observing block",
+  "description": "An observing block, as read by numina from each document of a YAML file",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Identifier of the observing block, unique in the session",
+      "type": ["integer", "string"]
+    },
+    "instrument": {
+      "type": "string"
+    },
+    "mode": {
+      "description": "Key of the observing mode",
+      "type": "string"
+    },
+    "pipeline": {
+      "description": "Pipeline of the DRP, 'default' if not defined",
+      "type": "string"
+    },
+    "frames": {
+      "description": "Images of the observing block",
+      "$ref": "#/$defs/filenames"
+    },
+    "images": {
+      "description": "Alternative name of frames",
+      "$ref": "#/$defs/filenames"
+    },
+    "children": {
+      "description": "Identifiers of the observing blocks whose results are used by this one",
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/obid"
+      }
+    },
+    "parent": {
+      "description": "Identifier of the parent observing block, computed from the children of the parent",
+      "anyOf": [
+        {
+          "$ref": "#/$defs/obid"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "enabled": {
+      "description": "If false, the observing block is not reduced unless enabled in the command line",
+      "type": "boolean"
+    },
+    "requirements": {
+      "description": "Values of the requirements of the recipe, by name",
+      "type": "object"
+    },
+    "results": {
+      "type": "object"
+    },
+    "labels": {
+      "description": "Values of the tags, that override those of the images",
+      "type": "object"
+    }
+  },
+  "required": ["id", "instrument", "mode"],
+  "unevaluatedProperties": false,
+  "$defs": {
+    "obid": {
+      "type": ["integer", "string"]
+    },
+    "filenames": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
+    }
+  }
+}
