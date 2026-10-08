@@ -42,15 +42,24 @@ def base_config():
     return config
 
 
+def load_config():
+    """Configuration of numina, as used by the command line
+
+    The default values in numina.cfg, updated with the configuration
+    files of the user, $XDG_CONFIG_HOME/numina/numina.cfg and
+    .numina.cfg in the current directory, if they exist.
+    """
+    config = base_config()
+    read_files = config.read([os.path.join(xdg_config_home, "numina/numina.cfg"), ".numina.cfg"])
+    _logger.debug(f"Reading config files {read_files}")
+    return config
+
+
 def main(args=None):
     """Entry point for the Numina CLI."""
 
     # Configuration args from a text file
-    config = base_config()
-
-    # Extend with custom values
-    read_files = config.read([os.path.join(xdg_config_home, "numina/numina.cfg"), ".numina.cfg"])
-    _logger.debug(f"Reading config files {read_files}")
+    config = load_config()
 
     parser0 = argparse.ArgumentParser(
         description="Command line interface of Numina",

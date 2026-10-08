@@ -41,3 +41,24 @@ def test_main_passes_parameters(monkeypatch):
     args, extra_args, config = calls[0]
     assert args.obsresult == ["obs.yaml"]
     assert extra_args.extra_control == {"value": "3"}
+
+
+def test_load_config(tmp_path, monkeypatch):
+    """The configuration files of the user update the defaults"""
+    import numina.user.cli as cli
+
+    confdir = tmp_path / "xdg"
+    (confdir / "numina").mkdir(parents=True)
+    (confdir / "numina" / "numina.cfg").write_text("[tool.run]\ndatadir: rawdata\n")
+    workdir = tmp_path / "work"
+    workdir.mkdir()
+    (workdir / ".numina.cfg").write_text("[tool.db]\nfile: local-db.json\n")
+    monkeypatch.setattr(cli, "xdg_config_home", str(confdir))
+    monkeypatch.chdir(workdir)
+
+    config = cli.load_config()
+
+    assert config["tool.run"]["datadir"] == "rawdata"
+    assert config["tool.db"]["file"] == "local-db.json"
+    # the other defaults are kept
+    assert config["tool.run"]["resultfile_tmpl"] == "result.json"
