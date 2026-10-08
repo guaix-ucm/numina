@@ -1,4 +1,4 @@
-"""ResultOf with node='last', that is not implemented"""
+"""ResultOf with node='last' without a registry of reductions"""
 
 import pytest
 
@@ -14,12 +14,17 @@ QUERY_LAST = ResultOf("MODE.value", node="last")
 
 @pytest.fixture
 def dal():
-    """The DAL created by numina run"""
+    """The DAL created by numina run, without registry"""
     return HybridDAL(None, "", [], {})
 
 
+def test_mode_is_required():
+    with pytest.raises(ValueError, match="node 'last' requires the mode in the field, as 'MODE.value'"):
+        ResultOf("value", node="last")
+
+
 def test_search_result_relative_last(dal):
-    with pytest.raises(NoResultFound, match="node 'last' is not implemented"):
+    with pytest.raises(NoResultFound, match="node 'last' requires a registry of reductions"):
         dal.search_result_relative("value", None, ObservationResult(), result_desc=QUERY_LAST)
 
 

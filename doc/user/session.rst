@@ -60,6 +60,12 @@ with ``--parameter-NAME=VALUE`` have priority over the registry, and the
 products in the control file and in ``calibsdir`` are used if there is none
 in the registry.
 
+The results of other observing blocks requested by a recipe with
+``ResultOf("MODE.field", node="last")`` are the most recent result of the
+mode in the registry, for the same instrument and instrument profile and
+with quality control different from ``BAD``. Without a registry, these
+results are not found.
+
 The registry can be queried::
 
     session.products(type="MasterBias")

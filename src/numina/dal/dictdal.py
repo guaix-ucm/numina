@@ -448,14 +448,48 @@ class BaseHybridDAL(Dict2DAL):
                 raise NoResultFound("value not found in any node")
         elif result_node == "last":
             _logger.debug("search last node of %s", result_mode)
-            return self.search_result_last(name, tipo, result_desc)
+            return self.search_result_last(name, tipo, obsres, result_desc)
         else:
             msg = f"unknown node type {result_node}"
             raise TypeError(msg)
 
-    def search_result_last(self, name, tipo, result_desc):
-        # FIXME: Implement
-        raise NoResultFound(f"result of '{result_desc.field}' not found, node 'last' is not implemented")
+    def search_result_last(self, name, tipo, obsres, result_desc):
+        """The most recent result of the mode in the registry that has the field"""
+        if self.registry is None:
+            msg = (
+                f"result of '{result_desc.field}' not found, "
+                "node 'last' requires a registry of reductions (numina run --db)"
+            )
+            raise NoResultFound(msg)
+        candidates = self.registry.select_results(obsres.instrument, obsres.profile, result_desc.mode)
+        for res in candidates:
+            try:
+                return self._load_result_field(
+                    res["oblock_id"], res["result_dir"], res["result_file"], result_desc.attr
+                )
+            except NoResultFound:
+                # this result does not have the field
+                continue
+        raise NoResultFound(f"result of '{result_desc.field}' not found in the registry")
+
+    def _load_result_field(self, node_id, directory, filename, field):
+        """Load field of the result stored in directory/filename"""
+        # change directory to open result file
+        with working_directory(os.path.join(self.basedir, directory)):
+            if os.path.exists(filename):
+                with open(filename) as fd:
+                    result_data = json.load(fd)
+            else:
+                raise ValueError(f"{filename} not found in {directory}")
+
+            stored_result = StoredResult.load_data(result_data)
+
+            try:
+                content = getattr(stored_result, field)
+            except AttributeError:
+                raise NoResultFound(f"no field {field} found in result")
+
+            return StoredProduct(id=node_id, content=content, tags={})
 
     def build_product_path(self, drp, conf, name, tipo, obsres):
         path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
@@ -568,22 +602,3 @@ class HybridDAL(BaseHybridDAL):
         except KeyError as err:
             msg = f"field '{field}' not found in result of mode '{cobsres.mode}' id={node_id}"
             raise NoResultFound(msg) from err
-
-    def _load_result_field(self, node_id, directory, filename, field):
-        """Load field of the result stored in directory/filename"""
-        # change directory to open result file
-        with working_directory(os.path.join(self.basedir, directory)):
-            if os.path.exists(filename):
-                with open(filename) as fd:
-                    result_data = json.load(fd)
-            else:
-                raise ValueError(f"{filename} not found in {directory}")
-
-            stored_result = StoredResult.load_data(result_data)
-
-            try:
-                content = getattr(stored_result, field)
-            except AttributeError:
-                raise NoResultFound(f"no field {field} found in result")
-
-            return StoredProduct(id=node_id, content=content, tags={})

@@ -288,6 +288,7 @@ class Registry:
                 "qc": result.qc.name,
                 "mode": runinfo["mode"],
                 "instrument": runinfo["instrument"],
+                "profile": task.request_params["instrument_configuration"],
                 "pipeline": runinfo["pipeline"],
                 "recipe_class": runinfo["recipe_class"],
                 "recipe_fqn": runinfo["recipe_fqn"],
@@ -339,6 +340,28 @@ class Registry:
         """The most recent result of an OB, with QC not BAD"""
         candidates = [res for res in self.store.find("results", oblock_id=oblock_id) if res["qc"] != "BAD"]
         return _most_recent(candidates)
+
+    def select_results(self, instrument, profile, mode):
+        """Results of a mode, with QC not BAD, the most recent first
+
+        The results have the given instrument and profile.
+        """
+        candidates = [
+            res
+            for res in self.store.find("results", instrument=instrument, mode=mode)
+            if res["qc"] != "BAD" and self._result_profile(res) == profile
+        ]
+        return sorted(candidates, key=lambda doc: doc["id"], reverse=True)
+
+    def _result_profile(self, result):
+        """Profile of a result, from its task if it was recorded without it"""
+        if "profile" in result:
+            return result["profile"]
+        try:
+            task = self.store.get("tasks", result["task_id"])
+        except KeyError:
+            return None
+        return task["request_params"].get("instrument_configuration")
 
     def tasks(self, **equal):
         """Tasks in the registry, filtered by equality of fields"""

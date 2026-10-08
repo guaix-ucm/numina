@@ -25,7 +25,8 @@ class ResultOf(QueryModifier):
     ----------
     field : str
         Field of the result, as 'MODE.field' or 'field'. The mode
-        is only checked with node='prev' and node='prev-rel'.
+        is checked with node='prev' and node='prev-rel', and it is
+        required with node='last'.
     node : str, optional
         Observing blocks where the result is searched:
 
@@ -34,7 +35,9 @@ class ResultOf(QueryModifier):
           in the order they were loaded.
         - 'prev-rel': as 'prev', but only among the previous children
           of the same parent; if there is no parent, as 'prev'.
-        - 'last': not implemented, the query raises NoResultFound.
+        - 'last': the most recent result of the mode, of any observing
+          block, with the same instrument and instrument profile and
+          quality control not BAD. It requires a registry of reductions.
     ignore_fail : bool, optional
         With node='children', skip the children without result
         instead of raising NoResultFound.
@@ -74,6 +77,9 @@ class ResultOf(QueryModifier):
             self.attr = splitm[1]
         else:
             raise ValueError(f"malformed desc: {field}")
+
+        if self.node == "last" and self.mode is None:
+            raise ValueError(f"node 'last' requires the mode in the field, as 'MODE.{self.attr}'")
 
 
 class Ignore(QueryModifier):

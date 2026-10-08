@@ -155,3 +155,22 @@ def test_registry_with_other_store(tmp_path):
     store.insert("products", {"instrument": "TEST1", "profile": "P", "qc": "GOOD", "type": "T"})
     assert registry.select_product("TEST1", "P")["id"] == 1
     assert not (tmp_path / "unused.json").exists()
+
+
+def test_select_results(tmp_path):
+    from ..registry import Registry
+
+    registry = Registry(str(tmp_path / "db.json"), basedir=str(tmp_path))
+    store = registry.store
+    task = store.insert("tasks", {"request_params": {"instrument_configuration": "P1"}})
+    common = {"instrument": "TEST1", "mode": "bias"}
+    # recorded without profile, from the task
+    store.insert("results", dict(common, qc="GOOD", task_id=task))
+    store.insert("results", dict(common, qc="GOOD", profile="P1"))
+    store.insert("results", dict(common, qc="BAD", profile="P1"))
+    store.insert("results", dict(common, qc="GOOD", profile="P2"))
+    store.insert("results", {"instrument": "TEST1", "mode": "dark", "qc": "GOOD", "profile": "P1"})
+
+    results = registry.select_results("TEST1", "P1", "bias")
+    assert [res["id"] for res in results] == [2, 1]
+    assert registry.select_results("TEST1", "P3", "bias") == []
