@@ -31,3 +31,4 @@ classes contained in the package, see the :ref:`reference`.
    deploy_venv
    deploy_conda
    cli
+   session

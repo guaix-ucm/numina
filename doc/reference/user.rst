@@ -9,3 +9,7 @@
 .. automodule:: numina.user.console
    :synopsis: Console output
    :members:
+
+.. automodule:: numina.user.session
+   :synopsis: Reduction sessions, from scripts and notebooks
+   :members:
