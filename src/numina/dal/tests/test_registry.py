@@ -131,3 +131,27 @@ def test_invalid_file(tmp_path, content, msg):
     filename.write_text(content)
     with pytest.raises(ValueError, match=msg):
         JSONStore(str(filename))
+
+
+def test_store_interface(store):
+    from ..registry import Store
+
+    assert isinstance(store, Store)
+
+    class Incomplete(Store):
+        def insert(self, collection, doc):
+            return 1
+
+    with pytest.raises(TypeError):
+        Incomplete()
+
+
+def test_registry_with_other_store(tmp_path):
+    """The registry uses any Store"""
+    from ..registry import Registry
+
+    store = JSONStore(str(tmp_path / "other.json"))
+    registry = Registry("unused.json", basedir=str(tmp_path), store=store)
+    store.insert("products", {"instrument": "TEST1", "profile": "P", "qc": "GOOD", "type": "T"})
+    assert registry.select_product("TEST1", "P")["id"] == 1
+    assert not (tmp_path / "unused.json").exists()

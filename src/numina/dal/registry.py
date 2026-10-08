@@ -16,6 +16,7 @@ run of numina, a script or a notebook) can use them.
 The registry is stored in a JSON file, as collections of documents.
 """
 
+import abc
 import contextlib
 import copy
 import datetime
@@ -59,7 +60,37 @@ def atomic_write(filename, write):
         raise
 
 
-class JSONStore:
+class Store(abc.ABC):
+    """Storage of the registry, as collections of documents
+
+    Each document is a dictionary with an integer ``id``, unique in its
+    collection. The methods return copies of the documents. The changes
+    made inside :meth:`transaction` are stored together, or discarded if
+    it ends with an error.
+    """
+
+    @abc.abstractmethod
+    def transaction(self):
+        """Context manager that groups changes"""
+
+    @abc.abstractmethod
+    def insert(self, collection, doc):
+        """Insert a copy of `doc` in `collection`, return its id"""
+
+    @abc.abstractmethod
+    def update(self, collection, docid, values):
+        """Update the fields of a document with `values`"""
+
+    @abc.abstractmethod
+    def get(self, collection, docid):
+        """Return a document, KeyError if it does not exist"""
+
+    @abc.abstractmethod
+    def find(self, collection, **equal):
+        """Return the documents whose fields are equal to `equal`, in the order they were inserted"""
+
+
+class JSONStore(Store):
     """Collections of documents stored in a JSON file
 
     Each document is a dictionary with an integer ``id``, unique in its
@@ -184,11 +215,12 @@ class Registry:
         Products of the results, that can be used by other reductions.
     """
 
-    def __init__(self, filename, basedir=None):
+    def __init__(self, filename, basedir=None, store=None):
         self.filename = filename
         #: Base directory, the paths of the results are relative to it
         self.basedir = os.getcwd() if basedir is None else basedir
-        self.store = JSONStore(filename)
+        #: Storage of the documents, a :class:`Store` (JSONStore by default)
+        self.store = JSONStore(filename) if store is None else store
 
     def new_task(self, task, oblock):
         """Record a new task, return its id
