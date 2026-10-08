@@ -1,4 +1,4 @@
-"""Schemas of the DRP, component and observing block files"""
+"""Schemas of the DRP, instrument configuration and observing block files"""
 
 import json
 
@@ -11,7 +11,7 @@ from numina.schemas import SchemaValidationError, load_schema, validate
 UUID = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
 
 
-@pytest.mark.parametrize("name", ["control", "drp", "component", "oblock"])
+@pytest.mark.parametrize("name", ["control", "drp", "instconf", "oblock"])
 def test_schema_is_valid(name):
     schema = load_schema(name)
     assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
@@ -89,8 +89,8 @@ COMPONENT = {
 }
 
 
-def test_component_valid():
-    validate(COMPONENT, "component")
+def test_instconf_valid():
+    validate(COMPONENT, "instconf")
 
 
 @pytest.mark.parametrize(
@@ -104,10 +104,10 @@ def test_component_valid():
         (["components", 0], {"id": "x"}, "at components -> 0"),
     ],
 )
-def test_component_invalid(path, value, msg):
+def test_instconf_invalid(path, value, msg):
     obj = with_changes(COMPONENT, path, value)
     with pytest.raises(SchemaValidationError) as excinfo:
-        validate(obj, "component", source="component.json")
+        validate(obj, "instconf", source="component.json")
     assert msg in str(excinfo.value)
 
 
@@ -144,11 +144,11 @@ def test_oblock_invalid(path, value, msg):
     assert msg in str(excinfo.value)
 
 
-def test_component_file_is_validated(tmp_path):
+def test_instconf_file_is_validated(tmp_path):
     from numina.instrument.collection import load_paths_store
 
     (tmp_path / "bad.json").write_text(json.dumps(with_changes(COMPONENT, ["configurations"], {})))
-    with pytest.raises(SchemaValidationError, match="bad.json: invalid component file"):
+    with pytest.raises(SchemaValidationError, match="bad.json: invalid instconf file"):
         load_paths_store(file_paths=[tmp_path])
 
 

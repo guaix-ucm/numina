@@ -11,7 +11,7 @@ and the function to validate them.
 ``drp-schema.json``
    Description of a DRP (``drp.yaml``), validated when the DRP is loaded.
 
-``component-schema.json``
+``instconf-schema.json``
    Elements of the instrument configurations (instruments, components,
    setups and properties), validated when they are loaded.
 

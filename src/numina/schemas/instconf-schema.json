@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://numina.readthedocs.io/en/stable/component-schema.json",
-  "title": "Component",
+  "$id": "https://numina.readthedocs.io/en/stable/instconf-schema.json",
+  "title": "Instrument configuration",
   "description": "An element of an instrument configuration: instrument, component, setup or properties",
   "type": "object",
   "properties": {

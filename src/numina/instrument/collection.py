@@ -56,7 +56,7 @@ def load_paths_store(
             if obj.suffix == ".json":
                 with obj.open() as fd:
                     cont = json.load(fd)
-                    validate_schema(cont, "component", source=str(obj))
+                    validate_schema(cont, "instconf", source=str(obj))
                     cont["origin"] = ElementOrigin.from_dict(cont)
                     if obj.name in comp_store:
                         _logger.warning(
