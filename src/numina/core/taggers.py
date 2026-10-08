@@ -10,36 +10,8 @@
 """Function to retrieve tags from Observation results."""
 
 import itertools
-import warnings
 
 from numina.datamodel import DataModel
-
-
-def get_tags_from_full_ob(ob, reqtags=None):
-    """
-    Parameters
-    ----------
-    ob (ObservationResult): Observation result
-    reqtags (iterable): Keywords
-
-    Returns
-    -------
-    A dictionary
-
-    """
-    warnings.warn(
-        "'get_tags_from_full_ob' is deprecated, use 'extract_tags_from_obsres' instead",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-
-    if reqtags is None:
-        reqtags = []
-    # adding an override from reqtags
-    mappings = {r: r for r in reqtags}
-    datamodel = DataModel(mappings=mappings)
-
-    return extract_tags_from_obsres(ob, reqtags, datamodel, strict=True)
 
 
 def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True) -> dict:

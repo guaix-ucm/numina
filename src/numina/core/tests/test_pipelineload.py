@@ -22,7 +22,7 @@ def test_load_confs_default_path():
     assert excinfo.value.name == "numina.instrument.configs"
 
 
-@pytest.mark.parametrize("tagger", [None, ["KEY1"], "numina.core.taggers.get_tags_from_full_ob"])
+@pytest.mark.parametrize("tagger", [None, ["KEY1"], "numina.core.taggers.extract_tags_from_obsres"])
 def test_load_mode_ignores_tagger(tagger):
     """The per mode tagger of drp.yaml is ignored"""
     node = {"key": "bias", "name": "Bias", "summary": "", "description": "", "tagger": tagger}
