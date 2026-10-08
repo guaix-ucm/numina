@@ -1,0 +1,109 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://guaix.fis.ucm.es/numina/control-schema.json",
+  "title": "Control file",
+  "description": "Control file of numina run, in format 1: parameters of the recipes and precomputed products, by instrument and instrument profile",
+  "type": "object",
+  "properties": {
+    "version": {
+      "description": "Format of the control file",
+      "const": 1
+    },
+    "rootdir": {
+      "description": "Directory with products, organized by instrument and profile (calibsdir)",
+      "type": "string"
+    },
+    "requirements": {
+      "$ref": "#/$defs/requirements"
+    },
+    "parameters": {
+      "description": "Alternative name of requirements",
+      "$ref": "#/$defs/requirements"
+    },
+    "products": {
+      "description": "Precomputed products, by instrument and instrument profile",
+      "type": "object",
+      "additionalProperties": {
+        "description": "Products of an instrument, by instrument profile",
+        "type": "object",
+        "additionalProperties": {
+          "type": "array",
+          "items": {
+            "$ref": "#/$defs/product"
+          }
+        }
+      }
+    }
+  },
+  "unevaluatedProperties": false,
+  "$defs": {
+    "tags": {
+      "description": "Tags that select the entry, compared with the tags of the observation",
+      "type": "object",
+      "additionalProperties": {
+        "type": ["string", "number", "boolean", "null"]
+      }
+    },
+    "requirement": {
+      "description": "Value of a parameter of a recipe, for the given tags",
+      "type": "object",
+      "properties": {
+        "name": {
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/$defs/tags"
+        },
+        "content": {
+          "description": "Value of the parameter"
+        }
+      },
+      "required": ["name", "tags", "content"],
+      "unevaluatedProperties": false
+    },
+    "requirements": {
+      "description": "Parameters of the recipes, by instrument, instrument profile, pipeline and observing mode",
+      "type": "object",
+      "additionalProperties": {
+        "description": "Parameters of an instrument, by instrument profile",
+        "type": "object",
+        "additionalProperties": {
+          "description": "Parameters of an instrument profile, by pipeline",
+          "type": "object",
+          "additionalProperties": {
+            "description": "Parameters of a pipeline, by observing mode",
+            "type": "object",
+            "additionalProperties": {
+              "type": "array",
+              "items": {
+                "$ref": "#/$defs/requirement"
+              }
+            }
+          }
+        }
+      }
+    },
+    "product": {
+      "description": "A precomputed product",
+      "type": "object",
+      "properties": {
+        "id": {
+          "type": "integer"
+        },
+        "type": {
+          "description": "Name of the type of the product",
+          "type": "string"
+        },
+        "tags": {
+          "$ref": "#/$defs/tags"
+        },
+        "content": {
+          "description": "Path of the product, relative to datadir. Without it, the product is searched in rootdir",
+          "type": "string"
+        }
+      },
+      "required": ["id", "type", "tags"],
+      "unevaluatedProperties": false
+    }
+  }
+}

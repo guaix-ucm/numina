@@ -183,3 +183,20 @@ def test_unsupported_control_format(test1_drp, run_config, tmp_path, version):
     reqfile.write_text(yaml.safe_dump({"version": version, "database": {}}))
     with pytest.raises(ValueError, match=f"format {version} of the control file .* is not supported"):
         helpers.create_datamanager(run_config, str(reqfile))
+
+
+def test_invalid_control_file(test1_drp, run_config, tmp_path):
+    """The control file is validated with its schema"""
+    from numina.schemas import SchemaValidationError
+
+    reqfile = tmp_path / "control.yaml"
+    reqfile.write_text(yaml.safe_dump({"version": 1, "products": {"TEST1": [{"id": 1, "type": "T", "tags": {}}]}}))
+    with pytest.raises(SchemaValidationError, match="control.yaml: invalid control file, at products -> TEST1"):
+        helpers.create_datamanager(run_config, str(reqfile))
+
+
+def test_empty_control_file(test1_drp, run_config, tmp_path):
+    reqfile = tmp_path / "control.yaml"
+    reqfile.write_text("")
+    datamanager = helpers.create_datamanager(run_config, str(reqfile))
+    assert datamanager.backend is not None

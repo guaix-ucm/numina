@@ -36,6 +36,7 @@ dependencies = [
     'astropy >= 6.1.7',
     'attrs',
     'ccdproc',
+    'jsonschema >= 4.18',
     'lmfit',
     'matplotlib',
     'numpy >= 2',

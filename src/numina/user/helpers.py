@@ -21,6 +21,7 @@ import yaml
 import numina.drps
 from numina.dal.dictdal import HybridDAL
 from numina.dal.registry import Registry
+from numina.schemas import validate as validate_schema
 from numina.dal.utils import check_template, fill_template
 from numina.util.jsonencoder import ExtEncoder
 from numina.types.frame import DataFrameType
@@ -482,7 +483,8 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
     if reqfile:
         _logger.info("reading control from %s", reqfile)
         with open(reqfile, "r") as fd:
-            loaded_data = yaml.safe_load(fd)
+            # an empty file is an empty control
+            loaded_data = yaml.safe_load(fd) or {}
     else:
         _logger.info("no control file")
         loaded_data = {}
@@ -500,6 +502,8 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
         if control_format == 2:
             msg += ", the reductions can be recorded in a registry (numina run --db FILE)"
         raise ValueError(msg)
+    if reqfile:
+        validate_schema(loaded_data, "control", source=reqfile)
 
     components = create_com_store(sys_drps, profile_path_extra)
     # What rootdir are going to use
