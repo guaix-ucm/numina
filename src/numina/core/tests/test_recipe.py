@@ -10,7 +10,6 @@
 
 """Unit test for RecipeBase."""
 
-from ..metarecipes import RecipeType
 from ..recipes import BaseRecipe
 from ..recipeinout import RecipeInput, RecipeResult
 from ..requirements import ObservationResultRequirement
@@ -41,9 +40,9 @@ class PruebaRecipe1(BaseRecipe):
         return recipe_result
 
 
-def test_metaclass_empty_base():
+def test_recipe_empty_base():
 
-    class RecipeTest(metaclass=RecipeType):
+    class RecipeTest(BaseRecipe):
         pass
 
     assert hasattr(RecipeTest, "RecipeInput")
@@ -59,9 +58,9 @@ def test_metaclass_empty_base():
     assert RecipeTest.RecipeResult.__name__ == "RecipeResult"
 
 
-def test_metaclass():
+def test_recipe_io_classes():
 
-    class RecipeTest(metaclass=RecipeType):
+    class RecipeTest(BaseRecipe):
         obsresult = ObservationResultRequirement()
         someresult = Result(int, "Some integer")
 
@@ -72,6 +71,28 @@ def test_metaclass():
     assert RecipeTest.RecipeInput.__name__ == "RecipeTestInput"
 
     assert RecipeTest.RecipeResult.__name__ == "RecipeTestResult"
+
+
+def test_recipe_io_classes_inherit():
+
+    class RecipeBase1(BaseRecipe):
+        req1 = Requirement(int, "Some integer")
+        res1 = Result(int, "Some integer")
+
+    class RecipeTest(RecipeBase1):
+        req2 = Requirement(int, "Other integer")
+
+    # the requirements and results are moved to the generated classes
+    assert not hasattr(RecipeTest, "req1")
+    assert not hasattr(RecipeTest, "req2")
+    assert list(RecipeTest.requirements()) == ["req1", "req2"]
+    assert list(RecipeTest.products()) == ["res1"]
+    assert issubclass(RecipeTest.RecipeInput, RecipeBase1.RecipeInput)
+    # without new results, the result class of the base recipe is used
+    assert RecipeTest.RecipeResult is RecipeBase1.RecipeResult
+    assert RecipeTest.RecipeTestInput is RecipeTest.RecipeInput
+    assert RecipeTest.RecipeInput.__module__ == __name__
+    assert RecipeTest.RecipeInput.__qualname__.endswith("RecipeTest.RecipeTestInput")
 
 
 def test_recipe_with_autofield():

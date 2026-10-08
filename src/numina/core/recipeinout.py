@@ -15,7 +15,7 @@ Recipe inputs and outputs
 import uuid
 import logging
 
-from .metaclass import RecipeInputType, RecipeResultType
+from .dataholders import Requirement, Result
 import numina.store.dump
 import numina.types.qc
 
@@ -23,6 +23,32 @@ _logger = logging.getLogger(__name__)
 
 
 class RecipeInOut:
+    """Base class of the inputs and the results of the recipes.
+
+    The fields are the class attributes of type ``_numina_field_type``,
+    stored by name, with those of the base classes, in ``__numina_stored__``.
+    A field with a destination is renamed to it.
+    """
+
+    _numina_field_type = None
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+
+        stored = {}
+        for base in cls.__bases__:
+            stored.update(getattr(base, "__numina_stored__", {}))
+
+        field_type = cls._numina_field_type
+        for name, value in list(vars(cls).items()):
+            if field_type is not None and isinstance(value, field_type):
+                # the destination is set by EntryHolder.__set_name__
+                if value.dest != name:
+                    delattr(cls, name)
+                    setattr(cls, value.dest, value)
+                stored[value.dest] = value
+
+        cls.__numina_stored__ = stored
 
     def __init__(self, *args, **kwds):
         super().__init__()
@@ -128,14 +154,16 @@ class RecipeInOut:
         return qfields
 
 
-class RecipeInput(RecipeInOut, metaclass=RecipeInputType):
+class RecipeInput(RecipeInOut):
     """RecipeInput base class"""
 
-    pass
+    _numina_field_type = Requirement
 
 
-class RecipeResultBase(RecipeInOut, metaclass=RecipeResultType):
+class RecipeResultBase(RecipeInOut):
     """The result of a Recipe."""
+
+    _numina_field_type = Result
 
     def store_to(self, where):
 
@@ -216,3 +244,51 @@ class define_input:
 
 
 define_requirements = define_input
+
+
+def generate_docs(klass):
+    """Add documentation to generated classes"""
+    import numina.types.datatype
+
+    attrh = "Attributes\n" "----------\n"
+
+    doc = getattr(klass, "__doc__", None)
+
+    if doc is None or doc == "":
+        doc = f"{klass.__name__} documentation."
+
+    if len(klass.stored()):
+        doc = doc + "\n\n" + attrh
+
+    skeys = sorted(klass.stored().keys())
+    for key in skeys:
+        y = klass.stored()[key]
+
+        if isinstance(y, Requirement):
+            modo = "requirement"
+        elif isinstance(y, Result):
+            modo = "product"
+        else:
+            modo = ""
+        if y.type.isproduct():
+            tipo = y.type.__class__.__name__
+        elif isinstance(y.type, numina.types.datatype.PlainPythonType):
+            tipo = y.type.internal_type.__name__
+        else:
+            tipo = y.type.__class__.__name__
+
+        if y.optional:
+            if y.default_value():
+                modo = f"{modo}, optional, default={y.default}"
+            else:
+                modo = f"{modo}, optional"
+
+        descript = y.description
+        if descript:
+            field = f"{key} : {tipo}, {modo}\n {descript}\n"
+        else:
+            field = f"{key} : {tipo}, {modo}\n"
+        doc = doc + field
+
+    klass.__doc__ = doc
+    return klass

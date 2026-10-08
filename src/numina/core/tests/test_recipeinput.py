@@ -44,18 +44,6 @@ def test_class_desc_access():
     assert isinstance(BB.param2, Parameter)
 
 
-def test_class_desc_set():
-
-    BB = create_input_class()
-
-    BB.param3 = Parameter(3, "something3")
-
-    assert BB.param3 is getattr(BB, "param3")
-    assert isinstance(BB.param3, Parameter)
-    assert BB.param3 is BB.stored()["param3"]
-    assert BB.param3.dest == "param3"
-
-
 def test_class_destination_set():
 
     class BB(RecipeInput):

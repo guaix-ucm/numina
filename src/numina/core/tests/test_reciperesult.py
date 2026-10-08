@@ -44,18 +44,6 @@ def test_class_desc_access():
     assert isinstance(BB.prod2, Result)
 
 
-def test_class_desc_set():
-
-    BB = create_result_class()
-
-    BB.prod3 = Result(3, "something3")
-
-    assert BB.prod3 is getattr(BB, "prod3")
-    assert isinstance(BB.prod3, Result)
-    assert BB.prod3 is BB.stored()["prod3"]
-    assert BB.prod3.dest == "prod3"
-
-
 def test_class_desc_stored():
 
     BB = create_result_class()

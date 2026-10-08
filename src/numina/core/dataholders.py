@@ -45,6 +45,11 @@ class EntryHolder:
         self.validation = validation
         self.alias = alias
 
+    def __set_name__(self, owner, name):
+        """The destination is by default the name of the attribute."""
+        if self.dest is None:
+            self.dest = name
+
     def __get__(self, instance, owner):
         """Getter of the descriptor protocol."""
         if instance is None:

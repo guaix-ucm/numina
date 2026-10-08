@@ -25,15 +25,16 @@ from astropy.io import fits
 from numina.util.jsonencoder import ExtEncoder
 from numina.datamodel import DataModel
 from .. import __version__
+from .dataholders import EntryHolder, Requirement, Result
 from .recipeinout import RecipeResult as RecipeResultClass
 from .recipeinout import RecipeInput as RecipeInputClass
-from .metarecipes import RecipeType
+from .recipeinout import generate_docs
 from .oresult import ObservationResult
 from ..exceptions import NoResultFound
 from numina.core.taggers import extract_tags_from_obsres, extract_tags_from_img
 
 
-class BaseRecipe(metaclass=RecipeType):
+class BaseRecipe:
     """Base class for all instrument recipes
 
     Parameters
@@ -57,6 +58,35 @@ class BaseRecipe(metaclass=RecipeType):
     datamodel = DataModel()
     # Recipe own logger
     logger = logging.getLogger("numina.recipes.numina")
+
+    def __init_subclass__(cls, **kwargs):
+        """Move the requirements and the results to the input and result classes.
+
+        The requirements of the recipe become the fields of a new class
+        RECIPENAMEInput, derived from the RecipeInput of the base recipe,
+        and the results the fields of RECIPENAMEResult, derived from its
+        RecipeResult. If there are none, the class of the base recipe is
+        used. A RecipeInput or RecipeResult defined in the class is used
+        as the base class.
+        """
+        super().__init_subclass__(**kwargs)
+
+        requirements = {}
+        results = {}
+        for name, value in list(vars(cls).items()):
+            if isinstance(value, EntryHolder):
+                if isinstance(value, Requirement):
+                    requirements[name] = value
+                if isinstance(value, Result):
+                    results[name] = value
+                delattr(cls, name)
+
+        input_class = _create_io_class(cls, "Input", cls.RecipeInput, requirements)
+        result_class = _create_io_class(cls, "Result", cls.RecipeResult, results)
+        for klass in [input_class, result_class]:
+            setattr(cls, klass.__name__, klass)
+        cls.RecipeInput = input_class
+        cls.RecipeResult = result_class
 
     def __new__(cls, *args, **kwargs):
         recipe = super().__new__(cls)
@@ -328,6 +358,17 @@ class BaseRecipe(metaclass=RecipeType):
             else:
                 pass
         return metadata
+
+
+def _create_io_class(recipe_class, suffix, base, fields):
+    """Create the input or result class of a recipe, with its fields"""
+    if not fields:
+        return base
+    name = f"{recipe_class.__name__}{suffix}"
+    attributes = dict(fields)
+    attributes["__module__"] = recipe_class.__module__
+    attributes["__qualname__"] = f"{recipe_class.__qualname__}.{name}"
+    return generate_docs(type(name, (base,), attributes))
 
 
 def timeit(method):
