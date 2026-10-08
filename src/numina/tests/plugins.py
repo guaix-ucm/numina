@@ -101,7 +101,7 @@ def datamanager_remote(tmp_path_factory, request):
         optional. The observing blocks are added to the DataManager
     """
     from numina.user.cli import base_config
-    from numina.user.helpers import create_datamanager, load_observations
+    from numina.user.session import Session
 
     req_base_default = "https://guaix.fis.ucm.es/data/"
     req_base = getattr(request.module, "TEST_SET_HOST", req_base_default)
@@ -111,9 +111,6 @@ def datamanager_remote(tmp_path_factory, request):
     req_obs = getattr(request.module, "TEST_SET_OBS", None)
 
     basedir = tmp_path_factory.mktemp("manager")
-
-    datadir = basedir / req_datadir  # pathlib syntax
-    reqfile = basedir / req_control
 
     if req_tarname is None:
         raise ValueError("Undefined TEST_SET_FILE")
@@ -131,19 +128,13 @@ def datamanager_remote(tmp_path_factory, request):
 
         os.remove(downloaded.name)
 
-    # Insert OBS in the control file....
-    config = base_config()
-    section = config["tool.run"]
-    section["basedir"] = str(basedir)
-    section["datadir"] = str(datadir)
-    dm = create_datamanager(config, reqfile)
-
+    # base_config, the configuration files of the user are not used
+    session = Session(basedir=basedir, datadir=req_datadir, control=req_control, config=base_config())
     if req_obs is not None:
         obsfiles = [req_obs] if isinstance(req_obs, str) else req_obs
-        _, loaded_obs = load_observations([str(basedir / name) for name in obsfiles])
-        dm.backend.add_obs(loaded_obs)
+        session.add_observations(*obsfiles)
 
-    return dm
+    return session.datamanager
 
 
 def pytest_report_header(config):
