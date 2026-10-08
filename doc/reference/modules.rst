@@ -17,6 +17,7 @@ Numina modules
    modeling
    processing
    qa
+   schemas
    store
    treedict
    types

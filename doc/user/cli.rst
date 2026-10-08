@@ -49,7 +49,10 @@ It is called like this::
 
 .. option::  -r, --requirements filename
 
-   File with the description of the parameters of the recipe.
+   File with the description of the parameters of the recipe
+   (control file, in format 1). It is validated with the schema
+   ``control-schema.json`` of :mod:`numina.schemas`, the errors
+   show where the file is not valid.
 
 .. option:: --basedir path
 
