@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://guaix.fis.ucm.es/numina/oblock-schema.json",
+  "$id": "https://numina.readthedocs.io/en/stable/oblock-schema.json",
   "title": "Observing block",
   "description": "An observing block, as read by numina from each document of a YAML file",
   "type": "object",

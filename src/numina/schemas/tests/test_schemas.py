@@ -15,7 +15,7 @@ UUID = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
 def test_schema_is_valid(name):
     schema = load_schema(name)
     assert schema["$schema"] == "https://json-schema.org/draft/2020-12/schema"
-    assert schema["$id"] == f"https://guaix.fis.ucm.es/numina/{name}-schema.json"
+    assert schema["$id"] == f"https://numina.readthedocs.io/en/stable/{name}-schema.json"
     jsonschema.Draft202012Validator.check_schema(schema)
 
 

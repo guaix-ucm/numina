@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://guaix.fis.ucm.es/numina/drp-schema.json",
+  "$id": "https://numina.readthedocs.io/en/stable/drp-schema.json",
   "title": "DRP",
   "description": "Description of a Data Reduction Pipeline (drp.yaml)",
   "type": "object",

@@ -12,6 +12,7 @@
 # serve to show the default.
 #
 
+import glob
 import importlib.metadata
 
 # -- General configuration ----------------------------------------------------
@@ -128,6 +129,10 @@ html_theme = "sphinx_rtd_theme"
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ["_static"]
+
+# The JSON schemas, published in the root of the documentation, where
+# their $id points
+html_extra_path = sorted(glob.glob("../src/numina/schemas/*-schema.json"))
 
 # If not '', a 'Last updated on:' timestamp is inserted at every page bottom,
 # using the given strftime format.

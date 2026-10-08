@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://guaix.fis.ucm.es/numina/control-schema.json",
+  "$id": "https://numina.readthedocs.io/en/stable/control-schema.json",
   "title": "Control file",
   "description": "Control file of numina run, in format 1: parameters of the recipes and precomputed products, by instrument and instrument profile",
   "type": "object",
