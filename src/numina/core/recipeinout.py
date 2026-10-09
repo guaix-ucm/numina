@@ -16,6 +16,8 @@ import uuid
 import logging
 import warnings
 
+import numina.exceptions
+
 from .dataholders import Requirement, Result
 import numina.store.dump
 import numina.types.qc
@@ -125,25 +127,44 @@ class RecipeInOut:
         Each value is validated by its field, and then the checks of the
         class attribute ``__checkers__``, a list of objects with a method
         ``check(recipe_inout)``, that can validate the values together.
+        The optional fields without value are not validated.
+
+        Raises
+        ------
+        numina.exceptions.ValidationError
+            With the errors of all the fields and checks.
         """
 
+        errors = []
         for key, req in self.stored().items():
             val = getattr(self, key)
-            _logger.info("validate %s with a value of %s", req, val)
+            if val is None and req.optional:
+                continue
+            _logger.debug("validate %s with a value of %s", key, val)
             try:
                 req.validate(val)
-                _logger.info("validation passed")
             except Exception as error:
-                _logger.warning("validation failed with error %s", error)
+                errors.append(f"{key}: {_error_message(error)}")
 
         # Run checks defined in __checkers__
-        self._run_checks()
+        errors.extend(self._run_checks())
+
+        if errors:
+            for error in errors:
+                _logger.error("validation failed, %s", error)
+            raise numina.exceptions.ValidationError(f"invalid {type(self).__name__}: " + "; ".join(errors))
 
     def _run_checks(self):
+        """Run the checks of __checkers__, return the list of errors"""
+        errors = []
         checkers = getattr(self, "__checkers__", [])
 
         for check in checkers:
-            check.check(self)
+            try:
+                check.check(self)
+            except Exception as error:
+                errors.append(f"{type(check).__name__}: {_error_message(error)}")
+        return errors
 
     @classmethod
     def tag_names(cls):
@@ -301,3 +322,11 @@ def generate_docs(klass):
 
     klass.__doc__ = doc
     return klass
+
+
+def _error_message(error):
+    """The message of a validation error, with its type if it is not a ValidationError"""
+    msg = str(error) or repr(error)
+    if isinstance(error, numina.exceptions.ValidationError):
+        return msg
+    return f"{type(error).__name__}: {msg}"

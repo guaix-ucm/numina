@@ -118,6 +118,9 @@ class DataChecker:
     def __init__(self):
         self._loaders = {}
 
+    def __contains__(self, instrument_name):
+        return instrument_name in self._loaders
+
     def register(self, instrument_name):
         """Decorator that registers the function of `instrument_name`"""
 

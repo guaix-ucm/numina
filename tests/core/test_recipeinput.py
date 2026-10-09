@@ -13,6 +13,7 @@
 import pytest
 
 from numina.core.dataholders import Parameter
+from numina.exceptions import ValidationError
 from numina.core.recipeinout import RecipeInput
 
 
@@ -129,5 +130,30 @@ def test_checkers():
         param2 = Parameter(2, "something2")
 
     BB(param1=1, param2=2).validate()
-    with pytest.raises(ValueError, match="param1 > param2"):
+    with pytest.raises(ValidationError, match="Check: ValueError: param1 > param2"):
         BB(param1=3, param2=2).validate()
+
+
+def test_validate_all_errors():
+    """All the errors are raised together, the optional fields without value are skipped"""
+
+    def positive(value):
+        if value < 0:
+            raise ValidationError("must be >= 0")
+        return value
+
+    class BB(RecipeInput):
+        param1 = Parameter(1, "something1", validator=positive)
+        param2 = Parameter(2, "something2", validator=positive)
+        param3 = Parameter(None, "optional", optional=True)
+
+    bb = BB()
+    # invalid values, that the validator would reject when set
+    bb._numina_desc_val["param1"] = -1
+    bb._numina_desc_val["param2"] = -2
+    with pytest.raises(ValidationError) as excinfo:
+        bb.validate()
+    msg = str(excinfo.value)
+    assert "param1: must be >= 0" in msg
+    assert "param2: must be >= 0" in msg
+    assert "param3" not in msg
