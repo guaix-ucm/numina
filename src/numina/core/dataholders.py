@@ -15,6 +15,7 @@ import inspect
 import numina.exceptions
 import collections.abc
 import contextlib
+import copy
 import warnings
 
 from numina.exceptions import NoResultFound
@@ -157,6 +158,15 @@ class Product(Result):
         return f"Product(type={self.type!r}, dest={self.dest!r})"
 
 
+def _with_tags(obsres, tags):
+    """The observation result with other tags, without modifying it"""
+    if tags is obsres.tags:
+        return obsres
+    other = copy.copy(obsres)
+    other.tags = tags
+    return other
+
+
 @contextlib.contextmanager
 def tags_as_scalar(obsres):
     saved = obsres.tags
@@ -205,6 +215,34 @@ class Requirement(EntryHolder):
         an exception
     alias : str, optional
         Alternative name of the field in the RecipeInput object.
+
+    Notes
+    -----
+    The value of the requirement is searched by :meth:`query`, called by
+    :meth:`numina.core.recipes.BaseRecipe.build_recipe_input`, in this order:
+
+    1. If the query options are :class:`~numina.core.query.Ignore`, the
+       default value, without searching.
+    2. A value given in the command line, if the DAL has one
+       (``dal.has_extra``), returned by the DAL.
+    3. The observation result, with :meth:`query_on_ob`.
+    4. With :class:`~numina.core.query.ResultOf` query options, the
+       result of other observing blocks (``dal.search_result_relative``).
+    5. The DAL, with :meth:`query_on_dal`: the registry of reductions
+       or the directory of calibrations.
+
+    If the value is not found, :exc:`~numina.exceptions.NoResultFound`
+    is raised, and ``build_recipe_input`` calls :meth:`on_query_not_found`.
+
+    The search can be customized in a subclass, redefining:
+
+    - :meth:`query`, to replace the whole search;
+    - :meth:`query_on_ob`, to search in the observation result in other way;
+    - :meth:`query_on_dal_base`, to change the query of one value to the DAL;
+    - :meth:`on_query_not_found`, to act when the value is not found, for
+      example raising an exception with a better message.
+
+    The observation result passed to these methods must not be modified.
     """
 
     def __init__(
@@ -252,6 +290,7 @@ class Requirement(EntryHolder):
             )
 
     def query(self, dal, obsres, options=None):
+        """Search the value of the requirement, see the notes of the class"""
         from numina.core.query import ResultOf
 
         self._check_dest_is_set()
@@ -281,9 +320,17 @@ class Requirement(EntryHolder):
         return self.query_on_dal(dal, obsres, options=q_options)
 
     def query_on_dal(self, dal, obsres, options=None):
+        """Search the value of the requirement in the DAL"""
         return self.query_on_dal_rec(self.type, dal, obsres, options=options)
 
     def query_on_dal_rec(self, this_type, dal, obsres, options=None):
+        """Search a value of type `this_type` in the DAL.
+
+        With a MultiType, the first of its types that is found. With a
+        list that requires a query for each element, one query for each
+        set of tags of the observation result. Otherwise, one query,
+        with the first set of tags if there are several.
+        """
         import numina.types.multitype as mt
 
         mtype = isinstance(this_type, mt.MultiType)
@@ -295,9 +342,7 @@ class Requirement(EntryHolder):
             for next_type in this_type.node_type:
 
                 try:
-                    result = self.query_on_dal_rec(next_type, dal, obsres, options=options)
-                    this_type._current = next_type
-                    return result
+                    return self.query_on_dal_rec(next_type, dal, obsres, options=options)
                 except NoResultFound as notfound:
                     failures.append((next_type, notfound))
             else:
@@ -307,21 +352,16 @@ class Requirement(EntryHolder):
                 raise NoResultFound
 
         if not scalar and this_type.multi_query:
-
-            with tags_as_list(obsres) as obsres:
-                query_tags = obsres.tags
-                result = []
-                for idx, tags in enumerate(query_tags):
-                    obsres.tags = tags
-                    res = self.query_on_dal_rec(next_type, dal, obsres, options=options)
-                    result.append(res)
-                return result
+            query_tags = obsres.tags if isinstance(obsres.tags, list) else [obsres.tags]
+            return [
+                self.query_on_dal_rec(next_type, dal, _with_tags(obsres, tags), options=options) for tags in query_tags
+            ]
         else:
-            with tags_as_scalar(obsres) as obsres:
-                result = self.query_on_dal_base(this_type, dal, obsres, options=options)
-                return result
+            tags = obsres.tags[0] if isinstance(obsres.tags, list) else obsres.tags
+            return self.query_on_dal_base(this_type, dal, _with_tags(obsres, tags), options=options)
 
     def query_on_dal_base(self, next_type, dal, obsres, options=None):
+        """Query one value of type `next_type` to the DAL"""
         if next_type.isproduct():
             value = dal.search_product(self.dest, next_type, obsres, options=options)
         else:
@@ -329,9 +369,14 @@ class Requirement(EntryHolder):
         return value.content
 
     def on_query_not_found(self, notfound):
+        """Called by build_recipe_input when the value is not found"""
         pass
 
     def query_on_ob(self, ob):
+        """Search the value in the observation result.
+
+        In its requirements, by name or alias, or as an attribute.
+        """
         self._check_dest_is_set()
         # First check if the requirement is embedded
         # in the observation result
