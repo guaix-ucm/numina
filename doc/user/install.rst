@@ -99,6 +99,22 @@ You can all install the package in "editable" mode, including the "-e" option::
 
     pip install -e .
 
+Running the tests
++++++++++++++++++
+
+The tests use `pytest`_. Install numina with the optional dependencies
+for testing and run pytest from the root of the source tree::
+
+    pip install -e ".[test]"
+    pytest
+
+The tests that need data downloaded from a server are skipped by default,
+they are enabled with ``--remote-data=any``. The tests can be run in
+parallel with `pytest-xdist <https://pytest-xdist.readthedocs.io>`_; as
+they are short, a few processes are faster than one for each CPU::
+
+    pytest -n 8
+
 
 .. _virtualenv: https://virtualenv.pypa.io/
 .. _sphinx: http://sphinx.pocoo.org
