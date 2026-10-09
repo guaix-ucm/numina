@@ -231,7 +231,7 @@ def get_imgid_header(hdr, prefix=True):
         pre = "file:{}"
         value = hdr["filename"]
     else:
-        raise ValueError("no method to identity image")
+        raise ValueError("no method to identify image")
     if prefix:
         return pre.format(value)
     else:
