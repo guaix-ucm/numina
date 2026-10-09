@@ -54,6 +54,8 @@ def test_fits_history_handler(logger_fits):
 def test_logger_decorator():
 
     _logger = logging.getLogger("numina_test_logger")
+    # the level is set here, the test can run before test_fits_history_handler
+    _logger.setLevel(logging.DEBUG)
 
     class RecipeResult:
         pass
