@@ -7,7 +7,15 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Build a LoadableDRP from a yaml file"""
+"""Registries of functions that load, describe and check files
+
+``load`` and ``describe`` are :class:`~numina.core.dataload.DataLoaders`:
+called with the path of a file, they return its contents and a
+description (instrument and observing mode). ``check`` is a
+:class:`~numina.core.dataload.DataChecker` that checks an object with
+the function of its instrument. The DRPs can register their own
+functions, with a lower priority value to be used before these ones.
+"""
 
 import numina.core.dataload
 
@@ -16,6 +24,7 @@ load = numina.core.dataload.DataLoaders()
 
 @load.register("image/fits", priority=20)
 def load_fits_0(pathname):
+    """Open a FITS file"""
     import astropy.io.fits as fits
 
     return fits.open(pathname)
@@ -23,6 +32,7 @@ def load_fits_0(pathname):
 
 @load.register("application/json", priority=20)
 def load_json(pathname):
+    """Load a JSON file"""
     import json
 
     with open(pathname) as fd:
@@ -31,6 +41,7 @@ def load_json(pathname):
 
 @load.register("application/json", numina.core.dataload.is_json_structured, priority=5)
 def load_json(pathname):  # noqa: F811
+    """Load a JSON file with a serialized object, of the class in 'type_fqn'"""
     import json
     from numina.util.objimport import import_object
 
@@ -69,6 +80,7 @@ _describe_keys = [
 
 @describe.register("image/fits", priority=20)
 def describe_fits_0(pathname):
+    """Return the instrument and the observing mode of a FITS file, from INSTRUME and OBSMODE"""
     import astropy.io.fits as fits
 
     with fits.open(pathname) as hdulist:
@@ -81,6 +93,7 @@ def describe_fits_0(pathname):
 
 @describe.register("application/json", numina.core.dataload.is_json_structured, priority=20)
 def describe_json(pathname):
+    """Return the instrument of a serialized object; the observing mode is not known"""
     import json
     from numina.util.objimport import import_object
 

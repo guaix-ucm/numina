@@ -7,10 +7,14 @@
 # License-Filename: LICENSE.txt
 #
 
+"""Efficiency of the elements of an instrument"""
+
 import numpy
 
 
 class Efficiency:
+    """Efficiency as a function of the wavelength, 1 for all of them"""
 
     def response(self, wl):
+        """Efficiency at the wavelengths `wl`"""
         return numpy.ones_like(wl)

@@ -23,7 +23,11 @@ from numina.datamodel import get_imgid
 def basic_processing_with_combination(
     rinput, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
 ):
+    """Combine the frames of the observation result of a recipe and process the result.
 
+    It calls :func:`basic_processing_with_combination_frames` with the
+    frames of ``rinput.obresult``.
+    """
     return basic_processing_with_combination_frames(
         rinput.obresult.frames,
         reduction_flows,
@@ -37,7 +41,24 @@ def basic_processing_with_combination(
 def basic_processing_with_combination_frames(
     frames, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
 ):
+    """Combine frames and process the result with a reduction flow.
 
+    Parameters
+    ----------
+    frames : list of DataFrame
+        Frames to combine.
+    reduction_flows : callable or list of callable
+        Flow applied to the combined image, as the result of
+        ``BaseRecipe.init_filters``. With a list, only its first
+        element is used.
+    method, method_kwargs, errors, prolog
+        As in :func:`combine_frames`.
+
+    Returns
+    -------
+    astropy.io.fits.HDUList
+        The combined and processed image.
+    """
     result = combine_frames(frames, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog)
 
     if isinstance(reduction_flows, list):
@@ -52,19 +73,21 @@ def basic_processing_with_combination_frames(
 
 
 def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True, prolog=None):
-    """
+    """Combine the images of a list of frames.
+
+    The frames are opened and combined with :func:`combine_imgs`.
 
     Parameters
     ----------
-    frames
-    method
-    method_kwargs
-    errors
-    prolog
+    frames : list of DataFrame
+        Frames to combine.
+    method, method_kwargs, errors, prolog
+        As in :func:`combine_imgs`.
 
     Returns
     -------
-
+    astropy.io.fits.HDUList
+        The combined image.
     """
 
     with contextlib.ExitStack() as stack:
@@ -77,20 +100,42 @@ def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True,
 def combine_imgs(
     hduls, method=combine.mean, method_kwargs=None, errors=True, prolog=None, crmasks=None, use_lamedian=False
 ):
-    """
+    """Combine the primary HDUs of a list of images.
+
+    The header of the result is the header of the first image, with
+    HISTORY entries that record the method and the combined images,
+    NUM-NCOM, the number of raw images combined, and a new UUID. The
+    extensions of the first image are copied to the result.
 
     Parameters
     ----------
-    hduls
-    method
-    method_kwargs
-    errors
-    prolog
-    crmasks
+    hduls : list of astropy.io.fits.HDUList
+        Images to combine, at least one.
+    method : callable, optional
+        Combination function of :mod:`numina.array.combine`, the mean
+        by default.
+    method_kwargs : dict, optional
+        Arguments passed to `method`. The default 'dtype' is 'float32'.
+    errors : bool, optional
+        If True, the variance and the number of pixels combined are
+        appended as the extensions VARIANCE and MAP.
+    prolog : str, optional
+        Text added to the HISTORY of the result before the other entries.
+    crmasks : optional
+        Masks of cosmic rays, passed to the methods that use them
+        ('mediancr', 'meancrt', 'meancr' and 'meancr2').
+    use_lamedian : bool, optional
+        Not used.
 
     Returns
     -------
+    astropy.io.fits.HDUList
+        The combined image.
 
+    Raises
+    ------
+    ValueError
+        If `hduls` is empty.
     """
 
     _logger = logging.getLogger(__name__)
@@ -148,6 +193,7 @@ def combine_imgs(
 
 
 def main(args=None):
+    """Command line program that combines FITS images with the mean or the median"""
     import argparse
 
     parser = argparse.ArgumentParser(prog="combine")

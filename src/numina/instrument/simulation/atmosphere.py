@@ -7,11 +7,25 @@
 # License-Filename: LICENSE.txt
 #
 
+"""Models of the atmosphere: emission, extinction, refraction and seeing"""
+
 import math
 from astropy.modeling.functional_models import Gaussian2D, Moffat2D
 
 
 class AtmosphereModel:
+    """Model of the atmosphere.
+
+    Parameters
+    ----------
+    twilight, nightsky, extinction : callable
+        Spectrum of the twilight, spectrum of the night sky, and
+        extinction, as functions of the wavelength.
+    seeing : object
+        Seeing model, as :class:`SeeingSizeModel` or :class:`ConstSeeing`.
+    refraction : object
+        Model with a method 'refraction(z, wl, ref)'.
+    """
 
     def __init__(self, twilight, nightsky, seeing, extinction, refraction):
         self.tw_interp = twilight
@@ -33,32 +47,50 @@ class AtmosphereModel:
         return self.ext_interp(wl_in)
 
     def refraction(self, z, wl, ref):
+        """Atmospheric refraction at the zenith distance `z` and wavelength `wl`, relative to `ref`"""
         return self.refraction_model.refraction(z, wl, ref)
 
 
 class SeeingSizeModel:
+    """Seeing that depends on the wavelength and the zenith distance.
+
+    Parameters
+    ----------
+    wl : float
+        Reference wavelength.
+    r0 : float
+        Fried parameter at the reference wavelength and the zenith.
+    """
+
     def __init__(self, wl, r0):
         self._r0 = r0
         self._wl0 = wl
 
     def fwhm(self, wl, zd):
+        """FWHM of the seeing at the wavelength `wl` and zenith distance `zd` (radians)"""
         return 1.2 * wl / self.r0(wl, zd)
 
     def r0(self, wl, zd):
+        """Fried parameter at the wavelength `wl` and zenith distance `zd` (radians)"""
         return self._r0 * (wl / self._wl0) ** 1.2 * math.cos(zd)
 
     def profile(self, fwhm):
+        """Normalized Gaussian profile with the given FWHM"""
         return generate_gaussian_profile(fwhm)
 
 
 class ConstSeeing:
+    """Seeing with a constant FWHM"""
+
     def __init__(self, seeing):
         self._s = seeing
 
     def fwhm(self, wl, zd):
+        """FWHM of the seeing, the same for all wavelengths and zenith distances"""
         return self._s
 
     def profile(self, fwhm):
+        """Normalized Gaussian profile with the given FWHM"""
         return generate_gaussian_profile(fwhm)
 
 

@@ -13,7 +13,11 @@ import warnings
 
 
 class QueryModifier:
-    pass
+    """Base class of the options that modify the query of a requirement.
+
+    They are given in the 'query_opts' of a requirement or in the 'links'
+    of a recipe in drp.yaml.
+    """
 
 
 class Constraint(QueryModifier):

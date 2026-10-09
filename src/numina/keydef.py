@@ -6,11 +6,14 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
+"""Definitions of the values stored in keywords of FITS headers"""
 
 from astropy.io.fits import HDUList, Header
 
 
 class QueryAttribute:
+    """An attribute used to query products, with its name and its type"""
+
     def __init__(self, name, tipo, description=""):
         self.name = name
         self.type = tipo
@@ -18,6 +21,21 @@ class QueryAttribute:
 
 
 class KeyDefinition:
+    """The definition of a value stored in a keyword of a FITS header.
+
+    Parameters
+    ----------
+    key : str
+        Name of the keyword.
+    ext : int or str, optional
+        Extension of the HDUList with the keyword, the primary by default.
+    default : optional
+        Value used if the keyword is not in the header.
+    convert : callable, optional
+        Function applied to the value read from the header, and to the
+        value written in it.
+    """
+
     def __init__(self, key: str, ext: int | str | None = None, default=None, convert=None):
         self.key = key
         self.ext = 0 if ext is None else ext
@@ -37,6 +55,7 @@ class KeyDefinition:
                 raise ValueError("head is not HDUList nor Header")
 
     def get_value(self, head: HDUList | Header):
+        """Return the value of the keyword in `head`, an HDUList or a Header"""
         hdr = self._get_header(head)
         value = hdr.get(self.key, self.default)
         if self.convert:
@@ -44,6 +63,7 @@ class KeyDefinition:
         return value
 
     def set_value(self, head: HDUList | Header, value=None):
+        """Write `value` in the keyword of `head`, the default if `value` is None"""
         hdr = self._get_header(head)
 
         if value is None:
@@ -64,6 +84,12 @@ class FITSKeyExtractor:
     """Extract values from FITS images"""
 
     def __init__(self, values):
+        """Create the extractor from a dictionary of definitions.
+
+        The value of each name can be a :class:`KeyDefinition`, the name
+        of a keyword, a tuple (keyword, default), a tuple (keyword,
+        extension, convert), or any callable that receives the HDUList.
+        """
         self.map = {}
         for key, entry in values.items():
             if isinstance(entry, KeyDefinition):
@@ -91,6 +117,7 @@ class FITSKeyExtractor:
             self.map[key] = newval
 
     def extract(self, value, hdulist):
+        """Return the value with name `value` from `hdulist`"""
         extractor = self.map[value]
         return extractor(hdulist)
 

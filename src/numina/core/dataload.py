@@ -7,7 +7,13 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Build a LoadableDRP from a yaml file"""
+"""Registries of functions that handle files by their type
+
+A :class:`DataLoaders` selects the function by the MIME type of the file
+and an optional predicate. A :class:`DataChecker` selects it by the name
+of the instrument. The registries used by numina are in
+:mod:`numina.core.config`.
+"""
 
 import warnings
 import mimetypes
@@ -44,10 +50,30 @@ def is_json_structured(pathname):
 
 
 class DataLoaders:
+    """Registry of functions that handle a file, selected by its type.
+
+    A function is registered with :meth:`register`, for a MIME type and,
+    optionally, a predicate of the path. Calling the registry with a path
+    calls the first registered function whose MIME type is the type of
+    the file, as guessed from its name, and whose predicate is true.
+    """
+
     def __init__(self):
         self._loaders = []
 
     def register(self, mtype, is_func=None, priority=20):
+        """Decorator that registers a function.
+
+        Parameters
+        ----------
+        mtype : str
+            MIME type of the files handled, as 'image/fits'.
+        is_func : callable, optional
+            Predicate of the path, the function is used only if it
+            returns True. By default, all the files of the type.
+        priority : int, optional
+            The functions with lower values are tried first.
+        """
 
         if is_func is None:
 
@@ -62,6 +88,13 @@ class DataLoaders:
         return wrapper
 
     def dispatch(self, pathname):
+        """Call the function that handles `pathname` and return its result.
+
+        Raises
+        ------
+        TypeError
+            If no function handles the file.
+        """
 
         mmtype, enc = mimetypes.guess_type(pathname)
         # This is ordered by priority
@@ -76,10 +109,17 @@ class DataLoaders:
 
 
 class DataChecker:
+    """Registry of functions that check objects, selected by instrument.
+
+    A function is registered with :meth:`register` for the name of an
+    instrument, and called as ``func(obj, astype=None, level=None)``.
+    """
+
     def __init__(self):
         self._loaders = {}
 
     def register(self, instrument_name):
+        """Decorator that registers the function of `instrument_name`"""
 
         def wrapper(func):
             self._loaders[instrument_name] = func
@@ -88,6 +128,11 @@ class DataChecker:
         return wrapper
 
     def dispatch(self, instrument, hdulist, astype=None, level=None):
+        """Check `hdulist` with the function of `instrument`.
+
+        If there is no function for the instrument, a warning is emitted
+        and None is returned.
+        """
         try:
             func = self._loaders[instrument]
         except KeyError:

@@ -11,12 +11,24 @@
 
 
 class Sequence:
+    """Base class of the sequences of actions of an observing mode.
+
+    Parameters
+    ----------
+    instrument : str
+        Name of the instrument.
+    mode : str
+        Observing mode.
+    """
+
     def __init__(self, instrument, mode):
         self.instrument = instrument
         self.mode = mode
 
     def setup_instrument(self, instrument):
+        """Configure `instrument` for the sequence, nothing by default"""
         pass
 
     def run(self, **kwds):
+        """Run the sequence, to be implemented by subclasses"""
         raise NotImplementedError

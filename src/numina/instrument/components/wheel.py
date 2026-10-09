@@ -6,6 +6,7 @@
 # SPDX-License-Identifier: GPL-3.0-or-later
 # License-Filename: LICENSE.txt
 #
+"""Devices with several positions, that hold objects (filters, gratings...)"""
 
 import typing
 
@@ -21,6 +22,21 @@ from numina.instrument.signal import Signal
 
 
 class Carrousel(HWDevice):
+    """A device with a fixed number of positions, each holding an object.
+
+    The objects are strings or devices with a name. Moving to a position
+    selects its object. The signal ``changed`` is emitted when the
+    position changes, and ``moved`` after any movement, both with the
+    new position.
+
+    Parameters
+    ----------
+    cid : str
+        Name of the device.
+    capacity : int
+        Number of positions.
+    """
+
     def __init__(
         self,
         cid,
@@ -41,12 +57,15 @@ class Carrousel(HWDevice):
         self.moved = Signal()
 
     def current(self):
+        """Return the object in the current position"""
         return self._current
 
     def pos(self):
+        """Return the current position"""
         return self._pos
 
     def put_in_pos(self, obj, pos: int):
+        """Put `obj` in the position `pos`"""
         if pos >= self._capacity or pos < 0:
             raise ValueError("position greater than capacity or negative")
 
@@ -54,6 +73,7 @@ class Carrousel(HWDevice):
         self._current = self._container[self._pos]
 
     def move_to(self, pos: int):
+        """Move to the position `pos`"""
         if pos >= self._capacity or pos < 0:
             raise ValueError(f"Position {pos:d} out of bounds")
 
@@ -64,7 +84,7 @@ class Carrousel(HWDevice):
         self.moved.emit(self._pos)
 
     def select(self, name):
-        # find pos of object with name
+        """Move to the position of the object named `name`"""
         for idx, item in enumerate(self._container):
             if item:
                 if isinstance(item, str):
@@ -79,6 +99,7 @@ class Carrousel(HWDevice):
 
     @property
     def position(self):
+        """The current position, setting it moves the device"""
         return self._pos
 
     @position.setter
@@ -86,6 +107,7 @@ class Carrousel(HWDevice):
         self.move_to(pos)
 
     def init_config_info(self):
+        """Return the configuration, with the selected object in 'selected'"""
         info = super().init_config_info()
         if self._current:
             if isinstance(self._current, str):
@@ -102,6 +124,10 @@ class Carrousel(HWDevice):
 
     @property
     def label(self):
+        """Name of the object in the current position, 'Unknown' if empty.
+
+        Setting it selects the object with that name.
+        """
         if self._current:
             if isinstance(self._current, str):
                 lab = self._current
@@ -126,6 +152,7 @@ class Carrousel(HWDevice):
         properties=None,
         setup=None,
     ) -> Self:
+        """Create the device from a component, with the 'capacity' of its setup (1 by default)"""
         capacity = 1
         if setup is not None:
             capacity = setup.values["capacity"]
@@ -136,6 +163,8 @@ class Carrousel(HWDevice):
 
 
 class Wheel(Carrousel):
+    """A carrousel that can also turn to the next position"""
+
     def __init__(
         self,
         cid,
@@ -146,6 +175,7 @@ class Wheel(Carrousel):
         super().__init__(cid, capacity, origin=origin, parent=parent)
 
     def turn(self):
+        """Move to the next position, after the last one to the first"""
         self._pos = (self._pos + 1) % self._capacity
         self._current = self._container[self._pos]
         self.changed.emit(self._pos)

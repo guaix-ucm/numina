@@ -20,7 +20,7 @@ class RunCounter:
         self.last = last
 
     def runstring(self):
-        """Return the run number and the file name."""
+        """Return the file name of the next run and increase the counter."""
         cfile = self.template % self.last
         self.last += 1
         return cfile
@@ -43,11 +43,13 @@ class PersistentRunCounter(RunCounter):
         self.pstore = pstore
 
     def store(self):
+        """Store the next run number in the file `pstore`"""
         with open(self.pstore, "w") as pkl_file:
             json.dump(self.last, pkl_file)
 
     @staticmethod
     def load(pstore, last):
+        """Read the next run number from `pstore`, or create it with `last`"""
         file_exists = True
 
         try:
@@ -70,6 +72,11 @@ class PersistentRunCounter(RunCounter):
 
 
 def extract(header, meta, path, key, selector=None, default=None):
+    """Write in `header[key]` the value of `meta` at the sequence of keys `path`.
+
+    The value is transformed with `selector`. If it is missing, `default`
+    is written, unless it is None.
+    """
     m = meta
     if selector is None:
 
@@ -87,6 +94,7 @@ def extract(header, meta, path, key, selector=None, default=None):
 
 
 def extractm(meta, path, selector=None):
+    """Return the value of `meta` at the sequence of keys `path`, transformed with `selector`"""
     m = meta
     if selector is None:
 
