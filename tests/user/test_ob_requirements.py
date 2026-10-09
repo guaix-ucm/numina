@@ -14,7 +14,7 @@ from numina.user.clirundal import mode_run_common_obs
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.drps.tests.configs
+  path: numina.testing.drps.configs
 modes:
   - key: param
     name: Param

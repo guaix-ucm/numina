@@ -61,3 +61,23 @@ def test_warns_define_requirements():
             pass
 
     assert RecipeTest.RecipeInput is MyInput
+
+
+def test_warns_numina_tests(monkeypatch):
+    import importlib
+    import sys
+
+    for name in list(sys.modules):
+        if name == "numina.tests" or name.startswith("numina.tests."):
+            monkeypatch.delitem(sys.modules, name)
+
+    with pytest.warns(DeprecationWarning, match="numina.tests is deprecated"):
+        importlib.import_module("numina.tests")
+
+    import numina.testing.plugins
+    import numina.testing.testcache
+    from numina.tests import testcache
+    from numina.tests.plugins import pytest_configure
+
+    assert testcache is numina.testing.testcache
+    assert pytest_configure is numina.testing.plugins.pytest_configure

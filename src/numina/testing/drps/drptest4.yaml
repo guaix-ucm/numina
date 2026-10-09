@@ -1,7 +1,7 @@
 name: TEST4
 version: "1"
 configurations:
-  path: numina.drps.tests.configs
+  path: numina.testing.drps.configs
 modes:
   - description: Bias
     key: bias
@@ -22,11 +22,11 @@ modes:
 pipelines:
   default:
     recipes:
-      bias: numina.tests.recipes.BiasRecipe
-      dark: numina.tests.recipes.DarkRecipe
-      image_b: numina.tests.recipes.ImageRecipe
+      bias: numina.testing.recipes.BiasRecipe
+      dark: numina.testing.recipes.DarkRecipe
+      image_b: numina.testing.recipes.ImageRecipe
       image_c:
-        class: numina.tests.recipes.ImageRecipeCom
+        class: numina.testing.recipes.ImageRecipeCom
         links:
           obresult:
             result_of: {field: ImageBase.result_image, node: children}

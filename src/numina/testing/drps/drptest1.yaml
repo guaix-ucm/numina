@@ -1,7 +1,7 @@
 name: TEST1
 version: "1"
 configurations:
-  path: numina.drps.tests.configs
+  path: numina.testing.drps.configs
 modes:
   - description: A recipe that always fails
     key: fail
@@ -23,14 +23,14 @@ pipelines:
   default:
       recipes:
           bias:
-            class: numina.tests.recipes.BiasRecipe
+            class: numina.testing.recipes.BiasRecipe
             kwargs:
              simulate_error: True
-          dark: numina.tests.recipes.DarkRecipe
+          dark: numina.testing.recipes.DarkRecipe
           fail: numina.core.utils.AlwaysFailRecipe
-          image: numina.tests.recipes.ImageRecipe
+          image: numina.testing.recipes.ImageRecipe
       products:
-          MasterBias: numina.tests.recipes.MasterBias
+          MasterBias: numina.testing.recipes.MasterBias
       provides:
           - name: MasterBias
             mode: bias

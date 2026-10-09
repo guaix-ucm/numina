@@ -9,7 +9,7 @@
 
 import pytest
 
-from numina.tests.drptest import create_drp_test
+from numina.testing.drptest import create_drp_test
 import numina.instrument.assembly as asb
 
 from numina.dal.dictdal import HybridDAL
@@ -63,7 +63,7 @@ def hybriddal():
     gentable["products"] = prod_table
     gentable["requirements"] = {}
     # Load instrument profiles
-    pkg_paths = ["numina.drps.tests.configs"]
+    pkg_paths = ["numina.testing.drps.configs"]
     store = asb.load_paths_store(pkg_paths)
     base = HybridDAL(drps, "", ob_table, gentable, {}, components=store)
 

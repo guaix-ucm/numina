@@ -4,7 +4,7 @@ import numpy
 
 from numina.core.utils import Combine
 from numina.core.oresult import ObservationResult
-from numina.tests.simpleobj import create_simple_frame
+from numina.testing.simpleobj import create_simple_frame
 
 
 @pytest.mark.parametrize(

@@ -32,7 +32,7 @@ def test_fake_pipeline(drpmocker):
 
 def test_fake_pipeline_alt(drpmocker):
 
-    drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
+    drpdata1 = pkgutil.get_data("numina.testing.drps", "drptest1.yaml")
 
     drpmocker.add_drp("TEST1", drpdata1)
 
@@ -44,7 +44,7 @@ def test_fake_pipeline_alt(drpmocker):
 
 def test_fake_pipeline_alt2(drpmocker):
 
-    drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
+    drpdata1 = pkgutil.get_data("numina.testing.drps", "drptest1.yaml")
 
     ob_to_test = """
     id: 4
@@ -58,7 +58,7 @@ def test_fake_pipeline_alt2(drpmocker):
 
     import yaml
     from numina.core.oresult import oblock_from_dict
-    from numina.tests.recipes import BiasRecipe
+    from numina.testing.recipes import BiasRecipe
 
     oblock = oblock_from_dict(yaml.safe_load(ob_to_test))
 
@@ -69,7 +69,7 @@ def test_fake_pipeline_alt2(drpmocker):
     assert_valid_instrument(drp)
 
     this_pipeline = drp.pipelines[oblock.pipeline]
-    expected = "numina.tests.recipes.BiasRecipe"
+    expected = "numina.testing.recipes.BiasRecipe"
     assert this_pipeline.recipes[oblock.mode]["class"] == expected
 
     recipe = this_pipeline.get_recipe_object(oblock.mode)

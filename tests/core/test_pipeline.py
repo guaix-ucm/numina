@@ -5,7 +5,7 @@ import numina.core.pipelineload as loader
 
 @pytest.fixture(scope="module")
 def drptest():
-    return loader.drp_load("numina.drps.tests", "drptest1.yaml")
+    return loader.drp_load("numina.testing.drps", "drptest1.yaml")
 
 
 def test_mode_search(drptest):
@@ -45,7 +45,7 @@ DRP_PIPELINES = """
 name: TEST1
 version: "2.5"
 configurations:
-  path: numina.drps.tests.configs
+  path: numina.testing.drps.configs
   values: []
 modes:
   - key: dark
@@ -53,11 +53,11 @@ modes:
 pipelines:
   default:
     recipes:
-      dark: numina.tests.recipes.DarkRecipe
+      dark: numina.testing.recipes.DarkRecipe
     version: 1
   fast:
     recipes:
-      dark: numina.tests.recipes.DarkRecipe
+      dark: numina.testing.recipes.DarkRecipe
     version: 1
 """
 

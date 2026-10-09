@@ -27,7 +27,7 @@ def test_fill_template():
 
 @pytest.fixture
 def test1_drp(drpmocker):
-    drpmocker.add_drp("TEST1", pkgutil.get_data("numina.drps.tests", "drptest1.yaml"))
+    drpmocker.add_drp("TEST1", pkgutil.get_data("numina.testing.drps", "drptest1.yaml"))
 
 
 def test_datamanager_invalid_template(test1_drp, run_config):

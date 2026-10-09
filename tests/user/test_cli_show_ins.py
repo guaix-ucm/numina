@@ -9,8 +9,8 @@ import numina.core.pipelineload as pload
 
 from numina.user.cli import main
 
-drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
-drpdata2 = pkgutil.get_data("numina.drps.tests", "drptest2.yaml")
+drpdata1 = pkgutil.get_data("numina.testing.drps", "drptest1.yaml")
+drpdata2 = pkgutil.get_data("numina.testing.drps", "drptest2.yaml")
 
 expecte0 = [""]
 

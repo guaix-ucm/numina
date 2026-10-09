@@ -9,7 +9,7 @@ import numina.core.pipelineload as pload
 from numina.user import helpers
 from numina.user.helpers import WorkEnvironment, add_missing_entries, load_observations
 
-# uuid of the profile in numina/drps/tests/configs/instrument-test1.json
+# uuid of the profile in numina/testing/drps/configs/instrument-test1.json
 TEST1_PROFILE = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
 
 DRP_DEFAULTS = {
@@ -81,8 +81,8 @@ def test_add_missing_entries():
 
 @pytest.fixture
 def test1_drp(drpmocker):
-    """The DRP TEST1 of numina.drps.tests, with DRP_DEFAULTS as default requirements"""
-    drpdata = yaml.safe_load(pkgutil.get_data("numina.drps.tests", "drptest1.yaml"))
+    """The DRP TEST1 of numina.testing.drps, with DRP_DEFAULTS as default requirements"""
+    drpdata = yaml.safe_load(pkgutil.get_data("numina.testing.drps", "drptest1.yaml"))
 
     def loader():
         # A copy, DRP_DEFAULTS is used to check the results

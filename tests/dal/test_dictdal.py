@@ -10,7 +10,7 @@
 import pytest
 
 from numina.exceptions import NoResultFound
-from numina.tests.drptest import create_drp_test
+from numina.testing.drptest import create_drp_test
 import numina.core
 
 from numina.dal.dictdal import BaseDictDAL

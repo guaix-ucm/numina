@@ -11,7 +11,7 @@ import yaml
 from numina.core import BaseRecipe, Requirement, Result
 from numina.core.requirements import ObservationResultRequirement
 from numina.dal.registry import Registry
-from numina.tests.recipes import MasterBias
+from numina.testing.recipes import MasterBias
 from numina.types.qc import QC
 import numina.core.dataholders as dh
 
@@ -22,7 +22,7 @@ from numina.user.clirundal import mode_run_common_obs
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.drps.tests.configs
+  path: numina.testing.drps.configs
 modes:
   - key: bias
     name: Bias

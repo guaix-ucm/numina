@@ -7,7 +7,7 @@ from numina.instrument.collection import load_paths_store
 
 def load_from_tests(name, date_str):
     # pkg_paths = ["pattridrp.instrument.configs"]
-    pkg_paths = ["numina.drps.tests.configs"]
+    pkg_paths = ["numina.testing.drps.configs"]
     comp_store = load_paths_store(pkg_paths)
     ins = assembly_instrument(comp_store, name, date_str)
     return ins

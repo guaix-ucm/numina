@@ -1,6 +1,6 @@
 import pytest
 
-from numina.tests.seffect import record_call
+from numina.testing.seffect import record_call
 
 from numina.instrument.components.wheel import Wheel, Carrousel
 

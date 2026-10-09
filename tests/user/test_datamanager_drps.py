@@ -1,4 +1,4 @@
-"""create_datamanager with the test DRPs of numina.drps.tests
+"""create_datamanager with the test DRPs of numina.testing.drps
 
 Regression tests of two problems found when combining
 create_datamanager with the drpmocker fixture.
@@ -12,12 +12,12 @@ import numina.drps
 from numina.drps.drpsystem import DrpSystem
 from numina.user.helpers import create_datamanager
 
-# uuid of the profile in numina/drps/tests/configs/instrument-test1.json
+# uuid of the profile in numina/testing/drps/configs/instrument-test1.json
 TEST1_PROFILE = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
 
 
 def load_test1(drpmocker):
-    drpmocker.add_drp("TEST1", pkgutil.get_data("numina.drps.tests", "drptest1.yaml"))
+    drpmocker.add_drp("TEST1", pkgutil.get_data("numina.testing.drps", "drptest1.yaml"))
 
 
 @pytest.fixture

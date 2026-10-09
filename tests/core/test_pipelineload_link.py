@@ -5,7 +5,7 @@ import numina.core.pipelineload as loader
 
 @pytest.fixture(scope="module")
 def drptest():
-    return loader.drp_load("numina.drps.tests", "drptest4.yaml")
+    return loader.drp_load("numina.testing.drps", "drptest4.yaml")
 
 
 def test_load_link(drptest):

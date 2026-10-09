@@ -4,7 +4,7 @@ import astropy.io.fits as fits
 import pytest
 
 import numina.instrument.assembly as asb
-from numina.tests.drptest import create_drp_test
+from numina.testing.drptest import create_drp_test
 
 from numina.dal.dictdal import HybridDAL
 
@@ -12,7 +12,7 @@ from numina.dal.dictdal import HybridDAL
 @pytest.fixture
 def dal():
     drps = create_drp_test(["drptest1.yaml"])
-    store = asb.load_paths_store(["numina.drps.tests.configs"])
+    store = asb.load_paths_store(["numina.testing.drps.configs"])
     base = HybridDAL(drps, "", [], {"products": {}, "requirements": {}}, components=store)
     hdr = fits.Header()
     hdr["INSTRUME"] = "TEST1"

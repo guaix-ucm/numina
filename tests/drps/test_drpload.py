@@ -7,7 +7,7 @@ from numina.drps.drpsystem import DrpSystem
 def test_drpsys_one_instrument(drpmocker):
     """Test that only one DRP is returned."""
 
-    drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
+    drpdata1 = pkgutil.get_data("numina.testing.drps", "drptest1.yaml")
 
     drpmocker.add_drp("TEST1", drpdata1)
 
@@ -32,8 +32,8 @@ def test_drpsys_one_instrument(drpmocker):
 def test_drpsys_2_instruments(drpmocker):
     """Test that two DRPs are returned"""
 
-    drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
-    drpdata2 = pkgutil.get_data("numina.drps.tests", "drptest2.yaml")
+    drpdata1 = pkgutil.get_data("numina.testing.drps", "drptest1.yaml")
+    drpdata2 = pkgutil.get_data("numina.testing.drps", "drptest2.yaml")
     drpmocker.add_drp("TEST1", drpdata1)
     drpmocker.add_drp("TEST2", drpdata2)
 
@@ -67,8 +67,8 @@ def test_drpsys_2_instruments(drpmocker):
 def test_drpsys_name_2_instruments(drpmocker):
     """Test that two DRPs are returned"""
 
-    drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
-    drpdata2 = pkgutil.get_data("numina.drps.tests", "drptest2.yaml")
+    drpdata1 = pkgutil.get_data("numina.testing.drps", "drptest1.yaml")
+    drpdata2 = pkgutil.get_data("numina.testing.drps", "drptest2.yaml")
     drpmocker.add_drp("TEST1", drpdata1)
     drpmocker.add_drp("TEST2", drpdata2)
 
@@ -89,8 +89,8 @@ def test_drpsys_name_2_instruments(drpmocker):
 def test_drpsys_iload_2_instruments(drpmocker):
     """Test that two DRPs are returned"""
 
-    drpdata1 = pkgutil.get_data("numina.drps.tests", "drptest1.yaml")
-    drpdata2 = pkgutil.get_data("numina.drps.tests", "drptest2.yaml")
+    drpdata1 = pkgutil.get_data("numina.testing.drps", "drptest1.yaml")
+    drpdata2 = pkgutil.get_data("numina.testing.drps", "drptest2.yaml")
     drpmocker.add_drp("TEST1", drpdata1)
     drpmocker.add_drp("TEST2", drpdata2)
 
@@ -122,7 +122,7 @@ def test_drpsys_no_instrument():
 def test_drpsys_bad_file(capsys, drpmocker):
     """Test that a bad file doesn't break the load"""
 
-    drpdata3 = pkgutil.get_data("numina.drps.tests", "drptest3.yaml")
+    drpdata3 = pkgutil.get_data("numina.testing.drps", "drptest3.yaml")
 
     drpmocker.add_drp("TEST3", drpdata3)
     drpsys = DrpSystem()

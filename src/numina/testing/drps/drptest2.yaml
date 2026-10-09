@@ -1,6 +1,6 @@
 name: TEST2
 configurations:
-  path: numina.drps.tests.configs
+  path: numina.testing.drps.configs
 modes:
     - description: A recipe that always success
       key: success
@@ -13,6 +13,6 @@ modes:
 pipelines:
     default:
         recipes:
-            dark: numina.tests.recipes.DarkRecipe
+            dark: numina.testing.recipes.DarkRecipe
             success: numina.core.utils.AlwaysSuccessRecipe
         version: 1

@@ -4,8 +4,8 @@ import os
 
 import pytest
 
-from numina.tests.plugins import pytest_configure
-from numina.tests.pytest_resultcmp import ResultCompPlugin
+from numina.testing.plugins import pytest_configure
+from numina.testing.pytest_resultcmp import ResultCompPlugin
 
 
 class FakePluginManager:

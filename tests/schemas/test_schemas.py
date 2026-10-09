@@ -21,13 +21,13 @@ def test_schema_is_valid(name):
 
 DRP = {
     "name": "TEST1",
-    "configurations": {"path": "numina.drps.tests.configs"},
+    "configurations": {"path": "numina.testing.drps.configs"},
     "modes": [{"key": "bias", "name": "Bias", "summary": "Bias", "description": "Bias"}],
     "pipelines": {
         "default": {
             "version": 1,
-            "recipes": {"bias": "numina.tests.recipes.BiasRecipe", "fail": {"class": "x.Y", "args": [1]}},
-            "products": {"MasterBias": "numina.tests.recipes.MasterBias"},
+            "recipes": {"bias": "numina.testing.recipes.BiasRecipe", "fail": {"class": "x.Y", "args": [1]}},
+            "products": {"MasterBias": "numina.testing.recipes.MasterBias"},
             "provides": [{"name": "MasterBias", "mode": "bias", "field": "master_bias"}],
         }
     },

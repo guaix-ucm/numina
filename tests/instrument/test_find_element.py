@@ -9,7 +9,7 @@ import pytest
 from numina.instrument.assembly import find_instrument
 from numina.instrument.collection import load_paths_store
 
-# Profiles in numina/drps/tests/configs, TEST1 has two
+# Profiles in numina/testing/drps/configs, TEST1 has two
 TEST1_PROFILE = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"  # since 2016-06-01
 TEST1_OLD_PROFILE = "6ad5dc90-6b15-43b7-abb5-b07340e19f41"  # 2014-06-01 to 2016-06-01
 CLODIA_PROFILE = "44077557-32ab-43f2-8f2a-5ddb813c03df"
@@ -17,7 +17,7 @@ CLODIA_PROFILE = "44077557-32ab-43f2-8f2a-5ddb813c03df"
 
 @pytest.fixture(scope="module")
 def comp_store():
-    return load_paths_store(["numina.drps.tests.configs"])
+    return load_paths_store(["numina.testing.drps.configs"])
 
 
 def uuid_of(element):
@@ -65,13 +65,13 @@ def test_not_found(comp_store):
 def test_several_valid_for_date(tmp_path, caplog):
     """With an additional configuration valid for the same date, the first is used, with a warning"""
     new_profile = "0c6a1e5e-8d4f-4d8b-9b0e-2d7f0e3c5a11"
-    base = importlib.resources.files("numina.drps.tests.configs").joinpath("instrument-test1.json")
+    base = importlib.resources.files("numina.testing.drps.configs").joinpath("instrument-test1.json")
     conf = json.loads(base.read_text())
     conf["uuid"] = new_profile
     conf["date_start"] = "2020-01-01T00:00:00"
     (tmp_path / "instrument-test1-new.json").write_text(json.dumps(conf))
     # The additional directory is read first
-    comp_store = load_paths_store(["numina.drps.tests.configs"], [str(tmp_path)])
+    comp_store = load_paths_store(["numina.testing.drps.configs"], [str(tmp_path)])
 
     with caplog.at_level(logging.WARNING, logger="numina.instrument.assembly"):
         element = find_instrument(comp_store, "TEST1", "2021-01-01T00:00:00")

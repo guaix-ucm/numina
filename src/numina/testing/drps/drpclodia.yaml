@@ -1,6 +1,6 @@
 name: CLODIA
 configurations:
-  path: numina.drps.tests.configs
+  path: numina.testing.drps.configs
 modes:
   - key: bias
     name: Bias

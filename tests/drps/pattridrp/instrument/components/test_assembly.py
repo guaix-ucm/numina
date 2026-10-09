@@ -41,7 +41,7 @@ def test_all_comps(pattri_ins):
 
 @pytest.fixture
 def comp_store():
-    pkg_paths = ["numina.drps.tests.configs"]
+    pkg_paths = ["numina.testing.drps.configs"]
     # pkg_paths = ["pattridrp.instrument.configs"]
     comp_store = load_paths_store(pkg_paths)
     return comp_store

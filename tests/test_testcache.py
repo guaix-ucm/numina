@@ -11,7 +11,7 @@ import sys
 import os
 import pytest
 
-from numina.tests.testcache import user_cache_dir
+from numina.testing.testcache import user_cache_dir
 
 
 @pytest.mark.skipif(not sys.platform.startswith("linux"), reason="runs only in linux")
