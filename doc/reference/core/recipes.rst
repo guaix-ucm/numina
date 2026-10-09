@@ -36,3 +36,9 @@
 
 .. automodule:: numina.core.validator
    :members:
+
+:mod:`numina.core.query` --- Query options of the requirements
+==============================================================
+
+.. automodule:: numina.core.query
+   :members:

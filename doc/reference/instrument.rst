@@ -29,3 +29,30 @@ as an object of a class derived from `numina.instrument.generic.InstrumentGeneri
 
 .. automodule:: numina.instrument.hwdevice
    :members:
+
+Components
+==========
+
+.. automodule:: numina.instrument.components.wheel
+   :members:
+
+.. automodule:: numina.instrument.components.detector
+   :members:
+
+Simulation
+==========
+
+.. automodule:: numina.instrument.simulation.actions
+   :members:
+
+.. automodule:: numina.instrument.simulation.atmosphere
+   :members:
+
+.. automodule:: numina.instrument.simulation.efficiency
+   :members:
+
+.. automodule:: numina.instrument.simulation.factory
+   :members:
+
+.. automodule:: numina.instrument.simulation.optics
+   :members:

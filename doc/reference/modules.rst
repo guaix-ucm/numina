@@ -13,6 +13,7 @@ Numina modules
    exceptions
    frame
    instrument
+   keydef
    logger
    modeling
    processing

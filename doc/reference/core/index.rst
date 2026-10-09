@@ -4,6 +4,7 @@
 
 .. toctree::
 
+   dataload
    oresult
    pipeline
    recipes

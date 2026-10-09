@@ -64,3 +64,7 @@ The numeric values of the QC levels are given in this table.
 .. automodule:: numina.types.structured
    :synopsis: TBD
    :members:
+
+.. automodule:: numina.types.typedialect
+   :synopsis: Description of the data types for other systems
+   :members:
