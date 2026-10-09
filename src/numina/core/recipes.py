@@ -55,6 +55,9 @@ class BaseRecipe:
 
     RecipeResult = RecipeResultClass
     RecipeInput = RecipeInputClass
+    # Version of the recipe, in the header NUMRVER of the products.
+    # A recipe can define its own, or receive it in the argument 'version'
+    __version__ = 1
     datamodel = DataModel()
     # Recipe own logger
     logger = logging.getLogger("numina.recipes.numina")
@@ -103,7 +106,8 @@ class BaseRecipe:
         recipe.runinfo = cls.create_default_runinfo()
         recipe.runinfo.update(kwargs.get("runinfo", {}))
         recipe.environ = {}
-        recipe.__version__ = kwargs.get("version", 1)
+        if "version" in kwargs:
+            recipe.__version__ = kwargs["version"]
         recipe.query_options = kwargs.get("query_options", {})
         return recipe
 

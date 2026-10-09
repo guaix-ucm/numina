@@ -112,6 +112,23 @@ def test_recipe_init_without_arguments():
     assert recipe.runinfo["pipeline"] == "default"
 
 
+def test_recipe_version():
+
+    class RecipeDefault(BaseRecipe):
+        pass
+
+    class RecipeClassVersion(BaseRecipe):
+        __version__ = "3"
+
+    assert RecipeDefault().__version__ == 1
+    # the version of the class is used, it was always 1
+    assert RecipeClassVersion().__version__ == "3"
+    assert RecipeClassVersion(version="4").__version__ == "4"
+
+    hdr = RecipeClassVersion().set_base_headers({})
+    assert hdr["NUMRVER"] == ("3", "Numina recipe version")
+
+
 def test_recipe_with_autofield():
 
     class RecipeTestAutoField(BaseRecipe):
