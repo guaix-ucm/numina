@@ -11,6 +11,7 @@
 
 import pkgutil
 import importlib
+import warnings
 
 import yaml
 
@@ -66,6 +67,35 @@ def drp_load_data(package, data, confclass=None, source=None):
         pkg = importlib.import_module(package)
         ins.version = getattr(pkg, "__version__", "undefined")
     return ins
+
+
+def check_mode_keys(name, mode_node):
+    """Warn about the observing modes defined several times, the last one is used"""
+    if not isinstance(mode_node, list):
+        return
+    seen = set()
+    for mode in mode_node:
+        key = mode.get("key")
+        if key in seen:
+            msg = f"DRP {name}: the mode '{key}' is defined several times in 'modes', the last one is used"
+            warnings.warn(msg, RuntimeWarning, stacklevel=2)
+        seen.add(key)
+
+
+def check_recipe_modes(name, pipelines, modes):
+    """Warn about the recipes of the pipelines whose mode is not defined.
+
+    These recipes cannot be used. It is a warning and not an error, so that
+    the rest of the DRP can be used.
+    """
+    for pipe_name, pipeline in pipelines.items():
+        for mode_key in pipeline.recipes:
+            if mode_key not in modes:
+                msg = (
+                    f"DRP {name}: the pipeline '{pipe_name}' has a recipe "
+                    f"for the mode '{mode_key}', that is not defined in 'modes'"
+                )
+                warnings.warn(msg, RuntimeWarning, stacklevel=2)
 
 
 def load_modes(node, confclass=None):
@@ -267,7 +297,9 @@ def load_instrument(package, node, confclass=None, default_requirements=None):
     if "version" in node:
         trans["version"] = node["version"]
     trans["pipelines"] = load_pipelines(node["name"], pipe_node)
+    check_mode_keys(node["name"], mode_node)
     trans["modes"] = load_modes(mode_node, confclass)
+    check_recipe_modes(node["name"], trans["pipelines"], trans["modes"])
     confs, modpath = load_confs(package, conf_node)
     # trans['configurations'] = confs
     trans["configurations"] = confs

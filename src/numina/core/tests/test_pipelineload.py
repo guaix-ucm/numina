@@ -1,6 +1,6 @@
 import pytest
 
-from ..pipelineload import load_confs, load_mode
+from ..pipelineload import drp_load_data, load_confs, load_mode
 
 
 def test_load_confs_path():
@@ -31,3 +31,37 @@ def test_load_mode_ignores_tagger(tagger):
 
     assert mode.key == "bias"
     assert not hasattr(mode, "tagger")
+
+
+DRP_UNDEFINED_MODE = """
+name: TEST1
+configurations:
+  path: numina.drps.tests.configs
+  values: []
+modes:
+  - key: dark
+    name: Dark
+pipelines:
+  default:
+    recipes:
+      dark: numina.tests.recipes.DarkRecipe
+      other: numina.tests.recipes.DarkRecipe
+    version: 1
+"""
+
+
+def test_recipe_of_undefined_mode():
+    with pytest.warns(RuntimeWarning, match="pipeline 'default' has a recipe for the mode 'other'"):
+        drp = drp_load_data("numina", DRP_UNDEFINED_MODE)
+    # the rest of the DRP can be used
+    assert drp.get_recipe_object("dark").mode.key == "dark"
+
+
+def test_mode_defined_several_times():
+    data = DRP_UNDEFINED_MODE.replace(
+        "  - key: dark\n    name: Dark\n",
+        "  - key: dark\n    name: Dark\n  - key: dark\n    name: Dark 2\n",
+    ).replace("      other: numina.tests.recipes.DarkRecipe\n", "")
+    with pytest.warns(RuntimeWarning, match="the mode 'dark' is defined several times"):
+        drp = drp_load_data("numina", data)
+    assert drp.modes["dark"].name == "Dark 2"
