@@ -8,6 +8,8 @@
 #
 
 import inspect
+import warnings
+
 import numina.exceptions as nexcep
 import numina.types.datatype as dt
 
@@ -22,6 +24,8 @@ class MultiType(dt.DataType):
             node_type.append(obj)
 
         super().__init__(ptype=None, node_type=node_type)
+        # The type of the value found, only set by the deprecated
+        # _query_on_dal. The search of the requirements does not set it.
         self.current_node = None
 
     def validate(self, obj):
@@ -82,6 +86,15 @@ class MultiType(dt.DataType):
             raise TypeError(msg)
 
     def _query_on_dal(self, name, dal, ob, options=None):
+        """Deprecated, it is not used by numina and will be removed
+
+        The search is done by Requirement.query_on_dal_rec.
+        """
+        warnings.warn(
+            "MultiType._query_on_dal is deprecated, it is not used by numina and will be removed",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
         # Results for subtypes
         results = []

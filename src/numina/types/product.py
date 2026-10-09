@@ -37,9 +37,15 @@ class DataProductMixin(DataTypeBase):
         return f"{sclass}"
 
     def query_constraints(self):
+        """Deprecated, it is not used by numina and will be removed"""
         import numina.core.query
 
-        return numina.core.query.Constraint()
+        warnings.warn(
+            "DataProductMixin.query_constraints is deprecated, it is not used by numina and will be removed",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return numina.core.query.Constraint._create()
 
     def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""

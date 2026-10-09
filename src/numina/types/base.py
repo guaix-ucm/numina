@@ -8,6 +8,7 @@
 #
 
 import inspect
+import warnings
 
 from numina.util.parser import parse_arg_line
 from numina.datamodel import DataModel
@@ -67,9 +68,15 @@ class DataTypeBase:
         return obj
 
     def query_constraints(self):
+        """Deprecated, it is not used by numina and will be removed"""
         from numina.core.query import Constraint
 
-        return Constraint()
+        warnings.warn(
+            "DataTypeBase.query_constraints is deprecated, it is not used by numina and will be removed",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return Constraint._create()
 
     @classmethod
     def isproduct(cls):

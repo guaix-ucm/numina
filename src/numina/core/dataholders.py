@@ -411,7 +411,15 @@ class Requirement(EntryHolder):
         return fmt % (sclass, self.dest, self.description, self.default, self.optional, self.type, self.choices)
 
     def query_constraints(self):
-        return self.type.query_constraints()
+        """Deprecated, it is not used by numina and will be removed"""
+        warnings.warn(
+            "Requirement.query_constraints is deprecated, it is not used by numina and will be removed",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            return self.type.query_constraints()
 
     def tag_names(self):
         return self.type.tag_names()

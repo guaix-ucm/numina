@@ -10,6 +10,8 @@
 
 """Tests for RecipeInput and RecipeResult"""
 
+import pytest
+
 from ..dataholders import Parameter
 from ..recipeinout import RecipeInput
 
@@ -112,3 +114,20 @@ def test_class_nondesc_access():
         assert val == values[key]
 
     assert "otherattr" in bb.__dict__
+
+
+def test_checkers():
+
+    class Check:
+        def check(self, rinput):
+            if rinput.param1 > rinput.param2:
+                raise ValueError("param1 > param2")
+
+    class BB(RecipeInput):
+        __checkers__ = [Check()]
+        param1 = Parameter(1, "something1")
+        param2 = Parameter(2, "something2")
+
+    BB(param1=1, param2=2).validate()
+    with pytest.raises(ValueError, match="param1 > param2"):
+        BB(param1=3, param2=2).validate()

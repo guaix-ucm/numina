@@ -14,6 +14,7 @@ Recipe inputs and outputs
 
 import uuid
 import logging
+import warnings
 
 from .dataholders import Requirement, Result
 import numina.store.dump
@@ -119,7 +120,12 @@ class RecipeInOut:
         return cls.__numina_stored__
 
     def validate(self):
-        """Validate myself."""
+        """Validate the values of the fields.
+
+        Each value is validated by its field, and then the checks of the
+        class attribute ``__checkers__``, a list of objects with a method
+        ``check(recipe_inout)``, that can validate the values together.
+        """
 
         for key, req in self.stored().items():
             val = getattr(self, key)
@@ -237,7 +243,16 @@ class define_input:
         return klass
 
 
-define_requirements = define_input
+class define_requirements(define_input):
+    """Deprecated alias of define_input"""
+
+    def __init__(self, input_class):
+        warnings.warn(
+            "define_requirements is deprecated, use define_input",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        super().__init__(input_class)
 
 
 def generate_docs(klass):
