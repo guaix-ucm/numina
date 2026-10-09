@@ -29,6 +29,8 @@ class Pipeline:
         self.recipes = recipes
         self.products = {} if products is None else products
         self.version = version
+        # The InstrumentDRP of the pipeline, set by InstrumentDRP
+        self.drp = None
 
         # Query by different keys
         self._provides_by_p = {}
@@ -79,6 +81,9 @@ class Pipeline:
         # Init additional members
         recipe.mode = mode
         recipe.instrument = self.instrument
+        recipe.pipeline = self.name
+        if self.drp is not None:
+            recipe.drp_version = self.drp.version
 
         return recipe
 
@@ -181,6 +186,9 @@ class InstrumentDRP:
             self.datamodel = numina.datamodel.DataModel()
         self.version = version
         self._def_reqs = {} if default_requirements is None else default_requirements
+        if isinstance(pipelines, dict):
+            for pipeline in pipelines.values():
+                pipeline.drp = self
 
     def query_provides(self, product, pipeline="default", search=False):
         """Return the mode that provides a given product"""

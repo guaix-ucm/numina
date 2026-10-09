@@ -100,6 +100,7 @@ class BaseRecipe:
         recipe.instrument = kwargs.get("instrument", "UNKNOWN")
         recipe.mode = kwargs.get("mode", "UNKNOWN")
         recipe.pipeline = kwargs.get("pipeline", "default")
+        recipe.drp_version = "undefined"
         recipe.intermediate_results = kwargs.get("intermediate_results", False)
         recipe.validate_inputs = kwargs.get("validate_inputs", False)
         recipe.validate_results = kwargs.get("validate_results", False)
@@ -232,10 +233,34 @@ class BaseRecipe:
                 json.dump(state, fd, indent=2, cls=ExtEncoder)
 
     def set_base_headers(self, hdr):
-        """Set metadata in FITS headers."""
+        """Set metadata in FITS headers.
+
+        The keywords are:
+
+        NUMXVER
+            Version of numina.
+        NUMRNAM
+            Name of the class of the recipe.
+        NUMRVER
+            Version of the recipe, the attribute ``__version__`` of its
+            class (1 by default) or the argument ``version``.
+        NUMDRP
+            Name of the DRP, the instrument.
+        NUMDRPV
+            Version of the DRP, by default the version of its package.
+        NUMPIPE
+            Name of the pipeline of the DRP.
+
+        The DRP, its version and the pipeline are set when the recipe is
+        created by the pipeline of a DRP. The decorator :func:`timeit`
+        adds NUMUTC1 and NUMUTC2, the start and end of the run.
+        """
         hdr["NUMXVER"] = (__version__, "Numina package version")
         hdr["NUMRNAM"] = (self.__class__.__name__, "Numina recipe name")
         hdr["NUMRVER"] = (self.__version__, "Numina recipe version")
+        hdr["NUMDRP"] = (self.instrument, "Numina DRP name")
+        hdr["NUMDRPV"] = (str(self.drp_version), "Numina DRP version")
+        hdr["NUMPIPE"] = (self.pipeline, "Numina DRP pipeline")
         return hdr
 
     def build_recipe_input(self, ob, dal):
