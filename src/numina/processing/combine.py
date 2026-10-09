@@ -174,14 +174,14 @@ def combine_imgs(
     hdu.header["NUM-NCOM"] = prevnum * cnum
     hdu.header["UUID"] = str(uuid.uuid1())
 
-    # Copy extensions and then append 'variance' and 'map'
-    result = fits.HDUList([hdu])
-    for hdu in first_image[1:]:
-        result.append(hdu.copy())
-
     # Headers of last image, this is an EMIRISM
     if "TSUTC2" in hdu.header:
         hdu.header["TSUTC2"] = last_header["TSUTC2"]
+
+    # Copy extensions and then append 'variance' and 'map'
+    result = fits.HDUList([hdu])
+    for ext in first_image[1:]:
+        result.append(ext.copy())
     # Append error extensions
     if errors:
         varhdu = fits.ImageHDU(combined_data[1], name="VARIANCE")
