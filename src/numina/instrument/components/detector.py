@@ -11,6 +11,7 @@
 import numpy
 
 from ..hwdevice import HWDevice
+from ..simulation.efficiency import Efficiency
 
 
 class VirtualDetector:
@@ -70,7 +71,7 @@ class DetectorBase(HWDevice):
         Quantum efficiency.
     qe_wl : optional
         Quantum efficiency as a function of the wavelength, an object
-        with a method 'response(wl)'.
+        with a method 'response(wl)', 1 for all wavelengths by default.
     dark : float, optional
         Dark current, in electrons per second.
     """
@@ -87,7 +88,8 @@ class DetectorBase(HWDevice):
         self.qe = qe
 
         if qe_wl is None:
-            self._qe_wl = 1.0
+            # Efficiency 1 for all wavelengths
+            self._qe_wl = Efficiency()
         else:
             self._qe_wl = qe_wl
 
