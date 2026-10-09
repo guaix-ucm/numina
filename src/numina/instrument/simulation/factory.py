@@ -44,25 +44,19 @@ class PersistentRunCounter(RunCounter):
 
     def store(self):
         """Store the next run number in the file `pstore`"""
-        with open(self.pstore, "w") as pkl_file:
-            json.dump(self.last, pkl_file)
+        with open(self.pstore, "w") as fd:
+            json.dump(self.last, fd)
 
     @staticmethod
     def load(pstore, last):
         """Read the next run number from `pstore`, or create it with `last`"""
-        file_exists = True
-
         try:
-            with open(pstore, "rb") as pkl_file:
-                last = json.load(pkl_file)
-        except IOError:
-            file_exists = False
-
-        if not file_exists:
-            with open(pstore, "wb") as pkl_file:
-                json.dump(last, pkl_file)
-
-        return last
+            with open(pstore) as fd:
+                return json.load(fd)
+        except FileNotFoundError:
+            with open(pstore, "w") as fd:
+                json.dump(last, fd)
+            return last
 
     def __enter__(self):
         return self
