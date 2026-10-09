@@ -89,6 +89,10 @@ class BaseRecipe:
         cls.RecipeResult = result_class
 
     def __new__(cls, *args, **kwargs):
+        # The attributes are set here, and not in __init__, so that they
+        # are defined in recipes that do not pass the arguments to
+        # super().__init__. __init__ sets them again with configure,
+        # with the arguments it receives.
         recipe = super().__new__(cls)
         recipe.instrument = kwargs.get("instrument", "UNKNOWN")
         recipe.mode = kwargs.get("mode", "UNKNOWN")
@@ -99,9 +103,8 @@ class BaseRecipe:
         recipe.runinfo = cls.create_default_runinfo()
         recipe.runinfo.update(kwargs.get("runinfo", {}))
         recipe.environ = {}
-        recipe.__version__ = 1
+        recipe.__version__ = kwargs.get("version", 1)
         recipe.query_options = kwargs.get("query_options", {})
-        recipe.configure(**kwargs)
         return recipe
 
     def __init__(self, *args, **kwargs):

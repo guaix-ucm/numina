@@ -10,6 +10,8 @@
 
 """Tests for alias in RecipeInput"""
 
+import pytest
+
 from ..dataholders import Parameter
 from ..recipeinout import RecipeInput
 
@@ -79,3 +81,37 @@ def test_setter2():
 
     for key, val in bb.attrs().items():
         assert val == values[key]
+
+
+def test_alias_unknown_attribute():
+
+    BB = create_input_class()
+    bb = BB()
+
+    with pytest.raises(AttributeError):
+        bb.param4
+
+
+def test_alias_field_has_priority():
+
+    class BB(RecipeInput):
+        param1 = Parameter(1, "something1", alias="param2")
+        param2 = Parameter(2, "something2")
+
+    bb = BB()
+    assert bb.param1 == 1
+    assert bb.param2 == 2
+
+
+def test_alias_in_recipe():
+    from ..recipes import BaseRecipe
+
+    class RecipeBase1(BaseRecipe):
+        param1 = Parameter(1, "something1", alias="param3")
+
+    class RecipeTest(RecipeBase1):
+        param2 = Parameter(2, "something2")
+
+    rinput = RecipeTest.create_input(param3=80)
+    assert rinput.param1 == 80
+    assert rinput.param3 == 80

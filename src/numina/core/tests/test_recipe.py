@@ -95,6 +95,23 @@ def test_recipe_io_classes_inherit():
     assert RecipeTest.RecipeInput.__qualname__.endswith("RecipeTest.RecipeTestInput")
 
 
+def test_recipe_init_without_arguments():
+
+    class RecipeTest(BaseRecipe):
+        __version__ = "class version"
+
+        def __init__(self, *args, **kwargs):
+            # the arguments are not passed
+            super().__init__()
+
+    recipe = RecipeTest(instrument="TEST", mode="bias", version="2", runinfo={"taskid": "1"})
+    assert recipe.instrument == "TEST"
+    assert recipe.mode == "bias"
+    assert recipe.__version__ == "2"
+    assert recipe.runinfo["taskid"] == "1"
+    assert recipe.runinfo["pipeline"] == "default"
+
+
 def test_recipe_with_autofield():
 
     class RecipeTestAutoField(BaseRecipe):

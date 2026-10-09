@@ -22,12 +22,28 @@ import numina.types.qc
 _logger = logging.getLogger(__name__)
 
 
+class _Alias:
+    """Alternative name of a field of a RecipeInOut"""
+
+    def __init__(self, dest):
+        self.dest = dest
+
+    def __get__(self, instance, owner):
+        if instance is None:
+            return self
+        return getattr(instance, self.dest)
+
+    def __set__(self, instance, value):
+        setattr(instance, self.dest, value)
+
+
 class RecipeInOut:
     """Base class of the inputs and the results of the recipes.
 
     The fields are the class attributes of type ``_numina_field_type``,
     stored by name, with those of the base classes, in ``__numina_stored__``.
-    A field with a destination is renamed to it.
+    A field with a destination is renamed to it, and a field with an alias
+    can be accessed also by the alias.
     """
 
     _numina_field_type = None
@@ -50,21 +66,16 @@ class RecipeInOut:
 
         cls.__numina_stored__ = stored
 
+        for value in stored.values():
+            # a field has priority over an alias with the same name
+            if value.alias and value.alias not in stored and value.alias not in vars(cls):
+                setattr(cls, value.alias, _Alias(value.dest))
+
     def __init__(self, *args, **kwds):
         super().__init__()
         # Used to hold set values
-        # Use this to avoid infinite recursion
-        super().__setattr__("_numina_desc_val", {})
-        # instead of this
-        # self._numina_desc_val = {}
+        self._numina_desc_val = {}
         all_msg_errors = []
-
-        # memorize aliases
-        super().__setattr__("_aliases", {})
-
-        for key, req in self.stored().items():
-            if req.alias:
-                self._aliases[req.alias] = req
 
         for key, val in kwds.items():
             try:
@@ -80,23 +91,6 @@ class RecipeInOut:
         for key, val in self.stored().items():
             full.append(f"{key}={val!r}")
         return f"{sclass}({', '.join(full)})"
-
-    def __getattr__(self, item):
-        # This method might be called before _aliases is initialized
-        if item in self.__dict__.get("_aliases", {}):
-            ref = self.__dict__["_aliases"][item]
-            return getattr(self, ref.dest)
-        else:
-            msg = f"'{self.__class__.__name__}' object has no attribute '{item}'"
-            raise AttributeError(msg)
-
-    def __setattr__(self, item, value):
-        # This method might be called before _aliases is initialized
-        if item in self.__dict__.get("_aliases", {}):
-            ref = self.__dict__["_aliases"][item]
-            return setattr(self, ref.dest, value)
-        else:
-            super().__setattr__(item, value)
 
     def _finalize(self, all_msg_errors=None):
         """Access all the instance descriptors
