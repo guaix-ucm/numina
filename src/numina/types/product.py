@@ -25,6 +25,12 @@ class DataProductMixin(DataTypeBase):
         self.quality_control = QC.UNKNOWN
 
     def generators(self):
+        """Deprecated, it is not used by numina and will be removed"""
+        warnings.warn(
+            "DataProductMixin.generators is deprecated, it is not used by numina and will be removed",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return []
 
     @classmethod
@@ -111,10 +117,26 @@ class DataProductType(DataProductMixin, DataType):
 
 
 class ConfigurationTag:
-    """A type that is part of the instrument configuration."""
+    """Deprecated, it is not used by numina and will be removed.
+
+    A type that is part of the instrument configuration.
+    """
+
+    def __init_subclass__(cls, **kwargs):
+        super().__init_subclass__(**kwargs)
+        warnings.warn(
+            "ConfigurationTag is deprecated, it is not used by numina and will be removed",
+            DeprecationWarning,
+            stacklevel=2,
+        )
 
     @classmethod
     def isconfiguration(cls):
+        warnings.warn(
+            "ConfigurationTag is deprecated, it is not used by numina and will be removed",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return True
 
 

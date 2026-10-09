@@ -13,13 +13,7 @@ import numpy
 
 from numina.types.qc import QC
 
-from .datatype import DataType
-from .product import DataProductMixin
-
-
-class DataProductType(DataProductMixin, DataType):
-    def __init__(self, ptype, default=None):
-        super().__init__(ptype, default=default)
+from .product import DataProductType
 
 
 class LinesCatalog(DataProductType):

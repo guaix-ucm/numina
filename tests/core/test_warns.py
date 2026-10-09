@@ -81,3 +81,32 @@ def test_warns_numina_tests(monkeypatch):
 
     assert testcache is numina.testing.testcache
     assert pytest_configure is numina.testing.plugins.pytest_configure
+
+
+def test_warns_configuration_tag():
+    from numina.types.product import ConfigurationTag
+
+    with pytest.warns(DeprecationWarning, match="ConfigurationTag"):
+
+        class MyConf(ConfigurationTag):
+            pass
+
+    with pytest.warns(DeprecationWarning, match="ConfigurationTag"):
+        assert ConfigurationTag.isconfiguration()
+
+
+def test_warns_generators():
+    from numina.types.frame import DataFrameType
+    from numina.types.product import DataProductMixin
+
+    class MyProduct(DataProductMixin, DataFrameType):
+        pass
+
+    with pytest.warns(DeprecationWarning, match="generators"):
+        assert MyProduct().generators() == []
+
+
+def test_lines_catalog_data_product_type():
+    from numina.types import linescatalog, product
+
+    assert linescatalog.DataProductType is product.DataProductType
