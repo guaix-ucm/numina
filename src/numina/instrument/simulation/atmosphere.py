@@ -54,10 +54,14 @@ class AtmosphereModel:
 class SeeingSizeModel:
     """Seeing that depends on the wavelength and the zenith distance.
 
+    The model of Kolmogorov turbulence: the Fried parameter is
+    ``r0 * (wl / wl0)**(6/5) * cos(zd)**(3/5)``, and the FWHM of the
+    seeing, in radians, is ``0.98 * wl / r0``.
+
     Parameters
     ----------
     wl : float
-        Reference wavelength.
+        Reference wavelength, in the units of `r0`.
     r0 : float
         Fried parameter at the reference wavelength and the zenith.
     """
@@ -67,12 +71,12 @@ class SeeingSizeModel:
         self._wl0 = wl
 
     def fwhm(self, wl, zd):
-        """FWHM of the seeing at the wavelength `wl` and zenith distance `zd` (radians)"""
-        return 1.2 * wl / self.r0(wl, zd)
+        """FWHM of the seeing, in radians, at the wavelength `wl` and zenith distance `zd` (radians)"""
+        return 0.98 * wl / self.r0(wl, zd)
 
     def r0(self, wl, zd):
         """Fried parameter at the wavelength `wl` and zenith distance `zd` (radians)"""
-        return self._r0 * (wl / self._wl0) ** 1.2 * math.cos(zd)
+        return self._r0 * (wl / self._wl0) ** 1.2 * math.cos(zd) ** 0.6
 
     def profile(self, fwhm):
         """Normalized Gaussian profile with the given FWHM"""
@@ -109,11 +113,15 @@ def generate_moffat_profile(seeing_fwhm, alpha):
     scale = 2 * math.sqrt(2 ** (1.0 / alpha) - 1)
     gamma = seeing_fwhm / scale
     amplitude = 1.0 / math.pi * (alpha - 1) / gamma**2
-    seeing_model = Moffat2D(amplitude=amplitude, x_mean=0.0, y_mean=0.0, gamma=gamma, alpha=alpha)
+    seeing_model = Moffat2D(amplitude=amplitude, x_0=0.0, y_0=0.0, gamma=gamma, alpha=alpha)
     return seeing_model
 
 
 def generate_lorentz_profile(seeing_fwhm):
-    """Generate a normalized Lorent profile from its FWHM"""
+    """Generate a normalized Moffat profile with alpha=1.5 from its FWHM.
+
+    It is used as an approximation of a Lorentzian profile, the Moffat
+    profile with alpha=1, that cannot be normalized in two dimensions.
+    """
 
     return generate_moffat_profile(seeing_fwhm, alpha=1.5)
