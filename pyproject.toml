@@ -116,6 +116,7 @@ version_file = "src/numina/_version.py"
 where = ["src"]
 
 [tool.pytest.ini_options]
+testpaths = ["tests"]
 filterwarnings = [
     "error",
 ]

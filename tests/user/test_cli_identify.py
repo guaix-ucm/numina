@@ -1,0 +1,8 @@
+import pytest
+
+from numina.user.cli import main
+
+
+def test_identify_run1(capsys):
+    with pytest.raises(FileNotFoundError):
+        main(["identify", "r000001.fits"])
