@@ -13,26 +13,28 @@ try:
 except ImportError:
     from pkgutil import simplegeneric as singledispatch
 
-import numpy
-
-from numina.types.dataframe import DataFrame
-from numina.types.frame import dump_dataframe
-from numina.types.array import dump_numpy_array
-
 
 @singledispatch
 def dump(tag, obj, where):
-    """
+    """Save a value of the type `tag`, return its serialized form.
+
+    This is how numina saves the values of the results of the recipes.
+    The type defines how with the method ``_datatype_dump(obj, where)``;
+    ``__numina_dump__(obj, where)`` is also supported, and used first.
+    If it defines none, `obj` is returned.
 
     Parameters
     ----------
-    tag
+    tag : DataType
+        Type of the value.
     obj
+        The value.
     where
+        Base of the name of the file, if the value is saved in a file.
 
     Returns
     -------
-
+    The serialized value, as the name of the file.
     """
 
     if hasattr(tag, "__numina_dump__"):
@@ -42,18 +44,3 @@ def dump(tag, obj, where):
         return tag._datatype_dump(obj, where)
 
     return obj
-
-
-# It's not clear if I need to register these three
-# functions
-
-
-@dump.register(list)
-def _(tag, obj, where):
-    return [dump(tag, o, where) for o in obj]
-
-
-dump.register(numpy.ndarray, lambda t, o, w: dump_numpy_array(o, w))
-
-
-dump.register(DataFrame, lambda t, o, w: dump_dataframe(o, w))

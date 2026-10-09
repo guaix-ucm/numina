@@ -26,7 +26,7 @@ class LinesCatalog(DataProductType):
     def __init__(self):
         super().__init__(ptype=numpy.ndarray)
 
-    def __numina_load__(self, obj):
+    def _datatype_load(self, obj):
         with open(obj, "r") as fd:
             linecat = numpy.loadtxt(fd)
         return linecat

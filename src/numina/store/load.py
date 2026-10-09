@@ -16,16 +16,23 @@ except ImportError:
 
 @singledispatch
 def load(tag, obj):
-    """
+    """Load a value of the type `tag` from its serialized form `obj`.
+
+    This is how numina loads all the values of the requirements, from
+    the DAL or from the observation result. The type defines how with
+    the method ``_datatype_load(obj)``; ``__numina_load__(obj)`` is also
+    supported, and used first. If it defines none, `obj` is returned.
 
     Parameters
     ----------
-    tag
+    tag : DataType
+        Type of the value.
     obj
+        Serialized value, as the name of a file.
 
     Returns
     -------
-
+    The value.
     """
 
     if hasattr(tag, "__numina_load__"):

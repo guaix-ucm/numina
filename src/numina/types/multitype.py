@@ -75,10 +75,12 @@ class MultiType(dt.DataType):
         return " ".join(build_str)
 
     def _datatype_load(self, obj):
+        import numina.store
+
         faillures = []
         for subtype in self.node_type:
             try:
-                return subtype._datatype_load(obj)
+                return numina.store.load(subtype, obj)
             except KeyError:
                 faillures.append(subtype)
         else:

@@ -206,7 +206,9 @@ class ListOfType(DataType):
                 raise TypeError(
                     "The object received should be iterable" " or the type modified to accept scalar values"
                 )
-        return [self.node_type._datatype_load(obj) for obj in objs]
+        import numina.store
+
+        return [numina.store.load(self.node_type, obj) for obj in objs]
 
     def __str__(self):
         sclass = type(self).__name__

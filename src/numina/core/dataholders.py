@@ -397,9 +397,11 @@ class Requirement(EntryHolder):
                 key = self.alias
 
         if alias_d or dest_d:
+            import numina.store
+
             content = ob.requirements[key]
-            value = self.type._datatype_load(content)
-            return value
+            # loaded as the values of the DAL
+            return numina.store.load(self.type, content)
         try:
             return getattr(ob, key)
         except AttributeError:
