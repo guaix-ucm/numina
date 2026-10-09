@@ -56,13 +56,9 @@ def test_work1(tmpdir):
     assert work.basedir == basedir
     assert work.resultsdir == os.path.join(basedir, resultsdir)
 
-    index_base = "index.pkl"
-    assert work.index_file == os.path.join(work.workdir, index_base)
-
     assert os.path.isdir(work.workdir)
     assert os.path.isdir(work.resultsdir)
     assert os.path.isdir(work.basedir)
-    assert os.path.isfile(work.index_file)
 
 
 def test_add_missing_entries():

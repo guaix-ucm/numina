@@ -11,9 +11,9 @@
 
 import datetime
 import errno
+import hashlib
 import logging
 import os
-import pickle
 import shutil
 
 import yaml
@@ -29,6 +29,10 @@ from numina.types.qc import QC
 from numina.util.context import working_directory
 
 _logger = logging.getLogger(__name__)
+
+# Maximum difference, in seconds, between the modification times of a file
+# and its copy to consider them equal, as the option --modify-window of rsync
+MODIFY_WINDOW = 1.0
 
 
 class DataManager:
@@ -177,23 +181,12 @@ class WorkEnvironment:
         self.datadir_rel = datadir
         self.datadir = os.path.abspath(datadir)
 
-        index_base = "index.pkl"
-
-        self.index_file = os.path.join(self.workdir, index_base)
-        self.hashes = {}
+        # The source of each file installed in workdir
+        self._installed = {}
 
     def sane_work(self):
         _logger.debug("check workdir for working: %r", self.workdir_rel)
         make_sure_path_exists(self.workdir)
-        make_sure_file_exists(self.index_file)
-        # Load dictionary of hashes
-
-        with open(self.index_file, "rb") as fd:
-            try:
-                self.hashes = pickle.load(fd)
-            except EOFError:
-                self.hashes = {}
-        make_sure_file_exists(self.index_file)
 
         _logger.debug("check resultsdir to store results %r", self.resultsdir_rel)
         make_sure_path_exists(self.resultsdir)
@@ -230,7 +223,7 @@ class WorkEnvironment:
 
             else:
                 key = tail
-            dest = os.path.join(self.workdir, key)
+            dest = self._destination(src, key)
             # Update filename in DataFrame
             obj.filename = dest
             install_if_needed(key, src, dest)
@@ -267,12 +260,12 @@ class WorkEnvironment:
                 complete = os.path.abspath(os.path.join(self.datadir, value.filename))
 
                 head, tail = os.path.split(value.filename)
-                dest = os.path.join(self.workdir, tail)
+                dest = self._destination(complete, tail)
 
                 install_if_needed(value.filename, complete, dest)
                 # The recipe runs in the work directory, where the file is installed,
                 # as with the frames in adapt_obsres
-                value.filename = tail
+                value.filename = os.path.basename(dest)
 
     # Used by numina-plugin-db
     def copyfiles_stage1(self, obsres):
@@ -292,38 +285,40 @@ class WorkEnvironment:
     def copyfiles_stage2(self, reqs):
         return self.installfiles_stage2(reqs, action="copy")
 
+    def _destination(self, src, name):
+        """The path of `src` in workdir, with the name `name`.
+
+        If another file was installed with the same name, a part of the hash
+        of the path of `src` is added to the name, so that the name does not
+        change between runs.
+        """
+        src_real = os.path.realpath(src)
+        dest = os.path.join(self.workdir, name)
+        installed = self._installed.get(dest)
+        if installed is not None and installed != src_real:
+            root, ext = os.path.splitext(name)
+            digest = hashlib.sha1(src_real.encode()).hexdigest()[:8]
+            dest = os.path.join(self.workdir, f"{root}_{digest}{ext}")
+            _logger.debug("%r is already installed from other file, using %r", name, dest)
+        self._installed[dest] = src_real
+        return dest
+
     def copy_if_needed(self, key, src, dest):
+        """Copy `src` to `dest`, unless `dest` is already a copy of `src`.
 
-        md5hash = compute_md5sum_file(src)
-        _logger.debug("compute hash, %s %s %s", key, md5hash, src)
-
-        # Check hash
-        hash_in_file = self.hashes.get(key)
-        if hash_in_file is None:
-            trigger_save = True
-            make_copy = True
-        elif hash_in_file == md5hash:
-            trigger_save = False
-            if os.path.isfile(dest):
-                make_copy = False
-            else:
-                make_copy = True
-        else:
-            trigger_save = True
-            make_copy = True
-
-        self.hashes[key] = md5hash
-
-        if make_copy:
-            _logger.debug("copying %r to %r", key, self.workdir)
-            shutil.copy(src, dest)
-        else:
+        `dest` is a copy if it is a regular file with the size and the
+        modification time of `src`, as in the quick check of rsync. The copy
+        keeps the modification time of `src`. `key` is used in the log.
+        """
+        if is_copy_of(src, dest):
             _logger.debug("copying %r not needed", key)
+            return
 
-        if trigger_save:
-            _logger.debug("save hashes")
-            with open(self.index_file, "wb") as fd:
-                pickle.dump(self.hashes, fd)
+        if os.path.islink(dest):
+            # A link from a previous run, it may point to src
+            os.remove(dest)
+        _logger.debug("copying %r to %r", key, self.workdir)
+        shutil.copy2(src, dest)
 
     def link_if_needed(self, key, src, dest):
         _logger.debug("linking %r to %r", key, self.workdir)
@@ -344,28 +339,22 @@ class WorkEnvironment:
         return obsres
 
 
-def compute_md5sum_file(filename):
-    import hashlib
+def is_copy_of(src, dest, modify_window=MODIFY_WINDOW):
+    """Check if `dest` is a copy of `src`.
 
-    md5 = hashlib.md5()
-    with open(filename, "rb") as f:
-        for chunk in iter(lambda: f.read(128 * md5.block_size), b""):
-            md5.update(chunk)
-    return md5.hexdigest()
+    It is if `dest` is a regular file, not a link, with the size of `src`
+    and a modification time that differs at most `modify_window` seconds.
+    """
+    if os.path.islink(dest) or not os.path.isfile(dest):
+        return False
+    src_stat = os.stat(src)
+    dest_stat = os.stat(dest)
+    return src_stat.st_size == dest_stat.st_size and abs(src_stat.st_mtime - dest_stat.st_mtime) <= modify_window
 
 
 def make_sure_path_exists(path):
     try:
         os.makedirs(path)
-    except (OSError, IOError) as exception:
-        if exception.errno != errno.EEXIST:
-            raise
-
-
-def make_sure_file_exists(path):
-    try:
-        with open(path, "a"):
-            pass
     except (OSError, IOError) as exception:
         if exception.errno != errno.EEXIST:
             raise
