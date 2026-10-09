@@ -89,7 +89,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
 
         # fit and subtract background
         if nwin_background > 0:
-            background = ndimage.filters.median_filter(sp, size=nwin_background)
+            background = ndimage.median_filter(sp, size=nwin_background)
             sp -= background
 
         # save spectrum before wavelength calibration in external
@@ -265,7 +265,7 @@ def find_fxpeaks(
 
     # apply gaussian filtering when requested
     if sigma_gaussian_filtering > 0:
-        spf = ndimage.filters.gaussian_filter(sp, sigma=sigma_gaussian_filtering)
+        spf = ndimage.gaussian_filter(sp, sigma=sigma_gaussian_filtering)
         lpreserve = sp < minimum_gaussian_filtering
         spf[lpreserve] = sp[lpreserve]
     else:
@@ -700,7 +700,7 @@ def main(args=None):
 
     # apply gaussian filtering
     if args.sigma_gauss_filt > 0:
-        spf = ndimage.filters.gaussian_filter(sp, sigma=args.sigma_gauss_filt)
+        spf = ndimage.gaussian_filter(sp, sigma=args.sigma_gauss_filt)
     else:
         spf = np.copy(sp)
 

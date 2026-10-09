@@ -11,7 +11,7 @@ from mpl_toolkits.axes_grid1.inset_locator import inset_axes
 import numpy as np
 from numpy.polynomial import Polynomial
 from scipy.interpolate import interp1d
-from scipy.ndimage.filters import gaussian_filter
+from scipy.ndimage import gaussian_filter
 
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
