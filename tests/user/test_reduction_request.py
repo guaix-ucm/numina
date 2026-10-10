@@ -1,8 +1,11 @@
 """Reduction requests: how to reduce the observing blocks, in a file or in Session.run"""
 
+import json
+
 import pytest
 import yaml
 
+from numina.dal.registry import Registry
 from numina.schemas import SchemaValidationError
 from numina.user.cli import base_config, main
 from numina.user.helpers import ReductionRequests
@@ -130,3 +133,35 @@ def test_session_invalid_request(basedir):
     session.add_observations("obs.yaml")
     with pytest.raises(SchemaValidationError):
         session.run(30, request={"value": 5})
+
+
+def inputs_of_task(registry, task_id):
+    return registry.store.get("tasks", task_id)["request_runinfo"]["inputs"]
+
+
+def test_task_inputs(basedir, capsys):
+    numina(capsys, "db", "ingest", "--db", "numina-db.json", "obs.yaml")
+    req = write_requests(basedir / "req.yaml", {"id": 30, "requirements": {"value": 5}})
+    numina(capsys, "db", "run", "--db", "numina-db.json", "1", "10", "31")
+    numina(capsys, "db", "run", "--db", "numina-db.json", "--request", req)
+    numina(capsys, "db", "run", "--db", "numina-db.json", "30", "--parameter-value=7")
+    numina(capsys, "db", "run", "--db", "numina-db.json", "30")
+
+    reg = Registry(str(basedir / "numina-db.json"), basedir=str(basedir))
+    task_ids = sorted(task["id"] for task in reg.tasks())
+    assert len(task_ids) == 6
+
+    (product,) = reg.products(type="MasterBias")
+    image_inputs = inputs_of_task(reg, task_ids[1])
+    assert image_inputs["master_bias"]["source"] == "registry"
+    assert image_inputs["master_bias"]["product_id"] == product["id"]
+
+    assert inputs_of_task(reg, task_ids[2])["value"] == {"source": "observation block", "value": 3}
+    assert inputs_of_task(reg, task_ids[3])["value"] == {"source": "request", "value": 5}
+    assert inputs_of_task(reg, task_ids[4])["value"] == {"source": "command line", "value": 7}
+    assert inputs_of_task(reg, task_ids[5])["value"] == {"source": "default", "value": 1}
+
+    # the inputs are in the file of the task too
+    results_dir = reg.store.get("tasks", task_ids[5])["request_runinfo"]["results_dir"]
+    with open(basedir / results_dir / "task.json") as fd:
+        assert json.load(fd)["request_runinfo"]["inputs"]["value"]["source"] == "default"

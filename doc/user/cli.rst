@@ -331,3 +331,8 @@ The value of a requirement is searched, in this order, in:
 
 The ``--pipeline`` and ``--profile`` options of the command line override
 those of the requests.
+
+Each task records where the value of each requirement was found, and the
+value (a file name, for example), in ``inputs`` of its ``request_runinfo``,
+in the file ``task.json`` and in the registry of reductions. For the
+products of the registry, the id of the product is recorded too.

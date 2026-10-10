@@ -24,6 +24,52 @@ from numina.user.helpers import ProcessingTask, DataManager
 _logger = logging.getLogger(__name__)
 
 
+def describe_value(value):
+    """A short description of the value of a requirement, that can be stored in JSON"""
+    if value is None or isinstance(value, (bool, int, float, str)):
+        return value
+    if isinstance(value, (list, tuple)) and all(isinstance(v, (bool, int, float, str)) for v in value):
+        return list(value)
+    filename = getattr(value, "filename", None)
+    if filename is not None:
+        return filename
+    uuid = getattr(value, "uuid", None)
+    if uuid is not None:
+        return f"{type(value).__name__} uuid={uuid}"
+    return type(value).__name__
+
+
+def describe_inputs(recipe, rinput, dal, request_requirements, ob_requirements):
+    """Where the value of each requirement of the recipe comes from, and the value
+
+    The values found by the DAL are recorded in ``dal.sources``. The others
+    come from the reduction request, the observing block, the results of
+    other blocks (ResultOf) or the default value.
+    """
+    from numina.core.query import ResultOf
+    import numina.types.obsresult as obtype
+
+    sources = getattr(dal, "sources", {})
+    inputs = {}
+    for key, req in recipe.requirements().items():
+        if isinstance(req.type, obtype.ObservationResultType):
+            continue
+        names = {req.dest, getattr(req, "alias", None)}
+        if req.dest in sources:
+            info = dict(sources[req.dest])
+        elif names & set(request_requirements):
+            info = {"source": "request"}
+        elif names & set(ob_requirements):
+            info = {"source": "observation block"}
+        elif isinstance(recipe.query_options.get(key), ResultOf):
+            info = {"source": "result of"}
+        else:
+            info = {"source": "default"}
+        info["value"] = describe_value(getattr(rinput, key))
+        inputs[key] = info
+    return inputs
+
+
 def run_reduce(
     datastore: DataManager,
     obsid,
@@ -111,6 +157,8 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
         obsres = datastore.backend.obsres_from_oblock_id(obsid, as_mode=as_mode, profile=request_profile)
         _logger.debug("instrument profile is %s", obsres.profile)
         task.request_params["instrument_configuration"] = obsres.profile
+        # The requirements of the OB, before the request overrides them
+        ob_requirements = dict(obsres.requirements)
         # Merge requirements passed from above
         obsres.requirements.update(task.request_params["requirements"])
         # The pipeline of the request overrides the one in the OB
@@ -139,6 +187,8 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
 
         try:
             # here the tags have been updated
+            # The DAL records where it finds the values
+            datastore.backend.sources = {}
             rinput = recipe.build_recipe_input(obsres, datastore.backend)
         except (ValueError, numina.exceptions.ValidationError) as err:
             _logger.error("During recipe input construction")
@@ -162,6 +212,10 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
         for key, req in recipe.requirements().items():
             v = getattr(rinput, key)
             _logger.debug("recipe requires %r, value is %s", key, v)
+
+        task.request_runinfo["inputs"] = describe_inputs(
+            recipe, rinput, datastore.backend, task.request_params["requirements"], ob_requirements
+        )
 
         for req in recipe.products().values():
             _logger.debug("recipe provides %s, %s", req.type.__class__.__name__, req.description)

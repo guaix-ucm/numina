@@ -43,6 +43,12 @@ class BaseDictDAL(AbsDrpDAL):
         self.req_table = req_table
         self.extra_data = extra_data if extra_data else {}
         self.components = components if components else {}
+        #: Where the values returned by the searches were found, by name
+        self.sources = {}
+
+    def record_source(self, name, source, **details):
+        """Record where the value of `name` was found"""
+        self.__dict__.setdefault("sources", {})[name] = dict(source=source, **details)
 
     def search_prod_type_tags(self, tipo, ins, profile, tags, pipeline):
         """Returns the first coincidence..."""
@@ -194,9 +200,12 @@ class BaseDictDAL(AbsDrpDAL):
         if name in self.extra_data:
             val = self.extra_data[name]
             content = numina.store.load(tipo, val)
+            self.record_source(name, "command line")
             return StoredProduct(id=0, tags={}, content=content)
         else:
-            return self.search_prod_type_tags(tipo, ins, profile, tags, pipeline)
+            value = self.search_prod_type_tags(tipo, ins, profile, tags, pipeline)
+            self.record_source(name, "control file")
+            return value
 
     def search_parameter(self, name, tipo, obsres, options=None):
         # returns StoredProduct
@@ -214,6 +223,7 @@ class BaseDictDAL(AbsDrpDAL):
         if name in self.extra_data:
             value = self.extra_data[name]
             content = StoredParameter(value)
+            self.record_source(name, "command line")
             return content
         else:
             for prod in mode_list:
@@ -223,6 +233,7 @@ class BaseDictDAL(AbsDrpDAL):
                     # We have found the result, no more checks
                     value = numina.store.load(tipo, prod["content"])
                     content = StoredParameter(value)
+                    self.record_source(name, "control file")
                     return content
             else:
                 msg = f"name {name} compatible with tags {tags!r} not found"
@@ -334,10 +345,13 @@ class BaseHybridDAL(Dict2DAL):
         if name in self.extra_data:
             val = self.extra_data[name]
             content = numina.store.load(tipo, val)
+            self.record_source(name, "command line")
             return StoredProduct(id=0, tags={}, content=content)
         if self.registry is not None:
             try:
-                return self._search_registry_product(tipo, obsres)
+                value = self._search_registry_product(tipo, obsres)
+                self.record_source(name, "registry", product_id=value.id)
+                return value
             except NoResultFound as err:
                 _logger.debug("%s", err)
         return self._search_prod_table(name, tipo, obsres)
@@ -568,6 +582,7 @@ class HybridDAL(BaseHybridDAL):
                     path = build_product_path(drp, self.rootdir, profile, name, tipo, obsres)
                 _logger.debug("path is %s", path)
                 rprod["content"] = numina.store.load(tipo, path)
+                self.record_source(name, "control file")
                 return StoredProduct(**rprod)
         else:
             # Not in table, try file directly
@@ -575,6 +590,7 @@ class HybridDAL(BaseHybridDAL):
             path = self.build_product_path(drp, profile, name, tipo, obsres)
             _logger.debug("path is %s", path)
             content = self.product_loader(tipo, name, path)
+            self.record_source(name, "calibrations directory", path=path)
             return StoredProduct(id=0, content=content, tags=obsres.tags)
 
     def search_result_id(self, node_id, tipo, field, mode=None):
