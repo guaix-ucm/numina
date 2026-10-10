@@ -151,10 +151,10 @@ def _table(registry, collection):
                 ]
             )
     elif collection == "results":
-        header = ["id", "task_id", "oblock_id", "instrument", "mode", "qc", "time_create"]
+        header = ["id", "uuid", "task_id", "oblock_id", "instrument", "mode", "qc", "time_create"]
         rows = [[doc.get(field) for field in header] for doc in registry.results()]
     else:
-        header = ["id", "type", "oblock_id", "instrument", "qc", "time_obs", "content"]
+        header = ["id", "uuid", "type", "oblock_id", "instrument", "qc", "time_obs", "content"]
         rows = [[doc.get(field) for field in header] for doc in registry.products()]
     return header, rows
 

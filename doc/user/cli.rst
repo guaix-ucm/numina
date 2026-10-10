@@ -264,8 +264,8 @@ of the requests with id, in the order of the file.
 results or products of the registry::
 
      $ numina db list --db numina-db.json products
-     id  type        oblock_id  instrument  qc    time_obs                    content
-     1   MasterBias  0_bias     MEGARA      GOOD  2017-08-27T17:10:39.540000  obsid0_bias_1_results/master_bias.fits
+     id  uuid                                  type        oblock_id  instrument  qc    time_obs                    content
+     1   f5dea9e0-c4fc-11f1-98f1-a0369f681a26  MasterBias  0_bias     MEGARA      GOOD  2017-08-27T17:10:39.540000  obsid0_bias_1_results/master_bias.fits
 
 .. program:: numina db list
 
@@ -335,4 +335,51 @@ those of the requests.
 Each task records where the value of each requirement was found, and the
 value (a file name, for example), in ``inputs`` of its ``request_runinfo``,
 in the file ``task.json`` and in the registry of reductions. For the
-products of the registry, the id of the product is recorded too.
+products and results of the registry, their id is recorded too, and for
+the references, the reference and where it was given (the request or the
+observing block).
+
+References to the registry
+--------------------------
+With a registry of reductions, the value of a requirement, in a request or
+in an observing block, can be a reference to a product or a result of the
+registry, instead of a file name::
+
+    requirements:
+      master_bias: {product: f5dea9e0}
+      master_wlcalib: {result_of: 12_arc}
+      master_traces: {result: 9b2c41d7, field: master_traces}
+
+``product``
+   A product, by its id (an integer) or its uuid (a string), as shown by
+   ``numina db list products``.
+
+``result``
+   A result, by its id or its uuid, as shown by ``numina db list results``.
+
+``result_of``
+   The most recent result of an observing block, with quality control
+   different from ``BAD``. It changes if the block is reduced again.
+
+``task``
+   The result of a task, by its id, as shown by ``numina db list tasks``.
+   It is an error if the task failed or has not finished.
+
+The uuids can be abbreviated, with at least their first 8 characters
+(``{product: f5dea9e0}``); it is an error if the abbreviation is
+ambiguous. The ids of products, results and tasks are local to the
+registry: the same product has other id in other registry, or if the
+registry is created again. The uuids are part of the products and results,
+in their headers and result files. Use the uuids in the files of requests
+that are kept, and the ids when reducing interactively.
+
+For results, ``field`` is the field of the result, by default the name of
+the requirement. The value is a file of the result (a product, for
+example), or the value stored in the result file (a number, for example).
+
+The references choose a calibration explicitly, instead of the automatic
+selection of the registry (the most recent product). A product or result
+chosen explicitly is used even if its quality control is ``BAD``, with a
+warning. It is an error if what they refer to is not in the registry, if
+the product is not of the type of the requirement, or if there is no
+registry. These errors stop the reduction before running the recipe.

@@ -55,8 +55,9 @@ def describe_inputs(recipe, rinput, dal, request_requirements, ob_requirements):
         if isinstance(req.type, obtype.ObservationResultType):
             continue
         names = {req.dest, getattr(req, "alias", None)}
-        if req.dest in sources:
-            info = dict(sources[req.dest])
+        found = [name for name in names if name in sources]
+        if found:
+            info = dict(sources[found[0]])
         elif names & set(request_requirements):
             info = {"source": "request"}
         elif names & set(ob_requirements):
@@ -68,6 +69,58 @@ def describe_inputs(recipe, rinput, dal, request_requirements, ob_requirements):
         info["value"] = describe_value(getattr(rinput, key))
         inputs[key] = info
     return inputs
+
+
+def requirement_types(recipe, drp):
+    """The names of the product types of each requirement of the recipe, by name and alias"""
+    types = {}
+    for req in recipe.requirements().values():
+        node_types = getattr(req.type, "node_type", None) or [req.type]
+        labels = set()
+        for node_type in node_types:
+            if node_type.isproduct():
+                label = drp.product_label(node_type)
+                labels.add(label[:-2] if label.endswith("()") else label)
+        for name in (req.dest, getattr(req, "alias", None)):
+            if name is not None:
+                types[name] = labels
+    return types
+
+
+def resolve_references(obsres, datastore, request_requirements, recipe):
+    """Replace the references to the registry in the requirements of `obsres` by their values
+
+    The product types are checked against those of the requirements of the
+    recipe. The source of each value is recorded in the DAL.
+
+    Raises
+    ------
+    numina.exceptions.ValidationError
+        If a reference is not valid, its type is not that of the
+        requirement, or there is no registry.
+    """
+    from numina.dal.registry import is_reference
+
+    requirements = obsres.requirements
+    if not any(is_reference(value) for value in requirements.values()):
+        return
+    drp = datastore.backend.drps.query_by_name(obsres.instrument)
+    types = requirement_types(recipe, drp)
+    for key, value in requirements.items():
+        if not is_reference(value):
+            continue
+        if datastore.registry is None:
+            msg = f"requirement {key} is a reference to the registry, but there is no registry of reductions"
+            raise numina.exceptions.ValidationError(msg)
+        # an unknown requirement, or one that is not a product, is not checked
+        accepted = types.get(key) or None
+        try:
+            resolved, details = datastore.registry.resolve_reference(value, key, types=accepted)
+        except (ValueError, OSError) as error:
+            raise numina.exceptions.ValidationError(f"requirement {key}: {error}") from error
+        requirements[key] = resolved
+        requested_in = "request" if key in request_requirements else "observation block"
+        datastore.backend.record_source(key, "registry", reference=value, requested_in=requested_in, **details)
 
 
 def run_reduce(
@@ -170,6 +223,11 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
         recipe = datastore.backend.search_recipe_from_ob(obsres)
         _logger.debug("recipe class is %s", recipe.__class__)
 
+        # The DAL records where it finds the values
+        datastore.backend.sources = {}
+        # The references are resolved with the types of the requirements of the recipe
+        resolve_references(obsres, datastore, task.request_params["requirements"], recipe)
+
         recipe.intermediate_results = task.request_params["intermediate_results"]
         recipe.validate_inputs = task.request_params["validate_inputs"]
         recipe.validate_results = task.request_params["validate_results"]
@@ -187,8 +245,6 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
 
         try:
             # here the tags have been updated
-            # The DAL records where it finds the values
-            datastore.backend.sources = {}
             rinput = recipe.build_recipe_input(obsres, datastore.backend)
         except (ValueError, numina.exceptions.ValidationError) as err:
             _logger.error("During recipe input construction")

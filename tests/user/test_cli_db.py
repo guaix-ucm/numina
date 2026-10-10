@@ -97,8 +97,12 @@ def test_list(basedir, capsys):
     status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "tasks")
     assert lines[1].split()[:5] == ["1", "1", "TEST1", "bias", "finished"]
     status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products")
-    assert lines[1].split()[:3] == ["1", "MasterBias", "1"]
+    assert lines[0].split()[:4] == ["id", "uuid", "type", "oblock_id"]
+    product_id, _, product_type, oblock_id = lines[1].split()[:4]
+    assert (product_id, product_type, oblock_id) == ("1", "MasterBias", "1")
 
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "results")
+    assert lines[0].split()[:3] == ["id", "uuid", "task_id"]
     status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "results", "--oblock-id", "10")
     assert lines == ["no results"]
 

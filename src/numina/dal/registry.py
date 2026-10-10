@@ -39,6 +39,17 @@ REGISTRY_VERSION = 1
 #: Metadata of the products stored in the registry
 DB_PRODUCT_KEYS = ["instrument", "observation_date", "uuid", "quality_control"]
 
+#: The minimum length of an abbreviated uuid in a reference
+UUID_PREFIX_LENGTH = 8
+
+#: The keys of a reference to the registry, in the requirements
+REFERENCE_KEYS = ("product", "result", "result_of", "task")
+
+
+def is_reference(value):
+    """True if `value` is a reference to the registry"""
+    return isinstance(value, dict) and any(key in value for key in REFERENCE_KEYS)
+
 
 def atomic_write(filename, write):
     """Write a file atomically
@@ -381,6 +392,137 @@ class Registry:
             return None
         return task["request_params"].get("instrument_configuration")
 
+    def resolve_reference(self, reference, field, types=None):
+        """The value of a reference to the registry, and the details of its source
+
+        `reference` is a dictionary with one of the keys:
+
+        product
+            The id (integer) or the uuid (string) of a product. The uuid
+            can be abbreviated, with at least its first 8 characters.
+        result
+            The id (integer) or the uuid (string) of a result, as for
+            products.
+        result_of
+            The id of an observing block, its most recent result with QC
+            not BAD.
+        task
+            The id of a task, its result.
+
+        For results, ``field`` is the field of the result, by default
+        `field`. The values that are files are returned as absolute paths.
+
+        If `types` is not None, the names of the types of products
+        accepted: the product, or the product of the field of the result,
+        must be of one of them.
+
+        Raises
+        ------
+        ValueError
+            If the reference is not valid, or what it refers to is not in
+            the registry.
+        """
+        kinds = [key for key in REFERENCE_KEYS if key in reference]
+        unknown = set(reference) - set(REFERENCE_KEYS) - {"field"}
+        if unknown or len(kinds) != 1:
+            raise ValueError(f"invalid reference {reference}, use one of {', '.join(REFERENCE_KEYS)}")
+        kind = kinds[0]
+        key = reference[kind]
+        if kind == "product":
+            if "field" in reference:
+                raise ValueError(f"invalid reference {reference}, a product has no field")
+            doc = self._find_by_id_or_uuid("products", "product", key)
+            _check_type(f"the product {key}", doc, types)
+            if doc["qc"] == "BAD":
+                _logger.warning("the product %s has QC BAD", key)
+            return self._path(doc["content"]), {"product_id": doc["id"]}
+
+        if kind == "result_of":
+            result = self.select_result(key)
+            if result is None:
+                # the ids can be integers in a file and strings in other
+                matching = [res for res in self.store.find("results") if str(res["oblock_id"]) == str(key)]
+                result = _most_recent([res for res in matching if res["qc"] != "BAD"])
+            if result is None:
+                raise ValueError(f"no result of oblock_id={key} with QC not BAD in the registry")
+        elif kind == "result":
+            result = self._find_by_id_or_uuid("results", "result", key)
+        else:
+            result = self._result_of_task(key)
+        if kind != "result_of" and result["qc"] == "BAD":
+            _logger.warning("the result %s has QC BAD", result["id"])
+        field = reference.get("field", field)
+        value = self._result_value(result, field)
+        # the type is known if the field is a product
+        products = self.store.find("products", result_id=result["id"], field=field)
+        if products:
+            _check_type(f"the field {field} of the result {result['id']}", products[0], types)
+        return value, {"result_id": result["id"]}
+
+    def _find_by_id_or_uuid(self, collection, what, key):
+        """A document by id (integer) or uuid (string), that can be abbreviated"""
+        if isinstance(key, int):
+            docs = self.store.find(collection, id=key)
+            if not docs:
+                msg = f"no {what} with id {key} in the registry"
+                if len(str(key)) >= UUID_PREFIX_LENGTH:
+                    # YAML reads a uuid of digits as an integer
+                    msg += f", for a {what} with uuid {key} use {{{what}: '{key}'}}, with quotes"
+                raise ValueError(msg)
+            return docs[0]
+        key = str(key)
+        docs = self.store.find(collection, uuid=key)
+        if docs:
+            return docs[0]
+        if len(key) < UUID_PREFIX_LENGTH:
+            msg = f"no {what} with uuid {key} in the registry"
+            if key.isdigit():
+                msg += f", for the {what} with id {key} use {{{what}: {key}}}, without quotes"
+            else:
+                msg += f", an abbreviated uuid needs at least {UUID_PREFIX_LENGTH} characters"
+            raise ValueError(msg)
+        docs = [doc for doc in self.store.find(collection) if (doc.get("uuid") or "").startswith(key)]
+        if not docs:
+            raise ValueError(f"no {what} with uuid {key} in the registry")
+        if len(docs) > 1:
+            ids = ", ".join(str(doc["id"]) for doc in docs)
+            raise ValueError(f"the uuid {key} is ambiguous, it is the beginning of the uuid of the {what}s {ids}")
+        return docs[0]
+
+    def _result_of_task(self, task_id):
+        """The result of a task"""
+        tasks = self.store.find("tasks", id=task_id)
+        if not tasks:
+            raise ValueError(f"task {task_id} is not in the registry")
+        results = self.store.find("results", task_id=task_id)
+        if results:
+            return results[0]
+        if tasks[0]["state"] == 3:
+            raise ValueError(f"task {task_id} failed, it has no result")
+        raise ValueError(f"task {task_id} has not finished, it has no result")
+
+    def _path(self, name):
+        return os.path.abspath(os.path.join(self.basedir, name))
+
+    def _result_value(self, result, field):
+        """The value of a field of a result, the files as absolute paths
+
+        The result file does not mark which strings are files: a string
+        is a file if it is the name of a file in the directory of the
+        result, otherwise it is a value.
+        """
+        filename = self._path(os.path.join(result["result_dir"], result["result_file"]))
+        with open(filename) as fd:
+            values = json.load(fd)["values"]
+        if field not in values:
+            raise ValueError(f"the result {result['id']} has no field {field}")
+        value = values[field]
+        if isinstance(value, str):
+            path = self._path(os.path.join(result["result_dir"], value))
+            if os.path.isfile(path):
+                return path
+        return value
+
     def tasks(self, **equal):
         """Tasks in the registry, filtered by equality of fields"""
         return self.store.find("tasks", **equal)
@@ -396,6 +538,16 @@ class Registry:
     def oblocks(self, **equal):
         """Observing blocks in the registry, filtered by equality of fields"""
         return self.store.find("oblocks", **equal)
+
+
+def _check_type(what, product, types):
+    """Check that the type of a product is in `types` (if not None)"""
+
+    def strip(label):
+        return label[:-2] if label.endswith("()") else label
+
+    if types is not None and strip(product["type"]) not in {strip(label) for label in types}:
+        raise ValueError(f"{what} is a {strip(product['type'])}, not a {' or '.join(sorted(types))}")
 
 
 def _most_recent(docs):
