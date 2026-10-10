@@ -28,13 +28,8 @@ def mode_run_common(args, extra_args, config, mode):
         raise ValueError(f"Not valid run mode {mode}")
 
 
-def mode_run_common_obs(args, extra_args, config):
-    """Observing mode processing mode of numina."""
-
-    # Loading observation result if exists
-    sessions, loaded_obs = load_observations(args.obsresult)
-
-    # Override like this
+def configure_run(args, config):
+    """Update the configuration with the options of the command line"""
     if args.basedir:
         config["tool.run"]["basedir"] = args.basedir
     if args.datadir:
@@ -52,6 +47,32 @@ def mode_run_common_obs(args, extra_args, config):
     if hasattr(args, "strict_reqs"):
         config["tool.run"]["strict_reqs"] = str(args.strict_reqs)
 
+
+def run_oblocks(datamanager, oblock_ids, args, config):
+    """Reduce the observing blocks, with the options of the command line"""
+    copy_files = config["tool.run"].getboolean("copy_files")
+    validate = config["tool.run"].getboolean("validate")
+    strict_inputs = config["tool.run"].getboolean("strict_reqs")
+    for oblock_id in oblock_ids:
+        run_reduce(
+            datamanager,
+            oblock_id,
+            pipeline=args.pipe_name,
+            profile=args.profile,
+            copy_files=copy_files,
+            validate_inputs=validate,
+            validate_results=validate,
+            strict_inputs=strict_inputs,
+        )
+
+
+def mode_run_common_obs(args, extra_args, config):
+    """Observing mode processing mode of numina."""
+
+    # Loading observation result if exists
+    sessions, loaded_obs = load_observations(args.obsresult)
+
+    configure_run(args, config)
     datamanager = create_datamanager(config, args.reqs, extra_args.extra_control, profile_path_extra=args.profilepath)
     datamanager.backend.add_obs(loaded_obs)
 
@@ -60,23 +81,10 @@ def mode_run_common_obs(args, extra_args, config):
     for session in sessions:
         for job in session:
             if job["enabled"] or job["id"] in args.enable:
-                jobs.append(job)
+                jobs.append(job["id"])
 
-    copy_files = config["tool.run"].getboolean("copy_files")
-    validate = config["tool.run"].getboolean("validate")
-    strict_inputs = config["tool.run"].getboolean("strict_reqs")
     try:
-        for job in jobs:
-            run_reduce(
-                datamanager,
-                job["id"],
-                pipeline=args.pipe_name,
-                profile=args.profile,
-                copy_files=copy_files,
-                validate_inputs=validate,
-                validate_results=validate,
-                strict_inputs=strict_inputs,
-            )
+        run_oblocks(datamanager, jobs, args, config)
     finally:
         if args.dump_control:
             _logger.debug("dump control status")

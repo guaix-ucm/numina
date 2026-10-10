@@ -41,25 +41,47 @@ def complete_config(config):
     return config
 
 
-def register(subparsers, config):
-    complete_config(config)
-    parser_run = subparsers.add_parser("run", help="process a observation result")
+def add_location_options(parser):
+    """Options of the directories and the registry of reductions"""
+    parser.add_argument(
+        "--basedir",
+        action="store",
+        dest="basedir",
+        help="path to create the following directories",
+    )
+    parser.add_argument(
+        "--datadir",
+        action="store",
+        dest="datadir",
+        help="path to directory containing pristine data",
+    )
+    parser.add_argument(
+        "--db",
+        action="store",
+        dest="db",
+        metavar="FILE",
+        help="registry of the reductions, relative to basedir (created if it does not exist), "
+        "overrides file in [tool.db]",
+    )
 
-    parser_run.add_argument(
+
+def add_reduction_options(parser):
+    """Options of the reductions, shared by run and db run"""
+    parser.add_argument(
         "-c",
         "--task-control",
         dest="reqs",
         help="configuration file of the processing task",
         metavar="FILE",
     )
-    parser_run.add_argument(
+    parser.add_argument(
         "-r",
         "--requirements",
         dest="reqs",
         help="alias for --task-control",
         metavar="FILE",
     )
-    parser_run.add_argument(
+    parser.add_argument(
         "--insconf",
         "--profile",
         dest="profile",
@@ -68,40 +90,20 @@ def register(subparsers, config):
         metavar="UUID",
         help="uuid of an instrument configuration (INSCONF), overrides the configuration selected from the images",
     )
-    parser_run.add_argument(
+    parser.add_argument(
         "--profile-path",
         dest="profilepath",
         default=None,
         help="directory with additional instrument configurations",
     )
-    parser_run.add_argument(
+    parser.add_argument(
         "-p",
         "--pipeline",
         dest="pipe_name",
         default=None,
         help="name of a pipeline, overrides the pipeline of the observation result ('default' if not defined)",
     )
-    parser_run.add_argument(
-        "--basedir",
-        action="store",
-        dest="basedir",
-        help="path to create the following directories",
-    )
-    parser_run.add_argument(
-        "--datadir",
-        action="store",
-        dest="datadir",
-        help="path to directory containing pristine data",
-    )
-    parser_run.add_argument(
-        "--db",
-        action="store",
-        dest="db",
-        metavar="FILE",
-        help="registry of the reductions, relative to basedir (created if it does not exist), "
-        "overrides file in [tool.db]",
-    )
-    parser_run.add_argument(
+    parser.add_argument(
         "--calibsdir",
         "--rootdir",
         action="store",
@@ -111,7 +113,7 @@ def register(subparsers, config):
     )
 
     # If none is used, the value of copy_files in the configuration is used
-    group_copy = parser_run.add_mutually_exclusive_group()
+    group_copy = parser.add_mutually_exclusive_group()
     group_copy.add_argument(
         "--copy-files",
         action="store_true",
@@ -127,6 +129,32 @@ def register(subparsers, config):
         default=None,
         help="link observation result and requirement files in the work directory",
     )
+    parser.add_argument(
+        "--validate",
+        action="store_const",
+        const=True,
+        help="validate inputs and results of recipes",
+    )
+
+    group_strict = parser.add_mutually_exclusive_group()
+    group_strict.add_argument(
+        "--strict-reqs",
+        action="store_true",
+        help="end the program if a requirement name is not matched by the recipe",
+    )
+    group_strict.add_argument(
+        "--loose-reqs",
+        action="store_false",
+        dest="strict_reqs",
+        help="warn if a requirement name is not matched by the recipe",
+    )
+
+
+def register(subparsers, config):
+    complete_config(config)
+    parser_run = subparsers.add_parser("run", help="process a observation result")
+    add_reduction_options(parser_run)
+    add_location_options(parser_run)
     parser_run.add_argument(
         "-e",
         "--enable",
@@ -139,25 +167,6 @@ def register(subparsers, config):
         "--dump-control",
         action="store_true",
         help="save the modified task control file",
-    )
-    parser_run.add_argument(
-        "--validate",
-        action="store_const",
-        const=True,
-        help="validate inputs and results of recipes",
-    )
-
-    group_strict = parser_run.add_mutually_exclusive_group()
-    group_strict.add_argument(
-        "--strict-reqs",
-        action="store_true",
-        help="end the program if a requirement name is not matched by the recipe",
-    )
-    group_strict.add_argument(
-        "--loose-reqs",
-        action="store_false",
-        dest="strict_reqs",
-        help="warn if a requirement name is not matched by the recipe",
     )
     parser_run.add_argument("obsresult", nargs="+", help="file with the observation result")
 
