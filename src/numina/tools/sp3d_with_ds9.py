@@ -33,29 +33,36 @@ QUIT_KEYS_MATPLOTLIB_ORIG = list(mpl.rcParams["keymap.quit"])
 mpl.rcParams["keymap.quit"] = []  # Disable the default quit keys in Matplotlib
 
 
-def ds9cmd(cmd, pipe=False):
-    """Run a command in ds9 using xpa.
+def ds9cmd(cmd: str, pipe: bool = False) -> str:
+    """Run a shell command, typically an XPA command to control ds9.
 
     Parameters
     ----------
     cmd : str
-        The command to run in ds9.
+        The full command to run, including the XPA executable
+        (e.g. 'xpaset -p ds9 ...' or 'xpaget ds9 ...').
     pipe : bool, optional
         If True, the command is run in a shell. This is useful
-        when 'cm' contains a pipe, which gives an error when
+        when 'cmd' contains a pipe, which gives an error when
         trying to run the command as a list.
-        If False, the command is run as a list.
+        If False, the command is split on whitespace with
+        `str.split()` (quotes and braces are not taken into
+        account) and run as a list, without a shell.
         In both cases, the output is captured.
 
     Returns
     -------
     str
-        The output of the command, if successful.
+        The standard output of the command, with leading and
+        trailing whitespace removed.
 
     Raises
     ------
     ValueError
-        If the command fails.
+        If the command writes anything to standard error. The
+        return code of the command is not checked.
+    FileNotFoundError
+        If `pipe` is False and the executable is not found.
     """
 
     if pipe:
@@ -69,8 +76,36 @@ def ds9cmd(cmd, pipe=False):
         raise ValueError(result.stderr)
 
 
-def init_ds9_plot(fpath, wave):
-    """Initialize ds9 line plot."""
+def init_ds9_plot(fpath: Path, wave: u.Quantity) -> str:
+    """Initialize a line plot in ds9 to display spectra.
+
+    A new ds9 plot is created through XPA, with the file name as
+    title and generic axis labels. The font sizes and the legend
+    are configured, and the X-axis limits are set to the range of
+    `wave`. The Y-axis limits are initially set to [0, 1].
+
+    Parameters
+    ----------
+    fpath : pathlib.Path
+        Path to the 3D data cube. Only its name (without the
+        directory) is used, as the plot title.
+    wave : astropy.units.Quantity
+        Values along the NAXIS3 (spectral) direction. Only the
+        numerical values (`wave.value`) are used, to set the
+        X-axis limits, so the unit is not displayed in the plot.
+
+    Returns
+    -------
+    str
+        Name of the current ds9 plot, as returned by
+        'xpaget ds9 plot current'.
+
+    Raises
+    ------
+    ValueError
+        If any of the XPA commands writes to standard error
+        (see `ds9cmd`).
+    """
     ds9cmd(
         "xpaset -p ds9 plot line {" + fpath.name + "} {" + "Value along NAXIS3 direction" + "} {" + "Signal" + "} xy"
     )
