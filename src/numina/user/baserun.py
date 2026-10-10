@@ -43,6 +43,9 @@ def run_reduce(
     from the images of the observation result.
     """
 
+    # The block can be in the registry of reductions
+    datastore.restore_oblock(obsid)
+
     request = "reduce"
     request_params = dict()
 

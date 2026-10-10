@@ -72,6 +72,29 @@ class DataManager:
         saveres = result.store_to(None)
         return saveres
 
+    def restore_oblock(self, oblock_id):
+        """Load the observing block `oblock_id` from the registry, if needed
+
+        The observing blocks loaded from files have precedence: the block
+        is read from the registry only if it is not loaded. Its children
+        are restored too.
+
+        Raises
+        ------
+        ValueError
+            If the block is not loaded and is not in the registry.
+        """
+        if oblock_id in self.backend.ob_table:
+            return
+        oblock = None if self.registry is None else self.registry.oblock(oblock_id)
+        if oblock is None:
+            where = "the observation results" if self.registry is None else "the observation results or the registry"
+            raise ValueError(f"oblock_id={oblock_id} is not in {where}")
+        for child in oblock.get("children", []):
+            self.restore_oblock(child)
+        _logger.debug("restore oblock_id=%s from the registry", oblock_id)
+        self.backend.add_obs([oblock])
+
     def new_task(self, request, request_params):
         """Create a new task
 

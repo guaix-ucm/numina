@@ -99,6 +99,11 @@ BIAS = {"id": 1, "mode": "bias", "instrument": "TEST1", "images": ["image1.fits"
 
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
+    return create_basedir(drpmocker, tmp_path, monkeypatch)
+
+
+def create_basedir(drpmocker, tmp_path, monkeypatch):
+    """The DRP TEST1 and its images, in tmp_path, the working directory"""
     drpmocker.add_drp("TEST1", DRP_TEST1)
     monkeypatch.setattr(f"{__name__}.SEEN", [])
     datadir = tmp_path / "data"

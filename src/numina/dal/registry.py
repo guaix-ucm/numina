@@ -244,14 +244,32 @@ class Registry:
             }
             return self.store.insert("tasks", doc)
 
+    def record_oblock(self, oblock):
+        """Record the definition of an observing block
+
+        Returns "new", "updated" (the definition has changed) or "unchanged".
+        """
+        with self.store.transaction():
+            return self._record_oblock(oblock["id"], oblock)
+
     def _record_oblock(self, oblock_id, oblock):
         existing = self.store.find("oblocks", oblock_id=oblock_id)
         doc = {"oblock_id": oblock_id, "definition": oblock}
         if not existing:
             self.store.insert("oblocks", doc)
-        elif existing[0]["definition"] != oblock:
+            return "new"
+        if existing[0]["definition"] != oblock:
             _logger.info("oblock_id=%s has changed, updating the registry", oblock_id)
             self.store.update("oblocks", existing[0]["id"], doc)
+            return "updated"
+        return "unchanged"
+
+    def oblock(self, oblock_id):
+        """The definition of the observing block `oblock_id`, None if it is not recorded"""
+        existing = self.store.find("oblocks", oblock_id=oblock_id)
+        if not existing:
+            return None
+        return copy.deepcopy(existing[0]["definition"])
 
     def update_task(self, task):
         """Record the state of a task"""

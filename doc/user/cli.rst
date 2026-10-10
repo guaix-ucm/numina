@@ -224,3 +224,50 @@ The exit status is 1 if some file is invalid, and 0 otherwise.
 
    The files to check: FITS images and JSON files or, with :option:`--ob`,
    observation results.
+
+Options for db
+==============
+The db subcommand works with the registry of reductions, the file given
+with ``--db`` or with ``file`` in the section ``[tool.db]`` of the
+configuration. It has three subcommands.
+
+``numina db ingest`` records the observing blocks of the observation files
+in the registry, without reducing them::
+
+     $ numina db ingest --db numina-db.json 0_bias.yaml 1_tracemap.yaml
+     new oblock_id=0_bias
+     new oblock_id=1_HR-R
+
+Each block is reported as ``new``, ``updated`` (its definition has
+changed) or ``unchanged``.
+
+``numina db run`` reduces observing blocks of the registry by their id,
+in the order given::
+
+     $ numina db run --db numina-db.json -r control.yaml 0_bias 1_HR-R
+
+It accepts the options of ``numina run`` that describe how to reduce,
+like ``-r``, ``--profile``, ``--pipeline``, ``--validate`` or
+``--parameter-NAME=VALUE``. The exit status is 2 if a block is not in the
+registry. The children of a block are read from the registry too.
+
+``numina db list`` prints a table with the observing blocks, tasks,
+results or products of the registry::
+
+     $ numina db list --db numina-db.json products
+     id  type        oblock_id  instrument  qc    time_obs                    content
+     1   MasterBias  0_bias     MEGARA      GOOD  2017-08-27T17:10:39.540000  obsid0_bias_1_results/master_bias.fits
+
+.. program:: numina db list
+
+.. option:: oblocks, tasks, results, products
+
+   The collection to show.
+
+.. option:: --oblock-id ID, --instrument NAME, --mode MODE
+
+   Show only the documents with this value. A collection without the field
+   is an error.
+
+The three subcommands accept ``--db FILE``, ``--basedir path`` (the
+registry and its paths are relative to it) and ``--datadir path``.

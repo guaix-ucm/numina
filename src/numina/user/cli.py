@@ -116,7 +116,7 @@ def main(args=None):
     )
 
     # Init subcommands
-    cmds = ["clidentify", "clishowins", "clishowom", "clishowrecip", "clirun", "clirunrec", "cliverify"]
+    cmds = ["clidentify", "clishowins", "clishowom", "clishowrecip", "clirun", "clirunrec", "cliverify", "clidb"]
     for cmd in cmds:
         cmd_mod = import_module(f".{cmd}", "numina.user")
         register = getattr(cmd_mod, "register", None)

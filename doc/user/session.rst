@@ -77,7 +77,16 @@ With a registry, each task has its own work and result directories,
 ``obsid<id_of_obs>_<id_of_task>_results`` by default (templates in the
 section ``[tool.db]`` of the configuration).
 
-The registry is used by :program:`numina run` with ``--db FILE``.
+The registry is used by :program:`numina run` with ``--db FILE``, and by
+:program:`numina db`.
 
-The observing blocks are not restored from the registry: they must be added
-again in each session with :meth:`~numina.user.session.Session.add_observations`.
+The registry records the observing blocks that are reduced, and those
+recorded with ``numina db ingest``. A block that has not been added to the
+session is read from the registry, so a new session can reduce it by its
+id, without adding the observation files again::
+
+    session = Session(basedir=".", control="control.yaml", db="numina-db.json")
+    task = session.run("3_HR-R")
+
+The blocks added with :meth:`~numina.user.session.Session.add_observations`
+have precedence over those in the registry.
