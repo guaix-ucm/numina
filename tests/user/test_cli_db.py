@@ -152,3 +152,49 @@ def test_loaded_oblock_has_precedence(basedir):
     session.run(1)
     # the definition reduced is recorded in the registry
     assert registry(basedir).oblock(1) == BIAS
+
+
+def test_priority(basedir, capsys):
+    numina_db(capsys, "ingest", "--db", "numina-db.json", "obs.yaml")
+    numina_db(capsys, "run", "--db", "numina-db.json", "1")
+    numina_db(capsys, "run", "--db", "numina-db.json", "1")
+    first, second = registry(basedir).products(type="MasterBias")
+
+    # without priorities, the most recent
+    numina_db(capsys, "run", "--db", "numina-db.json", "10")
+    assert trr.SEEN[-1] == second["uuid"]
+
+    status, lines, _ = numina_db(capsys, "priority", "--db", "numina-db.json", str(first["id"]), "2")
+    assert status == 0
+    assert lines == [f"product {first['id']} has priority 2"]
+    numina_db(capsys, "run", "--db", "numina-db.json", "10")
+    assert trr.SEEN[-1] == first["uuid"]
+
+    # by uuid, abbreviated
+    status, _, _ = numina_db(capsys, "priority", "--db", "numina-db.json", second["uuid"][:8], "3")
+    assert status == 0
+    numina_db(capsys, "run", "--db", "numina-db.json", "10")
+    assert trr.SEEN[-1] == second["uuid"]
+
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products")
+    header = lines[0].split()
+    priorities = [line.split()[header.index("priority")] for line in lines[1:]]
+    assert priorities == ["2", "3"]
+
+
+def test_priority_unknown_product(basedir, capsys):
+    numina_db(capsys, "ingest", "--db", "numina-db.json", "obs.yaml")
+    status, _, err = numina_db(capsys, "priority", "--db", "numina-db.json", "99", "1")
+    assert status == 2
+    assert "no product with id 99" in err
+
+
+def test_session_set_priority(basedir):
+    session = Session(basedir=basedir, config=base_config(), db="numina-db.json")
+    session.add_observations("obs.yaml")
+    session.run(1)
+    session.run(1)
+    first, _ = session.products(type="MasterBias")
+    assert session.set_priority(first["uuid"], 1) == first["id"]
+    session.run(10)
+    assert trr.SEEN[-1] == first["uuid"]

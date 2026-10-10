@@ -334,6 +334,7 @@ class Registry:
                 meta = prod.type.extract_db_info(value, DB_PRODUCT_KEYS)
                 prod_doc = {
                     "origin": "reduction",
+                    "priority": 0,
                     "result_id": result_id,
                     "task_id": task.id,
                     "oblock_id": oblock_id,
@@ -352,18 +353,40 @@ class Registry:
                 self.store.insert("products", prod_doc)
         return result_id
 
-    def select_product(self, instrument, profile, valid=None):
-        """The most recent product, with QC not BAD
+    def select_product(self, instrument, profile, valid=None, date=None):
+        """The product with the highest priority, with QC not BAD
 
         The product has the given instrument and profile, and
         ``valid(product)`` is True, if `valid` is not None.
+
+        Among the products with the same priority, the product observed
+        closest to `date` (a datetime), if it is not None, and then the
+        most recent.
         """
         candidates = [
             prod
             for prod in self.store.find("products", instrument=instrument, profile=profile)
             if prod["qc"] != "BAD" and (valid is None or valid(prod))
         ]
-        return _most_recent(candidates)
+        if not candidates:
+            return None
+
+        def rank(prod):
+            distance = _time_distance(prod.get("time_obs"), date)
+            return (-prod.get("priority", 0), distance, -prod["id"])
+
+        return min(candidates, key=rank)
+
+    def set_priority(self, product, priority):
+        """Set the priority of a product, by id (integer) or uuid (string), return its id
+
+        The automatic selection of products uses the product with the
+        highest priority, 0 by default.
+        """
+        doc = self._find_by_id_or_uuid("products", "product", product)
+        with self.store.transaction():
+            self.store.update("products", doc["id"], {"priority": int(priority)})
+        return doc["id"]
 
     def select_result(self, oblock_id):
         """The most recent result of an OB, with QC not BAD"""
@@ -548,6 +571,22 @@ def _check_type(what, product, types):
 
     if types is not None and strip(product["type"]) not in {strip(label) for label in types}:
         raise ValueError(f"{what} is a {strip(product['type'])}, not a {' or '.join(sorted(types))}")
+
+
+def _time_distance(time_obs, date):
+    """Seconds between the time of a product (ISO string) and date, inf if unknown"""
+    if date is None:
+        return 0
+    if not time_obs:
+        return float("inf")
+    try:
+        value = datetime.datetime.fromisoformat(time_obs)
+    except ValueError:
+        return float("inf")
+    if (value.tzinfo is None) != (date.tzinfo is None):
+        value = value.replace(tzinfo=None)
+        date = date.replace(tzinfo=None)
+    return abs((value - date).total_seconds())
 
 
 def _most_recent(docs):

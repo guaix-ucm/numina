@@ -53,9 +53,12 @@ in the same session or in later ones, use the recorded products: for
 example, the master bias reduced in a session is used by the reductions of
 a later session, without listing it in the control file.
 
-A product is the most recent one in the registry with quality control
+A product is selected among those in the registry with quality control
 different from ``BAD``, for the same instrument, instrument profile and
-tags. The values in the requirements of the observing block and those given
+tags: the product with the highest priority (0 by default, see
+:meth:`~numina.user.session.Session.set_priority` and ``numina db
+priority``), then the one observed closest to the observing block, then
+the most recent. The values in the requirements of the observing block and those given
 with ``--parameter-NAME=VALUE`` have priority over the registry, and the
 products in the control file and in ``calibsdir`` are used if there is none
 in the registry.

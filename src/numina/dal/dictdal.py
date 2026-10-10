@@ -371,7 +371,8 @@ class BaseHybridDAL(Dict2DAL):
             # pred.eval must return True, non bool values mean that it is incomplete
             return prod["type"] in labels and pred.eval(**prod["tags"]) is True
 
-        prod = self.registry.select_product(obsres.instrument, obsres.profile, valid)
+        date = self._observation_date(obsres, drp)
+        prod = self.registry.select_product(obsres.instrument, obsres.profile, valid, date=date)
         if prod is None:
             msg = f"type {label} compatible with tags {obsres.tags} not found in the registry"
             raise NoResultFound(msg)
@@ -382,6 +383,32 @@ class BaseHybridDAL(Dict2DAL):
 
     def _search_prod_table(self, name, tipo, obsres):
         raise NotImplementedError
+
+    @staticmethod
+    def _observation_date(obsres, drp):
+        """The observation date of the first image of obsres, a datetime, None if unknown"""
+        import datetime
+
+        frame = obsres.get_sample_frame()
+        if frame is None or not hasattr(frame, "open"):
+            return None
+        try:
+            img = frame.open()
+            try:
+                value = drp.datamodel.extractor_map["fits"].extract("observation_date", img)
+            finally:
+                # Close the file only if it was opened here
+                if getattr(frame, "frame", None) is None:
+                    img.close()
+        except Exception as error:
+            _logger.debug("observation date of oblock_id=%s not found: %s", obsres.id, error)
+            return None
+        if isinstance(value, str):
+            try:
+                value = datetime.datetime.fromisoformat(value)
+            except ValueError:
+                return None
+        return value if isinstance(value, datetime.datetime) else None
 
     def product_loader(self, tipo, name, path):
         path, kind = path

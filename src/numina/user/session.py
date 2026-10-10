@@ -119,6 +119,15 @@ class Session:
         kwargs.setdefault("validate_results", validate)
         return run_reduce(self.datamanager, obsid, **kwargs)
 
+    def set_priority(self, product, priority):
+        """Set the priority of a product of the registry, by id (integer) or uuid
+
+        The automatic selection of products uses the product with the
+        highest priority (0 by default), and then the one observed closest
+        to the observing block. Returns the id of the product.
+        """
+        return self._require_registry().set_priority(product, priority)
+
     def _require_registry(self):
         if self.registry is None:
             raise ValueError("the session has no registry of reductions, use Session(db=...)")

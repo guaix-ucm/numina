@@ -14,7 +14,8 @@ in ``[tool.db]``):
 
 * ``numina db ingest`` records observing blocks, without reducing them;
 * ``numina db run`` reduces observing blocks by their id;
-* ``numina db list`` shows the contents of the registry.
+* ``numina db list`` shows the contents of the registry;
+* ``numina db priority`` sets the priority of a product.
 """
 
 import argparse
@@ -38,7 +39,7 @@ def register(subparsers, config):
         help="work with the registry of reductions",
         description="Work with the registry of reductions (--db or file in [tool.db] of the configuration).",
     )
-    subdb = parser_db.add_subparsers(title="Targets", dest="db_command", metavar="{ingest,run,list}")
+    subdb = parser_db.add_subparsers(title="Targets", dest="db_command", metavar="{ingest,run,list,priority}")
     subdb.required = True
 
     location = argparse.ArgumentParser(add_help=False)
@@ -66,6 +67,18 @@ def register(subparsers, config):
     parser_list.add_argument("--instrument", help="only the documents of this instrument")
     parser_list.add_argument("--mode", help="only the documents of this observing mode")
     parser_list.set_defaults(command=db_list)
+
+    parser_priority = subdb.add_parser(
+        "priority",
+        parents=[location],
+        help="set the priority of a product in the automatic selection",
+        description="Set the priority of a product. The automatic selection of products uses "
+        "the product with the highest priority (0 by default), and then the one observed "
+        "closest to the observing block.",
+    )
+    parser_priority.add_argument("product", help="id or uuid (can be abbreviated) of the product")
+    parser_priority.add_argument("priority", type=int, help="the priority, an integer")
+    parser_priority.set_defaults(command=db_priority)
 
     return parser_db
 
@@ -154,9 +167,35 @@ def _table(registry, collection):
         header = ["id", "uuid", "task_id", "oblock_id", "instrument", "mode", "qc", "time_create"]
         rows = [[doc.get(field) for field in header] for doc in registry.results()]
     else:
-        header = ["id", "uuid", "type", "oblock_id", "instrument", "qc", "time_obs", "content"]
-        rows = [[doc.get(field) for field in header] for doc in registry.products()]
+        header = ["id", "uuid", "type", "oblock_id", "instrument", "qc", "priority", "time_obs", "content"]
+        rows = [[doc.get(field, 0 if field == "priority" else None) for field in header] for doc in registry.products()]
     return header, rows
+
+
+def product_key(value):
+    """The id (an integer) or the uuid of a product, from the command line
+
+    A string of digits shorter than an abbreviated uuid is an id.
+    """
+    from numina.dal.registry import UUID_PREFIX_LENGTH
+
+    if value.isdigit() and len(value) < UUID_PREFIX_LENGTH:
+        return int(value)
+    return value
+
+
+def db_priority(args, extra_args, config):
+    """Set the priority of a product of the registry"""
+    registry = open_registry(args, config)
+    if registry is None:
+        return 2
+    try:
+        product_id = registry.set_priority(product_key(args.product), args.priority)
+    except ValueError as error:
+        print(f"numina db: error: {error}", file=sys.stderr)
+        return 2
+    print(f"product {product_id} has priority {args.priority}")
+    return 0
 
 
 def db_list(args, extra_args, config):

@@ -235,7 +235,7 @@ Options for db
 ==============
 The db subcommand works with the registry of reductions, the file given
 with ``--db`` or with ``file`` in the section ``[tool.db]`` of the
-configuration. It has three subcommands.
+configuration. It has these subcommands.
 
 ``numina db ingest`` records the observing blocks of the observation files
 in the registry, without reducing them::
@@ -278,8 +278,21 @@ results or products of the registry::
    Show only the documents with this value. A collection without the field
    is an error.
 
-The three subcommands accept ``--db FILE``, ``--basedir path`` (the
-registry and its paths are relative to it) and ``--datadir path``.
+``numina db priority`` sets the priority of a product, by its id or its
+uuid (that can be abbreviated)::
+
+     $ numina db priority --db numina-db.json f5dea9e0 1
+     product 1 has priority 1
+
+The automatic selection of products in the registry uses, among the
+products with quality control different from ``BAD`` that are valid for
+the observing block, the product with the highest priority (0 by default,
+it can be negative), then the one observed closest to the date of the
+first image of the block, then the most recent. The priorities are shown
+by ``numina db list products``.
+
+The subcommands accept ``--db FILE``, ``--basedir path`` (the registry and
+its paths are relative to it) and ``--datadir path``.
 
 .. _reduction-requests:
 
@@ -378,7 +391,7 @@ the requirement. The value is a file of the result (a product, for
 example), or the value stored in the result file (a number, for example).
 
 The references choose a calibration explicitly, instead of the automatic
-selection of the registry (the most recent product). A product or result
+selection of the registry (see ``numina db priority``). A product or result
 chosen explicitly is used even if its quality control is ``BAD``, with a
 warning. It is an error if what they refer to is not in the registry, if
 the product is not of the type of the requirement, or if there is no
