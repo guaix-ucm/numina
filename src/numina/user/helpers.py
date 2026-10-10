@@ -632,6 +632,75 @@ def load_observations(obfiles, is_session=False):
     return sessions, loaded_obs
 
 
+class ReductionRequests:
+    """Reduction requests, how to reduce the observing blocks
+
+    The requests are read from a YAML file, with one request in each
+    document (see ``request-schema.json``). A request with ``id``
+    applies to that observing block, a request without ``id`` to all
+    the others.
+    """
+
+    #: The keys of a request and the arguments of run_reduce
+    ARGUMENTS = {"requirements": "requirements", "pipeline": "pipeline", "profile": "profile", "mode": "as_mode"}
+
+    def __init__(self, requests=None, default=None):
+        #: Requests by id of the observing block
+        self.requests = {} if requests is None else requests
+        #: Request of the blocks without their own request
+        self.default = default
+
+    @classmethod
+    def load(cls, filename):
+        """Read the requests of a YAML file
+
+        Raises
+        ------
+        numina.schemas.SchemaValidationError
+            If a request is not valid.
+        ValueError
+            If there are two requests for the same block, or two without id.
+        """
+        requests = {}
+        default = None
+        with open(filename) as fd:
+            for idx, doc in enumerate(yaml.safe_load_all(fd), start=1):
+                if doc is None:
+                    continue
+                validate_schema(doc, "request", source=f"{filename} (document {idx})")
+                if "id" in doc:
+                    if doc["id"] in requests:
+                        raise ValueError(f"{filename}: two requests for oblock_id={doc['id']}")
+                    requests[doc["id"]] = doc
+                elif default is not None:
+                    raise ValueError(f"{filename}: two requests without id")
+                else:
+                    default = doc
+        return cls(requests, default)
+
+    def ids(self):
+        """The ids of the blocks with their own request, in the order of the file"""
+        return list(self.requests)
+
+    def request(self, oblock_id):
+        """The request of the block `oblock_id`, the default if it has none
+
+        The ids are compared as strings too, an id can be an integer in a
+        file and a string in the command line.
+        """
+        if oblock_id in self.requests:
+            return self.requests[oblock_id]
+        for key, request in self.requests.items():
+            if str(key) == str(oblock_id):
+                return request
+        return self.default
+
+    def arguments(self, oblock_id):
+        """The keyword arguments of run_reduce for the block `oblock_id`"""
+        request = self.request(oblock_id) or {}
+        return {self.ARGUMENTS[key]: value for key, value in request.items() if key in self.ARGUMENTS}
+
+
 def parse_as_yaml(strdict):
     """Parse a dictionary of strings as if yaml reads it"""
     interm = ""

@@ -25,9 +25,11 @@ following ones.
 
 import os
 
+from numina.schemas import validate as validate_schema
+
 from .baserun import run_reduce
 from .cli import load_config
-from .helpers import create_datamanager, load_observations
+from .helpers import ReductionRequests, create_datamanager, load_observations
 
 
 class Session:
@@ -89,7 +91,7 @@ class Session:
                 loaded.extend(loaded_obs)
         self.datamanager.backend.add_obs(loaded)
 
-    def run(self, obsid, **kwargs):
+    def run(self, obsid, request=None, **kwargs):
         """Reduce an observing block, return the task
 
         The keyword arguments are those of :func:`numina.user.baserun.run_reduce`
@@ -97,7 +99,19 @@ class Session:
         validate_results, strict_inputs). The defaults of copy_files, and of
         validate_inputs and validate_results, are the values of copy_files and
         validate in ``[tool.run]`` of the configuration, as in ``numina run``.
+
+        `request` is a reduction request, a YAML file (relative to basedir)
+        with requests, or a request as a dictionary (requirements, pipeline,
+        profile, mode). The keyword arguments override its values.
         """
+        if request is not None:
+            if isinstance(request, dict):
+                validate_schema(request, "request", source="request")
+                requests = ReductionRequests(default=request)
+            else:
+                requests = ReductionRequests.load(self._path(request))
+            for key, value in requests.arguments(obsid).items():
+                kwargs.setdefault(key, value)
         section = self.config["tool.run"]
         kwargs.setdefault("copy_files", section.getboolean("copy_files"))
         validate = section.getboolean("validate")

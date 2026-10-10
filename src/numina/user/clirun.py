@@ -104,6 +104,12 @@ def add_reduction_options(parser):
         help="name of a pipeline, overrides the pipeline of the observation result ('default' if not defined)",
     )
     parser.add_argument(
+        "--request",
+        dest="request",
+        metavar="FILE",
+        help="file with reduction requests (requirements, pipeline, profile, mode) of the observing blocks",
+    )
+    parser.add_argument(
         "--calibsdir",
         "--rootdir",
         action="store",

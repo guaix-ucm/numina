@@ -90,3 +90,12 @@ id, without adding the observation files again::
 
 The blocks added with :meth:`~numina.user.session.Session.add_observations`
 have precedence over those in the registry.
+
+A block can be reduced with a reduction request (see
+:ref:`reduction-requests`), a file or a dictionary::
+
+    session.run("3_HR-R", request="reduce.yaml")
+    session.run("3_HR-R", request={"requirements": {"master_bias": "/data/master_bias.fits"}})
+
+The keyword arguments of :meth:`~numina.user.session.Session.run`
+override the values of the request.

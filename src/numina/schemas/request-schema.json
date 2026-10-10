@@ -1,0 +1,30 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://numina.readthedocs.io/en/stable/request-schema.json",
+  "title": "Reduction request",
+  "description": "How to reduce an observing block, as read by numina from each document of a YAML file",
+  "type": "object",
+  "properties": {
+    "id": {
+      "description": "Identifier of the observing block. A request without id applies to all the blocks",
+      "type": ["integer", "string"]
+    },
+    "requirements": {
+      "description": "Values of the requirements of the recipe, by name. They override those of the observing block",
+      "type": "object"
+    },
+    "pipeline": {
+      "description": "Pipeline of the DRP, overrides the pipeline of the observing block",
+      "type": "string"
+    },
+    "profile": {
+      "description": "UUID of the instrument configuration, overrides the one selected from the images",
+      "type": "string"
+    },
+    "mode": {
+      "description": "Reduce the block with this observing mode, instead of its own",
+      "type": "string"
+    }
+  },
+  "additionalProperties": false
+}

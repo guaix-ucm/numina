@@ -18,6 +18,10 @@ and the function to validate them.
 ``oblock-schema.json``
    An observing block, each document of the observation files.
 
+``request-schema.json``
+   A reduction request, each document of the files given with
+   ``--request`` (see :ref:`reduction-requests`).
+
 The schemas are published with this documentation, at the URL of their
 ``$id``, for example
 ``https://numina.readthedocs.io/en/stable/drp-schema.json``. Editors

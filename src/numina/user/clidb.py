@@ -24,7 +24,7 @@ import sys
 
 from .clirun import add_location_options, add_reduction_options, complete_config
 from .clirundal import configure_run, run_oblocks
-from .helpers import create_datamanager, load_observations
+from .helpers import ReductionRequests, create_datamanager, load_observations
 
 _logger = logging.getLogger(__name__)
 
@@ -52,7 +52,12 @@ def register(subparsers, config):
 
     parser_run = subdb.add_parser("run", parents=[location], help="reduce observing blocks of the registry by id")
     add_reduction_options(parser_run)
-    parser_run.add_argument("oblock_ids", nargs="+", metavar="ID", help="id of an observing block")
+    parser_run.add_argument(
+        "oblock_ids",
+        nargs="*",
+        metavar="ID",
+        help="id of an observing block, by default the blocks of the requests (--request)",
+    )
     parser_run.set_defaults(command=db_run, strict_reqs=True)
 
     parser_list = subdb.add_parser("list", parents=[location], help="show the contents of the registry")
@@ -102,16 +107,21 @@ def db_run(args, extra_args, config):
     if datamanager.registry is None:
         print("numina db: error: no registry of reductions, use --db FILE or file in [tool.db]", file=sys.stderr)
         return 2
+    requests = None if args.request is None else ReductionRequests.load(args.request)
+    names = args.oblock_ids or ([] if requests is None else requests.ids())
+    if not names:
+        print("numina db: error: no observing blocks, give their ids or a request file with ids", file=sys.stderr)
+        return 2
     # The ids of the command line are strings, the ids
     # of the observing blocks can be integers
     known = {str(doc["oblock_id"]): doc["oblock_id"] for doc in datamanager.registry.oblocks()}
     oblock_ids = []
-    for name in args.oblock_ids:
+    for name in map(str, names):
         if name not in known:
             print(f"numina db: error: oblock_id={name} is not in the registry", file=sys.stderr)
             return 2
         oblock_ids.append(known[name])
-    run_oblocks(datamanager, oblock_ids, args, config)
+    run_oblocks(datamanager, oblock_ids, args, config, requests=requests)
     return 0
 
 

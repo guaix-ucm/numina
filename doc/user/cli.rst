@@ -93,6 +93,12 @@ It is called like this::
 
    enable a block listed in the observation result
 
+.. option:: --request FILE
+
+   File with reduction requests: the requirements, pipeline, profile or
+   mode used to reduce each observing block (see
+   :ref:`reduction-requests`).
+
 .. option:: --validate
 
    Validate the inputs and the results of the recipe. Without this
@@ -251,6 +257,9 @@ like ``-r``, ``--profile``, ``--pipeline``, ``--validate`` or
 ``--parameter-NAME=VALUE``. The exit status is 2 if a block is not in the
 registry. The children of a block are read from the registry too.
 
+With ``--request FILE``, the ids are optional: the blocks reduced are those
+of the requests with id, in the order of the file.
+
 ``numina db list`` prints a table with the observing blocks, tasks,
 results or products of the registry::
 
@@ -271,3 +280,54 @@ results or products of the registry::
 
 The three subcommands accept ``--db FILE``, ``--basedir path`` (the
 registry and its paths are relative to it) and ``--datadir path``.
+
+.. _reduction-requests:
+
+Reduction requests
+==================
+An observing block describes the images to reduce. How to reduce them can
+be given apart, in a file of reduction requests, with ``--request FILE``
+in ``numina run`` and ``numina db run``, or with the argument ``request``
+of :meth:`numina.user.session.Session.run`. The same block can be reduced
+with different requests, for example with two different calibrations.
+
+Each document of the file is a request, with these keys, all optional:
+
+``id``
+   The id of the observing block. A request without id applies to the
+   blocks without their own request. There can be only one.
+
+``requirements``
+   Values of the requirements of the recipe, by name, as in the
+   ``requirements`` of an observing block. The paths of the files are
+   relative to the directory of the data (``--datadir``).
+
+``pipeline``, ``profile``, ``mode``
+   The pipeline, the UUID of the instrument configuration and the
+   observing mode used to reduce the block, instead of those of the
+   block.
+
+For example::
+
+    id: 3_HR-R
+    requirements:
+      master_bias: /data/calibrations/master_bias_2017.fits
+    ---
+    requirements:
+      reference_column: 2100
+
+The files are validated with ``request-schema.json``
+(:mod:`numina.schemas`).
+
+The value of a requirement is searched, in this order, in:
+
+1. the command line (``--parameter-NAME=VALUE``);
+2. the reduction request;
+3. the observing block;
+4. the results of other blocks, for the requirements that use them;
+5. for products, the registry of reductions, the control file and the
+   directory of calibrations; for parameters, the control file;
+6. the default value of the requirement.
+
+The ``--pipeline`` and ``--profile`` options of the command line override
+those of the requests.
