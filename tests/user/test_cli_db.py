@@ -1,5 +1,7 @@
 """numina db: observing blocks in the registry of reductions, reduced by id"""
 
+import json
+
 import pytest
 import yaml
 
@@ -198,3 +200,84 @@ def test_session_set_priority(basedir):
     assert session.set_priority(first["uuid"], 1) == first["id"]
     session.run(10)
     assert trr.SEEN[-1] == first["uuid"]
+
+
+@pytest.fixture
+def two_biases(basedir, capsys):
+    numina_db(capsys, "ingest", "--db", "numina-db.json", "obs.yaml")
+    numina_db(capsys, "run", "--db", "numina-db.json", "1")
+    numina_db(capsys, "run", "--db", "numina-db.json", "1")
+    reg = registry(basedir)
+    first, second = reg.products(type="MasterBias")
+    # tags of the products, the test recipe produces none
+    with reg.store.transaction():
+        reg.store.update("products", first["id"], {"tags": {"vph": "A", "mode": "X"}})
+        reg.store.update("products", second["id"], {"tags": {"vph": "B"}})
+    return reg.products(type="MasterBias")
+
+
+def test_list_table_abbreviates(two_biases, capsys):
+    first, _ = two_biases
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products")
+    header = lines[0].split()
+    row = lines[1].split()
+    assert row[header.index("uuid")] == first["uuid"][:8]
+    assert row[header.index("time_obs")] == first["time_obs"][:19]
+    assert len(lines) == 3
+
+
+def test_list_tags(two_biases, capsys):
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products", "--tags")
+    assert status == 0
+    assert lines[2] == "    └─ mode=X vph=A"
+    assert lines[4] == "    └─ vph=B"
+
+
+def test_list_tags_none(basedir, capsys):
+    numina_db(capsys, "ingest", "--db", "numina-db.json", "obs.yaml")
+    numina_db(capsys, "run", "--db", "numina-db.json", "1")
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products", "--tags")
+    assert lines[2] == "    └─ (no tags)"
+
+
+def test_list_tag_filter(two_biases, capsys):
+    first, second = two_biases
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products", "--tag", "vph=B")
+    assert [line.split()[0] for line in lines[1:]] == [str(second["id"])]
+    status, lines, _ = numina_db(
+        capsys, "list", "--db", "numina-db.json", "products", "--tag", "vph=A", "--tag", "mode=X"
+    )
+    assert [line.split()[0] for line in lines[1:]] == [str(first["id"])]
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products", "--tag", "mode=Y")
+    assert lines == ["no products"]
+
+
+def test_list_json(two_biases, capsys):
+    first, second = two_biases
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products", "--json", "--tag", "vph=A")
+    assert status == 0
+    (doc,) = json.loads("\n".join(lines))
+    assert doc["uuid"] == first["uuid"]
+    assert doc["tags"] == {"vph": "A", "mode": "X"}
+
+    status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "tasks", "--json")
+    assert [doc["oblock_id"] for doc in json.loads("\n".join(lines))] == [1, 1]
+
+
+@pytest.mark.parametrize(
+    "args, match",
+    [
+        (["tasks", "--tags"], "only the products have tags"),
+        (["oblocks", "--tag", "vph=A"], "only the products have tags"),
+        (["products", "--tag", "vph"], "the tag vph is not KEY=VALUE"),
+    ],
+)
+def test_list_tags_errors(two_biases, capsys, args, match):
+    status, _, err = numina_db(capsys, "list", "--db", "numina-db.json", *args)
+    assert status == 2
+    assert match in err
+
+
+def test_list_tags_and_json_not_allowed(basedir):
+    with pytest.raises(SystemExit):
+        main(["--disable-plugins", "db", "list", "--db", "numina-db.json", "products", "--tags", "--json"])

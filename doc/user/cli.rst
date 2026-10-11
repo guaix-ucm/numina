@@ -261,11 +261,16 @@ With ``--request FILE``, the ids are optional: the blocks reduced are those
 of the requests with id, in the order of the file.
 
 ``numina db list`` prints a table with the observing blocks, tasks,
-results or products of the registry::
+results or products of the registry, one line for each document. In the
+table, the uuids are abbreviated to their first 8 characters, as accepted
+by the references to the registry, and the times are shown to the second::
 
-     $ numina db list --db numina-db.json products
-     id  uuid                                  type        oblock_id  instrument  qc    time_obs                    content
-     1   f5dea9e0-c4fc-11f1-98f1-a0369f681a26  MasterBias  0_bias     MEGARA      GOOD  2017-08-27T17:10:39.540000  obsid0_bias_1_results/master_bias.fits
+     $ numina db list --db numina-db.json products --tags
+     id  uuid      type               oblock_id  instrument  qc    priority  time_obs             content
+     2   a5fb2b92  TraceMap           1_HR-R     MEGARA      GOOD  0         2017-08-31T18:09:14  obsid1_HR-R_2_results/master_traces.json
+         └─ insmode=LCB temp=15.91 vph=HR-R
+     7   f691f538  MasterSensitivity  7_HR-R     MEGARA      GOOD  0         2017-07-25T03:50:28  obsid7_HR-R_8_results/master_sensitivity.fits
+         └─ (no tags)
 
 .. program:: numina db list
 
@@ -277,6 +282,25 @@ results or products of the registry::
 
    Show only the documents with this value. A collection without the field
    is an error.
+
+.. option:: --tag KEY=VALUE
+
+   Show only the products with this tag. It can be repeated, to select
+   the products with all the tags.
+
+.. option:: --tags
+
+   Show the tags of each product, in a line below it. Without this
+   option, there is one line for each document, that can be processed
+   with tools like grep.
+
+.. option:: --json
+
+   Print the complete documents of the registry, with all their fields
+   (the tags, the uuids, the inputs of the tasks...), in JSON. It can be
+   processed with tools like jq, for example::
+
+       numina db list products --json | jq '.[] | select(.tags.vph == "HR-R") | .content'
 
 ``numina db priority`` sets the priority of a product, by its id or its
 uuid (that can be abbreviated)::

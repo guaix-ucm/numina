@@ -19,6 +19,7 @@ in ``[tool.db]``):
 """
 
 import argparse
+import json
 import logging
 import os
 import sys
@@ -66,6 +67,16 @@ def register(subparsers, config):
     parser_list.add_argument("--oblock-id", help="only the documents of this observing block")
     parser_list.add_argument("--instrument", help="only the documents of this instrument")
     parser_list.add_argument("--mode", help="only the documents of this observing mode")
+    parser_list.add_argument(
+        "--tag",
+        action="append",
+        default=[],
+        metavar="KEY=VALUE",
+        help="only the products with this tag, can be repeated",
+    )
+    output = parser_list.add_mutually_exclusive_group()
+    output.add_argument("--tags", action="store_true", help="show the tags of the products, below each one")
+    output.add_argument("--json", action="store_true", help="print the documents of the registry in JSON")
     parser_list.set_defaults(command=db_list)
 
     parser_priority = subdb.add_parser(
@@ -139,18 +150,20 @@ def db_run(args, extra_args, config):
 
 
 def _table(registry, collection):
-    """Header and rows with the main fields of the documents of a collection"""
+    """Header, rows with the main fields, and documents of a collection"""
     if collection == "oblocks":
         header = ["oblock_id", "instrument", "mode", "frames"]
+        docs = registry.oblocks()
         rows = []
-        for doc in registry.oblocks():
+        for doc in docs:
             ob = doc["definition"]
             frames = ob.get("frames", ob.get("images", []))
             rows.append([ob["id"], ob.get("instrument"), ob.get("mode"), len(frames)])
     elif collection == "tasks":
         header = ["id", "oblock_id", "instrument", "mode", "state", "time_end"]
+        docs = registry.tasks()
         rows = []
-        for doc in registry.tasks():
+        for doc in docs:
             runinfo = doc.get("request_runinfo") or {}
             state = TASK_STATES.get(doc.get("state"), doc.get("state"))
             rows.append(
@@ -165,11 +178,34 @@ def _table(registry, collection):
             )
     elif collection == "results":
         header = ["id", "uuid", "task_id", "oblock_id", "instrument", "mode", "qc", "time_create"]
-        rows = [[doc.get(field) for field in header] for doc in registry.results()]
+        docs = registry.results()
+        rows = [[doc.get(field) for field in header] for doc in docs]
     else:
         header = ["id", "uuid", "type", "oblock_id", "instrument", "qc", "priority", "time_obs", "content"]
-        rows = [[doc.get(field, 0 if field == "priority" else None) for field in header] for doc in registry.products()]
-    return header, rows
+        docs = registry.products()
+        rows = [[doc.get(field, 0 if field == "priority" else None) for field in header] for doc in docs]
+    return header, rows, docs
+
+
+def _cell(field, value):
+    """The text of a value in the table: the uuids abbreviated, the times in seconds"""
+    from numina.dal.registry import UUID_PREFIX_LENGTH
+
+    if value is None:
+        return ""
+    text = str(value)
+    if field == "uuid":
+        return text[:UUID_PREFIX_LENGTH]
+    if field.startswith("time_"):
+        return text[:19]
+    return text
+
+
+def _tags_line(doc):
+    tags = doc.get("tags") or {}
+    if not tags:
+        return "(no tags)"
+    return " ".join(f"{key}={tags[key]}" for key in sorted(tags))
 
 
 def product_key(value):
@@ -199,11 +235,12 @@ def db_priority(args, extra_args, config):
 
 
 def db_list(args, extra_args, config):
-    """Print a table with the documents of a collection of the registry"""
+    """Print the documents of a collection of the registry, in a table or in JSON"""
     registry = open_registry(args, config)
     if registry is None:
         return 2
-    header, rows = _table(registry, args.collection)
+    header, rows, docs = _table(registry, args.collection)
+    selected = list(zip(rows, docs))
     filters = {"oblock_id": args.oblock_id, "instrument": args.instrument, "mode": args.mode}
     for key, value in filters.items():
         if value is None:
@@ -212,13 +249,31 @@ def db_list(args, extra_args, config):
             print(f"numina db: error: the {args.collection} have no field {key}", file=sys.stderr)
             return 2
         idx = header.index(key)
-        rows = [row for row in rows if str(row[idx]) == value]
+        selected = [(row, doc) for row, doc in selected if str(row[idx]) == value]
+    if (args.tag or args.tags) and args.collection != "products":
+        print("numina db: error: only the products have tags", file=sys.stderr)
+        return 2
+    for tag in args.tag:
+        key, sep, value = tag.partition("=")
+        if not sep:
+            print(f"numina db: error: the tag {tag} is not KEY=VALUE", file=sys.stderr)
+            return 2
+        selected = [
+            (row, doc) for row, doc in selected if key in (doc.get("tags") or {}) and str(doc["tags"][key]) == value
+        ]
 
-    if not rows:
+    if args.json:
+        print(json.dumps([doc for _, doc in selected], indent=2, default=str))
+        return 0
+    if not selected:
         print(f"no {args.collection}")
         return 0
-    cells = [header] + [["" if cell is None else str(cell) for cell in row] for row in rows]
+    cells = [header] + [[_cell(field, value) for field, value in zip(header, row)] for row, _ in selected]
     widths = [max(len(cell) for cell in column) for column in zip(*cells)]
-    for line in cells:
-        print("  ".join(cell.ljust(width) for cell, width in zip(line, widths)).rstrip())
+    lines = ["  ".join(cell.ljust(width) for cell, width in zip(line, widths)).rstrip() for line in cells]
+    print(lines[0])
+    for line, (_, doc) in zip(lines[1:], selected):
+        print(line)
+        if args.tags:
+            print(f"    \u2514\u2500 {_tags_line(doc)}")
     return 0
