@@ -18,6 +18,12 @@
    :members:
 
 
+:mod:`numina.util.download` --- Download of files
+==================================================
+.. automodule:: numina.util.download
+   :members:
+
+
 :mod:`numina.util.flow` --- Flow objects
 ==================================================
 .. automodule:: numina.util.flow

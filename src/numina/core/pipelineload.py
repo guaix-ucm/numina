@@ -304,6 +304,7 @@ def load_instrument(package, node, confclass=None, default_requirements=None):
     # trans['configurations'] = confs
     trans["configurations"] = confs
     trans["default_requirements"] = default_requirements
+    trans["calibrations"] = node.get("calibrations", [])
     ins = InstrumentDRP(**trans)
     # Add package name
     ins.package = package

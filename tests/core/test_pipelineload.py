@@ -114,3 +114,35 @@ pipelines:
     recipes:
       bias: numina.core.utils.AlwaysSuccessRecipe
 """
+
+
+DRP_CALIBRATIONS = """
+name: TEST1
+configurations:
+  path: numina.testing.drps.configs
+calibrations:
+- name: cal-1.0
+  url: https://example.org/cal-1.0.zip
+  known_hash: {known_hash}
+modes: []
+pipelines:
+  default:
+    version: 1
+    recipes: {{}}
+"""
+
+
+def test_load_calibrations():
+    drp = drp_load_data("numina", DRP_CALIBRATIONS.format(known_hash="md5:0123abcd"))
+    assert drp.calibrations == [
+        {"name": "cal-1.0", "url": "https://example.org/cal-1.0.zip", "known_hash": "md5:0123abcd"}
+    ]
+    # without the key, no datasets
+    assert drp_load_data("numina", DRP_TEST1_MODES).calibrations == []
+
+
+def test_load_calibrations_invalid_hash():
+    from numina.schemas import SchemaValidationError
+
+    with pytest.raises(SchemaValidationError, match="calibrations"):
+        drp_load_data("numina", DRP_CALIBRATIONS.format(known_hash="crc:0"))

@@ -13,6 +13,37 @@
       "description": "Version of the DRP, by default the version of the package",
       "type": ["string", "number"]
     },
+    "calibrations": {
+      "description": "Datasets of calibrations of the instrument, installed with numina inittree",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "name": {
+            "description": "Name of the dataset, unique in the DRP",
+            "type": "string"
+          },
+          "description": {
+            "type": "string"
+          },
+          "url": {
+            "description": "URL of a ZIP file with the calibrations",
+            "type": "string"
+          },
+          "known_hash": {
+            "description": "Hash of the ZIP file, as algorithm:value",
+            "type": "string",
+            "pattern": "^(md5|sha1|sha256):[0-9a-f]+$"
+          },
+          "directory": {
+            "description": "Directory of the calibrations under the calibration tree, the name of the instrument by default",
+            "type": "string"
+          }
+        },
+        "required": ["name", "url", "known_hash"],
+        "additionalProperties": false
+      }
+    },
     "datamodel": {
       "description": "Class of the data model of the instrument",
       "$ref": "#/$defs/import_name"

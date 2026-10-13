@@ -182,6 +182,10 @@ class InstrumentDRP:
     default_requirements : dict, optional
         Default values of the requirements, by profile, pipeline and mode,
         see :meth:`default_requirements`.
+    calibrations : list of dict, optional
+        Datasets of calibrations of the instrument, with their name, url,
+        known_hash and optionally description and directory, installed
+        with ``numina inittree``.
 
     Attributes
     ----------
@@ -210,6 +214,7 @@ class InstrumentDRP:
         datamodel=None,
         version="undefined",
         default_requirements=None,
+        calibrations=None,
     ):
         self.name = name
         self.configurations = configurations
@@ -221,6 +226,7 @@ class InstrumentDRP:
             self.datamodel = numina.datamodel.DataModel()
         self.version = version
         self.checker = None
+        self.calibrations = [] if calibrations is None else calibrations
         self._def_reqs = {} if default_requirements is None else default_requirements
         if isinstance(pipelines, dict):
             for pipeline in pipelines.values():

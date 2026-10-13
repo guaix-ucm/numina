@@ -422,3 +422,72 @@ the product is not of the type of the requirement, if its tags do not match
 those of the observing block (as in the automatic selection, for example a
 trace map of other VPH), or if there is no registry. These errors stop the
 reduction before running the recipe.
+
+Options for inittree
+====================
+The inittree subcommand installs a dataset of calibrations of an
+instrument (master bias, trace maps, lines catalogues...), declared by its
+DRP, in the directory of calibrations used by ``numina run``::
+
+     $ numina inittree
+     MEGARA  megaradrp-calibrations-2026.2  Calibrations of MEGARA, release 2026.2
+     $ numina inittree MEGARA
+     dataset megaradrp-calibrations-2026.2 of MEGARA, from https://zenodo.org/records/...
+     58 new files, 0 unchanged, 0 with other contents, in calibrations/MEGARA
+     installed 58 files in calibrations/MEGARA
+     calibsdir set to calibrations in /home/user/work/.numina.cfg
+
+The dataset, a ZIP file, is downloaded to the cache of numina (see
+:mod:`numina.util.download`), and its hash is checked. If all the files of
+the ZIP file are under one directory, that directory is removed from their
+paths, and the hidden files are not installed. Before installing anything,
+the files are compared with those that already exist: the files with the
+same contents are left as they are, and if some file has other contents,
+nothing is installed, unless ``--overwrite`` is given.
+
+``calibsdir`` is set in the section ``[tool.run]`` of the file
+``.numina.cfg`` of the current directory, and the section
+``[tool.inittree.INSTRUMENT]`` records the dataset installed.
+
+.. program:: numina inittree
+
+.. option:: instrument
+
+   The instrument. Without it, the datasets declared by the DRPs are
+   listed.
+
+.. option:: --dataset NAME
+
+   The dataset to install, by default the last one declared by the DRP.
+
+.. option:: --base-path path
+
+   The directory of calibrations, ``calibrations`` by default. The files
+   are installed under ``path/INSTRUMENT``.
+
+.. option:: --overwrite
+
+   Replace the files that exist with other contents.
+
+.. option:: --dry-run
+
+   Show what would be done, without downloading to the directory of
+   calibrations or changing any file (the dataset is downloaded to the
+   cache).
+
+.. option:: --no-config
+
+   Do not change ``.numina.cfg``.
+
+A DRP declares its datasets in the key ``calibrations`` of its
+``drp.yaml``, with the URL of the ZIP file and its hash (``md5``,
+``sha1`` or ``sha256``, as ``algorithm:value``)::
+
+    calibrations:
+    - name: megaradrp-calibrations-2026.2
+      description: Calibrations of MEGARA, release 2026.2
+      url: https://zenodo.org/records/18623771/files/guaix-ucm/megaradrp-calibrations-2026.2.zip
+      known_hash: md5:3d98803089d4822ee00ed03a4dbba229
+
+The key ``directory`` changes the directory of the dataset under the
+directory of calibrations, the name of the instrument by default.
