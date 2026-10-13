@@ -383,7 +383,7 @@ class BaseRecipe:
         for key in klass.stored():
             val = getattr(recipeinput, key)
             if isinstance(val, DataFrame):
-                metadata[key] = self.datamodel.gather_info_dframe(val)
+                metadata[key] = self.datamodel.gather_info(val)
             # elif isinstance(val, ObservationResult):
             elif hasattr(val, "frames"):
                 metadata[key] = self.datamodel.gather_info_oresult(val)

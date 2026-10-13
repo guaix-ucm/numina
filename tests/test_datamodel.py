@@ -125,3 +125,19 @@ def test_aliases_follow_targets():
     datamodel = DataModel("CLODIA", mappings={"blckuuid": "OBUUID", "insconf": "CONFUUID"})
     for key, value in [("blckuuid", "b2"), ("block_uuid", "b2"), ("insconf", "c2"), ("insconf_uuid", "c2")]:
         assert datamodel.extractor.extract(key, img) == value
+
+
+def test_gather_info_oresult():
+    from numina.core import DataFrame
+    from numina.core.oresult import ObservationResult
+
+    ob = ObservationResult()
+    for uuid_str in ["u1", "u2"]:
+        ob.frames.append(DataFrame(frame=create_test_image({"UUID": uuid_str, "BLCKUUID": "b1"})))
+
+    datamodel = DataModel("CLODIA")
+    info = datamodel.gather_info_oresult(ob)
+    assert [item["uuid"] for item in info] == ["u1", "u2"]
+    assert [item["block_uuid"] for item in info] == ["b1", "b1"]
+    assert datamodel.gather_info(ob.frames[0]) == info[0]
+    assert list(datamodel.extractor_map) == ["fits"]

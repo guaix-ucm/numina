@@ -75,7 +75,6 @@ class DataModel:
 
         self.extractor_map = dict()
         self.extractor_map["fits"] = FITSKeyExtractor(values)
-        self.extractor_map["json"] = None
         self.extractor = self.extractor_map["fits"]
 
     def default_mappings(self):
@@ -153,7 +152,12 @@ class DataModel:
         return info
 
     def gather_info_dframe(self, img):
-        """Obtain a summary of information about the image."""
+        """Deprecated, use gather_info"""
+        warnings.warn(
+            "gather_info_dframe is deprecated, use gather_info",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         return self.gather_info(img)
 
     def gather_info_hdu(self, hdulist):
@@ -170,7 +174,7 @@ class DataModel:
         return values
 
     def gather_info_oresult(self, ob):
-        return [self.gather_info_dframe(f) for f in ob.images]
+        return [self.gather_info(f) for f in ob.images]
 
     def get_quality_control(self, img):
         """Obtain quality control flag from the image."""

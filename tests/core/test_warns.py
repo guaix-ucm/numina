@@ -111,3 +111,18 @@ def test_warns_tags_as(name):
         with getattr(dh, name)(obsres):
             pass
     assert obsres.tags == {"filter": "J"}
+
+
+def test_warns_gather_info_dframe():
+    import astropy.io.fits as fits
+
+    from numina.core import DataFrame
+    from numina.datamodel import DataModel
+
+    hdu = fits.PrimaryHDU()
+    hdu.header["UUID"] = "u1"
+    hdulist = fits.HDUList([hdu])
+    datamodel = DataModel("CLODIA")
+    with pytest.warns(DeprecationWarning, match="gather_info_dframe is deprecated"):
+        info = datamodel.gather_info_dframe(DataFrame(frame=hdulist))
+    assert info["uuid"] == "u1"
