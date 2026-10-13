@@ -394,5 +394,7 @@ The references choose a calibration explicitly, instead of the automatic
 selection of the registry (see ``numina db priority``). A product or result
 chosen explicitly is used even if its quality control is ``BAD``, with a
 warning. It is an error if what they refer to is not in the registry, if
-the product is not of the type of the requirement, or if there is no
-registry. These errors stop the reduction before running the recipe.
+the product is not of the type of the requirement, if its tags do not match
+those of the observing block (as in the automatic selection, for example a
+trace map of other VPH), or if there is no registry. These errors stop the
+reduction before running the recipe.

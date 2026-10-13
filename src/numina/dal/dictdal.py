@@ -368,8 +368,13 @@ class BaseHybridDAL(Dict2DAL):
         pred = tipo.query_expr.fill_placeholders(**obsres.tags)
 
         def valid(prod):
+            if prod["type"] not in labels:
+                return False
             # pred.eval must return True, non bool values mean that it is incomplete
-            return prod["type"] in labels and pred.eval(**prod["tags"]) is True
+            if pred.eval(**prod["tags"]) is True:
+                return True
+            _logger.debug("product id=%s discarded, its tags %s do not match %s", prod["id"], prod["tags"], obsres.tags)
+            return False
 
         date = self._observation_date(obsres, drp)
         prod = self.registry.select_product(obsres.instrument, obsres.profile, valid, date=date)

@@ -9,6 +9,7 @@ import yaml
 from numina.dal.registry import Registry, is_reference
 from numina.exceptions import ValidationError
 from numina.user.cli import base_config
+from numina.user.baserun import check_reference_tags
 from numina.user.session import Session
 
 from . import test_run_registry as trr
@@ -125,7 +126,7 @@ def test_resolve_reference(session):
     first, _ = session.products(type="MasterBias")
     value, details = registry.resolve_reference({"product": first["id"]}, "master_bias")
     assert value == os.path.join(session.basedir, first["content"])
-    assert details == {"product_id": first["id"]}
+    assert details == {"product_id": first["id"], "tags": {}}
 
 
 def add_other_product(session):
@@ -233,3 +234,66 @@ def test_bad_result_warns(session, caplog):
     assert f"the result {first['result_id']} has QC BAD" in caplog.text
     # an explicit reference is used
     assert trr.SEEN[-1] == first["uuid"]
+
+
+class TaggedType:
+    """A product type with the tags vph and insmode"""
+
+    def __init__(self):
+        from numina.core.tagexpr import query_expr_from_attr
+        from numina.keydef import QueryAttribute
+
+        self.query_expr = query_expr_from_attr([QueryAttribute("vph", str), QueryAttribute("insmode", str)])
+
+    def isproduct(self):
+        return True
+
+
+class TaggedRecipe:
+    def __init__(self):
+        from types import SimpleNamespace
+
+        self._reqs = {"master_traces": SimpleNamespace(dest="master_traces", alias="traces", type=TaggedType())}
+
+    def requirements(self):
+        return self._reqs
+
+
+def tagged_obsres(**tags):
+    from types import SimpleNamespace
+
+    return SimpleNamespace(tags=tags)
+
+
+@pytest.mark.parametrize("key", ["master_traces", "traces"])
+def test_reference_tags_match(key):
+    resolved = {key: ("the product 3", {"vph": "HR-R", "insmode": "LCB", "temp": 15.9})}
+    check_reference_tags(TaggedRecipe(), tagged_obsres(vph="HR-R", insmode="LCB"), resolved)
+
+
+@pytest.mark.parametrize(
+    "tags, match",
+    [
+        ({"vph": "LR-B", "insmode": "LCB"}, "the product 3 has vph=LR-B, the observing block has vph=HR-R"),
+        ({"insmode": "LCB"}, "the product 3 has no tag vph, the observing block has vph=HR-R"),
+        (
+            {"vph": "LR-B", "insmode": "MOS"},
+            "the product 3 has insmode=MOS, vph=LR-B, the observing block has insmode=LCB, vph=HR-R",
+        ),
+    ],
+)
+def test_reference_tags_differ(tags, match):
+    resolved = {"master_traces": ("the product 3", tags)}
+    with pytest.raises(ValidationError, match=f"requirement master_traces: {match}"):
+        check_reference_tags(TaggedRecipe(), tagged_obsres(vph="HR-R", insmode="LCB"), resolved)
+
+
+def test_reference_tags_unknown_requirement():
+    resolved = {"other": ("the product 3", {"vph": "LR-B"})}
+    check_reference_tags(TaggedRecipe(), tagged_obsres(vph="HR-R", insmode="LCB"), resolved)
+
+
+def test_reference_tags_recorded(session):
+    first, _ = session.products(type="MasterBias")
+    session.run(10, requirements={"master_bias": {"product": first["id"]}})
+    assert last_inputs(session)["master_bias"]["tags"] == {}

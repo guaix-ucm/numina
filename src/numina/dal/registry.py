@@ -434,6 +434,8 @@ class Registry:
 
         For results, ``field`` is the field of the result, by default
         `field`. The values that are files are returned as absolute paths.
+        The details include the tags of the product, if the value is a
+        product.
 
         If `types` is not None, the names of the types of products
         accepted: the product, or the product of the field of the result,
@@ -458,7 +460,7 @@ class Registry:
             _check_type(f"the product {key}", doc, types)
             if doc["qc"] == "BAD":
                 _logger.warning("the product %s has QC BAD", key)
-            return self._path(doc["content"]), {"product_id": doc["id"]}
+            return self._path(doc["content"]), {"product_id": doc["id"], "tags": doc.get("tags") or {}}
 
         if kind == "result_of":
             result = self.select_result(key)
@@ -478,9 +480,11 @@ class Registry:
         value = self._result_value(result, field)
         # the type is known if the field is a product
         products = self.store.find("products", result_id=result["id"], field=field)
+        details = {"result_id": result["id"]}
         if products:
             _check_type(f"the field {field} of the result {result['id']}", products[0], types)
-        return value, {"result_id": result["id"]}
+            details["tags"] = products[0].get("tags") or {}
+        return value, details
 
     def _find_by_id_or_uuid(self, collection, what, key):
         """A document by id (integer) or uuid (string), that can be abbreviated"""

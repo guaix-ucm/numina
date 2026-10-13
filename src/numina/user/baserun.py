@@ -102,8 +102,9 @@ def resolve_references(obsres, datastore, request_requirements, recipe):
     from numina.dal.registry import is_reference
 
     requirements = obsres.requirements
+    resolved = {}
     if not any(is_reference(value) for value in requirements.values()):
-        return
+        return resolved
     drp = datastore.backend.drps.query_by_name(obsres.instrument)
     types = requirement_types(recipe, drp)
     for key, value in requirements.items():
@@ -115,12 +116,63 @@ def resolve_references(obsres, datastore, request_requirements, recipe):
         # an unknown requirement, or one that is not a product, is not checked
         accepted = types.get(key) or None
         try:
-            resolved, details = datastore.registry.resolve_reference(value, key, types=accepted)
+            resolved_value, details = datastore.registry.resolve_reference(value, key, types=accepted)
         except (ValueError, OSError) as error:
             raise numina.exceptions.ValidationError(f"requirement {key}: {error}") from error
-        requirements[key] = resolved
+        requirements[key] = resolved_value
         requested_in = "request" if key in request_requirements else "observation block"
         datastore.backend.record_source(key, "registry", reference=value, requested_in=requested_in, **details)
+        if "tags" in details:
+            if "product_id" in details:
+                what = f"the product {details['product_id']}"
+            else:
+                what = f"the field {value.get('field', key)} of the result {details['result_id']}"
+            resolved[key] = (what, details["tags"])
+    return resolved
+
+
+def check_reference_tags(recipe, obsres, resolved):
+    """Check that the tags of the products of the references match those of obsres
+
+    `resolved` are the references resolved by resolve_references. The tags
+    are checked with the query expression of the type of the requirement,
+    as in the automatic selection of products.
+
+    Raises
+    ------
+    numina.exceptions.ValidationError
+        If the tags of a product do not match.
+    """
+    by_name = {}
+    for req in recipe.requirements().values():
+        for name in (req.dest, getattr(req, "alias", None)):
+            if name is not None:
+                by_name[name] = req
+    for key, (what, tags) in resolved.items():
+        req = by_name.get(key)
+        if req is None:
+            continue
+        node_types = getattr(req.type, "node_type", None) or [req.type]
+        exprs = [node.query_expr for node in node_types if node.isproduct() and hasattr(node, "query_expr")]
+        if not exprs:
+            continue
+        if any(expr.fill_placeholders(**obsres.tags).eval(**tags) is True for expr in exprs):
+            continue
+        names = sorted(set().union(*(expr.tags() for expr in exprs)))
+        different = [name for name in names if tags.get(name, _MISSING) != obsres.tags.get(name, _MISSING)]
+        if different:
+            product_tags = ", ".join(f"{name}={tags[name]}" if name in tags else f"no tag {name}" for name in different)
+            ob_tags = ", ".join(f"{name}={obsres.tags.get(name)}" for name in different)
+            msg = f"requirement {key}: {what} has {product_tags}, the observing block has {ob_tags}"
+        else:
+            msg = (
+                f"requirement {key}: the tags of {what}, {tags}, "
+                f"do not match those of the observing block, {obsres.tags}"
+            )
+        raise numina.exceptions.ValidationError(msg)
+
+
+_MISSING = object()
 
 
 def run_reduce(
@@ -226,7 +278,7 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
         # The DAL records where it finds the values
         datastore.backend.sources = {}
         # The references are resolved with the types of the requirements of the recipe
-        resolve_references(obsres, datastore, task.request_params["requirements"], recipe)
+        references = resolve_references(obsres, datastore, task.request_params["requirements"], recipe)
 
         recipe.intermediate_results = task.request_params["intermediate_results"]
         recipe.validate_inputs = task.request_params["validate_inputs"]
@@ -246,6 +298,8 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
         try:
             # here the tags have been updated
             rinput = recipe.build_recipe_input(obsres, datastore.backend)
+            # The tags of obsres are extracted in build_recipe_input
+            check_reference_tags(recipe, obsres, references)
         except (ValueError, numina.exceptions.ValidationError) as err:
             _logger.error("During recipe input construction")
             _logger.error("%s", err)
