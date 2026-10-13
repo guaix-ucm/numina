@@ -93,7 +93,17 @@ class DataTypeBase:
 
     @classmethod
     def from_name(cls, name):
-        # name is in the form Class(arg1=val1, arg2=val2)
+        """Create a datatype from its name, in the form Class(arg1=val1, arg2=val2)
+
+        Class is the name of the class, or the name of the datatype (see
+        :meth:`name`) if it is different, as in the subclasses of DRPs
+        that keep the name of a generic type.
+
+        Raises
+        ------
+        TypeError
+            If `name` is not a name of this class.
+        """
         # find first (
         fp = name.find("(")
         sp = name.find(")")
@@ -108,13 +118,12 @@ class DataTypeBase:
             kwargs = parse_arg_line(fargs)
 
         if klass == cls.__name__:
-            # create thing
-            obj = cls.__new__(cls)
-            obj.__init__(**kwargs)
-
+            return cls(**kwargs)
+        obj = cls(**kwargs)
+        # the name of the datatype, without the arguments
+        if obj.name().split("(", 1)[0] == klass:
             return obj
-        else:
-            raise TypeError(name)
+        raise TypeError(f"{name} is not a name of {cls.__name__}")
 
     @staticmethod
     def create_db_info():
