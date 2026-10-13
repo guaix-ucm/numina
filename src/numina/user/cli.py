@@ -91,6 +91,7 @@ def main(args=None):
         epilog="For detailed help pass --help to a target",
     )
 
+    parser.add_argument("--version", action="version", version=f"%(prog)s {__version__}")
     parser.add_argument("--disable-plugins", action="store_true", help="disable plugin loading")
     parser.add_argument("-l", action="store", dest="logging", metavar="FILE", help="FILE with logging configuration")
 

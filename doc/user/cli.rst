@@ -14,6 +14,10 @@ The :program:`numina` script has several options:
 
 .. program:: numina
 
+.. option:: --version
+
+   Show the version of numina and exit.
+
 .. option:: -d, --debug
 
    Debug enabled, increases verbosity.

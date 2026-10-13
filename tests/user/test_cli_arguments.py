@@ -4,6 +4,7 @@ import logging.config
 
 import pytest
 
+import numina
 import numina.user.clirun
 from numina.user.cli import main, process_unknown_arguments
 
@@ -27,6 +28,14 @@ def test_main_rejects_unknown_option(capsys):
         main(["--disable-plugins", "run", "--workdir", "/tmp/test1", "obs.yaml"])
     assert exc.value.code == 2
     assert "unrecognized arguments: --workdir" in capsys.readouterr().err
+
+
+@pytest.mark.parametrize("args", [["--version"], ["--disable-plugins", "--version"]])
+def test_main_version(args, capsys):
+    with pytest.raises(SystemExit) as exc:
+        main(args)
+    assert exc.value.code == 0
+    assert capsys.readouterr().out == f"numina {numina.__version__}\n"
 
 
 def test_main_passes_parameters(monkeypatch):
