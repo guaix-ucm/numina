@@ -21,7 +21,8 @@ class DataModel:
     name : str
         Name of the DataModel
     mappings: dict, optional
-        A dictionary of str keys and values convertibles to FITSKeyExtractor
+        A dictionary of str keys and values convertibles to FITSKeyExtractor.
+        The names in `aliases` take the definition of their targets.
 
     """
 
@@ -40,6 +41,12 @@ class DataModel:
     ]
     db_info_keys_extra = []
     query_attrs = {}
+    #: Names of values that are other names of a value, the alias
+    #: has always the value of its target
+    aliases = {
+        "block_uuid": "blckuuid",
+        "insconf_uuid": "insconf",
+    }
     meta_dinfo_headers = [
         "instrument",
         "object",
@@ -63,6 +70,8 @@ class DataModel:
         values = self.default_mappings()
         more = {} if mappings is None else mappings
         values.update(more)
+        for alias, target in self.aliases.items():
+            values[alias] = values[target]
 
         self.extractor_map = dict()
         self.extractor_map["fits"] = FITSKeyExtractor(values)
@@ -83,9 +92,7 @@ class DataModel:
             "insmode": ("INSMODE", "undefined"),
             "imgid": self.get_imgid,
             "insconf": "INSCONF",
-            "blckuuid": lambda x: "1",
-            "insconf_uuid": "insconf",  # Alias
-            "block_uuid": "blckuuid",  # Alias
+            "blckuuid": "BLCKUUID",
         }
 
     def get_data(self, img):

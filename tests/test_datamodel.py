@@ -98,7 +98,7 @@ def test_ginfo():
         "darktime": 573,
         "uuid": uuid_str,
         "observation_date": date_obs,
-        "blckuuid": "1",
+        "blckuuid": 1,
         "block_uuid": 1,
         "imgid": uuid_str,
         "insconf": "v1",
@@ -111,3 +111,17 @@ def test_ginfo():
 
     imgid_chsum = datamodel.gather_info_hdu(img)
     assert imgid_chsum == ref
+
+
+def test_aliases_follow_targets():
+    """The aliases have the value of their targets, also when these are redefined"""
+    hdr = {"BLCKUUID": "b1", "INSCONF": "c1", "OBUUID": "b2", "CONFUUID": "c2"}
+    img = create_test_image(hdr)
+
+    datamodel = DataModel("CLODIA")
+    assert datamodel.extractor.extract("block_uuid", img) == "b1"
+    assert datamodel.extractor.extract("insconf_uuid", img) == "c1"
+
+    datamodel = DataModel("CLODIA", mappings={"blckuuid": "OBUUID", "insconf": "CONFUUID"})
+    for key, value in [("blckuuid", "b2"), ("block_uuid", "b2"), ("insconf", "c2"), ("insconf_uuid", "c2")]:
+        assert datamodel.extractor.extract(key, img) == value

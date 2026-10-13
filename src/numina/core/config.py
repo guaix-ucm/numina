@@ -64,24 +64,6 @@ describe = numina.core.dataload.DataLoaders()
 check = numina.core.dataload.DataChecker()
 
 
-# Here we could have methods to extract
-# this information from different files
-# FITS and JSON
-_describe_keys = [
-    "instrument",
-    "object",
-    "observation_date",
-    "uuid",
-    "type",
-    "mode",
-    "exptime",
-    "darktime",
-    "insconf",
-    "blckuuid",
-    "quality_control",
-]
-
-
 @describe.register("image/fits", priority=20)
 def describe_fits_0(pathname):
     """Return the instrument and the observing mode of a FITS file, from INSTRUME and OBSMODE"""
