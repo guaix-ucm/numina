@@ -11,6 +11,7 @@
 """Global cache for testing."""
 
 import os
+import shutil
 import sys
 import tempfile
 
@@ -43,9 +44,7 @@ def download_cache(url, cache=True):
     with cntx.environ(XDG_CACHE_HOME=cache_dir):
         with open(data.download_file(url, cache=cache), "rb") as fs:
             with tempfile.NamedTemporaryFile(delete=False) as fd:
-                block = fs.read()
-                while block:
-                    fd.write(block)
-                    block = fs.read()
+                # by blocks, the files can be large
+                shutil.copyfileobj(fs, fd)
 
         return fd
