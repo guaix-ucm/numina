@@ -29,7 +29,7 @@ jobs:
     runs-on: ${{ matrix.os }}
     strategy:
       matrix:
-        os: [ubuntu-latest, macos-15-intel, macos-14]
+        os: [ubuntu-latest, ubuntu-24.04-arm, macos-latest]
     steps:
       - uses: actions/checkout@v7
 
@@ -37,6 +37,8 @@ jobs:
         uses: pypa/cibuildwheel@v4.2.1
         env:
           CIBW_BUILD: cp310-* cp311-* cp312-* cp313-* cp314-*
+          # macos-latest runs on arm64, the x86_64 wheels are cross-compiled
+          CIBW_ARCHS_MACOS: "x86_64 arm64"
           CIBW_SKIP: '*_i686'
 
       - uses: actions/upload-artifact@v7
