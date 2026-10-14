@@ -49,7 +49,7 @@ master_doc = "index"
 
 # General information about the project.
 project = "Numina"
-copyright = "2010-2025, Universidad Complutense de Madrid"
+copyright = "2010-2026, Universidad Complutense de Madrid"
 
 # The version info for the project you're documenting, acts as replacement for
 # |version| and |release|, also used in various other places throughout the
