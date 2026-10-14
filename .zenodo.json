@@ -1,0 +1,37 @@
+{
+  "title": "numina",
+  "upload_type": "software",
+  "description": "This is Numina, the data reduction package used by the following Gran Telescopio Canarias instruments: EMIR, FRIDA, MEGARA.",
+  "creators": [
+    {
+      "name": "Pascual, Sergio",
+      "affiliation": "Universidad Complutense de Madrid",
+      "orcid": "0000-0002-9351-6051"
+    },
+    {
+      "name": "Cardiel, Nicolás",
+      "affiliation": "Universidad Complutense de Madrid",
+      "orcid": "0000-0002-9334-2979"
+    }
+  ],
+  "keywords": ["MEGARA", "EMIR", "GTC"],
+  "license": "gpl-3.0-or-later",
+  "access_right": "open",
+  "communities": [
+    {"identifier": "iparcos-ucm"},
+    {"identifier": "guaix-ucm"}
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://pypi.org/project/numina/",
+      "relation": "compiles",
+      "resource_type": "software",
+      "scheme": "url"
+    }
+  ],
+  "custom": {
+    "code:codeRepository": "https://github.com/guaix-ucm/numina",
+    "code:programmingLanguage": [{"id": "python"}],
+    "code:developmentStatus": {"id": "active"}
+  }
+}
