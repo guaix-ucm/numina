@@ -24,9 +24,16 @@ import jsonschema
 import jsonschema.exceptions
 import jsonschema.validators
 
+from numina.exceptions import ValidationError
 
-class SchemaValidationError(ValueError):
-    """The contents of a file do not follow its schema"""
+
+class SchemaValidationError(ValidationError, ValueError):
+    """The contents of a file do not follow its schema
+
+    It is a :class:`~numina.exceptions.ValidationError`, so the command
+    line shows the message without a traceback, and a ``ValueError``,
+    as in previous versions.
+    """
 
 
 @functools.cache

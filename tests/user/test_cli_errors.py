@@ -21,6 +21,17 @@ def test_validation_error(invalid_run, capsys):
     assert "Traceback" not in err
 
 
+def test_schema_validation_error(tmp_path, monkeypatch, capsys):
+    """An invalid control file is logged, without traceback"""
+    monkeypatch.chdir(tmp_path)
+    (tmp_path / "obsresult.yaml").write_text("id: 1\ninstrument: TEST1\nmode: bias\n")
+    (tmp_path / "control.yaml").write_text("version: 1\nproducts:\n  TEST1:\n    - {id: 1, type: T, tags: {}}\n")
+    assert main(["--disable-plugins", "run", "obsresult.yaml", "-r", "control.yaml"]) == 1
+    err = capsys.readouterr().err
+    assert "ERROR: control.yaml: invalid control file, at products -> TEST1" in err
+    assert "Traceback" not in err
+
+
 def test_validation_error_debug(invalid_run):
     """With --debug, the exception is raised"""
     with pytest.raises(ValidationError, match="invalid raw images"):
