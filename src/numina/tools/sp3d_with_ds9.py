@@ -657,7 +657,7 @@ def main(args=None):
     parser.add_argument("--output-masks", help="Path to the output FITS file with source and continuum masks", type=str)
 
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args
     logger = myscript.logger
     console = myscript.console

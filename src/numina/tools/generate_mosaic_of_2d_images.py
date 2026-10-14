@@ -244,7 +244,7 @@ def main(args=None):
     parser.add_argument("--output-3D-stack", help="filename for stacked 3D array. Default None", default=None, type=str)
 
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args
     logger = myscript.logger
 

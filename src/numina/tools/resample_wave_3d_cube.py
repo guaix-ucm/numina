@@ -250,7 +250,7 @@ def main(args=None):
         "--connected_zeros_to_nan", action="store_true", help="Convert connected zeros to NaN before resampling."
     )
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args
     logger = myscript.logger
 

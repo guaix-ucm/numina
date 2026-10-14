@@ -159,7 +159,7 @@ def main(args=None):
     parser.add_argument("extname1", help="First extension name", type=str)
     parser.add_argument("extname2", help="Second extension name (optional)", type=str)
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args
 
     for extname in [args.extname1, args.extname2]:

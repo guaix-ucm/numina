@@ -209,7 +209,7 @@ def main(args=None):
     parser.add_argument("--ndecimal-wave", help="Number of decimal places in wavelength", type=int, default=3)
     parser.add_argument("--ndecimal-adr", help="Number of decimal places in ADR", type=int, default=3)
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args
     logger = myscript.logger
     console = myscript.console

@@ -364,7 +364,7 @@ def main(args=None):
     parser.add_argument("--save-test-images", action="store_true", help="Save synthetic images to FITS files")
 
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args
     logger = myscript.logger
 

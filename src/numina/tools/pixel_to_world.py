@@ -102,7 +102,7 @@ def main(args=None):
         "--wcskey", help="WCS key to use when multiple WCS are present in the FITS header", type=str, default=None
     )
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args
 
     pixel_to_world(

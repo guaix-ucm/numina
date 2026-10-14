@@ -239,7 +239,7 @@ def main(args=None):
     parser.add_argument("--output", help="Output FITS file")
     parser.add_argument("--png", help="Output PNG file (plot of the result)", type=str)
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args
 
     if args.output is not None:
