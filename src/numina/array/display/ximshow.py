@@ -1058,8 +1058,9 @@ def main(args=None):
     parser.add_argument("--xlabel", help="X-axis label", type=str, default=None)
     parser.add_argument("--ylabel", help="Y-axis label", type=str, default=None)
     parser.add_argument("--cmap", help="color map", type=str, default="hot")
-    parser.add_argument("--cbar-label", help="color bar label", type=str, default="Number of counts")
+    parser.add_argument("--cbar-label", "--cbar_label", help="color bar label", type=str, default="Number of counts")
     parser.add_argument(
+        "--cbar-orientation",
         "--cbar_orientation",
         help="color bar orientation",
         type=str,
