@@ -246,7 +246,7 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
     request_profile = task.request_params["instrument_configuration"]
     as_mode = task.request_params["mode"]
 
-    _logger.info(f"procesing OB with id={obsid}")
+    _logger.info(f"processing OB with id={obsid}")
 
     workenv = datastore.create_workenv(task)
     task.request_runinfo["results_dir"] = workenv.resultsdir_rel
