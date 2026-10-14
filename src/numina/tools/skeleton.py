@@ -30,7 +30,7 @@ def main(args=None):
         description="This is a skeleton script for Numina tools.", formatter_class=RichHelpFormatter
     )
     # Include default arguments for common actions, and initialize console and logging
-    myscript = NuminaScriptDefinition(parser)
+    myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args  # noqa: F841
     logger = myscript.logger  # noqa: F841
     console = myscript.console  # noqa: F841

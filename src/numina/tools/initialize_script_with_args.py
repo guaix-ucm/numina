@@ -9,6 +9,7 @@
 """Auxiliary functions for initializing scripts with command line arguments and logging."""
 
 from datetime import datetime
+from importlib import metadata
 import logging
 from rich.highlighter import ReprHighlighter
 from rich.logging import RichHandler
@@ -30,6 +31,42 @@ class SciNotationHighlighter(ReprHighlighter):
     highlights = ReprHighlighter.highlights + [
         r"(?P<number>(?<![\w.])[-+]?\d+\.?\d*[eE][-+]?\d+\b)",
     ]
+
+
+def _caller_package_version(caller_globals: dict) -> str | None:
+    """Return the installed version of the top-level package of the caller.
+
+    Parameters
+    ----------
+    caller_globals : dict
+        Global namespace of the calling module (``frame.f_globals``).
+
+    Returns
+    -------
+    str or None
+        Version string of the distribution providing the caller's top-level
+        package, or None if it cannot be determined.
+
+    Notes
+    -----
+    When the script is executed as ``python -m pkg.module``, ``__name__`` is
+    ``"__main__"`` but ``__spec__.name`` still holds the full module name.
+    When it is executed as ``python path/to/file.py``, neither is available
+    and None is returned.
+    """
+    spec = caller_globals.get("__spec__")
+    module_name = spec.name if spec is not None else caller_globals.get("__name__", "__main__")
+    if module_name == "__main__":
+        return None
+    top_level = module_name.partition(".")[0]
+    # Map import package name -> distribution name(s) (they may differ)
+    distributions = metadata.packages_distributions().get(top_level, [top_level])
+    for dist in distributions:
+        try:
+            return metadata.version(dist)
+        except metadata.PackageNotFoundError:
+            continue
+    return None
 
 
 class NuminaScriptDefinition:
@@ -114,8 +151,12 @@ class NuminaScriptDefinition:
 
         self.args = parser.parse_args(argv)
 
+        # Get the global namespace of the calling module and determine its version
+        caller_globals = sys._getframe(1).f_globals
+        caller_version = _caller_package_version(caller_globals)
+
         # Name of the module that called this function
-        caller_name = sys._getframe(1).f_globals.get("__name__", "__main__")
+        caller_name = caller_globals.get("__name__", "__main__")
 
         # Initialize datetime for script execution
         self.datetime_ini = datetime.now()
@@ -131,7 +172,12 @@ class NuminaScriptDefinition:
 
         # Display version and exit if requested
         if getattr(self.args, "version", False):
-            self.console.print(__version__)
+            self.console.print(f"Using {caller_name}")
+            if caller_version is not None:
+                self.console.print(f"version: '{str(caller_version)}'")
+            else:
+                self.console.print("version: unknown")
+            self.console.print(f"(numina version: '{str(__version__)}')")
             raise SystemExit()
 
         # Display full command line if requested
@@ -157,9 +203,14 @@ class NuminaScriptDefinition:
         if self.logger.isEnabledFor(logging.INFO):
             self.console.rule(f"[bold magenta]Welcome to {escape(parser.prog)}[/bold magenta]")
             self.logger.info(f"Using {caller_name}")
-            self.logger.info(f"Version {__version__}")
+            if caller_version is not None:
+                self.logger.info(f"version: '{str(caller_version)}'")
+            else:
+                self.logger.warning("version: unknown")
+            self.logger.info(f"(numina version: '{str(__version__)}')")
 
         self.logger.debug(f"Command line arguments: {self.args}", extra={"markup": False})
+        self.console.rule()
 
         # Generate output directory if it does not exist
         output_dir = getattr(self.args, "output_dir", ".")
