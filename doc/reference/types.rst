@@ -40,7 +40,8 @@ The types and their values are:
    * - :class:`~numina.types.frame.DataFrameType`
      - :class:`~numina.types.dataframe.DataFrame`, an image in disk or in memory
    * - :class:`~numina.types.array.ArrayType`
-     - :class:`numpy.ndarray`
+     - :class:`numpy.ndarray`, read from a text file (CSV with extension ``.csv``)
+       or an ECSV file (the numeric columns of the table)
    * - :class:`~numina.types.datatype.PlainPythonType`
      - a Python value (``int``, ``float``, ``str``...), used by
        :class:`~numina.core.dataholders.Parameter`

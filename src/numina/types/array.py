@@ -33,7 +33,9 @@ class ArrayType(DataType):
             # if is a string, it may be a pathname, try to load it
 
             # heuristics, by extension
-            if obj.endswith(".csv"):
+            if is_ecsv(obj):
+                res = load_ecsv_array(obj)
+            elif obj.endswith(".csv"):
                 # try to open as a CSV file
                 res = numpy.loadtxt(obj, delimiter=",")
             else:
@@ -47,6 +49,35 @@ class ArrayNType(ArrayType):
     def __init__(self, dimensions, default=None):
         super().__init__(default=default)
         self.N = dimensions
+
+
+def is_ecsv(path):
+    """True if the file is in ECSV format
+
+    The first line of an ECSV file is ``# %ECSV VERSION``.
+    """
+    try:
+        with open(path) as fd:
+            return fd.readline().startswith("# %ECSV")
+    except (OSError, UnicodeDecodeError):
+        return False
+
+
+def load_ecsv_array(path):
+    """Load the numeric columns of an ECSV file in a 2D array
+
+    The array has a row for each row of the table, and a column for
+    each numeric column, in the same order. The other columns (for
+    example, comments) are ignored. It is the array that loadtxt
+    returns for a text file with only these columns.
+    """
+    from astropy.table import Table
+
+    table = Table.read(path, format="ascii.ecsv")
+    columns = [col for col in table.itercols() if col.dtype.kind in "biuf"]
+    if not columns:
+        raise ValueError(f"{path}: the table does not have numeric columns")
+    return numpy.column_stack([numpy.asarray(col, dtype=float) for col in columns])
 
 
 def get_filename_obj(hdul, hint, ext):

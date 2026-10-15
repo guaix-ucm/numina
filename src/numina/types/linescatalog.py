@@ -13,6 +13,7 @@ import numpy
 
 from numina.types.qc import QC
 
+from .array import is_ecsv, load_ecsv_array
 from .product import DataProductType
 
 
@@ -21,6 +22,8 @@ class LinesCatalog(DataProductType):
         super().__init__(ptype=numpy.ndarray)
 
     def _datatype_load(self, obj):
+        if is_ecsv(obj):
+            return load_ecsv_array(obj)
         with open(obj, "r") as fd:
             linecat = numpy.loadtxt(fd)
         return linecat
