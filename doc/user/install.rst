@@ -5,25 +5,33 @@ Installation
 Requirements
 ------------
 
-Python >= 3.9 is required. Additionally the following packages are required
-in order to work properly:
+Python >= 3.10 is required. pip installs the other required packages, among
+them:
 
- - `numpy <http://numpy.scipy.org/>`_ 1.22 or later
- - `scipy <http://www.scipy.org>`_
- - `astropy <http://www.astropy.org>`_
- - `PyYaml <http://http://pyyaml.org/>`_
+ - `numpy <https://numpy.org/>`_ 2 or later
+ - `scipy <https://scipy.org>`_
+ - `astropy <https://www.astropy.org>`_ 6.1.7 or later
+ - `PyYaml <https://pyyaml.org/>`_
  - `matplotlib <https://matplotlib.org/>`_
  - `scikit-image <https://scikit-image.org/>`_
  - `lmfit <https://lmfit.github.io/lmfit-py/>`_
  - `reproject <https://reproject.readthedocs.io/en/stable/>`_
+ - `ccdproc <https://ccdproc.readthedocs.io/>`_
+ - `teareduce <https://pypi.org/project/teareduce/>`_
+ - `jsonschema <https://python-jsonschema.readthedocs.io/>`_
  - `python-dateutil <https://pypi.org/project/python-dateutil>`_
+
+The complete list is in the file ``pyproject.toml`` of the source code.
 
 
 Installing numina
 -----------------
 
-The preferred methods of installation are `pip <https://pip.pypa.io>`_ or
-`conda <https://docs.conda.io/en/latest/>`__, using prebuilt packages.
+The preferred method of installation is `pip <https://pip.pypa.io>`_, using
+the prebuilt packages of `PyPI <https://pypi.org/project/numina/>`__, in a
+virtual environment or in a `conda <https://docs.conda.io/en/latest/>`__
+environment. There are prebuilt packages of numina for Linux and macOS, in
+x86_64 and arm64.
 
 Using pip
 +++++++++
@@ -61,10 +69,15 @@ using virtualenv or venv. See :ref:`deploy_venv` for details.
 
 Using conda
 +++++++++++
-Numina packages for conda are provided in the `conda-forge <https://conda-forge.org/>`_ channel. To install
-the latest version of numina run::
+Create and activate a conda environment, and install numina in it with pip::
 
-    conda update -c conda-forge numina
+    conda create --name numinaenv python=3.12
+    conda activate numinaenv
+    pip install numina
+
+The packages of numina in the `conda-forge <https://conda-forge.org/>`_ channel
+are no longer updated: they are older versions, and some dependencies of
+numina, such as teareduce, are not in conda-forge.
 
 See :ref:`deploy_conda` for details.
 

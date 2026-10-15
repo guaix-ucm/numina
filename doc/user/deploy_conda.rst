@@ -37,15 +37,16 @@ instructions, the steps to install numina under conda are:
 Create a conda environment
 --------------------------
 
-With coda, environments are created in a centralised manner (under the
+With conda, environments are created in a centralised manner (under the
 subdirectory ``./envs`` in your conda tree)::
 
     conda create --name numinaenv
 
-The Pyhton interpreter used in this environment is the same version
-currently used by conda. You can select a different version with::
+The Python interpreter used in this environment is the same version
+currently used by conda. You can select a different version (3.10 or
+later) with::
 
-    conda create --name numinaenv python=3.10
+    conda create --name numinaenv python=3.12
 
 
 Activate the environment
@@ -69,29 +70,32 @@ following command::
 
 Numina installation
 -------------------
-After the environment activation, we can install numina using conda (we
-provide conda packages in the `conda-forge <https://conda-forge.org>`_
-channel)::
+After the environment activation, we install numina with ``pip``, inside the
+conda environment. pip downloads numina and its dependencies from `PyPI
+<https://pypi.org/project/numina/>`_::
 
-     (numinaenv) $ conda install -c conda-forge numina
+     (numinaenv) $ pip install numina
 
 We can also update numina, if your environment contains already a installed version::
 
-    (numinaenv) $ conda update numina
+    (numinaenv) $ pip install -U numina
 
-If you need to install the development version, you can download the source code and
-proceed following the instructions in xxxx.
+.. note:: The packages of numina in the `conda-forge <https://conda-forge.org>`_
+          channel are no longer updated: they are older versions, and some
+          dependencies of numina, such as teareduce, are not in conda-forge.
 
-Other possibility is using `pip`. It can access individual
-branches, particular commits or just the latest code. For example this will install
-the latest development version::
+pip can also install individual branches, particular commits or just the
+latest code. For example this will install the latest development version::
 
     (numinaenv) $ pip install git+https://github.com/guaix-ucm/numina.git
 
-Check the `pip` documentation for the syntax of other types of packages sources.
+Check the `pip` documentation for the syntax of other types of packages sources,
+and :ref:`deploy_source` to build numina from the source code.
 
-.. warning:: Issues can arise with packages installed with `pip` in `conda` environments.
-              See https://www.anaconda.com/blog/using-pip-in-a-conda-environment for details.
+.. warning:: Install numina and its dependencies with pip, and avoid installing
+              or updating the same packages afterwards with conda in that
+              environment. See https://www.anaconda.com/blog/using-pip-in-a-conda-environment
+              for details.
 
 
 Test the installation
@@ -101,8 +105,8 @@ We can test the installation by running the ``numina`` command:
 
 ::
 
-    (numinaenv) $ numina
-    INFO: Numina simple recipe runner version 0.20
+    (numinaenv) $ numina --version
+    numina 0.40.0
 
 
 .. _virtualenv: https://virtualenv.pypa.io/
