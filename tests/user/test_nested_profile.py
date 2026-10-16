@@ -1,17 +1,10 @@
 """The instrument profile of an OB with nested results (issue #233)"""
 
-import argparse
 import json
 
-import astropy.io.fits as fits
 import pytest
-import yaml
 
-from numina.user.cli import base_config, process_unknown_arguments
-from numina.user.clirun import register
-from numina.user.clirundal import mode_run_common_obs
-
-from .testdrp import DRP_NESTED, SEEN_BY_MODE
+from .testdrp import DRP_NESTED, SEEN_BY_MODE, run_obs, write_images
 
 TEST1_PROFILE = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"  # from 2016-06-01
 TEST1_PROFILE_OLD = "6ad5dc90-6b15-43b7-abb5-b07340e19f41"  # 2014-06-01 to 2016-06-01
@@ -21,27 +14,17 @@ TEST1_PROFILE_OLD = "6ad5dc90-6b15-43b7-abb5-b07340e19f41"  # 2014-06-01 to 2016
 def run_nested(drpmocker, run_config, tmp_path, monkeypatch):
     drpmocker.add_drp("TEST1", DRP_NESTED)
     datadir = tmp_path / "data"
-    datadir.mkdir()
-    for name in ["image1.fits", "image2.fits"]:
-        hdr = fits.Header()
-        hdr["INSTRUME"] = "TEST1"
-        # valid only for the old profile
-        hdr["DATE-OBS"] = "2015-01-01T00:00:00"
-        fits.PrimaryHDU(header=hdr).writeto(datadir / name)
+    # valid only for the old profile
+    write_images(datadir, [("image1.fits", "2015-01-01T00:00:00"), ("image2.fits", "2015-01-01T00:00:00")])
     run_config["tool.run"]["datadir"] = str(datadir)
     obs = [
         {"id": 1, "mode": "child", "instrument": "TEST1", "images": ["image1.fits"]},
         {"id": 2, "mode": "child", "instrument": "TEST1", "images": ["image2.fits"]},
         {"id": 3, "mode": "parent", "instrument": "TEST1", "children": [1, 2]},
     ]
-    obsfile = tmp_path / "obsdata.yaml"
-    obsfile.write_text(yaml.safe_dump_all(obs))
 
     def run(*options):
-        parser = argparse.ArgumentParser(prog="numina")
-        register(parser.add_subparsers(), base_config())
-        args = parser.parse_args(["run", *options, str(obsfile)])
-        mode_run_common_obs(args, process_unknown_arguments([]), run_config)
+        run_obs(run_config, obs, *options)
         return SEEN_BY_MODE
 
     return run

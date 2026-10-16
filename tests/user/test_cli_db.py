@@ -25,9 +25,7 @@ def basedir(drpmocker, tmp_path, monkeypatch):
 
 
 def numina_db(capsys, *args):
-    status = main(["--disable-plugins", "db", *args])
-    captured = capsys.readouterr()
-    return status, captured.out.splitlines(), captured.err
+    return testdrp.cli(capsys, "db", *args)
 
 
 def registry(basedir):

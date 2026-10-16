@@ -1,19 +1,13 @@
 """ResultOf with a registry of reductions"""
 
-import argparse
 import os
 
-import astropy.io.fits as fits
 import pytest
-import yaml
 
 from numina.dal.registry import Registry
 from numina.exceptions import NoResultFound
 
-from numina.user.cli import base_config, process_unknown_arguments
-from numina.user.clirun import register
-from numina.user.clirundal import mode_run_common_obs
-from .testdrp import DRP_NESTED
+from .testdrp import DB_OPTIONS, DRP_NESTED, make_config, run_obs, write_images
 
 CHILDREN = [
     {"id": 1, "mode": "child", "instrument": "TEST1", "images": ["image1.fits"]},
@@ -25,27 +19,13 @@ PARENT = {"id": 3, "mode": "parent", "instrument": "TEST1", "children": [1, 2]}
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
     drpmocker.add_drp("TEST1", DRP_NESTED)
-    datadir = tmp_path / "data"
-    datadir.mkdir()
-    for name in ["image1.fits", "image2.fits"]:
-        hdr = fits.Header()
-        hdr["INSTRUME"] = "TEST1"
-        hdr["DATE-OBS"] = "2015-01-01T00:00:00"
-        fits.PrimaryHDU(header=hdr).writeto(datadir / name)
+    write_images(tmp_path / "data", [("image1.fits", "2015-01-01T00:00:00"), ("image2.fits", "2015-01-01T00:00:00")])
     monkeypatch.chdir(tmp_path)
     return tmp_path
 
 
 def run(basedir, obs, *options, db=True):
-    obsfile = basedir / "obsdata.yaml"
-    obsfile.write_text(yaml.safe_dump_all(obs))
-    parser = argparse.ArgumentParser(prog="numina")
-    register(parser.add_subparsers(), base_config())
-    db_options = ["--db", "numina-db.json"] if db else []
-    args = parser.parse_args(["run", *db_options, *options, str(obsfile)])
-    config = base_config()
-    config["tool.run"]["basedir"] = str(basedir)
-    mode_run_common_obs(args, process_unknown_arguments([]), config)
+    run_obs(make_config(basedir), obs, *(DB_OPTIONS if db else ()), *options)
 
 
 def disabled(obs):

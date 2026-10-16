@@ -2,12 +2,13 @@
 
 import argparse
 
-import astropy.io.fits as fits
 import pytest
 
 from numina.user.baserun import run_reduce
 from numina.user.clirun import profile_uuid
 from numina.user.helpers import create_datamanager
+
+from .testdrp import run_parser, write_images
 
 # Profiles in numina/testing/drps/configs
 TEST1_PROFILE = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
@@ -45,13 +46,9 @@ def test_profile_uuid_invalid():
 def datamanager(drpmocker, run_config, tmp_path):
     drpmocker.add_drp("TEST1", DRP_TEST1)
     datadir = tmp_path / "data"
-    datadir.mkdir()
     # The automatic selection uses the date of the image,
     # TEST1_PROFILE is valid since 2016
-    hdr = fits.Header()
-    hdr["INSTRUME"] = "TEST1"
-    hdr["DATE-OBS"] = "2017-01-01T00:00:00"
-    fits.PrimaryHDU(header=hdr).writeto(datadir / "image1.fits")
+    write_images(datadir, [("image1.fits", "2017-01-01T00:00:00")])
     run_config["tool.run"]["datadir"] = str(datadir)
     datamanager = create_datamanager(run_config, None)
     datamanager.backend.add_obs([{"id": 1, "mode": "image", "instrument": "TEST1", "images": ["image1.fits"]}])
@@ -93,24 +90,14 @@ def test_profile_without_images(datamanager, caplog):
     assert "using the most recent" in caplog.text
 
 
-@pytest.fixture
-def run_parser():
-    from numina.user.cli import base_config
-    from numina.user.clirun import register
-
-    parser = argparse.ArgumentParser(prog="numina")
-    register(parser.add_subparsers(), base_config())
-    return parser
-
-
 @pytest.mark.parametrize("option", ["--insconf", "--profile"])
-def test_profile_option_names(run_parser, option):
-    args = run_parser.parse_args(["run", option, TEST1_OLD_PROFILE, "obsdata.yaml"])
+def test_profile_option_names(option):
+    args = run_parser().parse_args(["run", option, TEST1_OLD_PROFILE, "obsdata.yaml"])
     assert args.profile == TEST1_OLD_PROFILE
 
 
-def test_profile_option_ambiguous(run_parser, capsys):
+def test_profile_option_ambiguous(capsys):
     """--prof matches --profile and --profile-path"""
     with pytest.raises(SystemExit):
-        run_parser.parse_args(["run", "--prof", TEST1_OLD_PROFILE, "obsdata.yaml"])
+        run_parser().parse_args(["run", "--prof", TEST1_OLD_PROFILE, "obsdata.yaml"])
     assert "ambiguous option" in capsys.readouterr().err

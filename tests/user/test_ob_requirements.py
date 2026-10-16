@@ -1,12 +1,6 @@
 """The requirements of the observation result reach the recipe"""
 
-import argparse
-
-import yaml
-
-from numina.user.cli import base_config, process_unknown_arguments
-from numina.user.clirun import register
-from numina.user.clirundal import mode_run_common_obs
+from .testdrp import run_obs
 
 DRP_TEST1 = """
 name: TEST1
@@ -34,12 +28,6 @@ def test_ob_requirements(drpmocker, run_config, tmp_path, seen):
         {"id": 1, "mode": "param", "instrument": "TEST1", "images": []},
         {"id": 2, "mode": "param", "instrument": "TEST1", "images": [], "requirements": {"value": 2}},
     ]
-    obsfile = tmp_path / "obsdata.yaml"
-    obsfile.write_text(yaml.safe_dump_all(obs))
-
-    parser = argparse.ArgumentParser(prog="numina")
-    register(parser.add_subparsers(), base_config())
-    args = parser.parse_args(["run", str(obsfile)])
-    mode_run_common_obs(args, process_unknown_arguments([]), run_config)
+    run_obs(run_config, obs)
 
     assert seen == [1, 2]

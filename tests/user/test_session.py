@@ -16,12 +16,7 @@ IMAGE = testdrp.IMAGE
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
     drpmocker.add_drp("TEST1", testdrp.DRP_TEST1)
-    datadir = tmp_path / "data"
-    datadir.mkdir()
-    hdr = fits.Header()
-    hdr["INSTRUME"] = "TEST1"
-    hdr["DATE-OBS"] = "2017-01-01T00:00:00"
-    fits.PrimaryHDU(header=hdr).writeto(datadir / "image1.fits")
+    testdrp.write_images(tmp_path / "data", [("image1.fits", "2017-01-01T00:00:00")])
     # obs files, relative to basedir
     (tmp_path / "bias.yaml").write_text(yaml.safe_dump(BIAS))
     (tmp_path / "image.yaml").write_text(yaml.safe_dump(IMAGE))

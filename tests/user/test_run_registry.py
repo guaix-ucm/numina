@@ -1,6 +1,5 @@
 """numina run with a registry of reductions (--db)"""
 
-import argparse
 import logging
 
 import astropy.io.fits as fits
@@ -9,11 +8,7 @@ import yaml
 
 from numina.dal.registry import Registry
 
-from numina.user.cli import base_config, process_unknown_arguments
-from numina.user.clirun import register
-from numina.user.clirundal import mode_run_common_obs
-
-from .testdrp import BIAS, IMAGE, SEEN, create_basedir
+from .testdrp import BIAS, IMAGE, SEEN, create_basedir, make_config, run_obs
 
 
 @pytest.fixture
@@ -22,18 +17,7 @@ def basedir(drpmocker, tmp_path, monkeypatch):
 
 
 def run(basedir, obs, *options, run_values=None, db_values=None, extra=None):
-    obsfile = basedir / "obsdata.yaml"
-    obsfile.write_text(yaml.safe_dump_all(obs))
-    parser = argparse.ArgumentParser(prog="numina")
-    register(parser.add_subparsers(), base_config())
-    args = parser.parse_args(["run", *options, str(obsfile)])
-    config = base_config()
-    config["tool.run"]["basedir"] = str(basedir)
-    for key, value in (run_values or {}).items():
-        config["tool.run"][key] = value
-    for key, value in (db_values or {}).items():
-        config["tool.db"][key] = value
-    mode_run_common_obs(args, process_unknown_arguments(extra or []), config)
+    run_obs(make_config(basedir, run_values, db_values), obs, *options, extra=extra)
     return SEEN
 
 

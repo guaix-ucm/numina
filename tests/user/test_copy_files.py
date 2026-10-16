@@ -1,14 +1,8 @@
 """Options --copy-files and --link-files of numina run"""
 
-import argparse
-
-import astropy.io.fits as fits
 import pytest
-import yaml
 
-from numina.user.cli import base_config, process_unknown_arguments
-from numina.user.clirun import register
-from numina.user.clirundal import mode_run_common_obs
+from .testdrp import run_obs, run_parser, write_images
 
 DRP_TEST1 = """
 name: TEST1
@@ -28,25 +22,10 @@ pipelines:
 
 
 @pytest.fixture
-def run_parser():
-    parser = argparse.ArgumentParser(prog="numina")
-    register(parser.add_subparsers(), base_config())
-    return parser
-
-
-@pytest.fixture
-def obsfile(drpmocker, run_config, tmp_path):
+def image_drp(drpmocker, run_config, tmp_path):
     drpmocker.add_drp("TEST1", DRP_TEST1)
-    datadir = tmp_path / "data"
-    datadir.mkdir()
-    hdr = fits.Header()
-    hdr["INSTRUME"] = "TEST1"
-    hdr["DATE-OBS"] = "2017-01-01T00:00:00"
-    fits.PrimaryHDU(header=hdr).writeto(datadir / "image1.fits")
-    run_config["tool.run"]["datadir"] = str(datadir)
-    obsfile = tmp_path / "obsdata.yaml"
-    obsfile.write_text(yaml.safe_dump({"id": 1, "mode": "image", "instrument": "TEST1", "images": ["image1.fits"]}))
-    return obsfile
+    write_images(tmp_path / "data", [("image1.fits", "2017-01-01T00:00:00")])
+    run_config["tool.run"]["datadir"] = str(tmp_path / "data")
 
 
 @pytest.mark.parametrize(
@@ -59,18 +38,17 @@ def obsfile(drpmocker, run_config, tmp_path):
         (["--not-copy-files"], "True", True),
     ],
 )
-def test_copy_or_link(run_parser, run_config, obsfile, tmp_path, options, config_copy, linked):
+def test_copy_or_link(run_config, image_drp, tmp_path, options, config_copy, linked):
     run_config["tool.run"]["copy_files"] = config_copy
-    args = run_parser.parse_args(["run", *options, str(obsfile)])
 
-    mode_run_common_obs(args, process_unknown_arguments([]), run_config)
+    run_obs(run_config, {"id": 1, "mode": "image", "instrument": "TEST1", "images": ["image1.fits"]}, *options)
 
     installed = tmp_path / "obsid1_work" / "image1.fits"
     assert installed.is_file()
     assert installed.is_symlink() == linked
 
 
-def test_copy_and_link_are_exclusive(run_parser, capsys):
+def test_copy_and_link_are_exclusive(capsys):
     with pytest.raises(SystemExit):
-        run_parser.parse_args(["run", "--copy-files", "--link-files", "obsdata.yaml"])
+        run_parser().parse_args(["run", "--copy-files", "--link-files", "obsdata.yaml"])
     assert "not allowed with argument" in capsys.readouterr().err

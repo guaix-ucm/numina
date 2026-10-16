@@ -7,8 +7,9 @@ import zipfile
 import pytest
 
 import numina.core.pipelineload as pload
-from numina.user.cli import main
 from numina.util.download import check_hash, file_hash
+
+from .testdrp import cli
 
 DRP_TEST1 = """
 name: TEST1
@@ -62,9 +63,7 @@ def setup(drpmocker, tmp_path, monkeypatch):
 
 
 def inittree(capsys, *args):
-    status = main(["--disable-plugins", "inittree", *args])
-    captured = capsys.readouterr()
-    return status, captured.out.splitlines(), captured.err
+    return cli(capsys, "inittree", *args)
 
 
 def test_list(setup, capsys):

@@ -1,19 +1,16 @@
 """Additional instrument configurations with --profile-path"""
 
-import argparse
 import importlib.resources
 import json
 import logging
 
 import pytest
-import yaml
 
 from numina.instrument.collection import load_paths_store
 from numina.user.baserun import run_reduce
-from numina.user.cli import base_config, process_unknown_arguments
-from numina.user.clirun import register
-from numina.user.clirundal import mode_run_common_obs
 from numina.user.helpers import create_datamanager
+
+from .testdrp import run_obs
 
 # A configuration of TEST1 that is not in numina.testing.drps.configs
 NEW_PROFILE = "0c6a1e5e-8d4f-4d8b-9b0e-2d7f0e3c5a11"
@@ -86,13 +83,9 @@ def test_without_profile_path(run_setup):
 
 def test_numina_run_profile_path(run_setup, extra_dir, tmp_path):
     """The option --profile-path of numina run reaches create_datamanager"""
-    obsfile = tmp_path / "obsdata.yaml"
-    obsfile.write_text(yaml.safe_dump({"id": 1, "mode": "image", "instrument": "TEST1", "images": []}))
-    parser = argparse.ArgumentParser(prog="numina")
-    register(parser.add_subparsers(), base_config())
-    args = parser.parse_args(["run", "--profile-path", str(extra_dir), "--insconf", NEW_PROFILE, str(obsfile)])
+    ob = {"id": 1, "mode": "image", "instrument": "TEST1", "images": []}
 
-    mode_run_common_obs(args, process_unknown_arguments([]), run_setup)
+    run_obs(run_setup, ob, "--profile-path", str(extra_dir), "--insconf", NEW_PROFILE)
 
     task = json.loads((tmp_path / "obsid1_results" / "task.json").read_text())
     assert task["request_params"]["instrument_configuration"] == NEW_PROFILE

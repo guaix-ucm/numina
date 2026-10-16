@@ -5,9 +5,12 @@ SEEN_BY_MODE (a dict of lists). conftest.py empties both before each
 test; the tests read them with the fixtures seen and seen_by_mode.
 """
 
+import argparse
+import pathlib
 import uuid
 
 import astropy.io.fits as fits
+import yaml
 
 from numina.core import BaseRecipe, DataFrameType, Requirement, Result
 from numina.core.query import ResultOf
@@ -15,6 +18,9 @@ from numina.core.requirements import ObservationResultRequirement
 from numina.testing.recipes import MasterBias
 from numina.types.qc import QC
 import numina.core.dataholders as dh
+from numina.user.cli import base_config, main, process_unknown_arguments
+from numina.user.clirun import register
+from numina.user.clirundal import mode_run_common_obs
 
 # values received by the recipes
 SEEN = []
@@ -200,3 +206,51 @@ def create_basedir(drpmocker, tmp_path, monkeypatch, drp=DRP_TEST1):
     )
     monkeypatch.chdir(tmp_path)
     return tmp_path
+
+
+# options of numina run to record the reductions in a registry
+DB_OPTIONS = ("--db", "numina-db.json")
+
+
+def run_parser():
+    """The parser of the command line, with the command run"""
+    parser = argparse.ArgumentParser(prog="numina")
+    register(parser.add_subparsers(), base_config())
+    return parser
+
+
+def make_config(basedir, run_values=None, db_values=None):
+    """The default configuration, with basedir and other values of [tool.run] and [tool.db]"""
+    config = base_config()
+    config["tool.run"]["basedir"] = str(basedir)
+    for key, value in (run_values or {}).items():
+        config["tool.run"][key] = value
+    for key, value in (db_values or {}).items():
+        config["tool.db"][key] = value
+    return config
+
+
+def run_obs(config, obs, *options, extra=None):
+    """numina run with the observing blocks obs and the options
+
+    obs is an observing block or a list of them, written in obsdata.yaml
+    in the basedir of config. extra are the arguments not known by the
+    parser, such as --parameter-NAME=VALUE.
+    """
+    if isinstance(obs, dict):
+        obs = [obs]
+    obsfile = pathlib.Path(config["tool.run"]["basedir"]) / "obsdata.yaml"
+    obsfile.write_text(yaml.safe_dump_all(obs))
+    args = run_parser().parse_args(["run", *options, str(obsfile)])
+    mode_run_common_obs(args, process_unknown_arguments(extra or []), config)
+
+
+def cli(capsys, *args):
+    """numina with the arguments, without plugins
+
+    Returns the exit status, the lines of the standard output and the
+    standard error.
+    """
+    status = main(["--disable-plugins", *args])
+    captured = capsys.readouterr()
+    return status, captured.out.splitlines(), captured.err

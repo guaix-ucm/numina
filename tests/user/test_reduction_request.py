@@ -7,7 +7,7 @@ import yaml
 
 from numina.dal.registry import Registry
 from numina.schemas import SchemaValidationError
-from numina.user.cli import base_config, main
+from numina.user.cli import base_config
 from numina.user.helpers import ReductionRequests
 from numina.user.session import Session
 
@@ -34,9 +34,8 @@ def write_requests(path, *docs):
 
 
 def numina(capsys, *args):
-    status = main(["--disable-plugins", *args])
-    captured = capsys.readouterr()
-    return status, captured.err
+    status, _, err = testdrp.cli(capsys, *args)
+    return status, err
 
 
 def test_load_requests(tmp_path):
