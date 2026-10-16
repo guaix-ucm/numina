@@ -10,10 +10,18 @@
 
 """Recipes for testing"""
 
+import warnings
 import numina.core
 import numina.types.product as prod
 import numina.types.frame as frame
 import numina.core.requirements as reqs
+
+warnings.warn(
+    "numina.testing.recipes is deprecated and will be removed in the next version of numina, "
+    "it is only used by the tests of numina",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class MasterBias(prod.DataProductMixin, frame.DataFrameType):

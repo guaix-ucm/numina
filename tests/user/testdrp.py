@@ -15,7 +15,7 @@ import yaml
 from numina.core import BaseRecipe, DataFrameType, Requirement, Result
 from numina.core.query import ResultOf
 from numina.core.requirements import ObservationResultRequirement
-from numina.testing.recipes import MasterBias
+from tests.support.recipes import MasterBias
 from numina.types.qc import QC
 import numina.core.dataholders as dh
 from numina.user.cli import base_config, main, process_unknown_arguments
@@ -128,7 +128,7 @@ class ParentRecipe(BaseRecipe):
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: bias
     name: Bias
@@ -160,7 +160,7 @@ pipelines:
 DRP_NESTED = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: child
     name: Child

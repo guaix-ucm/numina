@@ -1,6 +1,14 @@
+import warnings
 import pkgutil
 import numina.drps.drpbase
 import numina.core.pipelineload as pload
+
+warnings.warn(
+    "numina.testing.drptest is deprecated and will be removed in the next version of numina, "
+    "it is only used by the tests of numina",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 def create_drp_test(names):

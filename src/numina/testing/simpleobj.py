@@ -1,4 +1,12 @@
+import warnings
 import numpy
+
+warnings.warn(
+    "numina.testing.simpleobj is deprecated and will be removed in the next version of numina, "
+    "it is only used by the tests of numina",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 """Create simple objects for testing"""
 

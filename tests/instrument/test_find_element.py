@@ -17,7 +17,7 @@ CLODIA_PROFILE = "44077557-32ab-43f2-8f2a-5ddb813c03df"
 
 @pytest.fixture(scope="module")
 def comp_store():
-    return load_paths_store(["numina.testing.drps.configs"])
+    return load_paths_store(["tests.support.drps.configs"])
 
 
 def uuid_of(element):
@@ -65,13 +65,13 @@ def test_not_found(comp_store):
 def test_several_valid_for_date(tmp_path, caplog):
     """With an additional configuration valid for the same date, the first is used, with a warning"""
     new_profile = "0c6a1e5e-8d4f-4d8b-9b0e-2d7f0e3c5a11"
-    base = importlib.resources.files("numina.testing.drps.configs").joinpath("instrument-test1.json")
+    base = importlib.resources.files("tests.support.drps.configs").joinpath("instrument-test1.json")
     conf = json.loads(base.read_text())
     conf["uuid"] = new_profile
     conf["date_start"] = "2020-01-01T00:00:00"
     (tmp_path / "instrument-test1-new.json").write_text(json.dumps(conf))
     # The additional directory is read first
-    comp_store = load_paths_store(["numina.testing.drps.configs"], [str(tmp_path)])
+    comp_store = load_paths_store(["tests.support.drps.configs"], [str(tmp_path)])
 
     with caplog.at_level(logging.WARNING, logger="numina.instrument.assembly"):
         element = find_instrument(comp_store, "TEST1", "2021-01-01T00:00:00")

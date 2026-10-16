@@ -7,8 +7,16 @@
 # License-Filename: LICENSE.txt
 #
 
+import warnings
 import astropy.io.fits as fits
 import pytest
+
+warnings.warn(
+    "numina.testing.plugins_pattri is deprecated and will be removed in the next version of numina, "
+    "it is only used by the tests of numina",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 @pytest.fixture

@@ -6,9 +6,9 @@ from numina.core.pipelineload import drp_load_data, load_confs, load_mode
 def test_load_confs_path():
     """The configurations are loaded from 'path'"""
 
-    confs, modpath = load_confs("numina", {"path": "numina.testing.drps.configs"})
+    confs, modpath = load_confs("numina", {"path": "tests.support.drps.configs"})
 
-    assert modpath == "numina.testing.drps.configs"
+    assert modpath == "tests.support.drps.configs"
     assert "instrument-test1.json" in confs
     assert confs["instrument-test1.json"]["name"] == "TEST1"
 
@@ -36,7 +36,7 @@ def test_load_mode_ignores_tagger(tagger):
 DRP_UNDEFINED_MODE = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
   values: []
 modes:
   - key: dark
@@ -44,8 +44,8 @@ modes:
 pipelines:
   default:
     recipes:
-      dark: numina.testing.recipes.DarkRecipe
-      other: numina.testing.recipes.DarkRecipe
+      dark: tests.support.recipes.DarkRecipe
+      other: tests.support.recipes.DarkRecipe
     version: 1
 """
 
@@ -61,7 +61,7 @@ def test_mode_defined_several_times():
     data = DRP_UNDEFINED_MODE.replace(
         "  - key: dark\n    name: Dark\n",
         "  - key: dark\n    name: Dark\n  - key: dark\n    name: Dark 2\n",
-    ).replace("      other: numina.testing.recipes.DarkRecipe\n", "")
+    ).replace("      other: tests.support.recipes.DarkRecipe\n", "")
     with pytest.warns(RuntimeWarning, match="the mode 'dark' is defined several times"):
         drp = drp_load_data("numina", data)
     assert drp.modes["dark"].name == "Dark 2"
@@ -102,7 +102,7 @@ def test_observing_mode_validate_deprecated():
 DRP_TEST1_MODES = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: bias
     name: Bias
@@ -119,7 +119,7 @@ pipelines:
 DRP_CALIBRATIONS = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 calibrations:
 - name: cal-1.0
   url: https://example.org/cal-1.0.zip

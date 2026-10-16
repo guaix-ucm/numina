@@ -1,6 +1,6 @@
 import pytest
 
-import numina.testing.simpleobj as simple
+import tests.support.simpleobj as simple
 
 
 @pytest.mark.result_compare

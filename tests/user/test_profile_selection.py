@@ -19,7 +19,7 @@ UNKNOWN_PROFILE = "11111111-2222-3333-4444-555555555555"
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: image
     name: Image

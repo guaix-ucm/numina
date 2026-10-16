@@ -1,0 +1,48 @@
+name: CLODIA
+configurations:
+  path: tests.support.drps.configs
+modes:
+  - key: bias
+    name: Bias
+    summary: Bias mode
+    description: >
+      Full description of the Bias mode
+  - key: flat
+    name: Flat
+    summary: Flat mode
+    description: >
+      Full description of the Flat mode
+  - key: image
+    name: Image
+    summary: Image mode
+    description: >
+      Full description of the Image mode
+  - key: image_with_sky
+    name: Image with Sky substraction
+    summary: Image mode with sky substraction
+    description: >
+      Full description of the Image mode
+  - key: sky
+    name: Sky Image
+    summary: Image obtained to substract sky
+    description: >
+      Full description of the Sky Image mode
+  - key: mosaic
+    name: ClodiaMosaic
+    summary: Mosaic of images
+    description: >
+      Full description of the Mosaic mode
+pipelines:
+  default:
+    version: 1
+    recipes:
+      bias: clodiadrp.recipes.bias.BiasRecipe
+      flat: clodiadrp.recipes.flat.Flat
+      image:
+        class: clodiadrp.recipes.image.ImageSkyRecipe
+        kwargs:
+          query_options:
+            sky_image: False
+      image_with_sky: clodiadrp.recipes.image.ImageSkyRecipe
+      sky: clodiadrp.recipes.image.SkyRecipe
+      mosaic: clodiadrp.recipes.mosaic.Mosaic

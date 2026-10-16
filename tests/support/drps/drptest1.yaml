@@ -1,0 +1,38 @@
+name: TEST1
+version: "1"
+configurations:
+  path: tests.support.drps.configs
+modes:
+  - description: A recipe that always fails
+    key: fail
+    name: Fail
+    summary: Summary of fail recipe
+  - description: Bias
+    key: bias
+    name: Bias
+    summary: Summary of Bias recipe
+  - description: Dark
+    key: dark
+    name: Dark
+    summary: Summary of Dark recipe
+  - description: Image
+    key: image
+    name: Image
+    summary: Summary of Image recipe
+pipelines:
+  default:
+      recipes:
+          bias:
+            class: tests.support.recipes.BiasRecipe
+            kwargs:
+             simulate_error: True
+          dark: tests.support.recipes.DarkRecipe
+          fail: numina.core.utils.AlwaysFailRecipe
+          image: tests.support.recipes.ImageRecipe
+      products:
+          MasterBias: tests.support.recipes.MasterBias
+      provides:
+          - name: MasterBias
+            mode: bias
+            field: master_bias
+      version: 1

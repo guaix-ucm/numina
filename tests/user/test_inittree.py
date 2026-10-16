@@ -14,7 +14,7 @@ from .testdrp import cli
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes: []
 pipelines:
   default:

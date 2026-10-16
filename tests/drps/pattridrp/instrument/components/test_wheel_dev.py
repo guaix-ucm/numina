@@ -1,4 +1,4 @@
-from numina.testing.drps.pattridrp.instrument.components.wheel import PWheel
+from tests.support.drps.pattridrp.instrument.components.wheel import PWheel
 
 
 def test_wheel1(pattri_ins):

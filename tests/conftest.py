@@ -1,1 +1,1 @@
-pytest_plugins = ["numina.testing.plugins", "numina.testing.plugins_pattri"]
+pytest_plugins = ["numina.testing.plugins", "tests.support.plugins_pattri"]

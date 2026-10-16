@@ -5,7 +5,7 @@ from .testdrp import run_obs
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: param
     name: Param

@@ -59,8 +59,10 @@ def test_warns_numina_tests(monkeypatch):
         if name == "numina.tests" or name.startswith("numina.tests."):
             monkeypatch.delitem(sys.modules, name)
 
-    with pytest.warns(DeprecationWarning, match="numina.tests is deprecated"):
+    # numina.tests also imports the deprecated modules of numina.testing
+    with pytest.warns(DeprecationWarning) as record:
         importlib.import_module("numina.tests")
+    assert any("numina.tests is deprecated" in str(w.message) for w in record)
 
     import numina.testing.plugins
     import numina.testing.testcache

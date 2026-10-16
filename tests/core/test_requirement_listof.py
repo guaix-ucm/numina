@@ -3,7 +3,6 @@ import numina.core.query
 import numina.dal.stored
 import numina.exceptions
 import numina.types.datatype as dt
-import numina.testing.simpleobj
 from numina.types.structured import BaseStructuredCalibration
 from numina.types.multitype import MultiType
 from numina.core.dataholders import Requirement

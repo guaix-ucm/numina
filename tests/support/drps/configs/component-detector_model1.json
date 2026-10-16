@@ -1,0 +1,13 @@
+{
+  "name": "Detector_Model1",
+  "type": "component",
+  "description": "Detector for testing",
+  "uuid": "510efa03-c266-4202-8a4d-d5799af49d9d",
+  "date_start": null,
+  "date_end": null,
+  "components": [
+  ],
+  "properties": [
+    {"id": "shape", "depends": [], "values":  [2048, 2048]}
+  ]
+}

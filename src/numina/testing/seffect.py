@@ -3,6 +3,15 @@
 Decorates a function to call another
 """
 
+import warnings
+
+warnings.warn(
+    "numina.testing.seffect is deprecated and will be removed in the next version of numina, "
+    "it is only used by the tests of numina",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 
 class FuncCall:
     """Record a function call"""

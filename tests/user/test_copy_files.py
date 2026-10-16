@@ -7,7 +7,7 @@ from .testdrp import run_obs, run_parser, write_images
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: image
     name: Image

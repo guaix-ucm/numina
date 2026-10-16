@@ -9,7 +9,7 @@ from numina.user.helpers import create_datamanager
 DRP_TWO_PIPELINES = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: image
     name: Image

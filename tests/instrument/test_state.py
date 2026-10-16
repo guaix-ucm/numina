@@ -1,5 +1,5 @@
 import pytest
-from numina.testing.seffect import record_call
+from tests.support.seffect import record_call
 
 from numina.instrument.state import State, Status, Transition
 

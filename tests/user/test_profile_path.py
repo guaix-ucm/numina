@@ -12,13 +12,13 @@ from numina.user.helpers import create_datamanager
 
 from .testdrp import run_obs
 
-# A configuration of TEST1 that is not in numina.testing.drps.configs
+# A configuration of TEST1 that is not in tests.support.drps.configs
 NEW_PROFILE = "0c6a1e5e-8d4f-4d8b-9b0e-2d7f0e3c5a11"
 
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: image
     name: Image
@@ -34,7 +34,7 @@ pipelines:
 
 def make_test1_configuration(uuid, date_start):
     """A copy of the configuration of TEST1, with other uuid and start date"""
-    base = importlib.resources.files("numina.testing.drps.configs").joinpath("instrument-test1.json")
+    base = importlib.resources.files("tests.support.drps.configs").joinpath("instrument-test1.json")
     conf = json.loads(base.read_text())
     conf["uuid"] = uuid
     conf["date_start"] = date_start
@@ -99,7 +99,7 @@ def test_replaced_file_warning(tmp_path, caplog):
     (extra / "instrument-test1.json").write_text(json.dumps(conf))
 
     with caplog.at_level(logging.WARNING, logger="numina.instrument.collection"):
-        store = load_paths_store(["numina.testing.drps.configs"], [str(extra)])
+        store = load_paths_store(["tests.support.drps.configs"], [str(extra)])
 
     assert "configuration file instrument-test1.json in" in caplog.text
     assert "replaces the one in" in caplog.text

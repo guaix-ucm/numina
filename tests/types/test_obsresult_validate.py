@@ -33,7 +33,7 @@ def mode(monkeypatch):
 DRP_TESTVAL = """
 name: TESTVAL
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: mode1
     name: Mode1

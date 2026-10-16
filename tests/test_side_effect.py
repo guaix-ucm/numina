@@ -1,4 +1,4 @@
-from numina.testing.seffect import side_effect, record_call, FuncCall
+from tests.support.seffect import side_effect, record_call, FuncCall
 
 
 def test_side_effect_1():

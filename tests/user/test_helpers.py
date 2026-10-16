@@ -77,8 +77,8 @@ def test_add_missing_entries():
 
 @pytest.fixture
 def test1_drp(drpmocker):
-    """The DRP TEST1 of numina.testing.drps, with DRP_DEFAULTS as default requirements"""
-    drpdata = yaml.safe_load(pkgutil.get_data("numina.testing.drps", "drptest1.yaml"))
+    """The DRP TEST1 of tests.support.drps, with DRP_DEFAULTS as default requirements"""
+    drpdata = yaml.safe_load(pkgutil.get_data("tests.support.drps", "drptest1.yaml"))
 
     def loader():
         # A copy, DRP_DEFAULTS is used to check the results

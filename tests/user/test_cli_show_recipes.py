@@ -6,8 +6,8 @@ import numina.core.pipelineload as pload
 
 from numina.user.cli import main
 
-drpdata1 = pkgutil.get_data("numina.testing.drps", "drptest1.yaml")
-drpdata2 = pkgutil.get_data("numina.testing.drps", "drptest2.yaml")
+drpdata1 = pkgutil.get_data("tests.support.drps", "drptest1.yaml")
+drpdata2 = pkgutil.get_data("tests.support.drps", "drptest2.yaml")
 
 
 # def test_show_recipes(capsys, monkeypatch):
@@ -34,19 +34,19 @@ def test_show_recipes(capsys, monkeypatch):
         "  obs mode: fail",
         " requirements:",
         "",
-        "Recipe: numina.testing.recipes.BiasRecipe",
+        "Recipe: tests.support.recipes.BiasRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: bias",
         " requirements:",
         "",
-        "Recipe: numina.testing.recipes.DarkRecipe",
+        "Recipe: tests.support.recipes.DarkRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: dark",
         " requirements:",
         "",
-        "Recipe: numina.testing.recipes.ImageRecipe",
+        "Recipe: tests.support.recipes.ImageRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: image",
@@ -91,19 +91,19 @@ def test_show_2_instruments(capsys, monkeypatch):
         "  obs mode: fail",
         " requirements:",
         "",
-        "Recipe: numina.testing.recipes.BiasRecipe",
+        "Recipe: tests.support.recipes.BiasRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: bias",
         " requirements:",
         "",
-        "Recipe: numina.testing.recipes.DarkRecipe",
+        "Recipe: tests.support.recipes.DarkRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: dark",
         " requirements:",
         "",
-        "Recipe: numina.testing.recipes.ImageRecipe",
+        "Recipe: tests.support.recipes.ImageRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: image",
@@ -112,7 +112,7 @@ def test_show_2_instruments(capsys, monkeypatch):
         "  master_bias type='MasterBias' [Master Bias]",
         "  master_dark type='MasterDark' [Master Dark]",
         "",
-        "Recipe: numina.testing.recipes.DarkRecipe",
+        "Recipe: tests.support.recipes.DarkRecipe",
         " instrument: TEST2",
         "  pipeline: default",
         "  obs mode: dark",
@@ -152,7 +152,7 @@ def test_show_1_recipe(capsys, monkeypatch):
     monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
 
     expected = [
-        "Recipe: numina.testing.recipes.BiasRecipe",
+        "Recipe: tests.support.recipes.BiasRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: bias",
@@ -161,7 +161,7 @@ def test_show_1_recipe(capsys, monkeypatch):
         "",
     ]
 
-    main(["show-recipes", "numina.testing.recipes.BiasRecipe"])
+    main(["show-recipes", "tests.support.recipes.BiasRecipe"])
     out, err = capsys.readouterr()
     out = out.split("\n")
     out.sort()
@@ -184,13 +184,13 @@ def test_show_2_recipes(capsys, monkeypatch):
     monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
 
     expected = [
-        "Recipe: numina.testing.recipes.BiasRecipe",
+        "Recipe: tests.support.recipes.BiasRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: bias",
         " requirements:",
         "",
-        "Recipe: numina.testing.recipes.DarkRecipe",
+        "Recipe: tests.support.recipes.DarkRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: dark",
@@ -199,7 +199,7 @@ def test_show_2_recipes(capsys, monkeypatch):
         "",
     ]
 
-    main(["show-recipes", "numina.testing.recipes.BiasRecipe", "numina.testing.recipes.DarkRecipe"])
+    main(["show-recipes", "tests.support.recipes.BiasRecipe", "tests.support.recipes.DarkRecipe"])
     out, err = capsys.readouterr()
     out = out.split("\n")
     out.sort()
@@ -222,13 +222,13 @@ def test_show_2_ins_recipes(capsys, monkeypatch):
     monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
 
     expected = [
-        "Recipe: numina.testing.recipes.BiasRecipe",
+        "Recipe: tests.support.recipes.BiasRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: bias",
         " requirements:",
         "",
-        "Recipe: numina.testing.recipes.DarkRecipe",
+        "Recipe: tests.support.recipes.DarkRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: dark",
@@ -237,7 +237,7 @@ def test_show_2_ins_recipes(capsys, monkeypatch):
         "",
     ]
 
-    main(["show-recipes", "-i", "TEST1", "numina.testing.recipes.BiasRecipe", "numina.testing.recipes.DarkRecipe"])
+    main(["show-recipes", "-i", "TEST1", "tests.support.recipes.BiasRecipe", "tests.support.recipes.DarkRecipe"])
     out, err = capsys.readouterr()
     out = out.split("\n")
     out.sort()
@@ -260,7 +260,7 @@ def test_show_mode_name(capsys, monkeypatch):
     monkeypatch.setattr(numina.drps, "get_system_drps", mockreturn)
 
     expected = [
-        "Recipe: numina.testing.recipes.BiasRecipe",
+        "Recipe: tests.support.recipes.BiasRecipe",
         " instrument: TEST1",
         "  pipeline: default",
         "  obs mode: bias",

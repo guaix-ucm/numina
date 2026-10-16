@@ -1,0 +1,13 @@
+{
+  "name": "Wheel_Model1",
+  "type": "component",
+  "description": "Wheel for testing",
+  "uuid": "27614307-783f-4c1c-bd9c-165ff9cec1c5",
+  "class": "tests.support.drps.pattridrp.instrument.components.wheel.PWheel",
+  "date_start": null,
+  "date_end": null,
+  "setup": [
+    {"values":  {"capacity":  5, "filters":  ["U", "B", "V", "R", "I"]}, "id": "wheel"},
+    {"values":  {"filters":  ["U", "B", "V", "R", "I"]}, "id": "filter_db"}
+  ]
+}

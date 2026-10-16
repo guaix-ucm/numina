@@ -9,7 +9,7 @@ from .testdrp import DB_OPTIONS, SEEN, create_basedir, make_config, run_obs
 DRP_TEST1 = """
 name: TEST1
 configurations:
-  path: numina.testing.drps.configs
+  path: tests.support.drps.configs
 modes:
   - key: bias
     name: Bias
