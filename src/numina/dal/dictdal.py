@@ -19,7 +19,7 @@ import numina.store
 import numina.store.gtc.load as gtcload
 from numina.core.oresult import oblock_from_dict
 from numina.exceptions import NoResultFound
-from numina.instrument.assembly import assembly_instrument
+from numina.instrument.assembly import assembly_instrument, configure_obresult
 from numina.util.context import working_directory
 
 from .absdal import AbsDrpDAL
@@ -153,30 +153,7 @@ class BaseDictDAL(AbsDrpDAL):
             # The default value, so that select_profile uses the images
             obsres.profile = ObservingBlock().profile
             _logger.debug("assembly instrument model, auto detection")
-        key, date_obs, keyname = this_drp.select_profile(obsres)
-        obsres.configuration = self.assembly_instrument(key, date_obs, keyname)
-        if obsres.configuration.name != obsres.instrument:
-            msg = (
-                f"instrument configuration uuid={obsres.configuration.origin.uuid} is for "
-                f"instrument '{obsres.configuration.name}', not '{obsres.instrument}'"
-            )
-            raise ValueError(msg)
-        obsres.profile = str(obsres.configuration.origin.uuid)
-        _logger.debug(f"instrument profile is {obsres.profile}")
-
-        auto_configure = True
-        sample_frame = obsres.get_sample_frame()
-        if auto_configure and sample_frame is not None:
-            _logger.debug("configuring instrument model with image from obsres")
-            img = sample_frame.open()
-            try:
-                obsres.configuration.configure_with_image(img)
-            finally:
-                # Close the file only if it was opened here
-                if sample_frame.frame is None:
-                    img.close()
-        else:
-            _logger.debug("no configuring instrument model")
+        configure_obresult(obsres, this_drp, self.components)
 
     def update_configuration(self, obsres):
         """Select again the configuration, after adding frames to obsres

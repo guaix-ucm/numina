@@ -137,6 +137,63 @@ def assembly_instrument(comp_store, keyval: str, date: str | datetime, by_key: s
     return assembly_element(comp_store, ElementEnum.ELEM_INSTRUMENT, keyval, date, by_key=by_key)
 
 
+def configure_obresult(obsres, drp, comp_store=None) -> CG:
+    """Select, assembly and configure the instrument configuration of obsres
+
+    The configuration is selected by drp.select_profile, with the profile
+    of obsres, if it is a UUID, or with the first frame of obsres. It is
+    configured with the first frame of obsres. The configuration is
+    stored in obsres.configuration, and its UUID in obsres.profile.
+
+    Parameters
+    ----------
+    obsres : ObservationResult
+    drp : InstrumentDRP
+        The DRP of the instrument of obsres
+    comp_store : dict, optional
+        The components of the configurations, by default those of the
+        profiles of drp
+
+    Returns
+    -------
+    InstrumentGeneric
+        the instrument configuration
+
+    Raises
+    ------
+    ValueError
+        If the configuration is not for the instrument of obsres
+    """
+    if comp_store is None:
+        comp_store = load_paths_store([drp.profiles])
+
+    key, date_obs, keyname = drp.select_profile(obsres)
+    configuration = assembly_instrument(comp_store, key, date_obs, by_key=keyname)
+    if configuration.name != obsres.instrument:
+        msg = (
+            f"instrument configuration uuid={configuration.origin.uuid} is for "
+            f"instrument '{configuration.name}', not '{obsres.instrument}'"
+        )
+        raise ValueError(msg)
+    obsres.configuration = configuration
+    obsres.profile = str(configuration.origin.uuid)
+    _logger.debug("instrument profile is %s", obsres.profile)
+
+    sample_frame = obsres.get_sample_frame()
+    if sample_frame is not None:
+        _logger.debug("configuring instrument model with image from obsres")
+        img = sample_frame.open()
+        try:
+            configuration.configure_with_image(img)
+        finally:
+            # Close the file only if it was opened here
+            if sample_frame.frame is None:
+                img.close()
+    else:
+        _logger.debug("no configuring instrument model")
+    return configuration
+
+
 def assembly_component(comp_store, keyval: str, date: str | datetime, dest=None, by_key="name") -> CG:
     """
     Assembly an instrument configuration object.
