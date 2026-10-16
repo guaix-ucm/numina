@@ -10,7 +10,7 @@
 import enum
 import typing
 
-from typing_extensions import Self
+from typing import Self
 
 if typing.TYPE_CHECKING:
     from numina.instrument.configorigin import ElementOrigin

@@ -5,7 +5,7 @@ from typing import TypeVar, Type, TYPE_CHECKING
 if TYPE_CHECKING:
     from .configorigin import ElementOrigin
     from .property import PropertyBase
-    from typing_extensions import Self
+    from typing import Self
 
 from .device import DeviceBase
 

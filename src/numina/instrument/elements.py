@@ -11,7 +11,7 @@ import enum
 from typing import TypeAlias, Type, TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from typing_extensions import Self
+    from typing import Self
     from .configorigin import ElementOrigin
 
 from .generic import ComponentGeneric, InstrumentGeneric

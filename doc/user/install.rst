@@ -5,7 +5,7 @@ Installation
 Requirements
 ------------
 
-Python >= 3.10 is required. pip installs the other required packages, among
+Python >= 3.11 is required. pip installs the other required packages, among
 them:
 
  - `numpy <https://numpy.org/>`_ 2 or later

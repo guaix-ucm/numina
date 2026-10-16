@@ -43,7 +43,7 @@ subdirectory ``./envs`` in your conda tree)::
     conda create --name numinaenv
 
 The Python interpreter used in this environment is the same version
-currently used by conda. You can select a different version (3.10 or
+currently used by conda. You can select a different version (3.11 or
 later) with::
 
     conda create --name numinaenv python=3.12
