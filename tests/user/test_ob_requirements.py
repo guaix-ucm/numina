@@ -1,22 +1,9 @@
 """The requirements of the observation result reach the recipe"""
 
+from tests.support.drpdef import make_drp
 from .testdrp import run_obs
 
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: param
-    name: Param
-    summary: Param mode
-    description: Param mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      param: tests.user.testdrp.ParamRecipe
-"""
+DRP_TEST1 = make_drp({"param": "tests.user.testdrp.ParamRecipe"})
 
 
 def test_ob_requirements(drpmocker, run_config, tmp_path, seen):

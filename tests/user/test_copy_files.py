@@ -2,23 +2,10 @@
 
 import pytest
 
+from tests.support.drpdef import make_drp
 from .testdrp import run_obs, run_parser, write_images
 
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: image
-    name: Image
-    summary: Image mode
-    description: Image mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      image: numina.core.utils.AlwaysSuccessRecipe
-"""
+DRP_TEST1 = make_drp({"image": "numina.core.utils.AlwaysSuccessRecipe"})
 
 
 @pytest.fixture

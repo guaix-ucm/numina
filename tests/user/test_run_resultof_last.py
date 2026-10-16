@@ -4,28 +4,10 @@ import pytest
 
 from numina.dal.registry import Registry
 
+from tests.support.drpdef import make_drp
 from .testdrp import DB_OPTIONS, SEEN, create_basedir, make_config, run_obs
 
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: bias
-    name: Bias
-    summary: Bias mode
-    description: Bias mode
-  - key: uselast
-    name: Use last
-    summary: Use last mode
-    description: Use last mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      bias: tests.user.testdrp.BiasRecipe
-      uselast: tests.user.testdrp.UseLastRecipe
-"""
+DRP_TEST1 = make_drp({"bias": "tests.user.testdrp.BiasRecipe", "uselast": "tests.user.testdrp.UseLastRecipe"})
 
 
 def bias(obid, image="image1.fits", **requirements):

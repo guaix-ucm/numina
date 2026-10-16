@@ -8,6 +8,7 @@ from numina.user.baserun import run_reduce
 from numina.user.clirun import profile_uuid
 from numina.user.helpers import create_datamanager
 
+from tests.support.drpdef import make_drp
 from .testdrp import run_parser, write_images
 
 # Profiles in numina/testing/drps/configs
@@ -16,21 +17,7 @@ TEST1_OLD_PROFILE = "6ad5dc90-6b15-43b7-abb5-b07340e19f41"
 TEST2_PROFILE = "9c21b315-9231-4fe0-a276-5043b064a3a8"
 UNKNOWN_PROFILE = "11111111-2222-3333-4444-555555555555"
 
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: image
-    name: Image
-    summary: Image mode
-    description: Image mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      image: numina.core.utils.AlwaysSuccessRecipe
-"""
+DRP_TEST1 = make_drp({"image": "numina.core.utils.AlwaysSuccessRecipe"})
 
 
 def test_profile_uuid():

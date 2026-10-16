@@ -10,26 +10,13 @@ from numina.instrument.collection import load_paths_store
 from numina.user.baserun import run_reduce
 from numina.user.helpers import create_datamanager
 
+from tests.support.drpdef import make_drp
 from .testdrp import run_obs
 
 # A configuration of TEST1 that is not in tests.support.drps.configs
 NEW_PROFILE = "0c6a1e5e-8d4f-4d8b-9b0e-2d7f0e3c5a11"
 
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: image
-    name: Image
-    summary: Image mode
-    description: Image mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      image: numina.core.utils.AlwaysSuccessRecipe
-"""
+DRP_TEST1 = make_drp({"image": "numina.core.utils.AlwaysSuccessRecipe"})
 
 
 def make_test1_configuration(uuid, date_start):

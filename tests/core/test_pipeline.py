@@ -1,6 +1,7 @@
 import pytest
 
 import numina.core.pipelineload as loader
+from tests.support.drpdef import make_drp
 
 
 @pytest.fixture(scope="module")
@@ -41,25 +42,9 @@ def test_mode_query(drptest):
     assert ll.field == "master_dark"
 
 
-DRP_PIPELINES = """
-name: TEST1
-version: "2.5"
-configurations:
-  path: tests.support.drps.configs
-  values: []
-modes:
-  - key: dark
-    name: Dark
-pipelines:
-  default:
-    recipes:
-      dark: tests.support.recipes.DarkRecipe
-    version: 1
-  fast:
-    recipes:
-      dark: tests.support.recipes.DarkRecipe
-    version: 1
-"""
+DARK = "tests.support.recipes.DarkRecipe"
+PIPELINES = {"default": {"dark": DARK}, "fast": {"dark": DARK}}
+DRP_PIPELINES = make_drp(pipelines=PIPELINES, version="2.5")
 
 
 @pytest.mark.parametrize("pipeline", ["default", "fast"])
@@ -81,7 +66,7 @@ def test_recipe_drp_version_of_package():
     """Without version in the DRP, the version of the package"""
     import numina
 
-    drp = loader.drp_load_data("numina", DRP_PIPELINES.replace('version: "2.5"\n', ""))
+    drp = loader.drp_load_data("numina", make_drp(pipelines=PIPELINES))
     recipe = drp.get_recipe_object("dark")
 
     assert recipe.drp_version == numina.__version__

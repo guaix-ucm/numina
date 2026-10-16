@@ -10,6 +10,7 @@ from numina.core import ObservationResult
 from numina.core.pipeline import ObservingMode
 from numina.exceptions import ValidationError
 from numina.types.dataframe import DataFrame
+from tests.support.drpdef import make_drp
 
 
 def create_obsres(values):
@@ -30,21 +31,7 @@ def mode(monkeypatch):
     return mode
 
 
-DRP_TESTVAL = """
-name: TESTVAL
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: mode1
-    name: Mode1
-    summary: Mode1
-    description: Mode1
-pipelines:
-  default:
-    version: 1
-    recipes:
-      mode1: numina.core.utils.AlwaysSuccessRecipe
-"""
+DRP_TESTVAL = make_drp({"mode1": "numina.core.utils.AlwaysSuccessRecipe"}, name="TESTVAL")
 
 
 @pytest.fixture

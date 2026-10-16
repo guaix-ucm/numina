@@ -7,30 +7,15 @@ import yaml
 import numina.core.pipelineload as pload
 from numina.exceptions import ValidationError
 from numina.user.cli import main
+from tests.support.drpdef import make_drp
 
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: bias
-    name: Bias
-    summary: Bias mode
-    description: Bias mode
-    rawimage: BIAS
-    validator: tests.user.test_cli_verify.validate_same_exptime
-  - key: image
-    name: Image
-    summary: Image mode
-    description: Image mode
-    rawimage: IMAGE
-pipelines:
-  default:
-    version: 1
-    recipes:
-      bias: numina.core.utils.AlwaysSuccessRecipe
-      image: numina.core.utils.AlwaysSuccessRecipe
-"""
+DRP_TEST1 = make_drp(
+    {"bias": "numina.core.utils.AlwaysSuccessRecipe", "image": "numina.core.utils.AlwaysSuccessRecipe"},
+    mode_options={
+        "bias": {"rawimage": "BIAS", "validator": "tests.user.test_cli_verify.validate_same_exptime"},
+        "image": {"rawimage": "IMAGE"},
+    },
+)
 
 
 def validate_same_exptime(mode, obsres):

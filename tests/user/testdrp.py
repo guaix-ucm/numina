@@ -15,12 +15,15 @@ import yaml
 from numina.core import BaseRecipe, DataFrameType, Requirement, Result
 from numina.core.query import ResultOf
 from numina.core.requirements import ObservationResultRequirement
-from tests.support.recipes import MasterBias
+from numina.core.utils import AlwaysFailRecipe
 from numina.types.qc import QC
 import numina.core.dataholders as dh
 from numina.user.cli import base_config, main, process_unknown_arguments
 from numina.user.clirun import register
 from numina.user.clirundal import mode_run_common_obs
+
+from tests.support.drpdef import make_drp
+from tests.support.recipes import MasterBias
 
 # values received by the recipes
 SEEN = []
@@ -125,58 +128,10 @@ class ParentRecipe(BaseRecipe):
 
 # DRP with a bias, an image that uses the bias, a recipe that fails
 # and a recipe with a parameter
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: bias
-    name: Bias
-    summary: Bias mode
-    description: Bias mode
-  - key: fail
-    name: Fail
-    summary: Fail mode
-    description: Fail mode
-  - key: image
-    name: Image
-    summary: Image mode
-    description: Image mode
-  - key: param
-    name: Param
-    summary: Param mode
-    description: Param mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      bias: tests.user.testdrp.BiasRecipe
-      fail: numina.core.utils.AlwaysFailRecipe
-      image: tests.user.testdrp.ImageRecipe
-      param: tests.user.testdrp.ParamRecipe
-"""
+DRP_TEST1 = make_drp({"bias": BiasRecipe, "fail": AlwaysFailRecipe, "image": ImageRecipe, "param": ParamRecipe})
 
 # DRP with OBs that use the results of their children
-DRP_NESTED = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: child
-    name: Child
-    summary: Child mode
-    description: Child mode
-  - key: parent
-    name: Parent
-    summary: Parent mode
-    description: Parent mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      child: tests.user.testdrp.ChildRecipe
-      parent: tests.user.testdrp.ParentRecipe
-"""
+DRP_NESTED = make_drp({"child": ChildRecipe, "parent": ParentRecipe})
 
 BIAS = {"id": 1, "mode": "bias", "instrument": "TEST1", "images": ["image1.fits"]}
 IMAGE = {"id": 10, "mode": "image", "instrument": "TEST1", "images": ["image1.fits"]}

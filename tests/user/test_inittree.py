@@ -9,18 +9,10 @@ import pytest
 import numina.core.pipelineload as pload
 from numina.util.download import check_hash, file_hash
 
+from tests.support.drpdef import make_drp
 from .testdrp import cli
 
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes: []
-pipelines:
-  default:
-    version: 1
-    recipes: {}
-"""
+DRP_TEST1 = make_drp()
 
 FILES = {
     "calibrations-1.0/README.md": b"readme",

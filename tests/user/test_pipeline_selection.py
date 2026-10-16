@@ -4,27 +4,15 @@ import pytest
 
 from numina.user.baserun import run_reduce
 from numina.user.helpers import create_datamanager
+from tests.support.drpdef import make_drp
 
 # The DRP TEST1, with two pipelines that use different recipes for the same mode
-DRP_TWO_PIPELINES = """
-name: TEST1
-configurations:
-  path: tests.support.drps.configs
-modes:
-  - key: image
-    name: Image
-    summary: Image mode
-    description: Image mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      image: numina.core.utils.AlwaysSuccessRecipe
-  alt:
-    version: 1
-    recipes:
-      image: numina.core.utils.OBSuccessRecipe
-"""
+DRP_TWO_PIPELINES = make_drp(
+    pipelines={
+        "default": {"image": "numina.core.utils.AlwaysSuccessRecipe"},
+        "alt": {"image": "numina.core.utils.OBSuccessRecipe"},
+    }
+)
 
 RECIPE_OF_PIPELINE = {"default": "AlwaysSuccessRecipe", "alt": "OBSuccessRecipe"}
 
