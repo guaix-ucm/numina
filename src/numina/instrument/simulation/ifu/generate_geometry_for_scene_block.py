@@ -350,7 +350,6 @@ def generate_geometry_for_scene_block(
             airmass=airmass,
             reference_wave_vacuum=reference_wave_vacuum_differential_refraction,
             wave_vacuum=simulated_wave,
-            debug=False,
         )
         # compute RA and DEC of each simulated photon
         simulated_coor = wcs3d.celestial.pixel_to_world(simulated_x_ifu - 1.0, simulated_y_ifu - 1.0)

@@ -19,6 +19,7 @@ from astropy.wcs import WCS
 import io
 import numpy as np
 from rich import print
+from rich.markup import escape
 import sys
 
 
@@ -43,7 +44,8 @@ def world_to_pixel(inputfile, sky, wave, extnum, verbose=False):
         if verbose:
             buffer = io.StringIO()
             hdul.info(output=buffer)
-            print(buffer.getvalue().rstrip(), extra={"markup": False})
+            # escaped, the text of hdul.info() is not rich markup
+            print(escape(buffer.getvalue().rstrip()))
         if extnum > len(hdul) - 1:
             raise ValueError(f"Extension number {extnum} exceeds {len(hdul)}")
         header = hdul[extnum].header

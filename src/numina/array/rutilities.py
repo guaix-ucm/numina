@@ -178,7 +178,7 @@ class LinearModelYvsX:
                 # coeff_std_error = np.zeros_like(self.coeff_std_error)
                 for i in range(degree + 1):
                     for j in range(i, degree + 1):
-                        coeff_estimate[i] += aa[j] * comb(j, j - i, True) * (bx**i) * ((-cx) ** (j - i))
+                        coeff_estimate[i] += aa[j] * comb(j, j - i, exact=True) * (bx**i) * ((-cx) ** (j - i))
             coeff_estimate[0] += cy
             coeff_estimate /= by
             self.coeff_estimate = coeff_estimate
