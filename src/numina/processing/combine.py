@@ -19,6 +19,9 @@ from astropy.io import fits
 from numina.array import combine
 from numina.datamodel import get_imgid
 
+# Methods of numina.array.combine that use masks of cosmic rays
+CRMASK_METHODS = ("mediancr", "meancrt", "meancr", "meancr2")
+
 
 def basic_processing_with_combination(
     rinput, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
@@ -26,8 +29,13 @@ def basic_processing_with_combination(
     """Combine the frames of the observation result of a recipe and process the result.
 
     It calls :func:`basic_processing_with_combination_frames` with the
-    frames of ``rinput.obresult``.
+    frames of ``rinput.obresult``. With the methods that use masks of
+    cosmic rays (:data:`CRMASK_METHODS`), the masks are ``rinput.crmasks``.
     """
+    if method.__name__ in CRMASK_METHODS:
+        crmasks = getattr(rinput, "crmasks", None)
+    else:
+        crmasks = None
     return basic_processing_with_combination_frames(
         rinput.obresult.frames,
         reduction_flows,
@@ -35,41 +43,82 @@ def basic_processing_with_combination(
         method_kwargs=method_kwargs,
         errors=errors,
         prolog=prolog,
+        crmasks=crmasks,
     )
 
 
 def basic_processing_with_combination_frames(
-    frames, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None
+    frames, reduction_flows, method=combine.mean, method_kwargs=None, errors=True, prolog=None, crmasks=None
 ):
-    """Combine frames and process the result with a reduction flow.
+    """Process frames with reduction flows and combine them.
+
+    The reduction flows are those returned by ``BaseRecipe.init_filters``,
+    one for each sequence of getters of ``BaseRecipe.create_getters``.
+    All the flows but the last are applied to each frame, then the frames
+    are combined and the last flow is applied to the combined image. With
+    a single flow (a callable or a list of one flow), the frames are
+    combined and then processed, and with an empty list they are only
+    combined.
+
+    With the methods that use masks of cosmic rays (:data:`CRMASK_METHODS`),
+    all the flows are applied to each frame before the combination, and
+    the UUID of the masks is recorded in the HISTORY of the result.
 
     Parameters
     ----------
     frames : list of DataFrame
         Frames to combine.
     reduction_flows : callable or list of callable
-        Flow applied to the combined image, as the result of
-        ``BaseRecipe.init_filters``. With a list, only its first
-        element is used.
+        Flows applied to the frames and to the combined image.
     method, method_kwargs, errors, prolog
         As in :func:`combine_frames`.
+    crmasks : DataFrame, optional
+        Masks of cosmic rays, required by the methods in
+        :data:`CRMASK_METHODS`.
 
     Returns
     -------
     astropy.io.fits.HDUList
         The combined and processed image.
+
+    Raises
+    ------
+    ValueError
+        If the method uses masks of cosmic rays and `crmasks` is None.
     """
-    result = combine_frames(frames, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog)
-
-    if isinstance(reduction_flows, list):
-        # FIXME: handling a list, we use only the first element
-        reduction_flow = reduction_flows[0]
+    if isinstance(reduction_flows, (list, tuple)):
+        image_flows = list(reduction_flows[:-1])
+        combined_flows = list(reduction_flows[-1:])
     else:
-        reduction_flow = reduction_flows
+        image_flows = []
+        combined_flows = [reduction_flows]
 
-    hdulist = reduction_flow(result)
+    use_crmasks = method.__name__ in CRMASK_METHODS
+    if use_crmasks:
+        if crmasks is None:
+            raise ValueError(f"Cosmic ray masks are required for {method.__name__}")
+        # the combination with masks requires processed images
+        image_flows.extend(combined_flows)
+        combined_flows = []
 
-    return hdulist
+    with contextlib.ExitStack() as stack:
+        hduls = [stack.enter_context(dframe.open()) for dframe in frames]
+        for flow in image_flows:
+            hduls = [flow(hdul) for hdul in hduls]
+
+        if use_crmasks:
+            masks = stack.enter_context(crmasks.open())
+            result = combine_imgs(
+                hduls, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog, crmasks=masks
+            )
+            result[0].header.add_history(f'Masks uuid:{masks[0].header["UUID"]}')
+        else:
+            result = combine_imgs(hduls, method=method, method_kwargs=method_kwargs, errors=errors, prolog=prolog)
+
+    for flow in combined_flows:
+        result = flow(result)
+
+    return result
 
 
 def combine_frames(frames, method=combine.mean, method_kwargs=None, errors=True, prolog=None):
@@ -121,9 +170,9 @@ def combine_imgs(
         appended as the extensions VARIANCE and MAP.
     prolog : str, optional
         Text added to the HISTORY of the result before the other entries.
-    crmasks : optional
+    crmasks : astropy.io.fits.HDUList, optional
         Masks of cosmic rays, passed to the methods that use them
-        ('mediancr', 'meancrt', 'meancr' and 'meancr2').
+        (:data:`CRMASK_METHODS`).
     use_lamedian : bool, optional
         Not used.
 
@@ -153,7 +202,7 @@ def combine_imgs(
         method_kwargs["dtype"] = "float32"
 
     _logger.info(f"stacking {cnum:d} images using '{method.__name__}'")
-    if method.__name__ in ["mediancr", "meancrt", "meancr", "meancr2"]:
+    if method.__name__ in CRMASK_METHODS:
         combined_data = method([d[0].data for d in hduls], crmasks=crmasks, **method_kwargs)
     else:
         combined_data = method([d[0].data for d in hduls], **method_kwargs)
