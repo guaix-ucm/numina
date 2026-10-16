@@ -2,120 +2,23 @@
 
 import argparse
 import logging
-import uuid
 
 import astropy.io.fits as fits
 import pytest
 import yaml
 
-from numina.core import BaseRecipe, Requirement, Result
-from numina.core.requirements import ObservationResultRequirement
 from numina.dal.registry import Registry
-from numina.testing.recipes import MasterBias
-from numina.types.qc import QC
-import numina.core.dataholders as dh
 
 from numina.user.cli import base_config, process_unknown_arguments
 from numina.user.clirun import register
 from numina.user.clirundal import mode_run_common_obs
 
-DRP_TEST1 = """
-name: TEST1
-configurations:
-  path: numina.testing.drps.configs
-modes:
-  - key: bias
-    name: Bias
-    summary: Bias mode
-    description: Bias mode
-  - key: fail
-    name: Fail
-    summary: Fail mode
-    description: Fail mode
-  - key: image
-    name: Image
-    summary: Image mode
-    description: Image mode
-  - key: param
-    name: Param
-    summary: Param mode
-    description: Param mode
-pipelines:
-  default:
-    version: 1
-    recipes:
-      bias: tests.user.test_run_registry.BiasRecipe
-      fail: numina.core.utils.AlwaysFailRecipe
-      image: tests.user.test_run_registry.ImageRecipe
-      param: tests.user.test_run_registry.ParamRecipe
-"""
-
-# values received by the recipes
-SEEN = []
-
-
-class BiasRecipe(BaseRecipe):
-    obresult = ObservationResultRequirement()
-    quality = dh.Parameter("GOOD", "QC of the result")
-    master_bias = Result(MasterBias)
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(version=1)
-
-    def run(self, recipe_input):
-        with recipe_input.obresult.frames[0].open() as hdul:
-            hdr = hdul[0].header.copy()
-        hdr["UUID"] = str(uuid.uuid4())
-        master_bias = fits.HDUList([fits.PrimaryHDU(header=hdr)])
-        return self.create_result(master_bias=master_bias, qc=QC[recipe_input.quality])
-
-
-class ImageRecipe(BaseRecipe):
-    obresult = ObservationResultRequirement()
-    master_bias = Requirement(MasterBias, "Master bias")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(version=1)
-
-    def run(self, recipe_input):
-        with recipe_input.master_bias.open() as hdul:
-            SEEN.append(hdul[0].header["UUID"])
-        return self.create_result()
-
-
-class ParamRecipe(BaseRecipe):
-    value = dh.Parameter(1, "a value")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(version=1)
-
-    def run(self, recipe_input):
-        SEEN.append(recipe_input.value)
-        return self.create_result()
-
-
-BIAS = {"id": 1, "mode": "bias", "instrument": "TEST1", "images": ["image1.fits"]}
+from .testdrp import BIAS, IMAGE, SEEN, create_basedir
 
 
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
     return create_basedir(drpmocker, tmp_path, monkeypatch)
-
-
-def create_basedir(drpmocker, tmp_path, monkeypatch):
-    """The DRP TEST1 and its images, in tmp_path, the working directory"""
-    drpmocker.add_drp("TEST1", DRP_TEST1)
-    monkeypatch.setattr(f"{__name__}.SEEN", [])
-    datadir = tmp_path / "data"
-    datadir.mkdir()
-    # image3.fits is only valid for the old profile of TEST1
-    for name, date in [("image1.fits", "2017"), ("image2.fits", "2017"), ("image3.fits", "2015")]:
-        hdr = fits.Header()
-        hdr["INSTRUME"] = "TEST1"
-        hdr["DATE-OBS"] = f"{date}-01-01T00:00:00"
-        fits.PrimaryHDU(header=hdr).writeto(datadir / name)
-    monkeypatch.chdir(tmp_path)
-    return tmp_path
 
 
 def run(basedir, obs, *options, run_values=None, db_values=None, extra=None):
@@ -249,8 +152,6 @@ def test_format2_with_registry(basedir):
 
 
 # Reading the registry
-
-IMAGE = {"id": 10, "mode": "image", "instrument": "TEST1", "images": ["image1.fits"]}
 
 
 def bias_uuids(basedir):

@@ -4,9 +4,6 @@ import argparse
 
 import yaml
 
-from numina.core import BaseRecipe
-import numina.core.dataholders as dh
-
 from numina.user.cli import base_config, process_unknown_arguments
 from numina.user.clirun import register
 from numina.user.clirundal import mode_run_common_obs
@@ -24,26 +21,11 @@ pipelines:
   default:
     version: 1
     recipes:
-      param: tests.user.test_ob_requirements.ParamRecipe
+      param: tests.user.testdrp.ParamRecipe
 """
 
-# values received by the recipe
-SEEN = []
 
-
-class ParamRecipe(BaseRecipe):
-    value = dh.Parameter(1, "a value")
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(version=1)
-
-    def run(self, recipe_input):
-        SEEN.append(recipe_input.value)
-        return self.create_result()
-
-
-def test_ob_requirements(drpmocker, run_config, tmp_path, monkeypatch):
-    monkeypatch.setattr(f"{__name__}.SEEN", [])
+def test_ob_requirements(drpmocker, run_config, tmp_path, seen):
     drpmocker.add_drp("TEST1", DRP_TEST1)
     datadir = tmp_path / "data"
     datadir.mkdir()
@@ -60,4 +42,4 @@ def test_ob_requirements(drpmocker, run_config, tmp_path, monkeypatch):
     args = parser.parse_args(["run", str(obsfile)])
     mode_run_common_obs(args, process_unknown_arguments([]), run_config)
 
-    assert SEEN == [1, 2]
+    assert seen == [1, 2]

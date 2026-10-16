@@ -10,16 +10,16 @@ from numina.user.cli import base_config, main
 from numina.user.helpers import create_datamanager
 from numina.user.session import Session
 
-from . import test_run_registry as trr
+from . import testdrp
 
-BIAS = trr.BIAS
+BIAS = testdrp.BIAS
 IMAGE = {"id": 10, "mode": "image", "instrument": "TEST1", "images": ["image2.fits"]}
 PARENT = {"id": 20, "mode": "param", "instrument": "TEST1", "children": [1, 10]}
 
 
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
-    basedir = trr.create_basedir(drpmocker, tmp_path, monkeypatch)
+    basedir = testdrp.create_basedir(drpmocker, tmp_path, monkeypatch)
     (basedir / "obs.yaml").write_text(yaml.safe_dump_all([BIAS, IMAGE]))
     return basedir
 
@@ -62,7 +62,7 @@ def test_run_by_id(basedir, capsys):
     # the image used the master bias of the first reduction
     (product,) = registry(basedir).products(type="MasterBias")
     assert (basedir / product["content"]).is_file()
-    assert len(trr.SEEN) == 1
+    assert len(testdrp.SEEN) == 1
 
 
 def test_run_unknown_id(basedir, capsys):
@@ -122,7 +122,7 @@ def test_session_runs_ids_of_the_registry(basedir, capsys):
     # the blocks are not added to the session, they are read from the registry
     assert session.run(1).state == 2
     assert session.run(10).state == 2
-    assert len(trr.SEEN) == 1
+    assert len(testdrp.SEEN) == 1
 
 
 def test_session_unknown_id(basedir):
@@ -164,19 +164,19 @@ def test_priority(basedir, capsys):
 
     # without priorities, the most recent
     numina_db(capsys, "run", "--db", "numina-db.json", "10")
-    assert trr.SEEN[-1] == second["uuid"]
+    assert testdrp.SEEN[-1] == second["uuid"]
 
     status, lines, _ = numina_db(capsys, "priority", "--db", "numina-db.json", str(first["id"]), "2")
     assert status == 0
     assert lines == [f"product {first['id']} has priority 2"]
     numina_db(capsys, "run", "--db", "numina-db.json", "10")
-    assert trr.SEEN[-1] == first["uuid"]
+    assert testdrp.SEEN[-1] == first["uuid"]
 
     # by uuid, abbreviated
     status, _, _ = numina_db(capsys, "priority", "--db", "numina-db.json", second["uuid"][:8], "3")
     assert status == 0
     numina_db(capsys, "run", "--db", "numina-db.json", "10")
-    assert trr.SEEN[-1] == second["uuid"]
+    assert testdrp.SEEN[-1] == second["uuid"]
 
     status, lines, _ = numina_db(capsys, "list", "--db", "numina-db.json", "products")
     header = lines[0].split()
@@ -199,7 +199,7 @@ def test_session_set_priority(basedir):
     first, _ = session.products(type="MasterBias")
     assert session.set_priority(first["uuid"], 1) == first["id"]
     session.run(10)
-    assert trr.SEEN[-1] == first["uuid"]
+    assert testdrp.SEEN[-1] == first["uuid"]
 
 
 @pytest.fixture

@@ -13,7 +13,7 @@ from numina.exceptions import NoResultFound
 from numina.user.cli import base_config, process_unknown_arguments
 from numina.user.clirun import register
 from numina.user.clirundal import mode_run_common_obs
-from .test_nested_profile import DRP_TEST1
+from .testdrp import DRP_NESTED
 
 CHILDREN = [
     {"id": 1, "mode": "child", "instrument": "TEST1", "images": ["image1.fits"]},
@@ -24,7 +24,7 @@ PARENT = {"id": 3, "mode": "parent", "instrument": "TEST1", "children": [1, 2]}
 
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
-    drpmocker.add_drp("TEST1", DRP_TEST1)
+    drpmocker.add_drp("TEST1", DRP_NESTED)
     datadir = tmp_path / "data"
     datadir.mkdir()
     for name in ["image1.fits", "image2.fits"]:

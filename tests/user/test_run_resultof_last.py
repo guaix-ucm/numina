@@ -6,14 +6,13 @@ import astropy.io.fits as fits
 import pytest
 import yaml
 
-from numina.core import BaseRecipe, DataFrameType, Requirement
-from numina.core.query import ResultOf
-from numina.core.requirements import ObservationResultRequirement
 from numina.dal.registry import Registry
 
 from numina.user.cli import base_config, process_unknown_arguments
 from numina.user.clirun import register
 from numina.user.clirundal import mode_run_common_obs
+
+from .testdrp import SEEN
 
 DRP_TEST1 = """
 name: TEST1
@@ -32,26 +31,9 @@ pipelines:
   default:
     version: 1
     recipes:
-      bias: tests.user.test_run_registry.BiasRecipe
-      uselast: tests.user.test_run_resultof_last.UseLastRecipe
+      bias: tests.user.testdrp.BiasRecipe
+      uselast: tests.user.testdrp.UseLastRecipe
 """
-
-SEEN = []
-
-
-class UseLastRecipe(BaseRecipe):
-    obresult = ObservationResultRequirement()
-    master_bias = Requirement(
-        DataFrameType, "The last master bias", query_opts=ResultOf("bias.master_bias", node="last")
-    )
-
-    def __init__(self, *args, **kwargs):
-        super().__init__(version=1)
-
-    def run(self, recipe_input):
-        with recipe_input.master_bias.open() as hdul:
-            SEEN.append(hdul[0].header["UUID"])
-        return self.create_result()
 
 
 def bias(obid, image="image1.fits", **requirements):
@@ -67,7 +49,6 @@ USE_LAST = {"id": 100, "mode": "uselast", "instrument": "TEST1", "images": ["ima
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
     drpmocker.add_drp("TEST1", DRP_TEST1)
-    monkeypatch.setattr(f"{__name__}.SEEN", [])
     datadir = tmp_path / "data"
     datadir.mkdir()
     # image3.fits is only valid for the old profile of TEST1

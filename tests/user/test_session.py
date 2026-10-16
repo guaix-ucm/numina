@@ -7,16 +7,15 @@ import yaml
 from numina.user.cli import base_config
 from numina.user.session import Session
 
-from . import test_run_registry as trr
+from . import testdrp
 
-BIAS = trr.BIAS
-IMAGE = trr.IMAGE
+BIAS = testdrp.BIAS
+IMAGE = testdrp.IMAGE
 
 
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
-    drpmocker.add_drp("TEST1", trr.DRP_TEST1)
-    monkeypatch.setattr(trr, "SEEN", [])
+    drpmocker.add_drp("TEST1", testdrp.DRP_TEST1)
     datadir = tmp_path / "data"
     datadir.mkdir()
     hdr = fits.Header()
@@ -59,7 +58,7 @@ def test_products_of_previous_session(basedir):
     second.run(10)
 
     (product,) = second.products(type="MasterBias")
-    assert trr.SEEN == [product["uuid"]]
+    assert testdrp.SEEN == [product["uuid"]]
 
 
 def test_observations_as_dicts(basedir):
@@ -86,7 +85,7 @@ def test_session_with_control(basedir):
     session = new_session(basedir, control="control.yaml")
     session.add_observations("image.yaml")
     session.run(10)
-    assert trr.SEEN == [hdr["UUID"]]
+    assert testdrp.SEEN == [hdr["UUID"]]
 
 
 def test_session_without_registry(basedir):

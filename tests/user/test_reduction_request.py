@@ -11,9 +11,9 @@ from numina.user.cli import base_config, main
 from numina.user.helpers import ReductionRequests
 from numina.user.session import Session
 
-from . import test_run_registry as trr
+from . import testdrp
 
-BIAS = trr.BIAS
+BIAS = testdrp.BIAS
 IMAGE = {"id": 10, "mode": "image", "instrument": "TEST1", "images": ["image2.fits"]}
 PARAM = {"id": 30, "mode": "param", "instrument": "TEST1"}
 PARAM_OB = {"id": 31, "mode": "param", "instrument": "TEST1", "requirements": {"value": 3}}
@@ -21,7 +21,7 @@ PARAM_OB = {"id": 31, "mode": "param", "instrument": "TEST1", "requirements": {"
 
 @pytest.fixture
 def basedir(drpmocker, tmp_path, monkeypatch):
-    basedir = trr.create_basedir(drpmocker, tmp_path, monkeypatch)
+    basedir = testdrp.create_basedir(drpmocker, tmp_path, monkeypatch)
     (basedir / "obs.yaml").write_text(yaml.safe_dump_all([BIAS, IMAGE, PARAM, PARAM_OB]))
     # without the configuration files of the user
     monkeypatch.setattr("numina.user.cli.load_config", base_config)
@@ -80,7 +80,7 @@ def test_db_run_request(basedir, capsys):
     # the ids are those of the request file
     status, _ = numina(capsys, "db", "run", "--db", "numina-db.json", "--request", req)
     assert status == 0
-    assert trr.SEEN == [5]
+    assert testdrp.SEEN == [5]
 
 
 def test_db_run_request_and_command_line(basedir, capsys):
@@ -88,7 +88,7 @@ def test_db_run_request_and_command_line(basedir, capsys):
     numina(capsys, "db", "ingest", "--db", "numina-db.json", "obs.yaml")
     req = write_requests(basedir / "req.yaml", {"id": 30, "requirements": {"value": 5}})
     numina(capsys, "db", "run", "--db", "numina-db.json", "--request", req, "30", "--parameter-value=7")
-    assert trr.SEEN == [7]
+    assert testdrp.SEEN == [7]
 
 
 def test_request_overrides_ob(basedir, capsys):
@@ -96,10 +96,10 @@ def test_request_overrides_ob(basedir, capsys):
     # the default request applies to the blocks without their own request
     req = write_requests(basedir / "req.yaml", {"requirements": {"value": 5}})
     numina(capsys, "db", "run", "--db", "numina-db.json", "--request", req, "30", "31")
-    assert trr.SEEN == [5, 5]
+    assert testdrp.SEEN == [5, 5]
     # without request, the value of the OB
     numina(capsys, "db", "run", "--db", "numina-db.json", "31")
-    assert trr.SEEN == [5, 5, 3]
+    assert testdrp.SEEN == [5, 5, 3]
 
 
 def test_db_run_without_ids(basedir, capsys):
@@ -114,7 +114,7 @@ def test_numina_run_request(basedir, capsys):
     req = write_requests(basedir / "req.yaml", {"id": 30, "requirements": {"value": 5}})
     (basedir / "param.yaml").write_text(yaml.safe_dump(PARAM))
     status, _ = numina(capsys, "run", "--request", req, "param.yaml")
-    assert trr.SEEN == [5]
+    assert testdrp.SEEN == [5]
 
 
 def test_session_request(basedir):
@@ -125,7 +125,7 @@ def test_session_request(basedir):
     session.run(31, request="req.yaml")
     # the keyword arguments override the request
     session.run(31, request="req.yaml", requirements={"value": 8})
-    assert trr.SEEN == [5, 6, 8]
+    assert testdrp.SEEN == [5, 6, 8]
 
 
 def test_session_invalid_request(basedir):

@@ -12,16 +12,16 @@ from numina.user.cli import base_config
 from numina.user.baserun import check_reference_tags
 from numina.user.session import Session
 
-from . import test_run_registry as trr
+from . import testdrp
 
-BIAS = trr.BIAS
+BIAS = testdrp.BIAS
 IMAGE = {"id": 10, "mode": "image", "instrument": "TEST1", "images": ["image2.fits"]}
 
 
 @pytest.fixture
 def session(drpmocker, tmp_path, monkeypatch):
     """A session with a registry and two master bias, of tasks 1 and 2"""
-    basedir = trr.create_basedir(drpmocker, tmp_path, monkeypatch)
+    basedir = testdrp.create_basedir(drpmocker, tmp_path, monkeypatch)
     (basedir / "obs.yaml").write_text(yaml.safe_dump_all([BIAS, IMAGE]))
     session = Session(basedir=basedir, config=base_config(), db="numina-db.json")
     session.add_observations("obs.yaml")
@@ -46,7 +46,7 @@ def test_automatic_selection(session):
     """Without reference, the most recent master bias"""
     first, second = session.products(type="MasterBias")
     session.run(10)
-    assert trr.SEEN[-1] == second["uuid"]
+    assert testdrp.SEEN[-1] == second["uuid"]
     assert last_inputs(session)["master_bias"]["product_id"] == second["id"]
 
 
@@ -55,7 +55,7 @@ def test_product_reference(session, by):
     first, _ = session.products(type="MasterBias")
     key = first["id"] if by == "id" else first["uuid"]
     session.run(10, requirements={"master_bias": {"product": key}})
-    assert trr.SEEN[-1] == first["uuid"]
+    assert testdrp.SEEN[-1] == first["uuid"]
     inputs = last_inputs(session)["master_bias"]
     assert inputs["source"] == "registry"
     assert inputs["product_id"] == first["id"]
@@ -66,16 +66,16 @@ def test_product_reference(session, by):
 def test_result_of_reference(session):
     _, second = session.products(type="MasterBias")
     session.run(10, requirements={"master_bias": {"result_of": 1}})
-    assert trr.SEEN[-1] == second["uuid"]
+    assert testdrp.SEEN[-1] == second["uuid"]
     # the id can be a string
     session.run(10, requirements={"master_bias": {"result_of": "1", "field": "master_bias"}})
-    assert trr.SEEN[-1] == second["uuid"]
+    assert testdrp.SEEN[-1] == second["uuid"]
 
 
 def test_task_reference(session):
     first, _ = session.products(type="MasterBias")
     session.run(10, requirements={"master_bias": {"task": first["task_id"]}})
-    assert trr.SEEN[-1] == first["uuid"]
+    assert testdrp.SEEN[-1] == first["uuid"]
     assert last_inputs(session)["master_bias"]["result_id"] == first["result_id"]
 
 
@@ -84,7 +84,7 @@ def test_reference_in_observing_block(session):
     image = dict(IMAGE, id=11, requirements={"master_bias": {"product": first["id"]}})
     session.add_observations(image)
     session.run(11)
-    assert trr.SEEN[-1] == first["uuid"]
+    assert testdrp.SEEN[-1] == first["uuid"]
     assert last_inputs(session)["master_bias"]["requested_in"] == "observation block"
 
 
@@ -114,7 +114,7 @@ def test_invalid_reference(session, reference, match):
 
 
 def test_reference_without_registry(drpmocker, tmp_path, monkeypatch):
-    basedir = trr.create_basedir(drpmocker, tmp_path, monkeypatch)
+    basedir = testdrp.create_basedir(drpmocker, tmp_path, monkeypatch)
     session = Session(basedir=basedir, config=base_config())
     session.add_observations(IMAGE)
     with pytest.raises(ValidationError, match="there is no registry of reductions"):
@@ -162,7 +162,7 @@ def test_reference_of_unknown_requirement(session):
 def test_abbreviated_uuid(session):
     first, _ = session.products(type="MasterBias")
     session.run(10, requirements={"master_bias": {"product": first["uuid"][:8]}})
-    assert trr.SEEN[-1] == first["uuid"]
+    assert testdrp.SEEN[-1] == first["uuid"]
     assert last_inputs(session)["master_bias"]["product_id"] == first["id"]
 
 
@@ -212,7 +212,7 @@ def test_result_reference(session, by):
     result = session.registry.store.get("results", first["result_id"])
     key = {"id": result["id"], "uuid": result["uuid"], "prefix": result["uuid"][:8]}[by]
     session.run(10, requirements={"master_bias": {"result": key}})
-    assert trr.SEEN[-1] == first["uuid"]
+    assert testdrp.SEEN[-1] == first["uuid"]
     assert last_inputs(session)["master_bias"]["result_id"] == result["id"]
 
 
@@ -233,7 +233,7 @@ def test_bad_result_warns(session, caplog):
         session.run(10, requirements={"master_bias": {"task": first["task_id"]}})
     assert f"the result {first['result_id']} has QC BAD" in caplog.text
     # an explicit reference is used
-    assert trr.SEEN[-1] == first["uuid"]
+    assert testdrp.SEEN[-1] == first["uuid"]
 
 
 class TaggedType:
