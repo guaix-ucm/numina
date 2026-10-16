@@ -126,6 +126,24 @@ It is called like this::
 
    Filename containing the description of the observation result.
 
+The products of the results are saved in the results directory, with
+the name of the field of the result and the extension of its type, such
+as ``master_bias.fits``. The template ``product_tmpl`` in ``[tool.run]``
+of the configuration changes the name, without the extension. Its fields
+are ``{name}`` (the name of the field), ``{uuid}`` (the uuid of the
+product, the keyword ``UUID`` of an image or the uuid of a structured
+calibration, or the uuid of the result if the product has none),
+``{obsid}`` and ``{taskid}``. With unique names, the products can be
+copied to the same directory::
+
+    [tool.run]
+    product_tmpl: {name}_{uuid}
+
+gives ``master_bias_c8e5a2d4-....fits``. The elements of a list of
+products have their index after the name (``{name}`` is ``image0``,
+``image1``...). The default, ``{name}``, keeps the names of previous
+versions.
+
 Options for show-instruments
 ============================
 The show-instruments subcommand outputs information about the instruments

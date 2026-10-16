@@ -164,12 +164,14 @@ def test_run_templates():
         "resultdir_tmpl": "obsid{obsid}_results",
         "resultfile_tmpl": "result.json",
         "taskfile_tmpl": "task.json",
+        "product_tmpl": "{name}",
     }
     assert run_templates(config["tool.run"], config["tool.db"]) == {
         "workdir_tmpl": "obsid{obsid}_{taskid}_work",
         "resultdir_tmpl": "obsid{obsid}_{taskid}_results",
         "resultfile_tmpl": "result.json",
         "taskfile_tmpl": "task.json",
+        "product_tmpl": "{name}",
     }
 
 

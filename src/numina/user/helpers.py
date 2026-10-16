@@ -22,7 +22,7 @@ import numina.drps
 from numina.dal.dictdal import HybridDAL
 from numina.dal.registry import Registry
 from numina.schemas import validate as validate_schema
-from numina.dal.utils import check_template, fill_template
+from numina.dal.utils import PRODUCT_TEMPLATE_FIELDS, check_template, fill_template
 from numina.util.jsonencoder import ExtEncoder
 from numina.types.frame import DataFrameType
 from numina.types.qc import QC
@@ -49,27 +49,32 @@ class DataManager:
         self.resultdir_tmpl = "obsid{obsid}_{taskid}_result"
         self.resultfile_tmpl = "result.json"
         self.taskfile_tmpl = "task.json"
+        # the base of the names of the files of the products
+        self.product_tmpl = "{name}"
 
-    def set_templates(self, workdir_tmpl, resultdir_tmpl, resultfile_tmpl, taskfile_tmpl):
+    def set_templates(self, workdir_tmpl, resultdir_tmpl, resultfile_tmpl, taskfile_tmpl, product_tmpl="{name}"):
         """Set the templates of the names of directories and files
 
         Raises
         ------
         ValueError
             If a template uses fields not in numina.dal.utils.TEMPLATE_FIELDS
+            (numina.dal.utils.PRODUCT_TEMPLATE_FIELDS for product_tmpl)
         """
         self.workdir_tmpl = check_template(workdir_tmpl)
         self.resultdir_tmpl = check_template(resultdir_tmpl)
         self.resultfile_tmpl = check_template(resultfile_tmpl)
         self.taskfile_tmpl = check_template(taskfile_tmpl)
+        self.product_tmpl = check_template(product_tmpl, PRODUCT_TEMPLATE_FIELDS)
 
     def serializer(self, data, fd):
         import json
 
         json.dump(data, fd, indent=2, cls=ExtEncoder)
 
-    def store_result_to(self, result):
-        saveres = result.store_to(None)
+    def store_result_to(self, result, obsid=None, taskid=None):
+        """Save the products of the result, with the names of product_tmpl"""
+        saveres = result.store_to(None, product_tmpl=self.product_tmpl, fields=dict(obsid=obsid, taskid=taskid))
         return saveres
 
     def restore_oblock(self, oblock_id):
@@ -137,7 +142,7 @@ class DataManager:
                                 val.quality_control,
                             )
 
-                result_repr = self.store_result_to(task.result)
+                result_repr = self.store_result_to(task.result, obsid=obsid, taskid=task.id)
                 # Change result structure by filename
                 task_repr["result"] = result_file
 
@@ -467,6 +472,8 @@ def run_templates(section, db_section=None):
         for name in names:
             if name in db_section:
                 templates[name] = db_section[name]
+    # the names of the products are the same with or without registry
+    templates["product_tmpl"] = section.get("product_tmpl", "{name}")
     return templates
 
 
@@ -553,6 +560,7 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
         templates["resultdir_tmpl"],
         templates["resultfile_tmpl"],
         templates["taskfile_tmpl"],
+        templates["product_tmpl"],
     )
 
     if use_registry:

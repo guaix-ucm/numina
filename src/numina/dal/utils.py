@@ -16,9 +16,14 @@ import string
 # of the work and results directories, and of the task and result files
 TEMPLATE_FIELDS = ("obsid", "taskid")
 
+# Fields that can be used in the template of the names of the
+# products of the results: the name of the field of the result
+# and the uuid of the product (or of the result)
+PRODUCT_TEMPLATE_FIELDS = ("name", "uuid", "obsid", "taskid")
 
-def check_template(template):
-    """Check that the template only uses fields in TEMPLATE_FIELDS
+
+def check_template(template, fields=TEMPLATE_FIELDS):
+    """Check that the template only uses fields in `fields`
 
     Raises
     ------
@@ -26,8 +31,8 @@ def check_template(template):
         If the template uses other fields
     """
     for _, field, _, _ in string.Formatter().parse(template):
-        if field is not None and field not in TEMPLATE_FIELDS:
-            msg = f"field '{{{field}}}' not allowed in template '{template}', valid fields are {TEMPLATE_FIELDS}"
+        if field is not None and field not in fields:
+            msg = f"field '{{{field}}}' not allowed in template '{template}', valid fields are {fields}"
             raise ValueError(msg)
     return template
 

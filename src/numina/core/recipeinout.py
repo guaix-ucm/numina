@@ -21,6 +21,7 @@ import numina.exceptions
 from .dataholders import Requirement, Result
 import numina.store.dump
 import numina.types.qc
+from numina.types.datatype import ListOfType
 
 _logger = logging.getLogger(__name__)
 
@@ -38,6 +39,29 @@ class _Alias:
 
     def __set__(self, instance, value):
         setattr(instance, self.dest, value)
+
+
+def product_uuid(ptype, value):
+    """The uuid of a product of a result, None if it has none
+
+    The uuid of an image is read with the data model of its type, as the
+    registry of reductions does; other values use their attribute uuid.
+    """
+    import numina.types.dataframe as dataframe
+
+    if value is None:
+        return None
+    if isinstance(value, dataframe.DataFrame):
+        if value.frame is None:
+            return None
+        datamodel = getattr(ptype, "datamodel", None)
+        if datamodel is None:
+            uuid_ = value.frame[0].header.get("UUID")
+        else:
+            uuid_ = datamodel.extractor_map["fits"].extract("uuid", value.frame)
+    else:
+        uuid_ = getattr(value, "uuid", None)
+    return None if uuid_ in (None, "") else str(uuid_)
 
 
 class RecipeInOut:
@@ -186,15 +210,50 @@ class RecipeResultBase(RecipeInOut):
 
     _numina_field_type = Result
 
-    def store_to(self, where):
+    def store_to(self, where, product_tmpl="{name}", fields=None):
+        """Save the values of the result, return their serialized form
 
+        Parameters
+        ----------
+        where
+            Not used.
+        product_tmpl : str
+            Template of the base of the names of the files of the
+            products, with the fields {name} (the name of the field
+            of the result), {uuid} (the uuid of the product, or of the
+            result if the product has none) and the values in `fields`.
+            The default, {name}, gives master_bias.fits for the field
+            master_bias.
+        fields : dict, optional
+            Other values of the template, such as obsid and taskid.
+        """
+        fields = fields or {}
         saveres = dict(values={})
         saveres_v = saveres["values"]
         for key, prod in self.stored().items():
             val = getattr(self, key)
-            saveres_v[key] = numina.store.dump(prod.type, val, prod.dest)
+            saveres_v[key] = self._store_value(prod, val, product_tmpl, fields)
 
         return saveres
+
+    def _store_value(self, prod, val, product_tmpl, fields):
+        """Save one value of the result, with a name from the template"""
+        if product_tmpl == "{name}":
+            return numina.store.dump(prod.type, val, prod.dest)
+
+        result_uuid = getattr(self, "uuid", None)
+        if isinstance(prod.type, ListOfType) and val is not None:
+            # each element has its own name, with its index after the name
+            dumped = []
+            for idx, item in enumerate(val, start=prod.type.index):
+                uuid_ = product_uuid(prod.type.node_type, item) or result_uuid
+                base = product_tmpl.format(name=f"{prod.dest}{idx}", uuid=uuid_, **fields)
+                dumped.append(numina.store.dump(prod.type.node_type, item, base))
+            return dumped
+
+        uuid_ = product_uuid(prod.type, val) or result_uuid
+        base = product_tmpl.format(name=prod.dest, uuid=uuid_, **fields)
+        return numina.store.dump(prod.type, val, base)
 
 
 class RecipeResult(RecipeResultBase):
@@ -212,8 +271,8 @@ class RecipeResult(RecipeResultBase):
 
         super().__init__(*args, **kwds)
 
-    def store_to(self, where):
-        saveres = super().store_to(where)
+    def store_to(self, where, product_tmpl="{name}", fields=None):
+        saveres = super().store_to(where, product_tmpl=product_tmpl, fields=fields)
 
         saveres["qc"] = self.qc.name
         saveres["uuid"] = str(self.uuid)
