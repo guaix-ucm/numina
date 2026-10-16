@@ -11,3 +11,9 @@
 
 .. automodule:: numina.processing.combine
    :members:
+
+:mod:`numina.processing.getters` --- Getters of correctors
+==========================================================
+
+.. automodule:: numina.processing.getters
+   :members:
