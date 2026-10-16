@@ -100,7 +100,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
 
         self.meta_info = self.create_meta_info()
         self.meta_info["instrument_name"] = self.instrument
-        self.meta_info["creation_date"] = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        self.meta_info["creation_date"] = datetime.datetime.now(datetime.UTC).isoformat()
         self._base_info = {}
         self.add_dialect_info("gtc", DF.TYPE_STRUCT)
 

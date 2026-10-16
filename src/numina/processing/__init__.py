@@ -102,7 +102,7 @@ class BadPixelCorrector(Corrector):
         hdr = img["primary"].header
         hdr["NUM-BPM"] = self.calibid
         hdr["history"] = f"BPM correction with {self.calibid}"
-        t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        t_str = datetime.datetime.now(datetime.UTC).isoformat()
         hdr["history"] = f"BPM correction time {t_str}"
         return img
 
@@ -141,7 +141,7 @@ class BiasCorrector(Corrector):
         hdr["NUM-BS"] = self.calibid
         hdr["history"] = f"Bias correction with {self.calibid}"
         hdr["history"] = f"Bias image mean is {self.bias_stats}"
-        t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        t_str = datetime.datetime.now(datetime.UTC).isoformat()
         hdr["history"] = f"Bias correction time {t_str}"
         return img
 
@@ -180,7 +180,7 @@ class DarkCorrector(Corrector):
         hdr = img["primary"].header
         hdr["NUM-DK"] = self.calibid
         hdr["history"] = f"Dark correction with {self.calibid}"
-        t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        t_str = datetime.datetime.now(datetime.UTC).isoformat()
         hdr["history"] = f"Dark correction time {t_str}"
         return img
 
@@ -207,7 +207,7 @@ class NonLinearityCorrector(Corrector):
         hdr = self.datamodel.get_header(img)
         hdr["NUM-LIN"] = self.calibid
         hdr["history"] = f"Non-linearity correction with {self.calibid}"
-        t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        t_str = datetime.datetime.now(datetime.UTC).isoformat()
         hdr["history"] = f"Non-linearity correction time {t_str}"
         return img
 
@@ -237,7 +237,7 @@ class FlatFieldCorrector(Corrector):
         hdr = img["primary"].header
         hdr["NUM-FF"] = self.calibid
         hdr["history"] = f"Flat-field correction with {self.calibid}"
-        t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+        t_str = datetime.datetime.now(datetime.UTC).isoformat()
         hdr["history"] = f"Flat-field correction time {t_str}"
         hdr["history"] = f"Flat-field correction mean {self.flat_stats}"
         return img
@@ -271,7 +271,7 @@ class SkyCorrector(Corrector):
             hdr = img["primary"].header
             hdr["NUM-SK"] = self.calibid
             hdr["history"] = f"Sky subtraction with {self.calibid}"
-            t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            t_str = datetime.datetime.now(datetime.UTC).isoformat()
             hdr["history"] = f"Sky subtraction time {t_str}"
             hdr["history"] = f"Sky subtraction mean {self.calib_stats}"
         else:
@@ -314,6 +314,6 @@ class DivideByExposure(Corrector):
 
             hdr["NUM-EXP"] = etime
             hdr["history"] = f"Divided by exposure {etime}"
-            t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+            t_str = datetime.datetime.now(datetime.UTC).isoformat()
             hdr["history"] = f"Divided by exposure {t_str}"
         return img

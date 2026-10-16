@@ -411,9 +411,9 @@ def timeit(method):
     @functools.wraps(method)
     def timed_method(self, rinput):
 
-        time_start = datetime.datetime.now(datetime.timezone.utc)
+        time_start = datetime.datetime.now(datetime.UTC)
         result = method(self, rinput)
-        time_end = datetime.datetime.now(datetime.timezone.utc)
+        time_end = datetime.datetime.now(datetime.UTC)
         result.time_it(time_start, time_end)
         self.logger.info("total time measured")
         return result

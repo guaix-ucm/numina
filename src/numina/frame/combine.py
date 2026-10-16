@@ -165,7 +165,7 @@ def combine(
     else:
         hdu1.header["history"] = f"Combined {nimages:d} images"
 
-    t_str = datetime.datetime.now(datetime.timezone.utc).isoformat()
+    t_str = datetime.datetime.now(datetime.UTC).isoformat()
     hdu1.header["history"] = f"Combination time {t_str}"
 
     if datamodel is None:

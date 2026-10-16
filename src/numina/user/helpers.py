@@ -175,7 +175,7 @@ class ProcessingTask:
         self.result = None
         self.id = 1
 
-        self.time_create = datetime.datetime.now(datetime.timezone.utc)
+        self.time_create = datetime.datetime.now(datetime.UTC)
         # None until the recipe runs
         self.time_start = None
         self.time_end = None
