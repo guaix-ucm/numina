@@ -38,7 +38,7 @@ def save_image2d_detector_method0(
     """
 
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
 
     if len(prefix_intermediate_fits) > 0:
         # --------------------------------------

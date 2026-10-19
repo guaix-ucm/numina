@@ -66,7 +66,7 @@ def generate_image3d_method0_ifu(
         Output directory to store results. Default is the current directory.
     """
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
 
     if simulated_x_ifu_all is None or simulated_y_ifu_all is None or simulated_wave_all is None:
         nphotons_all = 0

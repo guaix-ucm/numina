@@ -45,7 +45,7 @@ def save_image2d_rss(
         Output directory to store results. Default is the current directory.
     """
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
 
     if len(prefix_intermediate_fits) > 0:
         # ------------------------------------------------

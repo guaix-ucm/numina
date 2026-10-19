@@ -104,3 +104,14 @@ def test_rich_handler_not_propagated(loggers):
     parent.addHandler(RichHandler())
     child.propagate = False
     assert not has_rich_handler(child)
+
+
+def test_logconf_keeps_existing_loggers():
+    """The configuration of the CLI does not disable the loggers of the modules imported before"""
+    import logging.config
+
+    from numina.user.logconf import LOGCONF
+
+    existing = logging.getLogger("test_logconf_pipeline.recipes.bias")
+    logging.config.dictConfig(LOGCONF)
+    assert not existing.disabled

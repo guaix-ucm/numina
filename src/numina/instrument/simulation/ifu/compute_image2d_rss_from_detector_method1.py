@@ -114,7 +114,7 @@ def compute_image2d_rss_from_detector_method1(
     """
 
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
     logger_level_in_use = logger.getEffectiveLevel()
 
     logger.debug("[green]* Computing image2d RSS (method 1)[/green]")

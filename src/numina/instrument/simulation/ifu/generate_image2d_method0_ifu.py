@@ -72,7 +72,7 @@ def generate_image2d_method0_ifu(
         Output directory for intermediate FITS files.
     """
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
 
     # select the 2D spatial info of the 3D WCS
     wcs2d = wcs3d.sub(axes=[1, 2])

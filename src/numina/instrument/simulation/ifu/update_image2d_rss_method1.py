@@ -68,7 +68,7 @@ def update_image2d_rss_method1(
     """
 
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
 
     slice_id = islice + 1
 

@@ -49,7 +49,9 @@ class BaseRecipe:
     obresult : ObservationResult, requirement
 
     logger :
-         recipe logger
+         recipe logger. A recipe that does not define it has the logger
+         of the module of its class; a logger defined in a recipe is
+         used by its subclasses
 
     """
 
@@ -61,6 +63,8 @@ class BaseRecipe:
     datamodel = DataModel()
     # Recipe own logger
     logger = logging.getLogger("numina.recipes.numina")
+    # The subclasses that do not define a logger have the logger of their module
+    _numina_module_logger = True
 
     def __init_subclass__(cls, **kwargs):
         """Move the requirements and the results to the input and result classes.
@@ -73,6 +77,13 @@ class BaseRecipe:
         as the base class.
         """
         super().__init_subclass__(**kwargs)
+
+        # The logger defined in the class is used by its subclasses,
+        # without it, the logger of the module of the class
+        if "logger" in vars(cls):
+            cls._numina_module_logger = False
+        elif cls._numina_module_logger:
+            cls.logger = logging.getLogger(cls.__module__)
 
         requirements = {}
         results = {}

@@ -12,6 +12,9 @@
 
 LOGCONF = {
     "version": 1,
+    # The loggers created before the configuration, as those of the
+    # modules of the pipelines imported before, keep working
+    "disable_existing_loggers": False,
     "formatters": {
         "simple": {"format": "%(levelname)s: %(message)s"},
         "state": {"format": "%(asctime)s - %(message)s"},

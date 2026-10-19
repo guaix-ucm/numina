@@ -47,7 +47,7 @@ def compute_image3d_ifu_from_rss_method1(
         The output IFU image.
     """
     if logger is None:
-        logger = logging.getLogger()
+        logger = logging.getLogger(__name__)
 
     logger.debug("[green]* Computing image3d IFU from image2d RSS method 1[/green]")
 
