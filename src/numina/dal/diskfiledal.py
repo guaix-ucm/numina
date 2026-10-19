@@ -120,7 +120,6 @@ class DiskFileDAL:
 
     def search_product(self, name, tipo, ob):
         klass = tipo.__class__
-        print("Init search ", name, tipo, tipo.__class__)
 
         try:
             res = self.drp.query_provides(tipo.__class__)
@@ -132,15 +131,11 @@ class DiskFileDAL:
         # build path based in combinations of tags
         for com in _combinations(ob.tags.values()):
             directory = os.path.join(self.rootdir, ob.instrument, self.conf, label, *com)
-            print("search in", directory)
             try:
                 files_s = [filename for filename in sorted(os.listdir(directory))]
-                print("files_s", files_s)
                 for fname in files_s:
                     loadpath = os.path.join(directory, fname)
-                    print("check ", loadpath)
                     if os.path.isfile(loadpath):
-                        print("is regular file ", loadpath)
                         if DAL_USE_OFFLINE_CALIBS:
                             content = load(tipo, loadpath)
                             # else:
@@ -149,15 +144,11 @@ class DiskFileDAL:
                             # key = self._field_to_extract[klass]
                             # content = result[key]
                             return StoredProduct(id=files_s[-1], content=content, tags=ob.tags)
-                        else:
-                            print("not ready")
-                    else:
-                        print("is not regular file ", loadpath)
-            except OSError as msg:
-                print(msg)
+            except OSError:
+                # the directory does not exist, search in the next one
+                pass
                 # msg = 'type %s compatible with tags %r not found' % (klass, ob.tags)
                 # raise NoResultFound(msg)
         else:
             msg = f"type {klass} compatible with tags {ob.tags!r} not found"
-            print(msg)
             raise NoResultFound(msg)

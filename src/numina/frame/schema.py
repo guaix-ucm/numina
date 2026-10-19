@@ -161,8 +161,6 @@ class SchemaNode:
         self.children_obj = {}
 
     def validate_req(self, value, state):
-        if self.group is not None:
-            print("this node has group", self.group)
         # value must be hdulist
         pass
 
@@ -182,8 +180,6 @@ class SchemaExtension(SchemaNode):
         # super(SchemaExtension, self).validate_req(value, state)
 
         if self.group is not None:
-            print("this node has group", self.group)
-            print("matched", self.matched)
             if self.group in state["groups"]:
                 # both must match
                 if state["groups"][self.group] != self.matched:
@@ -192,7 +188,6 @@ class SchemaExtension(SchemaNode):
 
         for key, val in self.children_obj.items():
             val.validate_req(value, state)
-            print(state)
 
 
 class SchemaKeywordII(SchemaNode):
@@ -207,20 +202,14 @@ class SchemaKeywordII(SchemaNode):
         # matched must be a list of the same length
 
     def validate_req(self, value, state):
-        print("validate keyword", self.title)
-
         hvalue = value.get(self.title)
         matched_val = None
-        print("hvalue", hvalue)
         sname = "test"
         key = 0
         if self.required:
-            print("keyword required")
             # if not defined, fail
             if hvalue is None:
                 raise SchemaValidationError(sname, f"required keyword {key!r} missing from header")
-        else:
-            print("keyword not required")
         # check type
         if self.v_type:
             ptype = types_table[self.v_type]
@@ -251,16 +240,11 @@ class SchemaKeywordII(SchemaNode):
                 )
 
         if self.group is not None:
-            print("this node has group", self.group)
-            print("matched", self.matched)
             if self.group in state["groups"]:
                 # both must match
                 if state["groups"][self.group] != matched_val:
                     msg = "matched group {} differs from state group {}"
                     raise ValueError(msg.format(matched_val, state["groups"][self.group]))
-                else:
-                    msg = "matched group {} = value from state group {}"
-                    print(msg.format(matched_val, state["groups"][self.group]))
             else:
                 state["groups"][self.group] = matched_val
 
@@ -349,7 +333,6 @@ def validate(header, schema):
 
 
 def validate_image(image, schema):
-    print("validate image")
     state = {}
     state["groups"] = {}
 
@@ -358,8 +341,3 @@ def validate_image(image, schema):
         node = create_extension_node(extnode)
         if extname in image:
             node.validate_req(image[extname].header, state)
-        else:
-            if node.required:
-                print("required ext", extname, "not present")
-            else:
-                print("not required ext", extname, "not present")
