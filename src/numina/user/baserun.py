@@ -19,6 +19,7 @@ from numina.user.logconf import LOGCONF
 
 from numina.util.context import working_directory
 from numina.util.fqn import fully_qualified_name
+from numina.core.recipeinout import check_product_tags
 from numina.user.helpers import ProcessingTask, DataManager
 
 _logger = logging.getLogger(__name__)
@@ -150,29 +151,8 @@ def check_reference_tags(recipe, obsres, resolved):
                 by_name[name] = req
     for key, (what, tags) in resolved.items():
         req = by_name.get(key)
-        if req is None:
-            continue
-        node_types = getattr(req.type, "node_type", None) or [req.type]
-        exprs = [node.query_expr for node in node_types if node.isproduct() and hasattr(node, "query_expr")]
-        if not exprs:
-            continue
-        if any(expr.fill_placeholders(**obsres.tags).eval(**tags) is True for expr in exprs):
-            continue
-        names = sorted(set().union(*(expr.tags() for expr in exprs)))
-        different = [name for name in names if tags.get(name, _MISSING) != obsres.tags.get(name, _MISSING)]
-        if different:
-            product_tags = ", ".join(f"{name}={tags[name]}" if name in tags else f"no tag {name}" for name in different)
-            ob_tags = ", ".join(f"{name}={obsres.tags.get(name)}" for name in different)
-            msg = f"requirement {key}: {what} has {product_tags}, the observing block has {ob_tags}"
-        else:
-            msg = (
-                f"requirement {key}: the tags of {what}, {tags}, "
-                f"do not match those of the observing block, {obsres.tags}"
-            )
-        raise numina.exceptions.ValidationError(msg)
-
-
-_MISSING = object()
+        if req is not None:
+            check_product_tags(key, what, req.type, tags, obsres.tags)
 
 
 def run_reduce(

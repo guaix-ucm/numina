@@ -201,7 +201,11 @@ class BaseRecipe:
         return result
 
     def validate_input(self, recipe_input):
-        """ "Validate the input of the recipe"""
+        """Validate the input of the recipe
+
+        The values are validated by their types and by the checks of the
+        input, see :meth:`numina.core.recipeinout.RecipeInOut.validate`.
+        """
         self.logger.debug("start validating input")
         recipe_input.validate()
 

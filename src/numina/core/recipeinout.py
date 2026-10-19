@@ -417,3 +417,81 @@ def _error_message(error):
     if isinstance(error, numina.exceptions.ValidationError):
         return msg
     return f"{type(error).__name__}: {msg}"
+
+
+class TagsChecker:
+    """Check that the tags of the products of a recipe input match those of its observation result
+
+    A check for the class attribute ``__checkers__`` of a RecipeInput,
+    run by its method ``validate``. The tags of each product are checked
+    with the query expression of the type of its requirement, as in the
+    automatic selection of products. Without observation result there is
+    nothing to check.
+
+    Examples
+    --------
+    The input of the recipes of a pipeline, with the check::
+
+        class InstrumentRecipeInput(RecipeInput):
+            __checkers__ = [TagsChecker()]
+
+        class InstrumentBaseRecipe(BaseRecipe):
+            RecipeInput = InstrumentRecipeInput
+    """
+
+    def check(self, recipe_input):
+        """Raise numina.exceptions.ValidationError if the tags of a product do not match"""
+        obresult = getattr(recipe_input, "obresult", None)
+        if obresult is None:
+            return
+        stored = recipe_input.stored()
+        for key, value in recipe_input.attrs().items():
+            if key == "obresult" or value is None:
+                continue
+            rtype = stored[key].type
+            check_product_tags(key, f"the value of {key}", rtype, rtype.extract_tags(value), obresult.tags)
+
+
+_MISSING = object()
+
+
+def check_product_tags(key, what, rtype, tags, ob_tags):
+    """Check that the tags of a product match those of an observation result
+
+    The tags are checked with the query expression of `rtype`, the type of
+    the requirement `key`, with the tags of the observation result in its
+    placeholders. With a type of several types (MultiType), the tags must
+    match one of them. Types that are not products are not checked.
+
+    Parameters
+    ----------
+    key : str
+        Name of the requirement.
+    what : str
+        Description of the product, for the error message.
+    rtype : DataType
+    tags : dict
+        Tags of the product.
+    ob_tags : dict
+        Tags of the observation result.
+
+    Raises
+    ------
+    numina.exceptions.ValidationError
+        If the tags do not match.
+    """
+    node_types = getattr(rtype, "node_type", None) or [rtype]
+    exprs = [node.query_expr for node in node_types if node.isproduct() and hasattr(node, "query_expr")]
+    if not exprs:
+        return
+    if any(expr.fill_placeholders(**ob_tags).eval(**tags) is True for expr in exprs):
+        return
+    names = sorted(set().union(*(expr.tags() for expr in exprs)))
+    different = [name for name in names if tags.get(name, _MISSING) != ob_tags.get(name, _MISSING)]
+    if different:
+        product_tags = ", ".join(f"{name}={tags[name]}" if name in tags else f"no tag {name}" for name in different)
+        values = ", ".join(f"{name}={ob_tags.get(name)}" for name in different)
+        msg = f"requirement {key}: {what} has {product_tags}, the observing block has {values}"
+    else:
+        msg = f"requirement {key}: the tags of {what}, {tags}, do not match those of the observing block, {ob_tags}"
+    raise numina.exceptions.ValidationError(msg)
