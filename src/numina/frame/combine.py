@@ -66,8 +66,7 @@ def _inspect_method(value):
         try:
             return _method_map[value], True
         except KeyError:
-            print(f"invalid method {value}")
-            raise
+            raise KeyError(f"invalid method {value}, valid methods are {sorted(_method_map)}") from None
     elif isinstance(value, collections.abc.Sequence):
         return value, False
     elif isinstance(value, Keyword):

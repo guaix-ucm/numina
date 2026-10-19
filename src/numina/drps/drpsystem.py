@@ -10,10 +10,12 @@
 """DRP system-wide loader"""
 
 from importlib.metadata import entry_points
-import sys
+import logging
 
 
 from .drpbase import DrpGeneric
+
+_logger = logging.getLogger(__name__)
 
 
 class DrpSystem(DrpGeneric):
@@ -51,5 +53,4 @@ class DrpSystem(DrpGeneric):
                 if cls.instrumentdrp_check(drpins, entry.name):
                     yield drpins
             except Exception as error:
-                print("Problem loading", entry, file=sys.stderr)
-                print("Error is: ", error, file=sys.stderr)
+                _logger.warning("problem loading the DRP of %s: %s", entry, error)

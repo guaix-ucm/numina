@@ -10,10 +10,13 @@
 """Numerical spline fit using different strategies."""
 
 from lmfit import Minimizer, Parameters
+import logging
 import numpy as np
 from scipy.interpolate import BSpline
 from scipy.interpolate import LSQUnivariateSpline
 from scipy.optimize import minimize
+
+_logger = logging.getLogger(__name__)
 
 
 def fun_residuals(params, xnor, ynor, w, bbox, k, ext):
@@ -182,8 +185,8 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
                 self._result = fitter.scalar_minimize(method="Nelder-Mead", tol=tolerance)
                 xknot = [item.value for item in self._result.params.values()]
                 xknot = (np.asarray(xknot) + cx) / bx
-            except ValueError:
-                print("Error when fitting adaptive splines. " "Reverting to initial knot location.")
+            except ValueError as error:
+                _logger.warning("error when fitting adaptive splines, reverting to the initial knots: %s", error)
                 xknot = xknot_backup.copy()
                 self._result = None
         else:

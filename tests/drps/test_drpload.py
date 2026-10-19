@@ -119,22 +119,19 @@ def test_drpsys_no_instrument():
     assert len(alldrps) == 0
 
 
-def test_drpsys_bad_file(capsys, drpmocker):
-    """Test that a bad file doesn't break the load"""
+def test_drpsys_bad_file(caplog, drpmocker):
+    """Test that a bad file doesn't break the load, and is logged"""
 
     drpdata3 = pkgutil.get_data("tests.support.drps", "drptest3.yaml")
 
     drpmocker.add_drp("TEST3", drpdata3)
     drpsys = DrpSystem()
     drpsys.load()
-    expected_msg = [
-        "",
-        "Error is:  DRP of numina: invalid drp file, at top level: 'modes' is a required property",
-        "Problem loading EntryPoint(name='TEST3', value='TEST3.loader', group='numina.pipeline.1')",
-    ]
 
-    out, err = capsys.readouterr()
-    err = err.split("\n")
-    err.sort()
-
-    assert err == expected_msg
+    (record,) = [r for r in caplog.records if r.name == "numina.drps.drpsystem"]
+    assert record.levelname == "WARNING"
+    assert record.getMessage() == (
+        "problem loading the DRP of "
+        "EntryPoint(name='TEST3', value='TEST3.loader', group='numina.pipeline.1'): "
+        "DRP of numina: invalid drp file, at top level: 'modes' is a required property"
+    )

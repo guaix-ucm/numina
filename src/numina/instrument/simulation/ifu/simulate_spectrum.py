@@ -116,11 +116,11 @@ def simulate_spectrum(
         upper_index = len(wave)
 
     if lower_index == upper_index:
-        if plot_title is not None:
-            print(f"Working with data from: {plot_title}")
-        print(f"Tabulated wavelength range: {wave[0]} - {wave[-1]}")
-        print(f"Requested wavelength range: {wmin} - {wmax}")
-        raise_ValueError("Wavelength ranges without intersection")
+        origin = "" if plot_title is None else f" of {plot_title}"
+        raise_ValueError(
+            f"Wavelength ranges without intersection, tabulated{origin}: {wave[0]} - {wave[-1]}, "
+            f"requested: {wmin} - {wmax}"
+        )
 
     if not isinstance(convolve_sigma_km_s, u.Quantity):
         raise_ValueError(f"Object {convolve_sigma_km_s=} is not a Quantity instance")

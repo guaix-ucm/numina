@@ -9,6 +9,7 @@
 
 """Supervised quality control of wavelength calibration"""
 
+import logging
 import argparse
 import astropy.io.fits as fits
 import decimal
@@ -27,6 +28,8 @@ from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
+
+_logger = logging.getLogger(__name__)
 
 
 def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
@@ -576,7 +579,7 @@ def check_wlcalib_sp(
         if abs(debugplot) >= 10:
             print(">>> Npoints (total / used / removed)..:", npoints_total, npoints_used, npoints_removed)
         if npoints_used < min_nlines_to_refine:
-            print("Warning: number of lines insuficient to refine " "wavelength calibration!")
+            _logger.warning("number of lines insufficient to refine the wavelength calibration")
             copc = "n"
         else:
             if interactive:

@@ -457,8 +457,7 @@ def order_fmap(ncoef):
         if loop:
             order += 1
             if order > NMAX_ORDER:
-                print("No. of coefficients: ", ncoef)
-                raise ValueError("order > " + str(NMAX_ORDER) + " not implemented")
+                raise ValueError(f"order > {NMAX_ORDER} not implemented, with {ncoef} coefficients")
     return order
 
 

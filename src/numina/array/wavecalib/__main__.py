@@ -9,6 +9,7 @@
 
 """Compute the wavelength calibration of a particular spectrum."""
 
+import logging
 import argparse
 from astropy.io import fits
 import numpy as np
@@ -27,6 +28,8 @@ from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
 from ..display.pause_debugplot import DEBUGPLOT_CODES
+
+_logger = logging.getLogger(__name__)
 
 
 def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None, debugplot=0):
@@ -411,7 +414,11 @@ def wvcal_spectrum(
 
     # check there are enough lines for fit
     if len(fxpeaks) <= poly_degree_wfit:
-        print(">>> Warning: not enough lines to fit spectrum")
+        _logger.warning(
+            "not enough lines to fit the spectrum, %d lines for a polynomial of degree %d",
+            len(fxpeaks),
+            poly_degree_wfit,
+        )
         return None
 
     # spectrum dimension

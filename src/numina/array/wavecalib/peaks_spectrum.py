@@ -278,9 +278,7 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     xpeaks = []  # list to store the peaks
 
     if sx_shape[0] < nwinwidth:
-        print("find_peaks_spectrum> sx shape......:", sx_shape)
-        print("find_peaks_spectrum> nwinwidth.....:", nwinwidth)
-        raise ValueError(f"sx.shape[0]={sx_shape[0]} < nwinwidth={nwinwidth}")
+        raise ValueError(f"sx.shape[0]={sx_shape[0]} < nwinwidth={nwinwidth}, sx.shape={sx_shape}")
 
     i = nmed
     while i < sx_shape[0] - nmed:

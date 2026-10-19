@@ -124,8 +124,7 @@ def shiftx_image2d_flux(image2d_orig, xoffset):
     elif image2d_orig.ndim == 2:
         naxis2, naxis1 = image2d_orig.shape
     else:
-        print(">>> image2d_orig.shape:", image2d_orig.shape)
-        raise ValueError("Unexpected number of dimensions")
+        raise ValueError(f"Unexpected number of dimensions, image2d_orig.shape={image2d_orig.shape}")
 
     return resample_image2d_flux(image2d_orig, naxis1=naxis1, cdelt1=1, crval1=1, crpix1=1, coeff=[xoffset, 1])
 
@@ -174,8 +173,7 @@ def resample_image2d_flux(image2d_orig, naxis1, cdelt1, crval1, crpix1, coeff):
         nscan, nchan = image2d_orig.shape
         image2d = np.copy(image2d_orig)
     else:
-        print(">>> image2d_orig.shape:", image2d_orig.shape)
-        raise ValueError("Unexpected number of dimensions")
+        raise ValueError(f"Unexpected number of dimensions, image2d_orig.shape={image2d_orig.shape}")
 
     new_x = np.arange(naxis1)
     new_wl = crval1 + cdelt1 * new_x

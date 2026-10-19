@@ -13,8 +13,6 @@ import pprint
 
 from .raise_valueerror import raise_ValueError
 
-pp = pprint.PrettyPrinter(indent=1, sort_dicts=False)
-
 
 def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, logger=None):
     """Set the wavelength unit and range for a scene block.
@@ -50,17 +48,12 @@ def set_wavelength_unit_and_range(scene_fname, scene_block, wmin, wmax, logger=N
 
     spectrum_keys = set(scene_block["spectrum"].keys())
     if not expected_keys_in_spectrum.issubset(spectrum_keys):
-        print(f"[red]ERROR while processing: {scene_fname}[/red]")
-        print(f"[blue]expected keys..: {expected_keys_in_spectrum}[/blue]")
-        print(f"[blue]keys found.....: {spectrum_keys}[/blue]")
-        list_unexpected_keys = list(spectrum_keys.difference(expected_keys_in_spectrum))
-        if len(list_unexpected_keys) > 0:
-            print(f"[red]unexpected keys: {list_unexpected_keys}[/red]")
-        list_missing_keys = list(expected_keys_in_spectrum.difference(spectrum_keys))
-        if len(list_missing_keys) > 0:
-            print(f"[red]missing keys: {list_missing_keys}[/red]")
-        pp.pprint(scene_block)
-        raise_ValueError(f"Invalid format in file: {scene_fname}")
+        list_missing_keys = sorted(expected_keys_in_spectrum.difference(spectrum_keys))
+        logger.debug("invalid scene block:\n%s", pprint.pformat(scene_block, indent=1, sort_dicts=False))
+        raise_ValueError(
+            f"Invalid format in file: {scene_fname}, the spectrum has the keys {sorted(spectrum_keys)}, "
+            f"missing keys: {list_missing_keys}"
+        )
     if "wave_unit" in scene_block["spectrum"]:
         wave_unit = scene_block["spectrum"]["wave_unit"]
     else:

@@ -35,6 +35,5 @@ def all_valid_numbers(seq, fixed_length=None):
     if not isinstance(seq, (list, tuple)):
         raise TypeError("Input must be a list or tuple.")
     if fixed_length is not None and len(seq) != fixed_length:
-        print(f"Sequence {seq} has length {len(seq)}, expected {fixed_length}.")
-        raise ValueError(f"Input sequence must have length {fixed_length}.")
+        raise ValueError(f"Input sequence must have length {fixed_length}, {seq} has length {len(seq)}.")
     return all(is_valid_number(x) for x in seq)
