@@ -27,7 +27,28 @@ class WarningRecipe(BaseRecipe):
         return self.create_result()
 
 
-DRP_LOG = make_drp({"fail": "numina.core.utils.AlwaysFailRecipe", "warn": WarningRecipe})
+def work_in_pool(value):
+    logging.getLogger("numina.test_pool_recipe").info("message of the process for %d", value)
+    return value
+
+
+class PoolRecipe(BaseRecipe):
+    """Logs from the processes of a pool"""
+
+    obresult = ObservationResultRequirement()
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(version=1)
+
+    def run(self, recipe_input):
+        from numina.util.parallel import logging_pool
+
+        with logging_pool(2) as pool:
+            pool.map(work_in_pool, [1, 2])
+        return self.create_result()
+
+
+DRP_LOG = make_drp({"fail": "numina.core.utils.AlwaysFailRecipe", "pool": PoolRecipe, "warn": WarningRecipe})
 
 
 @pytest.fixture
@@ -64,3 +85,11 @@ def test_logging_state_is_restored(basedir):
     assert logging.getLogger("numina").level == numina_level
     assert getattr(logging, "_warnings_showwarning", None) is None
     assert not logging.getLogger("py.warnings").handlers
+
+
+def test_messages_of_a_pool_of_processes(basedir):
+    """The messages of the processes of logging_pool are in the log"""
+    run_obs(make_config(basedir), {"id": 4, "mode": "pool", "instrument": "TEST1", "images": ["image1.fits"]})
+    log = processing_log(basedir, 4)
+    assert "message of the process for 1" in log
+    assert "message of the process for 2" in log
