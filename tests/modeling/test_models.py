@@ -103,3 +103,15 @@ def test_sum_of_gaussians():
     yp = model_gs(xl)
 
     assert_allclose(yl, yp, rtol=0, atol=1e-6)
+
+
+def test_gauss_box_model_values():
+    """The same values as the integral of the normal distribution of scipy.stats"""
+    from scipy.stats import norm
+
+    from numina.modeling.gaussbox import gauss_box_model
+
+    x = np.linspace(-20, 20, 4001)
+    z = (x - 1.3) / 1.53
+    expected = 2.0 * (norm.cdf(z + 0.5 / 1.53) - norm.cdf(z - 0.5 / 1.53))
+    assert np.array_equal(gauss_box_model(x, amplitude=2.0, mean=1.3, stddev=1.53), expected)

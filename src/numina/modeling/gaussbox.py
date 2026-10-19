@@ -7,7 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
-from scipy.stats import norm
+from scipy.special import ndtr
 import numpy as np
 from astropy.modeling import Fittable1DModel, Parameter
 import math
@@ -26,7 +26,7 @@ def gauss_box_model(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
         z = (x - mean) / stddev
         z2 = z + hpix / stddev
         z1 = z - hpix / stddev
-    result = amplitude * (norm.cdf(z2) - norm.cdf(z1))
+    result = amplitude * (ndtr(z2) - ndtr(z1))
     # Replace NaN and inf values with 0.0
     result = np.nan_to_num(result, nan=0.0, posinf=0.0, neginf=0.0)
     return result
@@ -38,7 +38,7 @@ def gauss_box_model_deriv(x, amplitude=1.0, mean=0.0, stddev=1.0, hpix=0.5):
     z2 = z + hpix / stddev
     z1 = z - hpix / stddev
 
-    da = norm.cdf(z2) - norm.cdf(z1)
+    da = ndtr(z2) - ndtr(z1)
 
     fp2 = norm_pdf_t(z2)
     fp1 = norm_pdf_t(z1)
