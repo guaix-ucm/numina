@@ -51,6 +51,30 @@ def test_warns_define_requirements():
     assert RecipeTest.RecipeInput is MyInput
 
 
+def test_warns_define_input_and_result():
+    from numina.core.recipeinout import RecipeInput, RecipeResult, define_input, define_result
+    from numina.core.recipes import BaseRecipe
+
+    class MyInput(RecipeInput):
+        pass
+
+    class MyResult(RecipeResult):
+        pass
+
+    with pytest.warns(DeprecationWarning, match="define_input is deprecated"):
+        decorate_input = define_input(MyInput)
+    with pytest.warns(DeprecationWarning, match="define_result is deprecated"):
+        decorate_result = define_result(MyResult)
+
+    @decorate_input
+    @decorate_result
+    class RecipeTest(BaseRecipe):
+        pass
+
+    assert RecipeTest.RecipeInput is MyInput
+    assert RecipeTest.RecipeResult is MyResult
+
+
 def test_warns_numina_tests(monkeypatch):
     import importlib
     import sys

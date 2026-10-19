@@ -296,9 +296,21 @@ class RecipeResult(RecipeResultBase):
 
 
 class define_result:
-    """Recipe decorator."""
+    """Recipe decorator, that sets the result class of the recipe
+
+    .. deprecated:: 0.41
+            Declare the results in the recipe, that creates its result
+            class. The decorator replaces the result class, and the results
+            declared in the recipe and in its base recipes are lost. It
+            will be removed in 0.42.
+    """
 
     def __init__(self, resultClass):
+        warnings.warn(
+            "define_result is deprecated, declare the results in the recipe",
+            DeprecationWarning,
+            stacklevel=2,
+        )
         if not issubclass(resultClass, RecipeResult):
             msg = f"{resultClass!r} does not derive from RecipeResult"
             raise TypeError(msg)
@@ -310,9 +322,25 @@ class define_result:
 
 
 class define_input:
-    """Recipe decorator."""
+    """Recipe decorator, that sets the input class of the recipe
+
+    .. deprecated:: 0.41
+            Declare the requirements in the recipe, that creates its input
+            class. The decorator replaces the input class, and the
+            requirements declared in the recipe and in its base recipes,
+            and the checks of the input class of the base recipe, are lost.
+            It will be removed in 0.42.
+    """
 
     def __init__(self, input_class):
+        warnings.warn(
+            "define_input is deprecated, declare the requirements in the recipe",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        self._set_class(input_class)
+
+    def _set_class(self, input_class):
         if not issubclass(input_class, RecipeInput):
             msg = f"{input_class!r} does not derive from RecipeInput"
             raise TypeError(msg)
@@ -328,11 +356,11 @@ class define_requirements(define_input):
 
     def __init__(self, input_class):
         warnings.warn(
-            "define_requirements is deprecated, use define_input",
+            "define_requirements is deprecated, declare the requirements in the recipe",
             DeprecationWarning,
             stacklevel=2,
         )
-        super().__init__(input_class)
+        self._set_class(input_class)
 
 
 def generate_docs(klass):
