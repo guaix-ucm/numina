@@ -53,3 +53,21 @@ def log_to_history(logger, name):
         return l2h_method
 
     return log_to_history_decorator
+
+
+def has_rich_handler(logger):
+    """True if logger, or the loggers its messages propagate to, have a RichHandler
+
+    The handlers that show the messages of a logger are usually those of
+    its parents, the root logger for a script, or 'numina' with numina run.
+    """
+    from rich.logging import RichHandler
+
+    current = logger
+    while current is not None:
+        if any(isinstance(handler, RichHandler) for handler in current.handlers):
+            return True
+        if not current.propagate:
+            break
+        current = current.parent
+    return False

@@ -20,7 +20,7 @@ from datetime import datetime
 import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
-from rich.logging import RichHandler
+from numina.logger import has_rich_handler
 from scipy import ndimage
 from skimage.registration import phase_cross_correlation
 
@@ -522,12 +522,8 @@ def compute_crmasks(
 
     if _logger is None:
         _logger = logging.getLogger(__name__)
-        rich_configured = False
-    else:
-        # use the provided logger
-        root_logger = logging.getLogger()
-        # check if RichHandler is configured in the parent logger's handler
-        rich_configured = any(isinstance(handler, RichHandler) for handler in root_logger.handlers)
+    # use rich markup if the messages are shown by a RichHandler
+    rich_configured = has_rich_handler(_logger)
     # Set up rich labels for logging
     rlabel_crmethod_plain = f"{crmethod}"
     rlabel_lacosmic_plain = "lacosmic"
@@ -1100,8 +1096,8 @@ def compute_crmasks(
             else:
                 _logger.debug("la_psfbeta for lacosmic: %f", la_psfbeta)
         # Set la_verbose
-        current_logging_level = logging.getLogger().getEffectiveLevel()
-        if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
+        # the output of the method is logged with level INFO
+        if not _logger.isEnabledFor(logging.INFO):
             la_verbose = False
         _logger.debug("la_verbose for lacosmic: %s", str(la_verbose))
         # Check la_padwidth
@@ -1258,8 +1254,8 @@ def compute_crmasks(
         else:
             _logger.debug("pc_increase_radius for pycosmic: %d", pc_increase_radius)
         # Set pc_verbose
-        current_logging_level = logging.getLogger().getEffectiveLevel()
-        if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
+        # the output of the method is logged with level INFO
+        if not _logger.isEnabledFor(logging.INFO):
             pc_verbose = False
         _logger.debug("pc_verbose for pycosmic: %s", str(pc_verbose))
         # Define dictionary with the parameters for cosmicray_pycosmic() function
@@ -1315,8 +1311,8 @@ def compute_crmasks(
             if (dc_threshold <= 0.0) or (dc_threshold >= 1.0):
                 raise ValueError("dc_threshold must be a number between 0 and 1.")
         # Set dc_verbose
-        current_logging_level = logging.getLogger().getEffectiveLevel()
-        if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
+        # the output of the method is logged with level INFO
+        if not _logger.isEnabledFor(logging.INFO):
             dc_verbose = False
         _logger.debug("dc_verbose for deepcr: %s", str(dc_verbose))
         # Define dictionary with the parameters for deepCR
@@ -1345,8 +1341,8 @@ def compute_crmasks(
             if (nn_threshold <= 0.0) or (nn_threshold >= 1.0):
                 raise ValueError("nn_threshold must be a number between 0 and 1.")
         # Set nn_verbose
-        current_logging_level = logging.getLogger().getEffectiveLevel()
-        if current_logging_level in [logging.WARNING, logging.ERROR, logging.CRITICAL]:
+        # the output of the method is logged with level INFO
+        if not _logger.isEnabledFor(logging.INFO):
             nn_verbose = False
         _logger.debug("nn_verbose for Cosmic-CoNN: %s", str(nn_verbose))
         # Define dictionary with the parameters for Cosmic-CoNN

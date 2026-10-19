@@ -13,7 +13,7 @@ import logging
 from astropy.table import Table
 import numpy as np
 import numpy.ma as ma
-from rich.logging import RichHandler
+from numina.logger import has_rich_handler
 
 from .valid_parameters import VALID_COMBINATIONS
 
@@ -113,7 +113,7 @@ def apply_crmasks(
     """
 
     _logger = logging.getLogger(__name__)
-    rich_configured = any(isinstance(handler, RichHandler) for handler in _logger.handlers)
+    rich_configured = has_rich_handler(_logger)
 
     # Check that the input is a list
     if not isinstance(list_arrays, list):

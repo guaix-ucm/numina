@@ -353,8 +353,12 @@ def run_recipe_timed(task: ProcessingTask, recipe, rinput) -> ProcessingTask:
     try:
         task.result = recipe(rinput)
         task.state = 2
-    except Exception:
+    except Exception as error:
         task.state = 3
+        # In the log of the reduction, the traceback only with DEBUG,
+        # the console shows it when the error is raised
+        _logger.error("the recipe failed, %s: %s", type(error).__name__, error)
+        _logger.debug("traceback of the error of the recipe", exc_info=True)
         raise
     finally:
         task.time_end = datetime.datetime.now()
@@ -363,14 +367,18 @@ def run_recipe_timed(task: ProcessingTask, recipe, rinput) -> ProcessingTask:
 
 @contextlib.contextmanager
 def logger_manager(logger_control, result_dir):
-    """ "Add a FileHandler to existing loggers
+    """Add a FileHandler to existing loggers
 
     We add a FileHandler to the loggers named in
     logger_control['root_levels'] if
     logger_control['root_levels'] is True
     with level DEBUG
 
-    After exiting the context, the handlers are removed
+    The warnings issued in the context are captured, and logged
+    in the file by the logger 'py.warnings'.
+
+    After exiting the context, the handlers are removed and the
+    levels of the loggers restored
     """
     # Creating custom logger file
     if logger_control["root_levels"]:
@@ -385,16 +393,31 @@ def logger_manager(logger_control, result_dir):
 
     root_levels = logger_control["root_levels"]
     recipe_loggers = []
+    saved_levels = []
     for lname in root_levels:
         recipe_logger = logging.getLogger(lname)
+        saved_levels.append(recipe_logger.level)
         recipe_logger.setLevel(logging.DEBUG)
         recipe_logger.addHandler(fh)
         recipe_loggers.append(recipe_logger)
+    # The warnings, logged in py.warnings. The logger is enabled, a
+    # previous logging.config.dictConfig disables it if it existed
+    warnings_logger = logging.getLogger("py.warnings")
+    warnings_disabled = warnings_logger.disabled
+    warnings_logger.disabled = False
+    warnings_logger.addHandler(fh)
+    capturing = getattr(logging, "_warnings_showwarning", None) is not None
+    logging.captureWarnings(True)
     try:
         yield recipe_loggers
     finally:
-        for recipe_logger in recipe_loggers:
+        if not capturing:
+            logging.captureWarnings(False)
+        warnings_logger.removeHandler(fh)
+        warnings_logger.disabled = warnings_disabled
+        for recipe_logger, level in zip(recipe_loggers, saved_levels):
             recipe_logger.removeHandler(fh)
+            recipe_logger.setLevel(level)
         # Close the log file
         fh.close()
 

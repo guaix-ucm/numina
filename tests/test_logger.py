@@ -11,10 +11,11 @@
 
 import logging
 
-from numina.logger import FITSHistoryHandler, log_to_history
+from numina.logger import FITSHistoryHandler, has_rich_handler, log_to_history
 
 import pytest
 from astropy.io import fits
+from rich.logging import RichHandler
 
 from numina.types.dataframe import DataFrame
 
@@ -78,3 +79,28 @@ def test_logger_decorator():
     h = rr.some.open()[0].header
     assert h["history"][0] == "some"
     assert h["history"][1] == "other"
+
+
+@pytest.fixture
+def loggers():
+    """A logger and its parent, without handlers at the end"""
+    parent = logging.getLogger("test_rich_parent")
+    child = logging.getLogger("test_rich_parent.child")
+    yield parent, child
+    for logger in (parent, child):
+        logger.handlers.clear()
+        logger.propagate = True
+
+
+def test_rich_handler_of_parent(loggers):
+    parent, child = loggers
+    assert not has_rich_handler(child) or has_rich_handler(logging.getLogger())
+    parent.addHandler(RichHandler())
+    assert has_rich_handler(child)
+
+
+def test_rich_handler_not_propagated(loggers):
+    parent, child = loggers
+    parent.addHandler(RichHandler())
+    child.propagate = False
+    assert not has_rich_handler(child)
