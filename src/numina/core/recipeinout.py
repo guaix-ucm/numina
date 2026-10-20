@@ -282,7 +282,7 @@ class RecipeResult(RecipeResultBase):
 
         # Extract QC if available
         self.qc = numina.types.qc.QC.UNKNOWN
-        self.uuid = uuid.uuid1()
+        self.uuid = uuid.uuid4()
 
         # qc is not passed further
         if "qc" in kwds:

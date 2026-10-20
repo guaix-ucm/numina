@@ -104,7 +104,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
         super().__init__(datamodel=datamodel)
         self.instrument = instrument
         self.tags = {}
-        self.uuid = str(uuid.uuid1())
+        self.uuid = str(uuid.uuid4())
 
         self.meta_info = self.create_meta_info()
         self.meta_info["instrument_name"] = self.instrument

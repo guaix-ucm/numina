@@ -240,7 +240,7 @@ def combine(
     prevnum = base_header.get("NUM-NCOM", 1)
 
     hdu1.header["NUM-NCOM"] = prevnum * nimages
-    hdu1.header["UUID"] = str(uuid.uuid1())
+    hdu1.header["UUID"] = str(uuid.uuid4())
 
     # Headers of last image
     # hdu1.header['TSUTC2'] = headers[-1]['TSUTC2']

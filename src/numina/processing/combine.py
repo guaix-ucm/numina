@@ -221,7 +221,7 @@ def combine_imgs(
 
     prevnum = base_header.get("NUM-NCOM", 1)
     hdu.header["NUM-NCOM"] = prevnum * cnum
-    hdu.header["UUID"] = str(uuid.uuid1())
+    hdu.header["UUID"] = str(uuid.uuid4())
 
     # Headers of last image, this is an EMIRISM
     if "TSUTC2" in hdu.header:
