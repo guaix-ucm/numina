@@ -90,15 +90,21 @@ def logging_pool(processes=None, initializer=None, initargs=(), context=None):
     context = context or multiprocessing.get_context()
     queue = context.Queue()
     listener = logging.handlers.QueueListener(queue, _Dispatcher())
-    listener.start()
     try:
         with context.Pool(
             processes, initializer=_init_process, initargs=(queue, _logger_levels(), initializer, initargs)
         ) as pool:
-            yield pool
-            # the records sent by the processes before closing the pool
-            pool.close()
-            pool.join()
+            # the thread of the listener starts after creating the processes,
+            # forking a process with threads may lead to deadlocks in the child
+            # (a DeprecationWarning since Python 3.15); the records sent before
+            # wait in the queue
+            listener.start()
+            try:
+                yield pool
+                # the records sent by the processes before closing the pool
+                pool.close()
+                pool.join()
+            finally:
+                listener.stop()
     finally:
-        listener.stop()
         queue.close()
