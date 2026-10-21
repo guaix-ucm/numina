@@ -11,9 +11,11 @@
 from datetime import datetime
 from importlib import metadata
 import logging
+import re
 from rich.highlighter import ReprHighlighter
 from rich.logging import RichHandler
 from rich.markup import escape
+from rich.style import Style
 import sys
 from pathlib import Path
 
@@ -31,6 +33,17 @@ class SciNotationHighlighter(ReprHighlighter):
     highlights = ReprHighlighter.highlights + [
         r"(?P<number>(?<![\w.])[-+]?\d+\.?\d*[eE][-+]?\d+\b)",
     ]
+
+    def highlight(self, text):
+        """Highlight the text, leaving runs of three or more dots without color.
+
+        ReprHighlighter colors each group of three dots as an ellipsis, so
+        the dots used as leaders (e.g. "Number of lines........: 12") are
+        colored unevenly.
+        """
+        super().highlight(text)
+        for match in re.finditer(r"\.{3,}", text.plain):
+            text.stylize(Style(color="default", bold=False), match.start(), match.end())
 
 
 def _caller_package_version(caller_globals: dict) -> str | None:
