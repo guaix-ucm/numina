@@ -192,7 +192,7 @@ class NuminaScriptDefinition:
             format_log = "%(message)s"
             handler_kwargs.update(show_path=False, show_level=False)
         else:
-            format_log = "%(name)s %(levelname)s\n%(message)s"
+            format_log = "%(name)s.%(funcName)s() %(levelname)s\n%(message)s"
         logging.basicConfig(level=log_level, format=format_log, handlers=[RichHandler(**handler_kwargs)])
         logging.getLogger("matplotlib").setLevel(logging.ERROR)  # suppress matplotlib debug logs
 
