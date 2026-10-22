@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2023 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -157,6 +157,7 @@ def main(args=None):
         " 'label':'sample data',"
         " 'color':'magenta'}\"",
     )
+    parser.add_argument("--geometry", help="tuple x,y,dx,dy (default 0,0,640,480)", default="0,0,640,480")
     args = parser.parse_args(args)
 
     # ASCII file
@@ -166,15 +167,18 @@ def main(args=None):
     col1 = args.col1 - 1
     col2 = args.col2 - 1
 
+    # geometry
+    geometry = tuple(int(item) for item in args.geometry.split(","))
+
     # read ASCII file
     bigtable = np.genfromtxt(filename)
     x = bigtable[:, col1]
     y = bigtable[:, col2]
 
     if args.kwargs is None:
-        ximplotxy(x, y, debugplot=12, marker="o", linestyle="")
+        ximplotxy(x, y, geometry=geometry, debugplot=12, marker="o", linestyle="")
     else:
-        ximplotxy(x, y, debugplot=12, **eval(args.kwargs))
+        ximplotxy(x, y, geometry=geometry, debugplot=12, **eval(args.kwargs))
 
 
 if __name__ == "__main__":

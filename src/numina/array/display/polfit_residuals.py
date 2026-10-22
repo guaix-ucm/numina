@@ -1,5 +1,5 @@
 #
-# Copyright 2015-2024 Universidad Complutense de Madrid
+# Copyright 2015-2026 Universidad Complutense de Madrid
 #
 # This file is part of Numina
 #
@@ -8,6 +8,8 @@
 #
 
 import argparse
+from astropy.table import Table
+import logging
 import numbers
 
 import numpy as np
@@ -107,6 +109,7 @@ def polfit_residuals(
         dimensions of the input 'x' and 'y' arrays.
 
     """
+    logger = logging.getLogger(__name__)
 
     # protections
     if type(x) is not np.ndarray:
@@ -150,15 +153,15 @@ def polfit_residuals(
     if use_r:
         from ..rutilities import LinearModelYvsX
 
-        print("\n>>> Total number of points:", nfitted)
+        print("\nTotal number of points:", nfitted)
         # using orthogonal polynomials
         myfit = LinearModelYvsX(x=xfitted, y=yfitted, degree=deg, raw=False)
-        print(">>> Fit with R, using orthogonal polynomials:")
+        print("Fit with R, using orthogonal polynomials:")
         print(myfit.summary)
         pause_debugplot(debugplot)
         # fit using raw polynomials
         myfit = LinearModelYvsX(x=xfitted, y=yfitted, degree=deg, raw=True)
-        print(">>> Fit with R, using raw polynomials:")
+        print("Fit with R, using raw polynomials:")
         print(myfit.summary)
         pause_debugplot(debugplot)
 
@@ -176,8 +179,7 @@ def polfit_residuals(
     if nrejected > 0:
         yres_rejected = yrejected - poly(xrejected)  # points rejected
 
-    if abs(debugplot) >= 10:
-        print(">>> Polynomial fit:\n", poly)
+    logger.debug(f"Polynomial fit:\n{poly}")
 
     if abs(debugplot) % 10 != 0:
         # define colors, markers and sizes for symbols
@@ -477,7 +479,7 @@ def polfit_residuals_with_sigma_rejection(
         # polynomial degree
         npoints_effective = npoints - np.sum(reject)
         if deg < npoints_effective - 1:
-            # determine robuts standard deviation, excluding points
+            # determine robust standard deviation, excluding points
             # already rejected
             # --- method 1 ---
             # yres_fitted = yres[np.logical_not(reject)]
@@ -636,6 +638,7 @@ def polfit_residuals_with_cook_rejection(
         Boolean array indicating rejected points.
 
     """
+    logger = logging.getLogger(__name__)
 
     # protections
     if type(x) is not np.ndarray:
@@ -716,6 +719,8 @@ def polfit_residuals_with_cook_rejection(
         # current polynomial degree
         if deg <= npoints_effective - 2:
             cook_distance = np.zeros(npoints)
+            table_cook_distance = Table(names=["index", "cook_distance"], dtype=[int, float])
+            table_cook_distance["cook_distance"].info.format = ".3f"
             for i in range(npoints):
                 if not reject[i]:
                     reject_cook = np.copy(reject)
@@ -740,8 +745,9 @@ def polfit_residuals_with_cook_rejection(
                     cook_distance[i] = np.sum(yres_cook_fitted * yres_cook_fitted) / (2 * residual_variance)
                 else:
                     cook_distance[i] = np.inf
-                if abs(debugplot) >= 10:
-                    print("i, cook_distance[i]:", i, cook_distance[i])
+                table_cook_distance.add_row([i, cook_distance[i]])
+            if abs(debugplot) >= 10:
+                logger.info(table_cook_distance)
             # determine median absolute cook distance, excluding points
             # already rejected
             dist_cook_fitted = np.abs(cook_distance[np.logical_not(reject)])

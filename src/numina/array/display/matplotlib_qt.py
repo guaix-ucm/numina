@@ -1,5 +1,18 @@
-# import matplotlib
-# matplotlib.use('Qt5Agg')
+#
+# Copyright 2015-2024 Universidad Complutense de Madrid
+#
+# This file is part of Numina
+#
+# SPDX-License-Identifier: GPL-3.0-or-later
+# License-Filename: LICENSE.txt
+#
+
+import logging
+
+_logger = logging.getLogger(__name__)
+
+# the warning about the window position is only shown once
+_warned_position = False
 
 
 def _pyplot():
@@ -26,20 +39,41 @@ def __getattr__(name):
 def set_window_geometry(geometry):
     """Set window geometry.
 
+    With the Qt backends both the position and the size of the window
+    are set; with the Tk backend too. The macosx backend does not allow
+    to set the window position, so only the figure size is set.
+
     Parameters
     ==========
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the Qt backend geometry.
+        x, y, dx, dy values employed to set the window geometry.
 
     """
 
-    if geometry is not None:
-        x_geom, y_geom, dx_geom, dy_geom = geometry
-        mngr = _pyplot().get_current_fig_manager()
-        if "window" in dir(mngr):
-            try:
-                mngr.window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
-            except AttributeError:
-                pass
-            else:
-                pass
+    global _warned_position
+
+    if geometry is None:
+        return
+
+    x_geom, y_geom, dx_geom, dy_geom = geometry
+    plt = _pyplot()
+    mngr = plt.get_current_fig_manager()
+    if mngr is None:
+        return
+    window = getattr(mngr, "window", None)
+    if hasattr(window, "setGeometry"):
+        # Qt
+        window.setGeometry(x_geom, y_geom, dx_geom, dy_geom)
+    elif hasattr(window, "wm_geometry"):
+        # Tk
+        window.wm_geometry(f"{dx_geom}x{dy_geom}+{x_geom}+{y_geom}")
+    else:
+        fig = mngr.canvas.figure
+        fig.set_size_inches(dx_geom / 640 * 6.4, dy_geom / 480 * 4.8)
+        # show warning only once and only if log-level is WARNING or lower
+        if _logger.isEnabledFor(logging.WARNING):
+            _logger.warning(
+                "window position cannot be set with backend %s (only its size); try MPLBACKEND=QtAgg",
+                plt.get_backend(),
+            )
+            _warned_position = True

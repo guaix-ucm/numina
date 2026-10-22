@@ -7,15 +7,31 @@
 # License-Filename: LICENSE.txt
 #
 
-"""Compute the wavelength calibration of a particular spectrum."""
+"""Compute the wavelength calibration of a particular spectrum.
+
+This script computes the wavelength calibration of a particular spectrum
+from a 2D image containing several spectra. The wavelength calibration
+is performed using a list of known arc line wavelengths. The script
+performs the following steps:
+1. Read the 2D image from a FITS file.
+2. Collapse the 2D image along the scan direction to obtain a 1D spectrum.
+3. Locate the peaks in the 1D spectrum using a threshold based on the robust standard deviation
+   of the spectrum.
+4. Perform an initial wavelength calibration using the brightest lines from the provided list of known
+   arc line wavelengths.
+5. Optionally refine the wavelength calibration using fainter lines from the provided list of known
+   arc line wavelengths.
+"""
 
 import logging
 import argparse
 from astropy.io import fits
+from astropy.table import Table
+from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import os
+from rich_argparse import RichHelpFormatter
 from scipy import ndimage
-import sys
 
 from .arccalibration import arccalibration
 from .arccalibration import fit_list_of_wvfeatures
@@ -27,12 +43,12 @@ from ...tools.arg_file_is_new import arg_file_is_new
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
+from numina.tools.initialize_script_with_args import NuminaScriptDefinition
+
 from ..display.pause_debugplot import DEBUGPLOT_CODES
 
-_logger = logging.getLogger(__name__)
 
-
-def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None, debugplot=0):
+def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None):
     """Compute a collapsed spectrum from a 2D image using scans in [ns1,ns2].
 
     Parameters
@@ -56,10 +72,6 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
     out_sp : string or None
         File name to save the selected spectrum in FITS format before
         performing the wavelength calibration.
-    debugplot : int
-        Determines whether intermediate computations and/or plots
-        are displayed. The valid codes are defined in
-        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -67,18 +79,19 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
         Collapsed spectrum.
 
     """
+    logger = logging.getLogger(__name__)
 
     # read FITS file
     with fits.open(fitsfile) as hdulist:
         image2d = hdulist[0].data
     naxis2, naxis1 = image2d.shape
-    if abs(debugplot) >= 10:
-        print(">>> Reading file:", fitsfile)
-        print(">>> NAXIS1:", naxis1)
-        print(">>> NAXIS2:", naxis2)
+    logger.info(f"Reading file: '{fitsfile}'")
+    logger.info(f"NAXIS1: {naxis1}")
+    logger.info(f"NAXIS2: {naxis2}")
 
     if 1 <= ns1 <= ns2 <= naxis2:
-        # extract spectrum
+        # extract spectrum using the requested scans and collapsing along the scan direction
+        logger.info(f"Collapsing scans from {ns1} to {ns2} using method '{method}'")
         if method == "mean":
             sp = np.mean(image2d[(ns1 - 1) : ns2], axis=0)
         elif method == "median":
@@ -101,12 +114,13 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
             hdu = fits.PrimaryHDU(sp)
             hdu.writeto(out_sp, overwrite=True)
     else:
-        raise ValueError("Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) + " values")
+        logger.error("ERROR: Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) + " values")
+        raise SystemExit()
 
     return sp
 
 
-def read_wv_master_from_array(master_table, lines="brightest", debugplot=0):
+def read_wv_master_from_array(master_table, lines="brightest"):
     """read arc line wavelengths from numpy array
 
     Parameters
@@ -119,10 +133,6 @@ def read_wv_master_from_array(master_table, lines="brightest", debugplot=0):
         three columns, lines='brightest' indicates that only the
         brightest lines are read, whereas lines='all' means that all
         the lines are considered.
-    debugplot : int
-        Determines whether intermediate computations and/or plots
-        are displayed. The valid codes are defined in
-        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -130,7 +140,6 @@ def read_wv_master_from_array(master_table, lines="brightest", debugplot=0):
         Array with arc line wavelengths.
 
     """
-
     # protection
     if lines not in ["brightest", "all"]:
         raise ValueError("Unexpected lines=" + str(lines))
@@ -149,16 +158,12 @@ def read_wv_master_from_array(master_table, lines="brightest", debugplot=0):
             else:
                 wv_master = np.copy(wv_master_all)
         else:
-            raise ValueError("Lines_catalog file does not have the " "expected number of columns")
-
-    if abs(debugplot) >= 10:
-        print("Reading master table from numpy array")
-        print("wv_master:\n", wv_master)
+            raise ValueError("Lines_catalog file does not have the expected number of columns")
 
     return wv_master
 
 
-def read_wv_master_file(wv_master_file, lines="brightest", debugplot=0):
+def read_wv_master_file(wv_master_file, lines="brightest"):
     """read arc line wavelengths from external file.
 
     Parameters
@@ -171,10 +176,6 @@ def read_wv_master_file(wv_master_file, lines="brightest", debugplot=0):
         three columns, lines='brightest' indicates that only the
         brightest lines are read, whereas lines='all' means that all
         the lines are considered.
-    debugplot : int
-        Determines whether intermediate computations and/or plots
-        are displayed. The valid codes are defined in
-        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -182,6 +183,7 @@ def read_wv_master_file(wv_master_file, lines="brightest", debugplot=0):
         Array with arc line wavelengths.
 
     """
+    logger = logging.getLogger(__name__)
 
     # protection
     if lines not in ["brightest", "all"]:
@@ -192,9 +194,8 @@ def read_wv_master_file(wv_master_file, lines="brightest", debugplot=0):
 
     wv_master = read_wv_master_from_array(master_table, lines)
 
-    if abs(debugplot) >= 10:
-        print("Reading master table: " + wv_master_file)
-        print("wv_master:\n", wv_master)
+    logger.debug(f"Reading master table: {wv_master_file}")
+    logger.debug(f"wv_master:\n{wv_master}")
 
     return wv_master
 
@@ -211,7 +212,6 @@ def find_fxpeaks(
     minimum_gaussian_filtering,
     plottitle=None,
     geometry=None,
-    debugplot=0,
 ):
     """Locate line peaks in array coordinates (from 0 to naxis1-1).
 
@@ -248,10 +248,6 @@ def find_fxpeaks(
         Plot title.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
-    debugplot : int
-        Determines whether intermediate computations and/or plots
-        are displayed. The valid codes are defined in
-        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -259,9 +255,10 @@ def find_fxpeaks(
         Refined location of peaks in array index scale, i.e, from 0
         to naxis1 - 1.
     sxpeaks : 1d numpy array
-        Line peak widths.
+        Refined line peak widths.
 
     """
+    logger = logging.getLogger(__name__)
 
     # spectrum dimension
     naxis1 = sp.shape[0]
@@ -278,15 +275,13 @@ def find_fxpeaks(
     q50 = np.percentile(spf, q=50)
     sigma_g = robust_std(spf)
     threshold = q50 + times_sigma_threshold * sigma_g
-    if abs(debugplot) >= 10:
-        print("median....:", q50)
-        print("robuts std:", sigma_g)
-        print("threshold.:", threshold)
+    logger.debug(f"median....: {q50}")
+    logger.debug(f"robust std: {sigma_g}")
+    logger.debug(f"threshold.: {threshold}")
     if minimum_threshold > threshold:
         threshold = minimum_threshold
-    if abs(debugplot) >= 10:
-        print("minimum threshold:", minimum_threshold)
-        print("final threshold..:", threshold)
+    logger.debug(f"minimum threshold: {minimum_threshold}")
+    logger.debug(f"final threshold..: {threshold}")
 
     # initial location of the peaks (integer values)
     ixpeaks = find_peaks_spectrum(spf, nwinwidth=nwinwidth_initial, threshold=threshold)
@@ -295,9 +290,8 @@ def find_fxpeaks(
     if len(nbrightlines) == 1 and nbrightlines[0] == 0:
         pass
     else:
-        if abs(debugplot) >= 10:
-            print("nbrightlines =", nbrightlines)
-            print("ixpeaks in whole spectrum:\n", ixpeaks)
+        logger.debug(f"nbrightlines = {nbrightlines}")
+        logger.debug(f"ixpeaks in whole spectrum:\n{ixpeaks}")
         region_size = (naxis1 - 1) / len(nbrightlines)
         ixpeaks_filtered = np.array([], dtype=int)
         for iregion, nlines_in_region in enumerate(nbrightlines):
@@ -312,12 +306,10 @@ def find_fxpeaks(
                     spos = peak_fluxes.argsort()
                     ixpeaks_tmp = ixpeaks_region[spos[-nlines_in_region:]]
                     ixpeaks_tmp.sort()  # in-place sort
-                    if abs(debugplot) >= 10:
-                        print("ixpeaks in region........:\n", ixpeaks_tmp)
+                    logger.debug(f"ixpeaks in region........:\n{ixpeaks_tmp}")
                     ixpeaks_filtered = np.concatenate((ixpeaks_filtered, ixpeaks_tmp))
         ixpeaks = ixpeaks_filtered
-        if abs(debugplot) >= 10:
-            print("ixpeaks filtered.........:\n", ixpeaks)
+        logger.debug(f"ixpeaks filtered.........:\n{ixpeaks}")
 
     # remove peaks too close to any of the borders of the spectrum
     if npix_avoid_border > 0:
@@ -329,14 +321,16 @@ def find_fxpeaks(
     fxpeaks, sxpeaks = refine_peaks_spectrum(spf, ixpeaks, nwinwidth=nwinwidth_refined, method="gaussian")
 
     # print peak location and width of fitted lines
-    if abs(debugplot) >= 10:
-        print(">>> Number of lines found:", len(fxpeaks))
-        print("# line_number, channel, width")
-        for i, (fx, sx) in enumerate(zip(fxpeaks, sxpeaks)):
-            print(i, fx + 1, sx)
+    logger.info(f"Number of lines found: {len(fxpeaks)}")
+    lines_found_table = Table(names=["line_number", "channel", "width"], dtype=[int, float, float])
+    lines_found_table["channel"].info.format = ".3f"
+    lines_found_table["width"].info.format = ".3f"
+    for i, (fx, sx) in enumerate(zip(fxpeaks, sxpeaks)):
+        lines_found_table.add_row([i, fx + 1, sx])
+    logger.info(lines_found_table)
 
-    # display median spectrum and peaks
-    if abs(debugplot) % 10 != 0:
+    # display median spectrum and peaks if logger level is DEBUG
+    if logger.isEnabledFor(logging.DEBUG):
         xplot = np.arange(1, naxis1 + 1, dtype=float)
         ax = ximplotxy(xplot, sp, show=False, geometry=geometry, **{"label": "original spectrum"})
         ax.set_xlabel("pixel (from 1 to NAXIS1)")
@@ -357,9 +351,9 @@ def find_fxpeaks(
         ax.plot(ixpeaks + 1, spf[ixpeaks], "bo", label="initial location")
         ax.plot(fxpeaks + 1, spf[ixpeaks], "go", label="refined location")
         # legend
-        ax.legend(numpoints=1)
+        ax.legend(title=f"{len(fxpeaks)} lines found", numpoints=1)
         # show plot
-        pause_debugplot(debugplot, pltshow=True)
+        pause_debugplot(debugplot=2, pltshow=True)
 
     return fxpeaks, sxpeaks
 
@@ -411,10 +405,11 @@ def wvcal_spectrum(
         Wavelength calibration solution.
 
     """
+    logger = logging.getLogger(__name__)
 
     # check there are enough lines for fit
     if len(fxpeaks) <= poly_degree_wfit:
-        _logger.warning(
+        logger.warning(
             "not enough lines to fit the spectrum, %d lines for a polynomial of degree %d",
             len(fxpeaks),
             poly_degree_wfit,
@@ -492,7 +487,7 @@ def wvcal_spectrum(
             reference = feature.reference
             ax.text(xpos, sp[int(xpos + 0.5) - 1], str(reference), fontsize=8, horizontalalignment="center")
         # show plot
-        print("Plot with identified lines")
+        logger.info("Plot with identified lines")
         pause_debugplot(12, pltshow=True)
 
     # return the wavelength calibration solution
@@ -500,8 +495,12 @@ def wvcal_spectrum(
 
 
 def main(args=None):
+    """Main function for the wavelength calibration script."""
+
     # parse command-line options
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(
+        description="Compute the wavelength calibration of a particular spectrum.", formatter_class=RichHelpFormatter
+    )
     # required parameters
     parser.add_argument("fitsfile", help="FITS image containing the spectra", type=str)
     parser.add_argument("--scans", required=True, help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
@@ -577,18 +576,15 @@ def main(args=None):
         type=int,
         choices=DEBUGPLOT_CODES,
     )
-    parser.add_argument("--echo", help="Display full command line", action="store_true")
-    args = parser.parse_args(args=args)
-
-    if args.echo:
-        print("\033[1m\033[31m% " + " ".join(sys.argv) + "\033[0m\n")
+    # Include default arguments for common actions, and initialize console and logging
+    myscript = NuminaScriptDefinition(parser, argv=args)
+    args = myscript.args  # noqa: F841
+    logger = myscript.logger  # noqa: F841
 
     # ---
 
     # read pdffile
     if args.pdffile is not None:
-        from matplotlib.backends.backend_pdf import PdfPages
-
         pdf = PdfPages(args.pdffile.name)
         interactive_refinement = False
     else:
@@ -634,7 +630,6 @@ def main(args=None):
         method=args.method,
         nwin_background=args.nwin_background,
         reverse=args.reverse,
-        debugplot=args.debugplot,
     )
 
     # read arc line wavelengths from external file (all the lines)
@@ -655,22 +650,19 @@ def main(args=None):
     lok1 = wvmin <= wv_master_all
     lok2 = wv_master_all <= wvmax
     lok = lok1 * lok2
-    if abs(args.debugplot) >= 10:
-        print("Number of lines in wv_master_all........: ", len(wv_master_all))
+    lsize = len(str(len(wv_master_all)))
+    logger.info(f"Number of lines in wv_master_all........: {len(wv_master_all):>{lsize}d}")
     wv_master_all = wv_master_all[lok]
-    if abs(args.debugplot) >= 10:
-        print("Number of lines in clipped wv_master_all: ", len(wv_master_all))
-        print("clipped wv_master_all:\n", wv_master_all)
+    logger.info(f"Number of lines in clipped wv_master_all: {len(wv_master_all):>{lsize}d}")
+    logger.debug(f"clipped wv_master_all:\n{wv_master_all}")
 
     lok1 = wvmin <= wv_master
     lok2 = wv_master <= wvmax
     lok = lok1 * lok2
-    if abs(args.debugplot) >= 10:
-        print("Number of lines in wv_master............: ", len(wv_master))
+    logger.info(f"Number of lines in wv_master............: {len(wv_master):>{lsize}d}")
     wv_master = wv_master[lok]
-    if abs(args.debugplot) >= 10:
-        print("Number of lines in clipped wv_master....: ", len(wv_master))
-        print("clipped wv_master....:\n", wv_master)
+    logger.info(f"Number of lines in clipped wv_master....: {len(wv_master):>{lsize}d}")
+    logger.debug(f"clipped wv_master....:\n{wv_master}")
 
     # determine refined peak location in array coordinates, i.e.,
     # from 0 to (naxis - 1)
@@ -688,7 +680,6 @@ def main(args=None):
         minimum_gaussian_filtering=args.minimum_gauss_filt,
         plottitle=plottitle,
         geometry=geometry,
-        debugplot=args.debugplot,
     )
 
     # perform wavelength calibration
@@ -729,12 +720,11 @@ def main(args=None):
     lok1 = wvmin <= wv_master_all
     lok2 = wv_master_all <= wvmax
     lok = lok1 * lok2
-    if abs(args.debugplot) >= 10:
-        print("Number of lines in wv_master_all........: ", len(wv_master_all))
+    lsize = len(str(len(wv_master_all)))
+    logger.debug(f"Number of lines in wv_master_all........: {len(wv_master_all):>{lsize}d}")
     wv_master_all = wv_master_all[lok]
-    if abs(args.debugplot) >= 10:
-        print("Number of lines in clipped wv_master_all: ", len(wv_master_all))
-        print("clipped wv_master_all:\n", wv_master_all)
+    logger.debug(f"Number of lines in clipped wv_master_all: {len(wv_master_all):>{lsize}d}")
+    logger.debug(f"clipped wv_master_all:\n{wv_master_all}")
 
     # refine wavelength calibration when requested
     if args.degree_refined is not None:
@@ -753,11 +743,9 @@ def main(args=None):
 
     if pdf is not None:
         pdf.close()
-    else:
-        try:
-            input("\nPress RETURN to QUIT...")
-        except SyntaxError:
-            pass
+
+    # Display goodbye message and save console log if recording is enabled
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":

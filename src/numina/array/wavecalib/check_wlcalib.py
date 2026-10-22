@@ -346,7 +346,7 @@ def check_wlcalib_sp(
                 fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
             else:
                 fig = plt.figure()
-            set_window_geometry(geometry)
+                set_window_geometry(geometry)
 
             # residuals
             ax2 = fig.add_subplot(2, 1, 1)
