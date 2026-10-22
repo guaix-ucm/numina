@@ -107,4 +107,8 @@ def logging_pool(processes=None, initializer=None, initargs=(), context=None):
             finally:
                 listener.stop()
     finally:
+        # stopping the listener puts a record in the queue, starting the
+        # thread of the queue in this process; it is joined so that no
+        # thread is left after the pool, a later fork would warn
         queue.close()
+        queue.join_thread()

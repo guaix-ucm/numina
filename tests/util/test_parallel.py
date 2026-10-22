@@ -2,6 +2,7 @@
 
 import logging
 import multiprocessing
+import sys
 
 import pytest
 
@@ -18,7 +19,11 @@ def work(value):
     return 2 * value
 
 
+# In macOS, the threads of the system libraries used by numpy are running
+# when forking, Python 3.15 emits a DeprecationWarning, and fork is not safe
 METHODS = [m for m in ["fork", "forkserver", "spawn"] if m in multiprocessing.get_all_start_methods()]
+if sys.platform == "darwin":
+    METHODS.remove("fork")
 
 
 @pytest.fixture
