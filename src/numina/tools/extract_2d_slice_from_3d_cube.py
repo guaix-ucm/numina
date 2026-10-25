@@ -19,6 +19,8 @@ import numpy as np
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
 
+from numina.array.display.matplotlib_qt import new_figure
+
 from .hdul_utils import get_hdu_from_hdul
 from .initialize_script_with_args import NuminaScriptDefinition
 
@@ -148,7 +150,9 @@ def extract_slice(
         xmin, xmax = 0.5, naxis1 + 0.5
         ymin, ymax = 0.5, naxis2 + 0.5
         extent = [xmin, xmax, ymin, ymax]
-        fig, ax = plt.subplots()
+        # a figure only saved in the PNG file is created without pyplot
+        fig = new_figure(interactive=png is None)
+        ax = fig.subplots()
         img = ax.imshow(
             slice2d, origin="lower", extent=extent, vmin=vmin, vmax=vmax, aspect=aspect, interpolation="None"
         )
@@ -159,10 +163,9 @@ def extract_slice(
         divider = make_axes_locatable(ax)
         cax = divider.append_axes("right", size="5%", pad=0.05)
         fig.colorbar(img, cax=cax, label=f"Number of counts ({method})")
-        plt.tight_layout()
+        fig.tight_layout()
         if png is not None:
-            plt.savefig(png, metadata={"Software": "extract_2d_slice_from_3d_cube"})
-            plt.close()
+            fig.savefig(png, metadata={"Software": "extract_2d_slice_from_3d_cube"})
         else:
             plt.show()
 
