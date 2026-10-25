@@ -36,6 +36,29 @@ def __getattr__(name):
     raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
 
 
+def new_figure(interactive=True, **kwargs):
+    """Create a figure, managed by pyplot only if it is displayed
+
+    A figure that is only saved to a file does not need pyplot: it is
+    independent of the backend and of the other figures, and it is
+    freed when it is no longer used.
+
+    Parameters
+    ==========
+    interactive : bool
+        If True, the figure is created with pyplot, to be displayed.
+    **kwargs
+        Arguments of the Figure.
+
+    """
+    if interactive:
+        return _pyplot().figure(**kwargs)
+
+    from matplotlib.figure import Figure
+
+    return Figure(**kwargs)
+
+
 def set_window_geometry(geometry):
     """Set window geometry.
 

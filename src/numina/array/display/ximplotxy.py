@@ -38,6 +38,7 @@ def ximplotxy(
     tight_layout=True,
     debugplot=0,
     using_jupyter=False,
+    fig=None,
     **kwargs,
 ):
     """
@@ -75,14 +76,26 @@ def ximplotxy(
         numina.array.display.pause_debugplot.
     using_jupyter : bool
         If True, this function is called from a jupyter notebook.
+    fig : matplotlib.figure.Figure or None
+        Figure where the plot is drawn, for example a figure created
+        without pyplot to be saved in a file. The axes are returned,
+        and 'show', 'geometry' and 'debugplot' are not used. If None,
+        a new figure is created with pyplot.
 
     Returns
     -------
     ax : axes object
         Matplotlib axes instance. This value is returned only when
-        'show' is False.
+        'show' is False or 'fig' is given.
 
     """
+
+    if fig is not None:
+        ax = fig.add_subplot(111)
+        _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs)
+        if tight_layout:
+            fig.tight_layout()
+        return ax
 
     from numina.array.display.matplotlib_qt import plt
 
@@ -91,6 +104,23 @@ def ximplotxy(
 
     fig = plt.figure()
     ax = fig.add_subplot(111)
+    _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs)
+
+    set_window_geometry(geometry)
+
+    if show:
+        pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
+    else:
+        if tight_layout:
+            plt.tight_layout()
+        # return axes
+        if using_jupyter:
+            plt.ion()
+        return ax
+
+
+def _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs):
+    """Draw the plot of ximplotxy in the axes ax"""
     if plottype == "loglog":
         if fmt is None:
             ax.loglog(x, y, **kwargs)
@@ -125,18 +155,6 @@ def ximplotxy(
         ax.set_ylabel(ylabel)
     if title is not None:
         ax.set_title(title)
-
-    set_window_geometry(geometry)
-
-    if show:
-        pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
-    else:
-        if tight_layout:
-            plt.tight_layout()
-        # return axes
-        if using_jupyter:
-            plt.ion()
-        return ax
 
 
 def main(args=None):

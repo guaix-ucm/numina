@@ -18,7 +18,7 @@ import re
 from rich import print
 from rich_argparse import RichHelpFormatter
 
-from .matplotlib_qt import set_window_geometry
+from .matplotlib_qt import new_figure, set_window_geometry
 from .pause_debugplot import pause_debugplot
 from .fileinfo import list_fileinfo_from_txt
 from .fileinfo import check_extnum
@@ -112,6 +112,7 @@ def ximshow(
     tight_layout=True,
     debugplot=0,
     using_jupyter=False,
+    fig=None,
 ):
     """Auxiliary function to display a numpy 2d array.
 
@@ -184,19 +185,25 @@ def ximshow(
         numina.array.display.pause_debugplot
     using_jupyter : bool
         If True, this function is called from a jupyter notebook.
+    fig : matplotlib.figure.Figure or None
+        Figure where the image is drawn, for example a figure created
+        without pyplot to be saved in a file. The axes are returned,
+        and 'show', 'geometry', 'figuredict' and 'debugplot' are not
+        used. If None, a new figure is created with pyplot.
 
     Returns
     -------
     ax : axes object
         Matplotlib axes instance. This value is returned only when
-        'show' is False.
+        'show' is False or 'fig' is given.
 
     """
 
-    from numina.array.display.matplotlib_qt import plt
+    if fig is None:
+        from numina.array.display.matplotlib_qt import plt
 
-    if not show and using_jupyter:
-        plt.ioff()
+        if not show and using_jupyter:
+            plt.ioff()
 
     # protections
     if not isinstance(image2d, np.ndarray):
@@ -389,10 +396,12 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     ymax = float(ns2) + 0.5 + (first_pixel[1] - 1)
 
     # display image
-    if figuredict is None:
-        fig = plt.figure()
-    else:
-        fig = plt.figure(**figuredict)
+    drawn_in_fig = fig is not None
+    if not drawn_in_fig:
+        if figuredict is None:
+            fig = plt.figure()
+        else:
+            fig = plt.figure(**figuredict)
 
     ax = fig.add_subplot(111)
     ax.autoscale(False)
@@ -414,7 +423,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         z2 = np.nanmax(image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2])
     else:
         z1, z2 = z1z2
-    im_show = plt.imshow(
+    im_show = ax.imshow(
         image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2],
         cmap=cmap,
         aspect=aspect,
@@ -427,7 +436,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     if cbar_label is None:
         cbar_label = "Number of counts"
     if cbar_orientation in ["horizontal", "vertical"]:
-        plt.colorbar(im_show, shrink=1.0, label=cbar_label, orientation=cbar_orientation)
+        fig.colorbar(im_show, shrink=1.0, label=cbar_label, orientation=cbar_orientation)
     if title is not None:
         ax.set_title(title)
 
@@ -435,7 +444,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         overplot_ds9reg(ds9regfile, ax)
 
     # set the geometry
-    if geometry is not None:
+    if geometry is not None and not drawn_in_fig:
         tmp_str = geometry.split(",")
         xwidth_geom = int(tmp_str[0])
         ywidth_geom = int(tmp_str[1])
@@ -460,7 +469,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
-    fig.canvas.mpl_connect("key_press_event", keypress)
+    if not drawn_in_fig:
+        fig.canvas.mpl_connect("key_press_event", keypress)
 
     # wavelength scale
     if wavecalib:
@@ -476,7 +486,14 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         ax.set_ylim(ymin, ymax)
 
     # show plot or return axes
-    if show:
+    if drawn_in_fig:
+        if tight_layout:
+            try:
+                fig.tight_layout()
+            except Exception:
+                pass
+        return ax
+    elif show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     else:
         if tight_layout:
@@ -513,6 +530,7 @@ def ximshow_file(
     show=True,
     debugplot=None,
     using_jupyter=False,
+    fig=None,
 ):
     """Function to execute ximshow() as called from command line.
 
@@ -575,6 +593,10 @@ def ximshow_file(
         numina.array.display.pause_debugplot.
     using_jupyter : bool
         If True, this function is called from a jupyter notebook.
+    fig : matplotlib.figure.Figure or None
+        Figure where the image is drawn, passed to ximshow(). If None
+        and the image is saved in 'pdf' or 'png' with show=True, the
+        figure is created without pyplot.
 
     Returns
     -------
@@ -705,6 +727,10 @@ def ximshow_file(
     else:
         figuredict = eval(args_figuredict)
 
+    # a figure only saved in a file is created without pyplot
+    if fig is None and show and (pdf is not None or png is not None):
+        fig = new_figure(interactive=False, **(figuredict or {}))
+
     ax = ximshow(
         image2d=image2d,
         show=False,
@@ -729,28 +755,17 @@ def ximshow_file(
         figuredict=figuredict,
         debugplot=debugplot,
         using_jupyter=using_jupyter,
+        fig=fig,
     )
 
     if pdf is not None:
         if show:
-            from numina.array.display.matplotlib_qt import plt
-
-            try:
-                plt.tight_layout()
-            except Exception:
-                pass
-            pdf.savefig()
+            pdf.savefig(ax.figure)
         else:
             return ax
     elif png is not None:
         if show:
-            from numina.array.display.matplotlib_qt import plt
-
-            try:
-                plt.tight_layout()
-            except Exception:
-                pass
-            plt.savefig(png, metadata={"Software": "ximshow"})
+            ax.figure.savefig(png, metadata={"Software": "ximshow"})
         else:
             return ax
     else:
@@ -891,9 +906,7 @@ def jimshow(
         extent=[xmin, xmax, ymin, ymax],
     )
     if cbar_orientation in ["horizontal", "vertical"]:
-        import matplotlib.pyplot as plt
-
-        plt.colorbar(im_show, shrink=1.0, label=cbar_label, orientation=cbar_orientation, ax=ax)
+        ax.figure.colorbar(im_show, shrink=1.0, label=cbar_label, orientation=cbar_orientation, ax=ax)
     ax.set_xlabel(xlabel)
     ax.set_ylabel(ylabel)
     ax.grid(grid)

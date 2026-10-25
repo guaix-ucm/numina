@@ -95,7 +95,9 @@ def polfit_residuals(
         Output PDF file name to save plot. This option is only
         employed when a plot has been generated.
     fig : `~matplotlib.figure.Figure`
-        If not None, use this object to generate plot.
+        If not None, use this object to generate plot. A figure
+        created without pyplot (for example, to be saved in a file)
+        is never shown and its window geometry is not set.
 
     Return
     ------
@@ -211,12 +213,14 @@ def polfit_residuals(
             sfitted = mysize[np.logical_not(reject)]
             srejected = mysize[reject]
 
-        from numina.array.display.matplotlib_qt import plt
-
         if fig is None:
+            from numina.array.display.matplotlib_qt import plt
+
             fig = plt.figure()
 
-        set_window_geometry(geometry)
+        # a figure created without pyplot has no window
+        if fig.canvas.manager is not None:
+            set_window_geometry(geometry)
 
         # residuals
         ax2 = fig.add_subplot(2, 1, 2)
@@ -297,13 +301,13 @@ def polfit_residuals(
 
         # graph title
         if title is not None:
-            plt.title(title)
+            ax.set_title(title)
 
         # save PDF file
         if pdffile is not None:
-            plt.savefig(pdffile, pad_inches=0.02, bbox_inches="tight")
+            fig.savefig(pdffile, pad_inches=0.02, bbox_inches="tight")
 
-        if show:
+        if show and fig.canvas.manager is not None:
             pause_debugplot(debugplot, pltshow=show, tight_layout=True)
 
     # return result
@@ -387,7 +391,9 @@ def polfit_residuals_with_sigma_rejection(
         Output PDF file name to save plot. This option is only
         employed when a plot has been generated.
     fig : `~matplotlib.figure.Figure`
-        If not None, use this object to generate plot.
+        If not None, use this object to generate plot. A figure
+        created without pyplot (for example, to be saved in a file)
+        is never shown and its window geometry is not set.
 
     Return
     ------
@@ -441,6 +447,7 @@ def polfit_residuals_with_sigma_rejection(
             ylabel=ylabel,
             title=title,
             use_r=use_r,
+            show=show,
             geometry=geometry,
             debugplot=debugplot,
             pdffile=pdffile,
@@ -622,7 +629,9 @@ def polfit_residuals_with_cook_rejection(
         Output PDF file name to save plot. This option is only
         employed when a plot has been generated.
     fig : `~matplotlib.figure.Figure`
-        If not None, use this object to generate plot.
+        If not None, use this object to generate plot. A figure
+        created without pyplot (for example, to be saved in a file)
+        is never shown and its window geometry is not set.
 
     Return
     ------
