@@ -122,9 +122,15 @@ for testing and run pytest from the root of the source tree::
     pytest
 
 The tests that need data downloaded from a server are skipped by default,
-they are enabled with ``--remote-data=any``. The tests can be run in
-parallel with `pytest-xdist <https://pytest-xdist.readthedocs.io>`_; as
-they are short, a few processes are faster than one for each CPU::
+they are enabled with ``--remote-data=any``. The slow tests, marked with
+``slow``, are skipped by default too, and the tests of the continuous
+integration run them. They are enabled with ``--runslow``::
+
+    pytest --runslow
+
+The tests can be run in parallel with `pytest-xdist
+<https://pytest-xdist.readthedocs.io>`_; as they are short, a few
+processes are faster than one for each CPU::
 
     pytest -n 8
 

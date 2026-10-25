@@ -2,6 +2,7 @@
 
 import matplotlib.pyplot as plt
 import numpy as np
+import pytest
 
 from numina.array.crmasks.compute_crmasks import compute_crmasks
 
@@ -21,6 +22,8 @@ def make_images():
     return images
 
 
+# About 16 s, drawing the debug figures
+@pytest.mark.slow
 def test_compute_crmasks_figures(tmp_path):
     hdul = compute_crmasks(
         make_images(),
