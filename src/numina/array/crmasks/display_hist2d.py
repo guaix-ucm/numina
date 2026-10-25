@@ -19,6 +19,7 @@ from pathlib import Path
 from scipy import ndimage
 import sys
 
+from numina.array.display.matplotlib_qt import new_figure
 from numina.array.numsplines import spline_positive_derivative
 from numina.tools.input_number import input_number
 import teareduce as tea
@@ -137,8 +138,8 @@ def display_hist2d(
         if vmin == 0:
             vmin = 1
         vmax = np.max(hist2d_accummulated)
-        cmap1 = plt.get_cmap("cividis_r")
-        cmap2 = plt.get_cmap("viridis")
+        cmap1 = mpl.colormaps["cividis_r"]
+        cmap2 = mpl.colormaps["viridis"]
         n_colors = 256
         n_colors2 = int((np.log10(vmax) - np.log10(1.0)) / (np.log10(vmax) - np.log10(vmin)) * n_colors)
         n_colors2 += 1
@@ -175,7 +176,8 @@ def display_hist2d(
                 loop = False
                 rerun_simulations = True
 
-        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12.1, 5.5))
+        fig = new_figure(interactive, figsize=(12.1, 5.5))
+        ax1, ax2 = fig.subplots(ncols=2)
         fig.canvas.mpl_connect("key_press_event", lambda event: on_key_2dhist(event))
         # Display 2D histogram of the simulated data
         extent = [bins_xdiag[0], bins_xdiag[-1], bins_ydiag[0], bins_ydiag[-1]]
@@ -374,10 +376,10 @@ def display_hist2d(
         ax2.set_ylabel(ax1.get_ylabel())
         ax2.set_title("Original data")
         ax2.legend(loc=1)
-        plt.tight_layout()
+        fig.tight_layout()
         png_filename = "diagnostic_histogram2d.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(Path(output_dir) / png_filename, dpi=150)
+        fig.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
             _logger.info(
                 "Entering interactive mode (press any of the following keys)\n"

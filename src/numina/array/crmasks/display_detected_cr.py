@@ -15,6 +15,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
+from numina.array.display.matplotlib_qt import new_figure
 from numina.tools.progressbarlines import ProgressBarLines
 import teareduce as tea
 
@@ -141,7 +142,8 @@ def display_detected_cr(
         if j2 >= naxis1:
             j2 = naxis1 - 1
         # Generate the plots
-        fig, axarr = plt.subplots(nrows=nrows, ncols=ncols, figsize=figsize)
+        fig = new_figure(verify_cr, figsize=figsize)
+        axarr = fig.subplots(nrows=nrows, ncols=ncols)
         axarr = axarr.flatten()
         # Important: use interpolation=None instead of interpolation='None' to avoid
         # having blurred images when opening the PDF file with macos Preview
@@ -261,7 +263,7 @@ def display_detected_cr(
                     ax.plot([xdum - 0.5, xdum + 0.5], [ydum + 0.5, ydum - 0.5], "r-")
             fig.suptitle(f"Problematic pixels, region #{i+1}/{number_cr}")
 
-        plt.tight_layout()
+        fig.tight_layout()
 
         if verify_cr:
             plt.show(block=False)
@@ -323,7 +325,9 @@ def display_detected_cr(
 
         if list_mask_single_exposures is None:
             # plot pixels in the M.M. diagnostic diagram
-            fig, ax = plt.subplots(figsize=figsize)
+            # the figure is only saved in the PDF file
+            fig = new_figure(interactive=False, figsize=figsize)
+            ax = fig.subplots()
             if boundaryfit is not None:
                 xplot_boundary = np.linspace(np.min(xplot), np.max(xplot), 1000)
                 yplot_boundary = boundaryfit(xplot_boundary)
@@ -377,7 +381,7 @@ def display_detected_cr(
             ax.set_ylabel(r"median2d $-$ min2d  [ADU]")
             ax.legend()
             fig.suptitle(f"CR#{i+1}/{number_cr}")
-            plt.tight_layout()
+            fig.tight_layout()
             if 4 in different_flag_values:
                 pdf_any4.savefig(fig, bbox_inches="tight")
             elif 3 in different_flag_values and 2 not in different_flag_values:
@@ -386,7 +390,6 @@ def display_detected_cr(
                 pdf_only2.savefig(fig, bbox_inches="tight")
             else:
                 pdf_other.savefig(fig, bbox_inches="tight")
-            plt.close(fig)
         pbar.update()
 
     _logger.info("plot generation complete")

@@ -8,6 +8,7 @@
 #
 """Diagnostic plot for cosmic ray mask computation."""
 
+import logging
 import sys
 
 import matplotlib as mpl
@@ -16,6 +17,8 @@ from matplotlib.widgets import TextBox
 import numpy as np
 from pathlib import Path
 import teareduce as tea
+
+from numina.array.display.matplotlib_qt import new_figure
 
 mpl.rcParams["keymap.quit"] = []  # disable 'q' key for quitting plots
 
@@ -257,6 +260,8 @@ def diagnostic_plot(
     output_dir=".",
 ):
     """Diagnostic plot for the mediancr function."""
+    if _logger is None:
+        _logger = logging.getLogger(__name__)
     if png_filename is None:
         raise ValueError("png_filename must be provided for diagnostic plots.")
 
@@ -305,7 +310,9 @@ def diagnostic_plot(
         ax_vmin = fig.add_axes([x0_plot, y0_plot + height_plot + 0.005, dx_text, 0.03])
         ax_vmax = fig.add_axes([x0_plot + width_plot - dx_text, y0_plot + height_plot + 0.005, dx_text, 0.03])
     else:
-        fig, axarr = plt.subplots(nrows=2, ncols=2, figsize=(12, 8))
+        # the figure is only saved in a file
+        fig = new_figure(interactive=False, figsize=(12, 8))
+        axarr = fig.subplots(nrows=2, ncols=2)
         ax1, ax2, ax3, ax4 = axarr.flatten()
         ax_vmin, ax_vmax = None, None
 
@@ -540,10 +547,10 @@ def diagnostic_plot(
     ax1.callbacks.connect("ylim_changed", sync_zoom_y)
 
     if not interactive:
-        plt.tight_layout()
+        fig.tight_layout()
     if png_filename is not None:
         _logger.info(f"saving {png_filename}")
-        plt.savefig(Path(output_dir) / png_filename, dpi=150)
+        fig.savefig(Path(output_dir) / png_filename, dpi=150)
     if interactive:
         init_limits = {ax: (ax.get_xlim(), ax.get_ylim()) for ax in [ax1, ax2, ax3, ax4]}
 
@@ -767,4 +774,4 @@ def diagnostic_plot(
         )
         # plt.tight_layout()
         plt.show()
-    plt.close(fig)
+        plt.close(fig)

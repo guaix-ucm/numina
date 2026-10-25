@@ -18,6 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
+from numina.array.display.matplotlib_qt import new_figure
 from numina.array.display.plot_hist_step import plot_hist_step
 import teareduce as tea
 
@@ -95,7 +96,8 @@ def compute_flux_factor(
         bins0 = np.linspace(xmin, xmax, 100)
         h0, edges0 = np.histogram(median2d[bool_ff_region].flatten(), bins=bins0)
         hstep = edges0[1] - edges0[0]
-        fig, ax = plt.subplots()
+        fig = new_figure(interactive)
+        ax = fig.subplots()
         for i in range(naxis3):
             xmax_ = np.max(image3d[i][bool_ff_region])
             bins = np.arange(xmin, xmax_ + hstep, hstep)
@@ -108,14 +110,14 @@ def compute_flux_factor(
         ax.set_title("Before applying flux factor")
         ax.set_yscale("log")
         ax.legend(loc="upper right")
-        plt.tight_layout()
+        fig.tight_layout()
         png_filename = "histogram_before_flux_factor.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(Path(output_dir) / png_filename, dpi=150)
+        fig.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
             _logger.info("Entering interactive mode\npress 'c' to close figure and continue")
             plt.show()
-        plt.close(fig)
+            plt.close(fig)
 
     if naxis3 % 2 == 0:
         _logger.warning("compute_flux_factor: naxis3 is even, skipping image number at median position plot.")
@@ -123,7 +125,8 @@ def compute_flux_factor(
         # Interactive plot showing the image number at the median position
         argsort = np.argsort(image3d, axis=0)
 
-        fig, (ax1, ax2) = plt.subplots(ncols=2, sharex=True, sharey=True, figsize=(12, 5.5))
+        fig = new_figure(interactive, figsize=(12, 5.5))
+        ax1, ax2 = fig.subplots(ncols=2, sharex=True, sharey=True)
         aspect_imshow = "auto"  # 'equal' or 'auto'
 
         i_comparison_image = 0  # 0 for median2d, 1, 2,... for image3d[comparison_image-1]
@@ -264,17 +267,17 @@ def compute_flux_factor(
             )
             ax1.add_patch(rect)
             # ax2.add_patch(rect)
-        plt.tight_layout()
+        fig.tight_layout()
         png_filename = "image_number_at_median_position.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(Path(output_dir) / png_filename, dpi=150)
+        fig.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
             _logger.info(
                 "Entering interactive mode (press any of the following keys)\n"
                 "'?' for help, 'c' to close figure and continue, 'x' to quit program"
             )
             plt.show()
-        plt.close(fig)
+            plt.close(fig)
 
     xmin = np.min(median2d[bool_ff_region])
     xmax = np.max(median2d[bool_ff_region])
@@ -309,7 +312,8 @@ def compute_flux_factor(
                 _logger.info("Closing figure and continuing execution as per user request ('c' key pressed).")
                 plt.close(fig)
 
-        fig, (ax1, ax2) = plt.subplots(ncols=2, figsize=(12, 5.5))
+        fig = new_figure(interactive, figsize=(12, 5.5))
+        ax1, ax2 = fig.subplots(ncols=2)
         fig.canvas.mpl_connect("key_press_event", lambda event: on_key(event))
 
         tea.imshow(fig, ax1, h, norm=LogNorm(vmin=vmin, vmax=vmax), extent=extent, aspect="auto", cblabel=cblabel)
@@ -371,18 +375,18 @@ def compute_flux_factor(
             ax2.axhline(1.0, color="k", linestyle=":")
             ax2.text(xbin[-5], 1.01, f"{1.0:.3f}", color="k", ha="right")
             flux_factor.append(1.0)
-        plt.tight_layout()
+        fig.tight_layout()
 
         png_filename = f"flux_factor{idata+1}.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(Path(output_dir) / png_filename, dpi=150)
+        fig.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
             _logger.info(
                 "Entering interactive mode (press any of the following keys)\n"
                 "'c' to close figure and continue, 'x' to quit program"
             )
             plt.show()
-        plt.close(fig)
+            plt.close(fig)
 
     if len(flux_factor) != naxis3:
         raise ValueError(f"Expected {naxis3} flux factors, but got {len(flux_factor)}.")
@@ -393,7 +397,8 @@ def compute_flux_factor(
 
     if debug:
         # Histograms after applying flux factor
-        fig, ax = plt.subplots()
+        fig = new_figure(interactive)
+        ax = fig.subplots()
         for i in range(naxis3):
             xmax_ = np.max(image3d[i][bool_ff_region])
             bins = np.arange(xmin, xmax_ + hstep, hstep)
@@ -406,13 +411,13 @@ def compute_flux_factor(
         ax.set_title("After applying flux factor")
         ax.set_yscale("log")
         ax.legend(loc="upper right")
-        plt.tight_layout()
+        fig.tight_layout()
         png_filename = "histogram_after_flux_factor.png"
         _logger.info(f"saving {png_filename}")
-        plt.savefig(Path(output_dir) / png_filename, dpi=150)
+        fig.savefig(Path(output_dir) / png_filename, dpi=150)
         if interactive:
             _logger.info("Entering interactive mode\npress 'c' to close figure and continue")
             plt.show()
-        plt.close(fig)
+            plt.close(fig)
 
     return flux_factor

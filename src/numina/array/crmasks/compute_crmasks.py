@@ -45,6 +45,7 @@ try:
 except ModuleNotFoundError:
     CONN_AVAILABLE = False
 
+from numina.array.display.matplotlib_qt import new_figure
 from numina.array.distortion import shift_image2d
 from numina.tools.input_number import input_number
 import teareduce as tea
@@ -1653,9 +1654,8 @@ def compute_crmasks(
                             _logger.info("Closing figure as per user request ('c' key pressed).")
                             plt.close(fig)
 
-                    fig, axarr = plt.subplots(
-                        nrows=2, ncols=2, sharex=True, sharey=True, figsize=(6.4 * 1.5, 4.8 * 1.5)
-                    )
+                    fig = new_figure(interactive, figsize=(6.4 * 1.5, 4.8 * 1.5))
+                    axarr = fig.subplots(nrows=2, ncols=2, sharex=True, sharey=True)
                     fig.canvas.mpl_connect("key_press_event", lambda event: on_key_cross(event))
                     axarr = axarr.flatten()
                     vmin = np.min(reference_image)
@@ -1718,17 +1718,17 @@ def compute_crmasks(
                         rf"$\delta x= {yx_offsets[1]:+.2f}$, "
                         rf"$\delta y= {yx_offsets[0]:+.2f}$"
                     )
-                    plt.tight_layout()
+                    fig.tight_layout()
                     png_filename = f"xyoffset_crosscorr_{i+1}.png"
                     _logger.info(f"saving {png_filename}")
-                    plt.savefig(Path(output_dir) / png_filename, dpi=150)
+                    fig.savefig(Path(output_dir) / png_filename, dpi=150)
                     if interactive:
                         _logger.info(
                             "Entering interactive mode (press any of the following keys)\n"
                             "'c' to continue, 'x' to quit program"
                         )
                         plt.show()
-                    plt.close(fig)
+                        plt.close(fig)
                     list_yx_offsets.append(yx_offsets)
 
         # Estimate limits for the diagnostic plot
