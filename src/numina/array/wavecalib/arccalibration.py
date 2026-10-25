@@ -602,18 +602,19 @@ def arccalibration_direct(
 
     Lines are assigned to different categories, depending on the reason why they
     have been selected or rejected. The categories are as follows:
+
     - A: line properly identified with three identical identifications.
     - B: line properly identified with two identical identifications and one
-            different (keeping the line with two identifications).
+      different (keeping the line with two identifications).
     - C: line properly identified with three different identifications
-            (keeping the one which is closest to a previously identified category B line)
+      (keeping the one which is closest to a previously identified category B line)
     - D: line properly identified with only two identical identifications.
     - E: line properly identified with only one identification, when the two next
-            (or previous) lines have been properly identified.
+      (or previous) lines have been properly identified.
     - R: line rejected because there are duplicated identifications.
     - T: line rejected because it is an outlier in the Theil-Sen linear fit.
     - P: line rejected because it is an outlier in the polynomial fit after
-            applying a robust filter.
+      applying a robust filter.
     - K: line rejected because it is an outlier in Cook's distance.
     - I: line identified using the prediction to the previously identified lines.
     - X: line rejected because it has not been identified.
