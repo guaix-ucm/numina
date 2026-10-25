@@ -20,7 +20,7 @@ from numina.array.stats import summary
 from numina.array.display.iofunctions import readi
 from numina.array.display.iofunctions import readf
 from numina.array.display.iofunctions import readc
-from numina.array.display.matplotlib_qt import set_window_geometry
+from numina.array.display.matplotlib_qt import new_figure, set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
@@ -340,12 +340,11 @@ def check_wlcalib_sp(
 
         # display results
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
-            from numina.array.display.matplotlib_qt import plt
-
             if pdf is not None:
-                fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+                # the figure is only saved in the PDF file
+                fig = new_figure(interactive=False, figsize=(11.69, 8.27), dpi=100)
             else:
-                fig = plt.figure()
+                fig = new_figure()
                 set_window_geometry(geometry)
 
             # residuals
@@ -509,7 +508,7 @@ def check_wlcalib_sp(
                 ax1.vlines(tmp, ymin=ymin, ymax=ymax, colors="grey", linestyles="dotted", label="missing lines")
             ax1.legend()
             if pdf is not None:
-                pdf.savefig()
+                pdf.savefig(fig)
             else:
                 if debugplot in [-22, -12, 12, 22]:
                     pause_debugplot(

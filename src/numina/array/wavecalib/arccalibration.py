@@ -18,7 +18,7 @@ from scipy.special import comb
 
 from ..display.iofunctions import readi
 from ..display.iofunctions import readf
-from ..display.matplotlib_qt import set_window_geometry
+from ..display.matplotlib_qt import new_figure, set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..display.polfit_residuals import polfit_residuals_with_sigma_rejection
@@ -1940,7 +1940,6 @@ def refine_arccalibration(
             logger.info(79 * "-")
 
         if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
-            from numina.array.display.matplotlib_qt import plt
 
             def handle_close(evt):
                 global xmin_previous
@@ -1951,13 +1950,14 @@ def refine_arccalibration(
                 ymin_previous, ymax_previous = ax2.get_ylim()
 
             if pdf is not None:
-                fig = plt.figure(figsize=(11.69, 8.27), dpi=100)
+                # the figure is only saved in the PDF file
+                fig = new_figure(interactive=False, figsize=(11.69, 8.27), dpi=100)
             else:
-                fig = plt.figure()
+                fig = new_figure()
                 fig.canvas.mpl_connect("close_event", handle_close)
                 set_window_geometry(geometry)
 
-            grid = plt.GridSpec(2, 1)
+            grid = fig.add_gridspec(2, 1)
             grid.update(left=0.10, right=0.98, bottom=0.10, top=0.90, hspace=0.01)
 
             # differences between linear fit and fitted polynomial
@@ -2103,7 +2103,7 @@ def refine_arccalibration(
             ax2.legend(numpoints=1)
 
             if pdf is not None:
-                pdf.savefig()
+                pdf.savefig(fig)
             else:
                 if local_debugplot in [-22, -12, 12, 22]:
                     pause_debugplot(

@@ -12,6 +12,7 @@ from numpy.polynomial import Polynomial
 from scipy.interpolate import interp1d
 from scipy.ndimage import gaussian_filter
 
+from numina.array.display.matplotlib_qt import new_figure
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
 from numina.modeling.gaussbox import gauss_box_model
@@ -294,13 +295,15 @@ def periodic_corr1d(
         ax.legend()
         plt.show()
 
+    # the figures only saved in the PDF file are created without pyplot
     if (abs(debugplot) in (21, 22)) or (pdf is not None):
         xdum = np.arange(naxis1) + 1
-        ax = ximplotxy(xdum, sp_reference_filtmask, show=False, title=plottitle, label="reference " + sp_label)
+        fig = None if pdf is None else new_figure(interactive=False)
+        ax = ximplotxy(xdum, sp_reference_filtmask, show=False, title=plottitle, label="reference " + sp_label, fig=fig)
         ax.plot(xdum, sp_offset_filtmask, label="offset " + sp_label)
         ax.legend()
         if pdf is not None:
-            pdf.savefig()
+            pdf.savefig(fig)
         else:
             pause_debugplot(debugplot=debugplot, pltshow=True)
 
@@ -321,13 +324,19 @@ def periodic_corr1d(
         sp_offset_norm[idum] /= -spmin
         if (abs(debugplot) in (21, 22)) or (pdf is not None):
             xdum = np.arange(naxis1) + 1
+            fig = None if pdf is None else new_figure(interactive=False)
             ax = ximplotxy(
-                xdum, sp_reference_norm, show=False, title=plottitle + " [normalized]", label="reference " + sp_label
+                xdum,
+                sp_reference_norm,
+                show=False,
+                title=plottitle + " [normalized]",
+                label="reference " + sp_label,
+                fig=fig,
             )
             ax.plot(xdum, sp_offset_norm, label="offset " + sp_label)
             ax.legend()
             if pdf is not None:
-                pdf.savefig()
+                pdf.savefig(fig)
             else:
                 pause_debugplot(debugplot=debugplot, pltshow=True)
     else:
@@ -375,6 +384,7 @@ def periodic_corr1d(
     fpeak = y_refined_peak
 
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
+        fig = None if pdf is None else new_figure(interactive=False)
         ax = ximplotxy(
             xcorr,
             corr,
@@ -383,6 +393,7 @@ def periodic_corr1d(
             title=plottitle,
             xlim=(-naxis1 / 2, naxis1 / 2),
             show=False,
+            fig=fig,
         )
         ax.axvline(offset, color="grey", linestyle="dashed")
         coffset = f"(offset:{offset:6.2f} pixels)"
@@ -407,7 +418,7 @@ def periodic_corr1d(
             inset_ax.plot([x_refined_peak], [y_refined_peak], "o")
         inset_ax.axvline(offset, color="grey", linestyle="dashed")
         if pdf is not None:
-            pdf.savefig()
+            pdf.savefig(fig)
         else:
             pause_debugplot(debugplot=debugplot, tight_layout=False, pltshow=True)
 
