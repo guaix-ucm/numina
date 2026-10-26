@@ -25,6 +25,12 @@ METHODS = [m for m in ["fork", "forkserver", "spawn"] if m in multiprocessing.ge
 if sys.platform == "darwin":
     METHODS.remove("fork")
 
+# In Linux, the threads of OpenMP started by other tests (lacosmic in crmasks)
+# are running too, Python 3.15 counts them and emits the DeprecationWarning;
+# the processes of these tests do not use OpenMP
+FORK_WITH_THREADS = pytest.mark.filterwarnings("ignore:This process .* is multi-threaded:DeprecationWarning")
+METHOD_PARAMS = [pytest.param(m, marks=FORK_WITH_THREADS) if m == "fork" else m for m in METHODS]
+
 
 @pytest.fixture
 def logger():
@@ -33,7 +39,7 @@ def logger():
     logger.setLevel(logging.NOTSET)
 
 
-@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize("method", METHOD_PARAMS)
 def test_messages_of_the_processes(caplog, logger, method):
     """The messages of the processes reach the handlers of the main process"""
     logger.setLevel(logging.DEBUG)
@@ -43,7 +49,7 @@ def test_messages_of_the_processes(caplog, logger, method):
     assert messages == sorted(f"{level} message of {v}" for v in [1, 2, 3] for level in ["debug", "info"])
 
 
-@pytest.mark.parametrize("method", METHODS)
+@pytest.mark.parametrize("method", METHOD_PARAMS)
 def test_levels_of_the_main_process(caplog, logger, method):
     """The processes have the levels of the loggers of the main process"""
     logger.setLevel(logging.INFO)
