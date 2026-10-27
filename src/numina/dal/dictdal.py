@@ -586,11 +586,13 @@ class HybridDAL(BaseHybridDAL):
 
                 if "content" in prod:
                     path = prod["content"]
+                    _logger.debug("path is %s", path)
+                    rprod["content"] = numina.store.load(tipo, path)
                 else:
-                    # Build path
-                    path = build_product_path(drp, self.rootdir, profile, name, tipo, obsres)
-                _logger.debug("path is %s", path)
-                rprod["content"] = numina.store.load(tipo, path)
+                    # Build path, a tuple (path, kind)
+                    path = self.build_product_path(drp, profile, name, tipo, obsres)
+                    _logger.debug("path is %s", path)
+                    rprod["content"] = self.product_loader(tipo, name, path)
                 self.record_source(name, "control file")
                 return StoredProduct(**rprod)
         else:

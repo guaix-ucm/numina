@@ -75,7 +75,6 @@ def test_product_in_table(drps, components, tmp_path, calibdir):
     assert dal.sources["master_bias"] == {"source": "control file"}
 
 
-@pytest.mark.xfail(reason="the path of the product is the tuple (path, kind)", strict=True)
 def test_product_in_table_without_content(drps, components, tmp_path, calibdir):
     base = {"products": {"TEST1": {PROFILE: [{"id": 7, "type": "MasterBias", "tags": {}}]}}}
     dal = make_dal(drps, components, tmp_path, base)
