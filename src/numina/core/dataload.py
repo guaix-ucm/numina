@@ -18,6 +18,12 @@ of the instrument. The registries used by numina are in
 import warnings
 import mimetypes
 
+# The tables of the system are not read, the type of a file must not depend
+# on the platform. Python < 3.14 doesn't have the FITS extensions
+_mimetypes = mimetypes.MimeTypes()
+for _ext in [".fits", ".fit", ".fts"]:
+    _mimetypes.add_type("image/fits", _ext)
+
 
 def is_fits_megara(pathname):
     """Check is any FITS"""
@@ -97,7 +103,7 @@ class DataLoaders:
             If no function handles the file.
         """
 
-        mmtype, enc = mimetypes.guess_type(pathname)
+        mmtype, enc = _mimetypes.guess_type(pathname)
         # This is ordered by priority
         for priority, mtype, is_func, func in self._loaders:
             if (mmtype == mtype) and is_func(pathname):

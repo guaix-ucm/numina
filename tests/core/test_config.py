@@ -1,6 +1,7 @@
 """Functions that load and describe files, numina.core.config"""
 
 import json
+import mimetypes
 
 import astropy.io.fits as fits
 import numpy
@@ -56,6 +57,12 @@ def test_describe_fits(fits_file, tmp_path):
     filename = tmp_path / "other.fits"
     fits.PrimaryHDU().writeto(filename)
     assert cfg.describe(str(filename)) == ("unknown", "unknown")
+
+
+def test_type_without_system_tables(fits_file, monkeypatch):
+    # The tables of macOS don't have FITS
+    monkeypatch.setattr(mimetypes, "guess_type", lambda *args, **kwargs: (None, None))
+    assert cfg.describe(fits_file) == ("TEST1", "bias")
 
 
 def test_describe_json_structured(structured_file):
