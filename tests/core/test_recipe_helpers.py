@@ -59,11 +59,7 @@ class Plain:
     [
         (WithState(), {"state": 1}),
         (Plain(), {"value": 2}),
-        pytest.param(
-            {"a": 1},
-            {"a": 1},
-            marks=pytest.mark.xfail(reason="the __getstate__ of a dict is None", strict=True),
-        ),
+        ({"a": 1}, {"a": 1}),
     ],
 )
 def test_save_structured_as_json(tmp_path, obj, expected):

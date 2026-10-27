@@ -237,12 +237,12 @@ class BaseRecipe:
 
     def save_structured_as_json(self, structured, name):
         if self.intermediate_results:
-            if hasattr(structured, "__getstate__"):
-                state = structured.__getstate__()
-            elif isinstance(structured, dict):
+            # Since Python 3.11 all objects have __getstate__,
+            # and the __getstate__ of a dict is None
+            if isinstance(structured, dict):
                 state = structured
             else:
-                state = structured.__dict__
+                state = structured.__getstate__()
 
             with open(name, "w") as fd:
                 json.dump(state, fd, indent=2, cls=ExtEncoder)
