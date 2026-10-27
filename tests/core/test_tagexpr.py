@@ -140,7 +140,6 @@ def test_not():
     assert expr.eval(vph="LR-B") is True
 
 
-@pytest.mark.xfail(reason="PredNot can not be cloned", raises=TypeError, strict=True)
 def test_not_fill_placeholders():
     vph = tagexpr.TagRepr("vph")
     expr = ~(vph == tagexpr.Placeholder("vph"))

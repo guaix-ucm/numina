@@ -259,7 +259,8 @@ class UnaryExpr(CompoundExpr):
         self.operator = oper
 
     def clone(self, nodes):
-        new = self.__class__(nodes[0], self.operator)
+        # The subclasses take only the operand, as in BinaryExpr
+        new = self.__class__(nodes[0])
         return new
 
 
