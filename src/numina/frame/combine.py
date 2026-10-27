@@ -160,7 +160,7 @@ def combine(
 
     if method_name != "":
         # _logger.info("Combined %d images using '%s'", nimages, method.__name__)
-        hdu1.header["history"] = f"Combined {nimages:d} images using '{method}'"
+        hdu1.header["history"] = f"Combined {nimages:d} images using '{method_name}'"
     else:
         hdu1.header["history"] = f"Combined {nimages:d} images"
 

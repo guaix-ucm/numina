@@ -62,7 +62,6 @@ def test_combine_datamodel():
     assert list(result[0].header["HISTORY"])[2] == "Image1 id-a"
 
 
-@pytest.mark.xfail(reason="the history has the method object instead of its name", strict=True)
 def test_combine_method_name():
     result = fc.combine(intl.mean_method(), images(), method_name="mean")
     assert result[0].header["HISTORY"][0] == "Combined 3 images using 'mean'"
