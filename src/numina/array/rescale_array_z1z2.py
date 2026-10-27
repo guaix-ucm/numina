@@ -1,5 +1,5 @@
 #
-# Copyright 2018-2024 Universidad Complutense de Madrid
+# Copyright 2018-2026 Universidad Complutense de Madrid
 #
 # This file is part of PyEmir
 #
@@ -18,6 +18,9 @@ def rescale_array_to_z1z2(array, z1z2=(-1.0, 1.0)):
     The transformation is carried out following the relation
     array_rs = b_flux * array - c_flux
     as explained in Appendix B1 of Cardiel (2009, MNRAS, 396, 680)
+
+    Non-finite values (NaN, +/-inf) are ignored when computing the
+    rescaling coefficients, and are preserved in the returned array.
 
     Parameters
     ----------
@@ -39,11 +42,18 @@ def rescale_array_to_z1z2(array, z1z2=(-1.0, 1.0)):
     if type(array) is not np.ndarray:
         raise ValueError("array=" + str(array) + " must be a numpy.ndarray")
 
-    array_min = array.min()
-    array_max = array.max()
+    # ignore NaN and +/-inf when computing the rescaling coefficients
+    finite = np.isfinite(array)
+    if not np.any(finite):
+        raise ValueError("array does not contain any finite value")
+
+    array_min = array[finite].min()
+    array_max = array[finite].max()
 
     z1, z2 = z1z2
     delta = array_max - array_min
+    if delta == 0.0:
+        raise ValueError("array_max == array_min, cannot rescale")
     b_flux = (z2 - z1) / delta
     c_flux = (z2 * array_min - z1 * array_max) / delta
 
@@ -52,7 +62,7 @@ def rescale_array_to_z1z2(array, z1z2=(-1.0, 1.0)):
     return array_rs, (b_flux, c_flux)
 
 
-def rescale_array_from_z1z2(array_rs, coef_rs=None):
+def rescale_array_from_z1z2(array_rs, coef_rs):
     """Restore the values in a numpy array rescaled to the [z1,z2] interval.
 
     The transformation is carried out following the relation
@@ -77,7 +87,7 @@ def rescale_array_from_z1z2(array_rs, coef_rs=None):
     """
 
     if type(array_rs) is not np.ndarray:
-        raise ValueError("array_rs=" + str(array_rs) + "must be a numpy.ndarray")
+        raise ValueError("array_rs=" + str(array_rs) + " must be a numpy.ndarray")
 
     b_flux, c_flux = coef_rs
 
