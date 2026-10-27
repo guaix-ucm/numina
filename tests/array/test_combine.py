@@ -232,3 +232,11 @@ def test_combine_miter_maxargs2():
 
     out0, out1, out2 = _c.generic_combine(_c.median_method(), inputs)
     assert numpy.allclose(out0, input1)
+
+
+def test_combine_mean_weights():
+    import numina.array.combine as combine
+
+    arrays = [numpy.full((2, 2), 1.0), numpy.full((2, 2), 3.0)]
+    result = combine.mean(arrays, weights=numpy.array([3.0, 1.0]))
+    assert numpy.allclose(result[0], 1.5)

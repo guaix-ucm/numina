@@ -344,7 +344,15 @@ def generic_combine(
             out_pix = numpy.empty_like(arrays[0], dtype=dtype)
 
     return intl.generic_combine(
-        method, arrays, out_res=out_res, out_var=out_var, out_pix=out_pix, masks=masks, zeros=zeros, scales=scales
+        method,
+        arrays,
+        out_res=out_res,
+        out_var=out_var,
+        out_pix=out_pix,
+        masks=masks,
+        zeros=zeros,
+        scales=scales,
+        weights=weights,
     )
 
 

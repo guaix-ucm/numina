@@ -135,7 +135,6 @@ def test_combine_region():
     assert numpy.allclose(result[0].data[1:], 0.0)
 
 
-@pytest.mark.xfail(reason="numina.array.combine.generic_combine does not use the weights", strict=True)
 def test_combine_weights():
     result = fc.combine(intl.mean_method(), images(), weights=[4.0, 1.0, 1.0])
     assert numpy.allclose(result[0].data, 2.0)
