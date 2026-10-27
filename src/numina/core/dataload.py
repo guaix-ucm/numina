@@ -82,7 +82,8 @@ class DataLoaders:
 
         def wrapper(func):
             self._loaders.append((priority, mtype, is_func, func))
-            self._loaders.sort()
+            # Stable, with equal priority in the order of registration
+            self._loaders.sort(key=lambda entry: entry[0])
             return func
 
         return wrapper

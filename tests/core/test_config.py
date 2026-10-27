@@ -77,7 +77,6 @@ def test_loaders_priority():
     assert loaders("b.json") == "last"
 
 
-@pytest.mark.xfail(reason="the functions are compared when the priority and type are equal", strict=True)
 def test_loaders_same_priority():
     loaders = DataLoaders()
     loaders.register("application/json")(lambda path: "first")
