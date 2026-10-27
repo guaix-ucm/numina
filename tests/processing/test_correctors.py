@@ -53,12 +53,12 @@ def test_corrector_datamodel():
     assert isinstance(proc.SkyCorrector(numpy.ones(1)).datamodel, proc.SimpleDataModel)
 
 
-@pytest.mark.parametrize("dtype", [">u2", "<u2"])
-def test_corrector_promotes_uint16(dtype):
-    corrector = proc.BiasCorrector(numpy.ones((4, 5)))
+@pytest.mark.parametrize("dtype", [">u2", "<u2", "uint8", ">i2", "int32"])
+def test_corrector_promotes_integer(dtype):
+    corrector = proc.BiasCorrector(numpy.full((4, 5), 0.5))
     result = corrector(image(10, dtype=dtype))
     assert result[0].data.dtype == numpy.float32
-    assert numpy.allclose(result[0].data, 9)
+    assert numpy.allclose(result[0].data, 9.5)
 
 
 def test_corrector_keeps_float():
@@ -176,6 +176,12 @@ def test_divide_by_exposure():
     assert numpy.allclose(result["variance"].data, 1)
     assert result[0].header["BUNIT"] == "ADU/s"
     assert result[0].header["NUM-EXP"] == 2.0
+
+
+def test_divide_by_exposure_integer():
+    result = proc.DivideByExposure()(image(10, dtype="int32", BUNIT="ADU", EXPTIME=4.0))
+    assert result[0].data.dtype == numpy.float32
+    assert numpy.allclose(result[0].data, 2.5)
 
 
 def test_divide_by_exposure_no_variance():

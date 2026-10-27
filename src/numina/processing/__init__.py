@@ -61,8 +61,9 @@ class Corrector(node.Node):
         self.calibid = calibid
 
     def __call__(self, img):
-        if img[0].data.dtype in ["<u2", ">u2", "=u2"]:
-            # FIXME: this is a GCS problem
+        if img[0].data.dtype.kind in "iu":
+            # The corrections are done in place, integer data
+            # (such as the uint16 images of GCS) are promoted to float
             _logger.debug("change dtype to float32, old is %s", img[0].data.dtype)
             img = promote_hdulist(img)
         img = self.run(img)
