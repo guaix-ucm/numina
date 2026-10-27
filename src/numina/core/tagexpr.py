@@ -225,6 +225,10 @@ class Placeholder(AtomicExpr):
     def clone(self, nodes):
         return self
 
+    def eval(self, **kwargs):
+        # Not substituted, the expression is incomplete
+        return self
+
 
 class ConstExpr(AtomicExpr):
     """A representation of a constant value"""

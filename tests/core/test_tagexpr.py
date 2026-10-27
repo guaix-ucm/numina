@@ -166,7 +166,6 @@ def test_eval_missing_tag():
     assert vph.eval(other=1) is vph
 
 
-@pytest.mark.xfail(reason="the evaluation of a Placeholder does not end", raises=RecursionError, strict=True)
 def test_eval_placeholder():
     """A expression with placeholders is incomplete, its value is not a bool"""
     expr = tagexpr.TagRepr("vph") == tagexpr.Placeholder("vph")
