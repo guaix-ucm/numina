@@ -99,3 +99,13 @@ def test_previous_obsid(hybriddal):
     obsres = hybriddal.oblock_from_id(4)
     previd = hybriddal.search_previous_obsres(obsres, node="prev-rel")
     assert list(previd) == []
+
+
+def test_previous_obsid_default(hybriddal):
+    obsres = hybriddal.oblock_from_id(5)
+    assert list(hybriddal.search_previous_obsres(obsres)) == [4, 3, 2, 1]
+
+    # without parent, prev-rel is prev
+    obsres = hybriddal.oblock_from_id(400)
+    previd = hybriddal.search_previous_obsres(obsres, node="prev-rel")
+    assert list(previd) == [40, 30, 5, 4, 3, 2, 1]

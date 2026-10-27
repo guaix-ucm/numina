@@ -139,3 +139,34 @@ def test_search_prod_type_tags4(basedictdal):
     assert res.content == {"demo2": 2}
 
     assert res.tags == {"field2": "A"}
+
+
+class FakeObsres:
+    instrument = "TEST1"
+    profile = "225fcaf2-7f6f-49cc-972a-70fd0aee8e96"
+    tags = {"field2": "B"}
+    pipeline = "default"
+
+
+class DemoType2:
+    def name(self):
+        return "DemoType2()"
+
+
+def test_search_product(basedictdal):
+    res = basedictdal.search_product("demo", DemoType2(), FakeObsres())
+    assert res.id == 3
+    assert res.content == {"demo2": 3}
+    assert basedictdal.sources["demo"] == {"source": "control file"}
+
+
+def test_search_product_extra_data(basedictdal):
+    basedictdal.extra_data["demo"] = {"demo2": 9}
+    res = basedictdal.search_product("demo", DemoType2(), FakeObsres())
+    assert res.id == 0
+    assert res.content == {"demo2": 9}
+    assert basedictdal.sources["demo"] == {"source": "command line"}
+
+
+def test_search_result_relative(basedictdal):
+    assert basedictdal.search_result_relative("demo", DemoType2(), FakeObsres(), None) == []
