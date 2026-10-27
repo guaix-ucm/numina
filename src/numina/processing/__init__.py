@@ -306,7 +306,7 @@ class DivideByExposure(Corrector):
             img[0].header["BUNIT"] = "ADU/s"
             try:
                 img["variance"].data /= etime**2
-                img["variance"].header["BUNIT"] = "ADU/s"
+                img["variance"].header["BUNIT"] = "ADU2/s2"
             except KeyError:
                 pass
 

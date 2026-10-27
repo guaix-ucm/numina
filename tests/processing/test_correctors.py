@@ -175,6 +175,7 @@ def test_divide_by_exposure():
     assert numpy.allclose(result[0].data, 5)
     assert numpy.allclose(result["variance"].data, 1)
     assert result[0].header["BUNIT"] == "ADU/s"
+    assert result["variance"].header["BUNIT"] == "ADU2/s2"
     assert result[0].header["NUM-EXP"] == 2.0
 
 
