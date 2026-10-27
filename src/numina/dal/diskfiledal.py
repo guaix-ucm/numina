@@ -143,7 +143,7 @@ class DiskFileDAL:
                             # result = process_result(data)
                             # key = self._field_to_extract[klass]
                             # content = result[key]
-                            return StoredProduct(id=files_s[-1], content=content, tags=ob.tags)
+                            return StoredProduct(id=fname, content=content, tags=ob.tags)
             except OSError:
                 # the directory does not exist, search in the next one
                 pass

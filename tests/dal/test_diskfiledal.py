@@ -149,7 +149,6 @@ def test_disk_file_dal_alias(tmp_path):
     assert dal.search_product("name", Product(), FakeOb()).content == "aliased"
 
 
-@pytest.mark.xfail(reason="the id of the product is the last file of the directory", strict=True)
 def test_disk_file_dal_id(tmp_path):
     directory = tmp_path / "INS" / "default" / "Product"
     make_file(directory / "calib.json", "first")
