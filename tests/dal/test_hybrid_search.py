@@ -208,7 +208,6 @@ def search(dal, obsid, query):
     return dal.search_result_relative("value", int, obsres, query)
 
 
-@pytest.mark.xfail(reason="an observing block without result stops the search", strict=True)
 def test_result_prev_skips_missing(drps, components, tmp_path):
     write_result(tmp_path, 1, {"value": 5})
     dal = make_dal(drps, components, tmp_path)
@@ -246,7 +245,6 @@ def test_result_children(drps, components, tmp_path):
     assert [res.id for res in results] == [1, 2]
 
 
-@pytest.mark.xfail(reason="a child without result raises FileNotFoundError", strict=True)
 @pytest.mark.parametrize("ignore_fail", [True, False])
 def test_result_children_missing(drps, components, tmp_path, ignore_fail):
     write_result(tmp_path, 1, {"value": 5})
@@ -256,8 +254,18 @@ def test_result_children_missing(drps, components, tmp_path, ignore_fail):
     if ignore_fail:
         assert [res.content for res in search(dal, 10, query)] == [5]
     else:
-        with pytest.raises(NoResultFound):
+        with pytest.raises(NoResultFound, match="directory obsid2_results of the result of oblock_id=2 not found"):
             search(dal, 10, query)
+
+
+def test_result_file_missing(drps, components, tmp_path):
+    write_result(tmp_path, 1, {"value": 5})
+    (tmp_path / "obsid2_results").mkdir()
+    dal = make_dal(drps, components, tmp_path)
+
+    assert search(dal, 3, ResultOf("value", node="prev")).content == 5
+    with pytest.raises(NoResultFound, match="result.json not found in obsid2_results"):
+        search(dal, 10, ResultOf("value", node="children"))
 
 
 def test_result_children_missing_field(drps, components, tmp_path):

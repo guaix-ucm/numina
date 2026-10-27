@@ -497,13 +497,17 @@ class BaseHybridDAL(Dict2DAL):
 
     def _load_result_field(self, node_id, directory, filename, field):
         """Load field of the result stored in directory/filename"""
+        # The observing block may not be reduced, the search continues
+        resultdir = os.path.join(self.basedir, directory)
+        if not os.path.isdir(resultdir):
+            raise NoResultFound(f"directory {directory} of the result of oblock_id={node_id} not found")
         # change directory to open result file
-        with working_directory(os.path.join(self.basedir, directory)):
+        with working_directory(resultdir):
             if os.path.exists(filename):
                 with open(filename) as fd:
                     result_data = json.load(fd)
             else:
-                raise ValueError(f"{filename} not found in {directory}")
+                raise NoResultFound(f"{filename} not found in {directory}")
 
             stored_result = StoredResult.load_data(result_data)
 
