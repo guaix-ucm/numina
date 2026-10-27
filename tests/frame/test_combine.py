@@ -102,7 +102,7 @@ def test_combine_masks_errors():
     [
         "mean",
         "median",
-        pytest.param("mode", marks=pytest.mark.xfail(reason="the mode of a 2D array fails", strict=True)),
+        "mode",
         SchemaKeyword("EXPTIME"),
         lambda img, mask, region: img[0].data[region].mean(),
     ],

@@ -26,7 +26,8 @@ def _m_base(calc, img, mask, region):
         mask_sub = mask[region]
         invalid = mask_sub > 0
         arr = arr[~invalid]
-    return calc(arr)
+    # mode_half_sample works only with 1D arrays
+    return calc(arr.ravel())
 
 
 def _m_mean(img, mask, region):
