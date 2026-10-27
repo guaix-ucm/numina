@@ -46,7 +46,6 @@ def test_resize_hdu_window():
     assert newhdu.header["OVALREGI"] == "[1:3,0:2]"
 
 
-@pytest.mark.xfail(reason="resize_hdu writes the keywords in the header of its input", strict=True)
 def test_resize_hdu_input_unchanged():
     hdu = fits.PrimaryHDU(numpy.ones((2, 3)))
     nf.resize_hdu(hdu, (4, 6), (slice(1, 3), slice(2, 5)), window=(slice(0, 2), slice(0, 3)))
@@ -73,7 +72,6 @@ def test_resize_hdul():
     assert result[1] is hdul[1]
 
 
-@pytest.mark.xfail(reason="resize_hdu returns a PrimaryHDU for an extension", strict=True)
 def test_resize_hdul_extensions(tmp_path):
     region = (slice(1, 3), slice(2, 5))
 

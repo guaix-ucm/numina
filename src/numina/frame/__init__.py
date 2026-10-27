@@ -37,10 +37,12 @@ def resize_hdu(hdu, newshape, region, window=None, fill=0.0, scale=1, conserve=T
     newdata = numina.array.resize_array(
         basedata, newshape, region, window=window, fill=fill, scale=scale, conserve=conserve, dtype=dtype
     )
-    hdu.header["NVALREGI"] = (custom_region_to_str(region), "Valid region of resized FITS")
+    header = hdu.header.copy()
+    header["NVALREGI"] = (custom_region_to_str(region), "Valid region of resized FITS")
     if window:
-        hdu.header["OVALREGI"] = (custom_region_to_str(window), "Valid region of original FITS")
-    newhdu = fits.PrimaryHDU(newdata, hdu.header)
+        header["OVALREGI"] = (custom_region_to_str(window), "Valid region of original FITS")
+    # The same class as the input, a PrimaryHDU or an ImageHDU
+    newhdu = type(hdu)(newdata, header)
     return newhdu
 
 
