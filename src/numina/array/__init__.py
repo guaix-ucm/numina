@@ -188,7 +188,7 @@ def fixpix(data, mask, kind="linear"):
     if not numpy.any(mask):
         return data
 
-    x = numpy.arange(0, data.shape[0])
+    x = numpy.arange(0, data.shape[1])
     for row, mrow in zip(data, mask):
         if numpy.any(mrow):  # Interpolate if there's some pixel missing
             valid = mrow == numpy.False_

@@ -99,7 +99,6 @@ class FixpixTestCase(unittest.TestCase):
             self.assertAlmostEqual(i, v)
 
 
-@pytest.mark.xfail(reason="fixpix uses the number of rows as the length of the rows", raises=IndexError, strict=True)
 @pytest.mark.parametrize("shape", [(3, 4), (4, 3)])
 def test_fixpix_not_square(shape):
     data = numpy.tile(numpy.arange(shape[1], dtype="float64"), (shape[0], 1))
