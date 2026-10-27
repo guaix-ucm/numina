@@ -112,7 +112,7 @@ class BiasCorrector(Corrector):
 
     def __init__(self, biasmap, biasvar=None, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
-        self.update_variance = True if biasvar else False
+        self.update_variance = biasvar is not None
 
         super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
         self.bias_stats = biasmap.mean()
@@ -151,10 +151,7 @@ class DarkCorrector(Corrector):
 
     def __init__(self, darkmap, darkvar=None, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
-        self.update_variance = False
-
-        if darkvar:
-            self.update_variance = True
+        self.update_variance = darkvar is not None
 
         super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 

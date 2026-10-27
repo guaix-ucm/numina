@@ -96,7 +96,6 @@ def test_bias_corrector_header():
     assert "Bias image mean is 2.0" in history
 
 
-@pytest.mark.xfail(reason="the truth value of the variance array is ambiguous", raises=ValueError, strict=True)
 def test_bias_corrector_variance():
     corrector = proc.BiasCorrector(numpy.full((4, 5), 2.0), biasvar=numpy.full((4, 5), 0.5))
     assert corrector.update_variance
@@ -121,7 +120,6 @@ def test_dark_corrector_time(keywords, etime):
     assert result[0].header["NUM-DK"] == "darkid"
 
 
-@pytest.mark.xfail(reason="the truth value of the variance array is ambiguous", raises=ValueError, strict=True)
 def test_dark_corrector_variance():
     corrector = proc.DarkCorrector(numpy.full((4, 5), 0.5), darkvar=numpy.full((4, 5), 0.25))
     assert corrector.update_variance
