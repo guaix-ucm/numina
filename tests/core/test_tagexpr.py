@@ -119,7 +119,6 @@ def test_bool_operands():
     assert (True | expr) is True
 
 
-@pytest.mark.xfail(reason="expr | False returns False", strict=True)
 def test_or_false():
     expr = tagexpr.TagRepr("vph") == "LR-U"
     assert (expr | False) is expr

@@ -124,7 +124,7 @@ class Expression:
             if other:
                 return True
             else:
-                return other
+                return self
 
         return NotImplemented
 
