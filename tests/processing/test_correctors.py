@@ -197,7 +197,6 @@ def test_divide_by_exposure_unknown_unit(caplog):
     assert "Unrecognized value for BUNIT electron" in caplog.text
 
 
-@pytest.mark.xfail(reason="a missing BUNIT raises KeyError", raises=KeyError, strict=True)
 def test_divide_by_exposure_no_unit():
     result = proc.DivideByExposure()(image(10, EXPTIME=2.0))
     assert numpy.allclose(result[0].data, 10)

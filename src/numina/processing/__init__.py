@@ -288,7 +288,7 @@ class DivideByExposure(Corrector):
     def run(self, img):
         imgid = self.get_imgid(img)
         hdr = self.datamodel.get_header(img)
-        bunit = hdr["BUNIT"]
+        bunit = hdr.get("BUNIT")
         convert_to_s = False
         if bunit:
             if bunit.lower() == "adu":
