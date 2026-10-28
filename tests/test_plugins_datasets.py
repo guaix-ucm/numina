@@ -34,8 +34,9 @@ def add_file(tar, name, content):
 def datasets(tmp_path_factory):
     base = tmp_path_factory.mktemp("datasets")
     # The dataset of numinatpldir is named after the test function
-    with tarfile.open(base / "numinatpldir.tar.gz", "w:gz") as tar:
-        add_file(tar, "tpl/data.txt", b"data")
+    for name in ["numinatpldir", "numinatpldir_filter"]:
+        with tarfile.open(base / f"{name}.tar.gz", "w:gz") as tar:
+            add_file(tar, "tpl/data.txt", b"data")
     with tarfile.open(base / "session.tar.gz", "w:gz") as tar:
         add_file(tar, "data/README", b"")
         add_file(tar, "control.yaml", yaml.safe_dump({"version": 1}).encode())
@@ -85,7 +86,6 @@ def test_numinatpldir(keep_cwd, numinatpldir, downloads):
     assert (numinatpldir / "tpl" / "data.txt").read_text("utf-8") == "data"
 
 
-@pytest.mark.xfail(reason="extractall without filter warns in Python 3.12 and 3.13", strict=True)
 def test_numinatpldir_filter(keep_cwd, extracted, numinatpldir):
     assert extracted == [{"filter": "data"}]
 

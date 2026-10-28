@@ -28,6 +28,16 @@ from .testcache import download_cache
 from .pytest_resultcmp import ResultCompPlugin
 
 
+def _extractall(tar):
+    """Extract the members of `tar` in the working directory"""
+    # The filter is in Python >= 3.11.4, without it extractall
+    # warns in Python 3.12 and 3.13
+    if hasattr(tarfile, "data_filter"):
+        tar.extractall(filter="data")
+    else:
+        tar.extractall()
+
+
 @pytest.fixture
 def numinatmpdir(tmpdir):
     """Return a temporary directory for recipe testing
@@ -69,7 +79,7 @@ def numinatpldir(tmpdir, request):
 
     # Uncompress
     with tarfile.open(downloaded.name, mode="r:gz") as tar:
-        tar.extractall()
+        _extractall(tar)
 
     os.remove(downloaded.name)
     os.chdir("tpl")
@@ -134,7 +144,7 @@ def datamanager_remote(tmp_path_factory, request):
 
         # Uncompress
         with tarfile.open(downloaded.name, mode="r:gz") as tar:
-            tar.extractall()
+            _extractall(tar)
 
         os.remove(downloaded.name)
 
