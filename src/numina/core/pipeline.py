@@ -14,7 +14,6 @@ import warnings
 import logging
 
 import numina.core.query
-import numina.core.deptree
 import numina.util.objimport
 import numina.util.parser
 import numina.datamodel
@@ -114,42 +113,6 @@ class Pipeline:
 
         entry = self._provides_by_r[mode_label]
         return entry
-
-    def _query_recipe(self, thismode, modes):
-        if thismode in modes:
-            thisnode = modes[thismode]
-        else:
-            thisnode = numina.core.deptree.DepNode(thismode)
-            modes[thismode] = thisnode
-
-        robj = self.load_recipe_object(thismode)
-        for field, vv in robj.requirements().items():
-            if vv.type.isproduct():
-
-                result = self.who_provides(vv.type.name())
-                # get first result
-                if result:
-                    good = result[0]
-                    recurse = False
-                    if good.mode not in modes:
-                        # Add link
-                        recurse = True
-                        node = numina.core.deptree.DepNode(good.mode)
-                        modes[good.mode] = node
-
-                    node = modes[good.mode]
-                    weight = 1
-                    if vv.optional:
-                        weight = 0
-                    # print "link", thismode, "with", good.mode
-                    newlink = numina.core.deptree.DepLink(node, weight=weight)
-                    thisnode.links.append(newlink)
-                    if recurse:
-                        self._query_recipe(good.mode, modes)
-                else:
-                    # No recipe provides this product
-                    pass
-        return modes
 
 
 class InstrumentDRP:
