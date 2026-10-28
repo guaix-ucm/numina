@@ -121,6 +121,16 @@ filterwarnings = [
     "error",
 ]
 
+[tool.coverage.run]
+source = ["numina"]
+
+[tool.coverage.report]
+# The job coverage of CI fails below this value; raise it
+# when the coverage increases
+fail_under = 42
+skip_covered = true
+skip_empty = true
+
 [tool.black]
 line-length = 120
 target-version = ['py311', 'py312', 'py313', 'py314']

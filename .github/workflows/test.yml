@@ -28,3 +28,19 @@ jobs:
       - name: Run tox
         # Run tox using the version of Python in `PATH`
         run: tox -e py
+
+  coverage:
+    name: Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - name: Setup python
+        uses: actions/setup-python@v7
+        with:
+          python-version: "3.14"
+          cache: 'pip'
+      - name: Install tox
+        run: pip install tox
+      - name: Run tox
+        # Fails if the coverage is below fail_under of pyproject.toml
+        run: tox -e coverage
