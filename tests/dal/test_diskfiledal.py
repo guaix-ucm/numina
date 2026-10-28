@@ -1,5 +1,6 @@
 import pytest
 
+from numina.core.pipeline import InstrumentDRP, Pipeline, ProductEntry
 from numina.dal.diskfiledal import DiskFileDAL, FileFinder, FileFinderGTC, _combinations, build_product_path
 from numina.exceptions import NoResultFound
 
@@ -162,3 +163,24 @@ def test_disk_file_dal_not_found(tmp_path):
     dal = DiskFileDAL(FakeDrp(), str(tmp_path))
     with pytest.raises(NoResultFound):
         dal.search_product("name", Product(), FakeOb())
+
+
+def instrument_drp(alias):
+    """A DRP whose mode bias provides ProductName, with an alias"""
+    entry = ProductEntry("ProductName", "bias", "master_bias", alias=alias)
+    pipeline = Pipeline("INS", "default", {}, provides=[entry])
+    return InstrumentDRP("INS", {}, {}, {"default": pipeline})
+
+
+@pytest.mark.xfail(reason="the product is searched by class, the DRP has the names", strict=True)
+def test_build_product_path_alias_of_drp(tmp_path):
+    make_file(tmp_path / "INS" / "default" / "Bias" / "calib.json")
+    path = build_product_path(instrument_drp("Bias"), str(tmp_path), "default", "name", Product(), FakeOb())
+    assert path == (str(tmp_path / "INS" / "default" / "Bias" / "calib.json"), 0)
+
+
+@pytest.mark.xfail(reason="the product is searched by class, the DRP has the names", strict=True)
+def test_disk_file_dal_alias_of_drp(tmp_path):
+    make_file(tmp_path / "INS" / "default" / "Bias" / "calib.json", "aliased")
+    dal = DiskFileDAL(instrument_drp("Bias"), str(tmp_path))
+    assert dal.search_product("name", Product(), FakeOb()).content == "aliased"
