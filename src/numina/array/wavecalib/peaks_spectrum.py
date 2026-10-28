@@ -13,6 +13,161 @@ from numpy.polynomial import Polynomial
 from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
+# np.trapezoid en NumPy >= 2.0; np.trapz en versiones anteriores
+_trapz = getattr(np, "trapezoid", None) or np.trapz
+
+
+def fwhm_nonparametric(x, y, debugplot=0):
+    """
+    Non-parametric FWHM: distance between the half-maximum crossings
+    closest to the peak, using linear interpolation between samples.
+
+    The spectrum must be continuum-subtracted and contain a single line
+    in the given range.
+
+    If the profile does not fall below half maximum on either side
+    within the supplied range, the function returns None for the
+    corresponding half-maximum crossing.
+
+    Parameters
+    ----------
+    x, y : array_like
+        Continuum-subtracted spectrum.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed:
+        00 : no debug, no plots
+        01 : no debug, plots without pauses
+        02 : no debug, plots with pauses
+        10 : debug, no plots
+        11 : debug, plots without pauses
+        12 : debug, plots with pauses
+
+    Returns
+    -------
+    fwhm : float
+        Full width at half maximum, in the units of x.
+    x_left, x_right : float
+        Positions of the half-maximum crossings.
+
+    Raises
+    ------
+    ValueError
+        If the profile does not fall below half maximum on either side
+        within the supplied range.
+    """
+    x, y = np.asarray(x, float), np.asarray(y, float)
+    ipk = np.argmax(y)  # index of the peak sample
+    half = y[ipk] / 2.0  # half-maximum level
+
+    # Left crossing: walk away from the peak until the flux drops to <= half
+    i = ipk
+    while i > 0 and y[i] > half:
+        i -= 1
+    if y[i] > half:
+        if debugplot >= 10:
+            print("The line does not drop below half maximum on the left side; widen the range.")
+        x_left = None
+    else:
+        # Linear interpolation between samples i and i + 1
+        x_left = x[i] + (half - y[i]) * (x[i + 1] - x[i]) / (y[i + 1] - y[i])
+
+    # Right crossing: same procedure towards increasing x
+    j = ipk
+    while j < len(y) - 1 and y[j] > half:
+        j += 1
+    if y[j] > half:
+        if debugplot >= 10:
+            print("The line does not drop below half maximum on the right side; widen the range.")
+        x_right = None
+    else:
+        # Linear interpolation between samples j - 1 and j
+        x_right = x[j - 1] + (half - y[j - 1]) * (x[j] - x[j - 1]) / (y[j] - y[j - 1])
+
+    if x_left is None or x_right is None:
+        fwhm_np = None
+    else:
+        fwhm_np = x_right - x_left
+    return fwhm_np, x_left, x_right
+
+
+def line_moments(x, y, window=None, debugplot=0):
+    """
+    Flux-weighted moments of the line profile, treating the continuum-
+    subtracted flux as a probability density:
+
+        m0     = ∫ f dx                         (integrated flux)
+        mu     = ∫ x f dx / m0                  (centroid)
+        sigma² = ∫ (x - mu)² f dx / m0
+        gamma1 = ∫ (x - mu)³ f dx / (m0 sigma³) (skewness)
+        gamma2 = ∫ (x - mu)⁴ f dx / (m0 sigma⁴) - 3  (excess kurtosis)
+
+
+    When the variance is zero or negative, the standard deviation, skewness and
+    excess kurtosis are set to NaN.
+
+    Parameters
+    ----------
+    x, y : array_like
+        Spectrum; y must be continuum-subtracted.
+    window : (float, float) or None, optional
+        Integration interval in x. If None, the whole range is used.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed:
+        00 : no debug, no plots
+        01 : no debug, plots without pauses
+        02 : no debug, plots with pauses
+        10 : debug, no plots
+        11 : debug, plots without pauses
+        12 : debug, plots with pauses
+
+    Returns
+    -------
+    dict
+        Keys: 'flux', 'centroid', 'sigma', 'skewness', 'kurtosis_excess'.
+
+    Raises
+    ------
+    ValueError
+        If the integrated flux is not positive (moments are undefined).
+    """
+    x, y = np.asarray(x, float), np.asarray(y, float)
+
+    # Restrict the integration to the requested window
+    if window is not None:
+        m = (x >= window[0]) & (x <= window[1])
+        x, y = x[m], y[m]
+
+    # Zeroth moment: integrated flux
+    m0 = _trapz(y, x)
+    if m0 <= 0:
+        raise ValueError(
+            "Integrated flux is not positive; the moments are " "not defined. Check the window and the continuum."
+        )
+
+    # First moment: flux-weighted centroid
+    mu = _trapz(x * y, x) / m0
+
+    # Second central moment: standard deviation of the profile
+    var = _trapz((x - mu) ** 2 * y, x) / m0
+    if var < 0:
+        if debugplot >= 10:
+            print("WARNING: negative variance encountered in line_moments; " "setting sigma to NaN.")
+        sigma = np.nan
+    else:
+        sigma = np.sqrt(var)
+
+    # Standardized third and fourth central moments
+    if sigma > 0:
+        skew = _trapz((x - mu) ** 3 * y, x) / (m0 * sigma**3)
+        kurt = _trapz((x - mu) ** 4 * y, x) / (m0 * sigma**4) - 3.0  # excess
+    else:
+        skew = np.nan
+        kurt = np.nan
+
+    return dict(flux=m0, centroid=mu, sigma=sigma, skewness=skew, kurtosis_excess=kurt)
+
 
 def zero_monotonic_flanks(signal, peak_idx, inplace=False):
     """Set to zero the peak and its monotonically decreasing flanks.
@@ -319,6 +474,9 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
 def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, title=None, debugplot=0):
     """Refine line peaks in spectrum.
 
+    This function refines the locations of line peaks in a 1D spectrum by fitting
+    a model to each peak. The refined peak locations are returned as a 1D array of floats.
+
     Parameters
     ----------
     sx : numpy.ndarray
@@ -332,6 +490,9 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
     method : string
         "poly2" : fit to a 2nd order polynomial
         "gaussian" : fit to a Gaussian
+        "gaussian+moments" : fit to a Gaussian and compute moments. This is only
+        available when the number of peaks is 1, since the moments are computed for
+        the whole line profile.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
     title : str or None
@@ -353,16 +514,33 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
         1D array of floats with the refined peak locations, in array coordinates.
     sxpeaks : numpy.ndarray
         1D array of floats. When fitting Gaussians, this array stores the fitted line
-        widths (sigma). Otherwise, this array returns zeros.
+        widths (sigma). Otherwise, this array returns zeros. If when fitting a Gaussian
+        the fitted width is not defined, the corresponding value in this array is set to None.
+    dict_moments : list of dict
+        Computed moments of the fitted peak. Returned only when method="gaussian+moments"
+        (and the number of peaks is 1). Otherwise, this value is not returned to keep
+        the compatibility with the existing code. The list contains a dictionary with
+        the following keys: 'flux', 'centroid', 'sigma', 'skewness', 'kurtosis_excess'.
+        In addition, the dictionary contains the non-parametric FWHM and its left and right
+        crossings, with the keys: 'fwhm_np', 'fwhm_np_left', and 'fwhm_np_right'.
 
     """
 
     nmed = nwinwidth // 2
 
-    xfpeaks = np.zeros(len(ixpeaks), dtype=float)
-    sfpeaks = np.zeros(len(ixpeaks), dtype=float)
+    npeaks = len(ixpeaks)
+    if npeaks < 1:
+        raise ValueError("No peaks to refine, ixpeaks is empty")
 
-    for iline in range(len(ixpeaks)):
+    if method not in ["poly2", "gaussian", "gaussian+moments"]:
+        raise ValueError("Invalid method=" + str(method) + " value")
+    if method == "gaussian+moments" and npeaks > 1:
+        raise ValueError("method=gaussian+moments is only available when npeaks=1")
+
+    xfpeaks = np.zeros(npeaks, dtype=float)
+    sfpeaks = np.zeros(npeaks, dtype=float)
+
+    for iline in range(npeaks):
         jmax = ixpeaks[iline]
         x_fit = np.arange(-nmed, nmed + 1, dtype=float)
         # prevent possible problem when fitting a line too near to any
@@ -383,11 +561,14 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
         # order to avoid modifying the original array when normalizing
         # the data to be fitted
         y_fit = np.copy(sx[j1:j2].astype(float))
+        y_full = np.copy(sx).astype(float)
+        x_full = np.arange(len(sx), dtype=float)
         sx_peak_flux = y_fit.max()
         if sx_peak_flux != 0:
             y_fit /= sx_peak_flux  # normalize to maximum value
+            y_full /= sx_peak_flux  # normalize to maximum value
 
-        if method == "gaussian":
+        if method in ["gaussian", "gaussian+moments"]:
             # check that there are no negative or null values
             if y_fit.min() <= 0:
                 if debugplot >= 10:
@@ -395,7 +576,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
                     print("         Using poly2 method instead.")
                 final_method = "poly2"
             else:
-                final_method = "gaussian"
+                final_method = method
         else:
             final_method = method
 
@@ -410,7 +591,9 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
                     refined_peak = 0.0 + jmax
             else:
                 refined_peak = 0.0 + jmax
-        elif final_method == "gaussian":
+            fwhm_np = None
+            dict_moments = None
+        elif final_method in ["gaussian", "gaussian+moments"]:
             poly_funct = Polynomial.fit(x_fit, np.log(y_fit), 2)
             poly_funct = Polynomial.cast(poly_funct)
             coef = poly_funct.coef
@@ -420,12 +603,35 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
                 else:
                     refined_peak = 0.0 + jmax
                 if coef[2] >= 0:
+                    if debugplot >= 10:
+                        print(
+                            "WARNING: non-negative quadratic coefficient "
+                            "encountered in refine_peaks_spectrum with gaussian."
+                        )
+                        print("Setting fitted width to None.")
                     sfpeaks[iline] = None
                 else:
                     sfpeaks[iline] = np.sqrt(-1 / (2.0 * coef[2]))
+                if final_method == "gaussian+moments":
+                    # compute the moments of the fitted peak
+                    dict_moments = line_moments(x_full, y_full, debugplot=debugplot)
+                    # compute the non-parametric FWHM and its left and right crossings
+                    fwhm_np, fwhm_np_left, fwhm_np_right = fwhm_nonparametric(x_full, y_full)
+                    # add the non-parametric FWHM and its left and right crossings to the moments dictionary
+                    dict_moments["fwhm_np"] = fwhm_np
+                    dict_moments["fwhm_np_left"] = fwhm_np_left
+                    dict_moments["fwhm_np_right"] = fwhm_np_right
+                else:
+                    fwhm_np = None
+                    fwhm_np_left = None
+                    fwhm_np_right = None
             else:
                 refined_peak = 0.0 + jmax
                 sfpeaks[iline] = None
+                fwhm_np = None
+                fwhm_np_left = None
+                fwhm_np_right = None
+                dict_moments = None
         else:
             raise ValueError("Invalid method=" + str(final_method) + " value")
 
@@ -435,14 +641,9 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
             from numina.array.display.matplotlib_qt import plt
 
             fig = plt.figure()
-            set_window_geometry(geometry)
+            if geometry is not None:
+                set_window_geometry(geometry)
             ax = fig.add_subplot(111)
-            xmin = x_fit.min() - 1
-            xmax = x_fit.max() + 1
-            ymin = 0
-            ymax = y_fit.max() * 1.10
-            ax.set_xlim(xmin, xmax)
-            ax.set_ylim(ymin, ymax)
             ax.set_xlabel("index around initial integer peak")
             ax.set_ylabel("Normalized number of counts")
             default_title = "Fit to line at array index " + str(jmax) + " (method=" + final_method + ")"
@@ -451,21 +652,40 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
             else:
                 title_ = default_title
             ax.set_title(title_)
-            plt.plot(x_fit, y_fit, "bo")
-            x_plot = np.linspace(start=-nmed, stop=nmed, num=1000, dtype=float)
+            if npeaks == 1:
+                ax.plot(x_full - jmax, y_full, "+", color="gray", markersize=10, label="Original data")
+            ax.plot(x_fit, y_fit, "bo", label="Data to fit")
+            xmin, xmax = ax.get_xlim()
+            x_plot = np.linspace(start=xmin, stop=xmax, num=1000, dtype=float)
             if final_method == "poly2":
                 y_plot = poly_funct(x_plot)
-            elif final_method == "gaussian":
+            elif final_method in ["gaussian", "gaussian+moments"]:
                 amp = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2]))
                 x0 = -coef[1] / (2.0 * coef[2])
                 sigma = np.sqrt(-1 / (2.0 * coef[2]))
                 y_plot = amp * np.exp(-((x_plot - x0) ** 2) / (2 * sigma**2))
             else:
                 raise ValueError("Invalid method=" + str(final_method) + " value")
-            ax.plot(x_plot, y_plot, color="red")
+            ax.plot(x_plot, y_plot, color="red", label="Fitted curve")
+            if final_method in ["gaussian", "gaussian+moments"]:
+                ax.axvline(x=x0, color="green", linestyle="--", label="Refined peak")
+                ax.axvline(x=x0 - 2.355 * sigma / 2, color="orange", linestyle="--", label="Fitted FWHM")
+                ax.axvline(x=x0 + 2.355 * sigma / 2, color="orange", linestyle="--")
+                if fwhm_np_left is not None:
+                    ax.axvline(x=fwhm_np_left - jmax, color="cyan", linestyle="--", label="non-parametric FWHM")
+                if fwhm_np_right is not None:
+                    ax.axvline(x=fwhm_np_right - jmax, color="cyan", linestyle="--")
+            ax.legend()
+            ymin, ymax = ax.get_ylim()
+            if ymin > 0:
+                ymin = 0
+            ax.set_ylim(ymin, ymax)
             print("Refined peak location:", refined_peak)
             plt.show(block=False)
             plt.pause(0.001)
             pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
-    return xfpeaks, sfpeaks
+    if method == "gaussian+moments":
+        return xfpeaks, sfpeaks, dict_moments
+    else:
+        return xfpeaks, sfpeaks
