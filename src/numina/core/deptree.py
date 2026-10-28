@@ -7,6 +7,20 @@
 # License-Filename: LICENSE.txt
 #
 
+"""Dependency trees
+
+.. deprecated:: 0.41
+   This module is not used by numina and will be removed in 0.42.
+"""
+
+import warnings
+
+warnings.warn(
+    "numina.core.deptree is deprecated, it is not used by numina and will be removed in 0.42",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
 
 class DepLink:
     """
