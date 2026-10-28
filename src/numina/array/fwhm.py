@@ -36,24 +36,23 @@ def compute_fwhm_2d_simple(img, xc, yc):
 
 def compute_fwhm_2d_spline(img, xc, yc):
 
-    Y = np.arange(0.0, img.shape[1], 1.0)
-    X = np.arange(0.0, img.shape[0], 1.0)
+    X = np.arange(0.0, img.shape[1], 1.0)
+    Y = np.arange(0.0, img.shape[0], 1.0)
 
     xpix = coor_to_pix_1d(xc)
     ypix = coor_to_pix_1d(yc)
     # The image is already cropped
 
-    bb = itpl.RectBivariateSpline(X, Y, img)
+    # The first axis of the spline are the rows, Y
+    bb = itpl.RectBivariateSpline(Y, X, img)
     # We assume that the peak is in the center...
-    peak = bb(xc, yc)[0, 0]
+    peak = bb(yc, xc)[0, 0]
 
-    U = X
-    V = bb.ev(U, [yc for _ in U]) - 0.5 * peak
-    fwhm_x, _codex, _msgx = compute_fwhm_1d(U, V, yc, ypix)
+    V = bb.ev([yc for _ in X], X) - 0.5 * peak
+    fwhm_x, _codex, _msgx = compute_fwhm_1d(X, V, xc, xpix)
 
-    U = Y
-    V = bb.ev([xc for _ in U], U) - 0.5 * peak
-    fwhm_y, _codey, _msgy = compute_fwhm_1d(U, V, xc, xpix)
+    V = bb.ev(Y, [xc for _ in Y]) - 0.5 * peak
+    fwhm_y, _codey, _msgy = compute_fwhm_1d(Y, V, yc, ypix)
 
     return peak, fwhm_x, fwhm_y
 

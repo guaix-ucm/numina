@@ -62,7 +62,6 @@ def test_fwhm_1d_simple():
     assert_allclose(fwhm, FWHM_G * sigma, rtol=1e-4)
 
 
-@pytest.mark.xfail(reason="the axes of the spline are swapped", strict=True)
 def test_fwhm_2d_spline():
     xcenter = 30.2
     ycenter = 20.7
