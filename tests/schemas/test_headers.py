@@ -120,16 +120,26 @@ def test_definition_validator_draft7():
         schemas.validate_schema(validator, -1)
 
 
-def test_relevant_error_any_of():
-    # The alternative that fails deepest in the instance is reported
+def test_relevant_error_one_of():
+    # best_match does not choose between alternatives with errors equally
+    # relevant, the alternative with fewer errors is reported
     schema = {
-        "anyOf": [
-            {"type": "array", "prefixItems": [{"properties": {"values": {"required": ["EXPTIME"]}}}]},
-            {"type": "array", "maxItems": 0},
-        ]
+        "type": "array",
+        "prefixItems": [
+            {"properties": {"values": {"oneOf": [{"required": ["OBSMODE", "OBSTYPE"]}, {"required": ["IMAGETYP"]}]}}}
+        ],
     }
-    with pytest.raises(schemas.SchemaValidationError, match="HDU 0: 'EXPTIME' is a required property"):
+    with pytest.raises(schemas.SchemaValidationError, match="^HDU 0: 'IMAGETYP' is a required property"):
         schemas.validate_headers(image(), schema)
+
+
+def test_relevant_error_deepest():
+    # The alternative that fails deepest in the instance is reported
+    validator = schemas.schema_validator(
+        {"oneOf": [{"required": ["a", "b"]}, {"properties": {"a": {"properties": {"c": {"type": "string"}}}}}]}
+    )
+    with pytest.raises(schemas.SchemaValidationError, match="^a/c: 1 is not of type 'string'"):
+        schemas.validate_schema(validator, {"a": {"c": 1}})
 
 
 class HeaderType(DataFrameType):
