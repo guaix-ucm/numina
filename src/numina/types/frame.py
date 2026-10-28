@@ -10,6 +10,7 @@ import warnings
 
 from astropy.io import fits
 
+import numina.schemas
 from numina.ext.gtc import DF
 from numina.frame.schema import Schema
 from .dataframe import DataFrame
@@ -43,6 +44,11 @@ class DataFrameType(DataType):
     ]
 
     tags_keys = []
+
+    #: JSON schema of the headers of the frames, converted with
+    #: :func:`numina.schemas.convert_headers`, or its validator. None,
+    #: the headers are not validated.
+    header_schema = None
 
     def __init__(self, datamodel=None):
         super().__init__(DataFrame, datamodel=datamodel)
@@ -91,12 +97,14 @@ class DataFrameType(DataType):
         return True
 
     def validate_hdulist(self, hdulist):
-        """Validate the contents of the frame, nothing by default.
+        """Validate the contents of the frame.
 
-        The types of the DRPs override this method to check the
-        headers and data of their frames.
+        The headers are validated with :attr:`header_schema`, if defined,
+        see :func:`numina.schemas.validate_headers`. The types of the DRPs
+        override this method to check the headers and data of their frames.
         """
-        pass
+        if self.header_schema is not None:
+            numina.schemas.validate_headers(hdulist, self.header_schema)
 
     def _datatype_dump(self, obj, where):
         return dump_dataframe(obj, where)

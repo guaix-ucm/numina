@@ -42,6 +42,14 @@ check-jsonschema does not read YAML files with several documents, such as
 most observation files; these are validated by numina when they are
 loaded.
 
+The headers of FITS images are validated with schemas of the DRPs. The
+headers are converted to a list of dictionaries, one for each HDU, with
+:func:`~numina.schemas.convert_headers`, and validated with
+:func:`~numina.schemas.validate_headers`. A
+:class:`~numina.types.frame.DataFrameType` with a
+:attr:`~numina.types.frame.DataFrameType.header_schema` validates the
+headers of its frames.
+
 .. automodule:: numina.schemas
    :synopsis: JSON schemas of the files read by numina
    :members:
