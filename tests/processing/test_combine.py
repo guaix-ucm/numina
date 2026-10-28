@@ -139,3 +139,23 @@ def test_crmasks_of_recipe_input():
     result = basic_processing_with_combination(rinput, [], method=mediancr)
     assert numpy.allclose(result[0].data, 2.0)
     assert mediancr.masks[0].header["UUID"] == rinput.crmasks.frame[0].header["UUID"]
+
+
+@pytest.mark.parametrize("method, value", [("mean", 3.0), ("median", 2.0)])
+@pytest.mark.parametrize("errors", [False, True])
+def test_main(tmp_path, method, value, errors):
+    from numina.processing.combine import main
+
+    names = []
+    for idx, val in enumerate([1.0, 2.0, 6.0]):
+        name = tmp_path / f"img{idx}.fits"
+        create_img(val, 0.0).writeto(name)
+        names.append(str(name))
+    output = tmp_path / "out.fits"
+    args = ["-o", str(output), "--method", method] + (["-e"] if errors else []) + names
+
+    main(args)
+
+    with fits.open(output) as hdul:
+        numpy.testing.assert_allclose(hdul[0].data, value)
+        assert len(hdul) == (3 if errors else 1)

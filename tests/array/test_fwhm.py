@@ -8,11 +8,12 @@
 #
 
 import numpy as np
+import pytest
 from numpy.testing import assert_almost_equal, assert_allclose
 from astropy.modeling.models import Gaussian2D
 
 from numina.constants import FWHM_G
-from numina.array.fwhm import compute_fwhm_2d_simple
+from numina.array.fwhm import compute_fwhm_2d_simple, compute_fwhm_2d_spline
 from numina.array.fwhm import compute_fwhm_1d_simple
 
 
@@ -59,3 +60,45 @@ def test_fwhm_1d_simple():
 
     peak, fwhm = compute_fwhm_1d_simple(Fr_ref, center, rad)
     assert_allclose(fwhm, FWHM_G * sigma, rtol=1e-4)
+
+
+@pytest.mark.xfail(reason="the axes of the spline are swapped", strict=True)
+def test_fwhm_2d_spline():
+    xcenter = 30.2
+    ycenter = 20.7
+    xsig = 6.0
+    ysig = 3.0
+    g2d_model = Gaussian2D(amplitude=1.0, x_mean=xcenter, y_mean=ycenter, x_stddev=xsig, y_stddev=ysig)
+    y, x = np.mgrid[:50, :70]
+    img = g2d_model(x, y)
+    peak, fwhmx, fwhmy = compute_fwhm_2d_spline(img, xcenter, ycenter)
+    assert_allclose(peak, 1.0, rtol=1e-3)
+    assert_allclose(fwhmx, FWHM_G * xsig, rtol=1e-2)
+    assert_allclose(fwhmy, FWHM_G * ysig, rtol=1e-2)
+
+
+def test_fwhm_1d_one_side():
+    # The profile reaches half the peak only on one side
+    yy = np.array([1.0, 0.9, 0.8, 0.4, 0.2])
+    _, fwhm = compute_fwhm_1d_simple(yy, 0)
+    assert_allclose(fwhm, 2 * (2 + 0.3 / 0.4))
+    _, fwhm = compute_fwhm_1d_simple(yy[::-1], 4)
+    assert_allclose(fwhm, 2 * (2 + 0.3 / 0.4))
+
+
+def test_fwhm_1d_failed():
+    _, fwhm = compute_fwhm_1d_simple(np.ones(5), 2)
+    assert fwhm == -99
+
+
+@pytest.mark.parametrize(
+    "yy, xc, msg",
+    [
+        (np.ones((3, 3)), 1, "must be 1-d"),
+        (np.ones(0), 0, "is empty"),
+        (np.ones(5), 7, "out of array"),
+    ],
+)
+def test_fwhm_1d_invalid(yy, xc, msg):
+    with pytest.raises(ValueError, match=msg):
+        compute_fwhm_1d_simple(yy, xc)

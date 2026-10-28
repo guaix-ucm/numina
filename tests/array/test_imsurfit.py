@@ -11,7 +11,7 @@ import pytest
 
 import numpy
 
-from numina.array.imsurfit import imsurfit
+from numina.array.imsurfit import imsurfit, vertex_of_quadratic
 
 
 def calc_ws(xx, yy):
@@ -59,3 +59,31 @@ def test_fit(order, results, steps):
     z = sum(dd)
     (results,) = imsurfit(z, order=order)
     assert numpy.allclose(results0, results)
+
+
+def test_fit_output():
+    x0 = numpy.linspace(-1.0, 1.0, 50)
+    xx, yy = numpy.meshgrid(x0, x0, indexing="ij")
+    z = 1.0 + 0.1 * xx + 12 * yy + 3.0 * xx**2 - 11.8 * xx * yy + 9.2 * yy**2
+    coeffs, fit = imsurfit(z, order=2, output_fit=True)
+    assert numpy.allclose(coeffs, [1.0, 0.1, 12, 3.0, -11.8, 9.2])
+    assert numpy.allclose(fit, z)
+
+
+def test_vertex_of_quadratic():
+    # f = 0.4 x - 0.4 y - x**2 - 2 y**2, maximum in (0.2, -0.1)
+    coeffs = [0.0, 0.4, -0.4, -1.0, 0.0, -2.0]
+    assert numpy.allclose(vertex_of_quadratic(coeffs), (0.2, -0.1))
+
+
+def test_vertex_of_quadratic_saddle():
+    with pytest.raises(ValueError, match="no maximum"):
+        vertex_of_quadratic([0.0, 0.0, 0.0, 1.0, 0.0, -1.0])
+
+
+def test_vertex_of_fitted_surface():
+    x0 = numpy.linspace(-1.0, 1.0, 21)
+    xx, yy = numpy.meshgrid(x0, x0, indexing="ij")
+    z = 5.0 - (xx - 0.3) ** 2 - 2 * (yy + 0.2) ** 2
+    (coeffs,) = imsurfit(z, order=2)
+    assert numpy.allclose(vertex_of_quadratic(coeffs), (0.3, -0.2))
