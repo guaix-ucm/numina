@@ -121,7 +121,9 @@ def test_build_product_path(tmp_path):
 
 def test_build_product_path_alias(tmp_path):
     make_file(tmp_path / "INS" / "conf" / "Alias" / "calib.json")
-    path = build_product_path(FakeDrp([Product]), str(tmp_path), "conf", "name", Product(), FakeOb(), cls=FileFinder)
+    path = build_product_path(
+        FakeDrp(["ProductName"]), str(tmp_path), "conf", "name", Product(), FakeOb(), cls=FileFinder
+    )
     assert path == str(tmp_path / "INS" / "conf" / "Alias" / "calib.json")
 
 
@@ -146,7 +148,7 @@ def test_disk_file_dal(tmp_path):
 
 def test_disk_file_dal_alias(tmp_path):
     make_file(tmp_path / "INS" / "default" / "Alias" / "calib.json", "aliased")
-    dal = DiskFileDAL(FakeDrp([Product]), str(tmp_path))
+    dal = DiskFileDAL(FakeDrp(["ProductName"]), str(tmp_path))
     assert dal.search_product("name", Product(), FakeOb()).content == "aliased"
 
 
@@ -172,14 +174,12 @@ def instrument_drp(alias):
     return InstrumentDRP("INS", {}, {}, {"default": pipeline})
 
 
-@pytest.mark.xfail(reason="the product is searched by class, the DRP has the names", strict=True)
 def test_build_product_path_alias_of_drp(tmp_path):
     make_file(tmp_path / "INS" / "default" / "Bias" / "calib.json")
     path = build_product_path(instrument_drp("Bias"), str(tmp_path), "default", "name", Product(), FakeOb())
     assert path == (str(tmp_path / "INS" / "default" / "Bias" / "calib.json"), 0)
 
 
-@pytest.mark.xfail(reason="the product is searched by class, the DRP has the names", strict=True)
 def test_disk_file_dal_alias_of_drp(tmp_path):
     make_file(tmp_path / "INS" / "default" / "Bias" / "calib.json", "aliased")
     dal = DiskFileDAL(instrument_drp("Bias"), str(tmp_path))

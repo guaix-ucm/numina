@@ -76,18 +76,26 @@ class FileFinderGTC(FileFinder):
         return super().check(directory, fname)
 
 
+def _product_label(drp, tipo, default):
+    """The directory of the products of type `tipo`
+
+    It is the alias of the product in the DRP, or `default` if
+    no mode of the DRP provides it. The products provided by the
+    DRP are indexed by the name of their type.
+    """
+    try:
+        return drp.query_provides(tipo.name()).alias
+    except ValueError:
+        return default
+
+
 def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
 
     _logger.info("search %s of type %s", name, tipo)
 
     file_finder = cls()
 
-    try:
-        # FIXME
-        res = drp.query_provides(tipo.__class__)
-        label = res.alias
-    except ValueError:
-        label = tipo.name()
+    label = _product_label(drp, tipo, tipo.name())
 
     # search results of these OBs
     # build path based in combinations of tags
@@ -121,11 +129,7 @@ class DiskFileDAL:
     def search_product(self, name, tipo, ob):
         klass = tipo.__class__
 
-        try:
-            res = self.drp.query_provides(tipo.__class__)
-            label = res.alias
-        except ValueError:
-            label = tipo.__class__.__name__
+        label = _product_label(self.drp, tipo, klass.__name__)
 
         # search results of these OBs
         # build path based in combinations of tags
