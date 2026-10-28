@@ -10,13 +10,15 @@
 
 import datetime
 import collections.abc
+import sys
 import uuid
+import warnings
 
 import numpy
 import astropy.io.fits as fits
 
 import numina.array.combine as C
-from numina.frame.schema import SchemaKeyword as Keyword
+from numina.keydef import KeyDefinition
 
 
 def _m_base(calc, img, mask, region):
@@ -53,11 +55,23 @@ class Extension:
 
 
 class _ExtractKeyword:
-    def __init__(self, keyword):
-        self.keyword = keyword
+    """The value of a keyword in each image, defined by a KeyDefinition"""
+
+    def __init__(self, keydef):
+        self.keydef = keydef
 
     def __call__(self, img, mask, region):
-        return img[0].header[self.keyword.name]
+        value = self.keydef(img)
+        if value is None:
+            raise KeyError(f"keyword {self.keydef.key!r} not found in HDU {self.keydef.ext!r}")
+        return value
+
+
+def _is_schema_keyword(value):
+    """True if `value` is a SchemaKeyword of the deprecated numina.frame.schema"""
+    # The module is not imported here, it warns when imported
+    schema = sys.modules.get("numina.frame.schema")
+    return schema is not None and isinstance(value, schema.SchemaKeyword)
 
 
 def _inspect_method(value):
@@ -70,8 +84,16 @@ def _inspect_method(value):
             raise KeyError(f"invalid method {value}, valid methods are {sorted(_method_map)}") from None
     elif isinstance(value, collections.abc.Sequence):
         return value, False
-    elif isinstance(value, Keyword):
+    elif isinstance(value, KeyDefinition):
         return _ExtractKeyword(value), True
+    elif _is_schema_keyword(value):
+        warnings.warn(
+            "passing a SchemaKeyword to combine is deprecated, it will be removed in 0.42, "
+            "use numina.keydef.KeyDefinition",
+            DeprecationWarning,
+            stacklevel=3,
+        )
+        return _ExtractKeyword(KeyDefinition(value.name)), True
     elif callable(value):
         return value, True
     else:
@@ -91,7 +113,13 @@ def combine(
     datamodel=None,
     method_name="",
 ):
-    """Combine HDUList objects using algorithm 'method'"""
+    """Combine HDUList objects using algorithm 'method'
+
+    `zeros`, `scales` and `weights` can be a sequence with a value for
+    each image, the name of a method ("mean", "median" or "mode") applied
+    to the data of each image, a :class:`~numina.keydef.KeyDefinition`
+    of a keyword of the images, or a callable ``func(img, mask, region)``.
+    """
 
     import numina.datamodel
 
@@ -191,3 +219,19 @@ def combine(
 
     result = fits.HDUList(list_of_hdu)
     return result
+
+
+def __getattr__(name):
+    if name == "Keyword":
+        warnings.warn(
+            "numina.frame.combine.Keyword is deprecated, it will be removed in 0.42, "
+            "use numina.keydef.KeyDefinition",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        with warnings.catch_warnings():
+            warnings.simplefilter("ignore", DeprecationWarning)
+            from numina.frame.schema import SchemaKeyword
+
+        return SchemaKeyword
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
