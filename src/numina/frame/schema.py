@@ -9,6 +9,11 @@
 
 """FITS header schema and validation.
 
+.. deprecated:: 0.41
+   This module will be removed in 0.42. The headers are validated with
+   JSON schemas, see :func:`numina.schemas.validate_headers`, and the
+   values of the keywords are defined with :class:`numina.keydef.KeyDefinition`.
+
 This module is a simplification of the FITS Schema defined
 by Erik Bray here:
 http://embray.github.io/PyFITS/schema/users_guide/users_schema.html
@@ -18,6 +23,15 @@ we will use it instead of ours, with schema definitions
 being the same.
 
 """
+
+import warnings
+
+warnings.warn(
+    "numina.frame.schema is deprecated and will be removed in 0.42, "
+    "use numina.schemas.validate_headers and numina.keydef.KeyDefinition",
+    DeprecationWarning,
+    stacklevel=2,
+)
 
 
 class SchemaValidationError(Exception):

@@ -1,5 +1,6 @@
 import astropy.io.fits as fits
 import numpy
+import pytest
 
 from numina.types.frame import DataFrameType
 from numina.types.dataframe import DataFrame
@@ -56,3 +57,12 @@ def test_dataframe_validate_in_memory():
     assert datatype.hdulist is hdulist
     # the frame can still be used
     assert hdulist[0].data.shape == (2, 2)
+
+
+def test_headerschema_deprecated():
+    datatype = DataFrameType()
+    with pytest.warns(DeprecationWarning, match="headerschema is deprecated"):
+        schema = datatype.headerschema
+    assert [keyword.name for keyword in schema.kwl] == ["INSTRUME", "READMODE", "EXPTIME", "NUMINAID"]
+    with pytest.warns(DeprecationWarning, match="headerschema is deprecated"):
+        datatype.headerschema = None
