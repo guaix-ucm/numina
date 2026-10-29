@@ -542,7 +542,7 @@ def main(args=None):
     parser.add_argument(
         "--nbrightlines",
         help="Tuple n1,[n2,[n3,...]] with maximum number of " "brightest lines to be used [0=all] (default=0)",
-        default=0,
+        default="0",
     )
     parser.add_argument(
         "--degree_refined",

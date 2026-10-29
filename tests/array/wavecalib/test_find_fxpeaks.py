@@ -82,8 +82,6 @@ def test_main_extra_plots(tmp_path, monkeypatch, options, extra_plots):
 
     monkeypatch.setattr(wavecalib_main, "find_fxpeaks", fake_find_fxpeaks)
     args = [str(fitsfile), "--scans", "2", "--wv_master_file", str(wv_master_file), "--degree", "1"]
-    # without --nbrightlines, main fails: its default is the integer 0
-    args += ["--nbrightlines", "0"]
     with pytest.raises(StopAfterPeaks):
         wavecalib_main.main(args + options)
     assert received["extra_plots"] is extra_plots
