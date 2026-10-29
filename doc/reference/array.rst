@@ -422,6 +422,9 @@ Once the module is created and loaded, a sample session would be:
 .. automodule:: numina.array.wavecalib.check_wlcalib
    :members:
 
+.. automodule:: numina.array.wavecalib.core
+   :members:
+
 .. automodule:: numina.array.wavecalib.crosscorrelation
    :members:
 

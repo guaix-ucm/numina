@@ -6,7 +6,7 @@ import numpy as np
 import pytest
 
 from numina.array.crmasks.all_valid_numbers import all_valid_numbers
-from numina.array.wavecalib.__main__ import wvcal_spectrum
+from numina.array.wavecalib.core import wvcal_spectrum
 from numina.array.wavecalib.resample import resample_image2d_flux, shiftx_image2d_flux
 from numina.frame.combine import _inspect_method
 

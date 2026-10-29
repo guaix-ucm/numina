@@ -8,7 +8,8 @@ import numpy as np
 import pytest
 
 import numina.array.wavecalib.__main__ as wavecalib_main
-from numina.array.wavecalib.__main__ import find_fxpeaks
+import numina.array.wavecalib.core as core
+from numina.array.wavecalib.core import find_fxpeaks
 
 CENTERS = [200, 500, 800]
 
@@ -42,7 +43,7 @@ def call_find_fxpeaks(**kwargs):
 def pauses(monkeypatch):
     """Record the calls to pause_debugplot instead of showing the figures"""
     calls = []
-    monkeypatch.setattr(wavecalib_main, "pause_debugplot", lambda **kwargs: calls.append(kwargs))
+    monkeypatch.setattr(core, "pause_debugplot", lambda **kwargs: calls.append(kwargs))
     yield calls
     plt.close("all")
 
@@ -80,7 +81,7 @@ def test_main_extra_plots(tmp_path, monkeypatch, options, extra_plots):
         received.update(kwargs)
         raise StopAfterPeaks
 
-    monkeypatch.setattr(wavecalib_main, "find_fxpeaks", fake_find_fxpeaks)
+    monkeypatch.setattr(core, "find_fxpeaks", fake_find_fxpeaks)
     args = [str(fitsfile), "--scans", "2", "--wv_master_file", str(wv_master_file), "--degree", "1"]
     with pytest.raises(StopAfterPeaks):
         wavecalib_main.main(args + options)
