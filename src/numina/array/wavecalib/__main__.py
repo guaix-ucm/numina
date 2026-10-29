@@ -212,6 +212,7 @@ def find_fxpeaks(
     minimum_gaussian_filtering,
     plottitle=None,
     geometry=None,
+    extra_plots=False,
 ):
     """Locate line peaks in array coordinates (from 0 to naxis1-1).
 
@@ -248,6 +249,9 @@ def find_fxpeaks(
         Plot title.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the Qt backend geometry.
+    extra_plots : bool
+        If True, display the spectrum and the peaks found, and wait
+        until the window is closed.
 
     Returns
     -------
@@ -329,8 +333,8 @@ def find_fxpeaks(
         lines_found_table.add_row([i, fx + 1, sx])
     logger.info(lines_found_table)
 
-    # display median spectrum and peaks if logger level is DEBUG
-    if logger.isEnabledFor(logging.DEBUG):
+    # display median spectrum and peaks if requested
+    if extra_plots:
         xplot = np.arange(1, naxis1 + 1, dtype=float)
         ax = ximplotxy(xplot, sp, show=False, geometry=geometry, **{"label": "original spectrum"})
         ax.set_xlabel("pixel (from 1 to NAXIS1)")
@@ -576,6 +580,7 @@ def main(args=None):
         type=int,
         choices=DEBUGPLOT_CODES,
     )
+    parser.add_argument("--extra-plots", help="Display the spectrum and the peaks found in it", action="store_true")
     # Include default arguments for common actions, and initialize console and logging
     myscript = NuminaScriptDefinition(parser, argv=args)
     args = myscript.args  # noqa: F841
@@ -680,6 +685,7 @@ def main(args=None):
         minimum_gaussian_filtering=args.minimum_gauss_filt,
         plottitle=plottitle,
         geometry=geometry,
+        extra_plots=args.extra_plots,
     )
 
     # perform wavelength calibration
