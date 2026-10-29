@@ -314,8 +314,8 @@
             {
                 "code": "reportCallIssue",
                 "range": {
-                    "startColumn": 49,
-                    "endColumn": 68,
+                    "startColumn": 55,
+                    "endColumn": 74,
                     "lineCount": 1
                 }
             }
@@ -345,6 +345,14 @@
                 "code": "reportCallIssue",
                 "range": {
                     "startColumn": 14,
+                    "endColumn": 38,
+                    "lineCount": 1
+                }
+            },
+            {
+                "code": "reportCallIssue",
+                "range": {
+                    "startColumn": 14,
                     "endColumn": 48,
                     "lineCount": 1
                 }
@@ -366,16 +374,6 @@
                 "range": {
                     "startColumn": 11,
                     "endColumn": 13,
-                    "lineCount": 1
-                }
-            }
-        ],
-        "./src/numina/frame/__init__.py": [
-            {
-                "code": "reportCallIssue",
-                "range": {
-                    "startColumn": 12,
-                    "endColumn": 22,
                     "lineCount": 1
                 }
             }
