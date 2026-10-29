@@ -102,6 +102,22 @@ def test_resize_fits(tmp_path, as_path):
         assert numpy.all(hdul[0].data[region] == 1)
 
 
+def test_resize_fits_extension(tmp_path):
+    """An extension is written as the primary HDU of the file, as the BPM of pyemir"""
+    newfilename = tmp_path / "resized.fits"
+    mask = fits.HDUList([fits.ImageHDU(numpy.zeros((2, 3), dtype="int16"), name="BPM")])
+    region = (slice(1, 3), slice(2, 5))
+
+    nf.resize_fits(mask, newfilename, (4, 6), region, fill=1, conserve=False)
+
+    with fits.open(newfilename) as hdul:
+        assert len(hdul) == 1
+        assert hdul["primary"].data.shape == (4, 6)
+        assert numpy.all(hdul["primary"].data[region] == 0)
+        assert hdul["primary"].data[0, 0] == 1
+        assert hdul["primary"].header["NVALREGI"] == "[1:3,2:5]"
+
+
 def test_resize_fits_overwrite(tmp_path):
     filename = tmp_path / "image.fits"
     newfilename = tmp_path / "resized.fits"

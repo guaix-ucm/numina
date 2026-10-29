@@ -77,6 +77,10 @@ def resize_fits(
         newhdu = resize_hdu(
             hdu, newshape, region, fill=fill, window=window, scale=scale, conserve=conserve, dtype=dtype
         )
+        # The file has only this HDU, the primary, also when the first
+        # HDU of fitsfile is an extension, as in HDUList([hdul["BPM"]])
+        if not isinstance(newhdu, fits.PrimaryHDU):
+            newhdu = fits.PrimaryHDU(newhdu.data, newhdu.header)
         with warnings.catch_warnings():
             warnings.simplefilter("ignore")
             newhdu.writeto(newfilename, overwrite=overwrite)
