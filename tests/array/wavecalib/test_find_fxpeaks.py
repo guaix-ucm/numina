@@ -64,6 +64,25 @@ def test_extra_plots(pauses):
     assert plt.gcf().axes[0].get_title() == "arc"
 
 
+def test_no_lines():
+    # a fiber without lines in the arc calibration of MEGARA
+    rng = np.random.default_rng(1)
+    sp = rng.normal(100.0, 5.0, 1000)
+    fxpeaks, sxpeaks = find_fxpeaks(
+        sp,
+        times_sigma_threshold=10,
+        minimum_threshold=0,
+        nwinwidth_initial=7,
+        nwinwidth_refined=5,
+        npix_avoid_border=6,
+        nbrightlines=[0],
+        sigma_gaussian_filtering=0,
+        minimum_gaussian_filtering=0,
+    )
+    assert len(fxpeaks) == 0
+    assert len(sxpeaks) == 0
+
+
 class StopAfterPeaks(Exception):
     pass
 

@@ -529,12 +529,10 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
     nmed = nwinwidth // 2
 
     npeaks = len(ixpeaks)
-    if npeaks < 1:
-        raise ValueError("No peaks to refine, ixpeaks is empty")
 
     if method not in ["poly2", "gaussian", "gaussian+moments"]:
         raise ValueError("Invalid method=" + str(method) + " value")
-    if method == "gaussian+moments" and npeaks > 1:
+    if method == "gaussian+moments" and npeaks != 1:
         raise ValueError("method=gaussian+moments is only available when npeaks=1")
 
     xfpeaks = np.zeros(npeaks, dtype=float)
