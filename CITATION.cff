@@ -13,7 +13,7 @@ authors:
   family-names: Cardiel
   given-names: Nicolás
   orcid: 'https://orcid.org/0000-0002-9334-2979'
-date-released: '2026-10-29'
+date-released: '2026-10-30'
 doi: 10.5281/zenodo.593638
 identifiers:
 - type: doi
@@ -27,4 +27,4 @@ keywords:
 - EMIR
 - GTC
 license: GPL-3.0-or-later
-version: 0.41.0
+version: 0.41.1
