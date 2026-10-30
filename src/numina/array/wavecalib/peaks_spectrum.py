@@ -471,7 +471,9 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     return ixpeaks
 
 
-def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, title=None, debugplot=0):
+def refine_peaks_spectrum(
+    sx, ixpeaks, nwinwidth, method=None, geometry=None, title=None, debugplot=0, ax_external=None
+):
     """Refine line peaks in spectrum.
 
     This function refines the locations of line peaks in a 1D spectrum by fitting
@@ -507,6 +509,16 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
         10 : debug, no plots
         11 : debug, plots without pauses
         12 : debug, plots with pauses
+    ax_external : list of matplotlib.axes.Axes or None
+        If not None, the plots will be drawn on these axes objects.
+        This is useful when the function is called from another function
+        that already has a figure and axes objects, and wants to draw
+        the plots on those axes objects instead of creating a new figure.
+        This option must only be used when the number of peaks is equal to
+        the number of axes objects in ax_external. Otherwise, an error
+        will be raised. The value of debugplot will only determine the
+        behavior of the debug messages, and the plots will always be drawn
+        on the provided axes objects.
 
     Returns
     -------
@@ -531,6 +543,14 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
     npeaks = len(ixpeaks)
     if npeaks < 1:
         raise ValueError("No peaks to refine, ixpeaks is empty")
+
+    if ax_external is not None:
+        ax_external = np.ravel(ax_external)  # flatten the array of axes objects
+        if len(ax_external) != npeaks:
+            raise ValueError(
+                "The number of axes objects in ax_external must be equal to the number of peaks. "
+                f"len(ax_external)={len(ax_external)}, npeaks={npeaks}"
+            )
 
     if method not in ["poly2", "gaussian", "gaussian+moments"]:
         raise ValueError("Invalid method=" + str(method) + " value")
@@ -592,6 +612,8 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
             else:
                 refined_peak = 0.0 + jmax
             fwhm_np = None
+            fwhm_np_left = None
+            fwhm_np_right = None
             dict_moments = None
         elif final_method in ["gaussian", "gaussian+moments"]:
             poly_funct = Polynomial.fit(x_fit, np.log(y_fit), 2)
@@ -637,13 +659,21 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
 
         xfpeaks[iline] = refined_peak
 
-        if debugplot % 10 != 0:
-            from numina.array.display.matplotlib_qt import plt
+        if ax_external is None:
+            debugplot_effective = debugplot
+        else:
+            debugplot_effective = 1
+        if debugplot_effective % 10 != 0:
+            if ax_external is None:
+                from numina.array.display.matplotlib_qt import plt
 
-            fig = plt.figure()
-            if geometry is not None:
-                set_window_geometry(geometry)
-            ax = fig.add_subplot(111)
+                fig = plt.figure()
+                if geometry is not None:
+                    set_window_geometry(geometry)
+                ax = fig.add_subplot(111)
+            else:
+                ax = ax_external[iline]
+
             ax.set_xlabel("index around initial integer peak")
             ax.set_ylabel("Normalized number of counts")
             default_title = "Fit to line at array index " + str(jmax) + " (method=" + final_method + ")"
@@ -659,31 +689,39 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method=None, geometry=None, ti
             x_plot = np.linspace(start=xmin, stop=xmax, num=1000, dtype=float)
             if final_method == "poly2":
                 y_plot = poly_funct(x_plot)
+                ax.plot(x_plot, y_plot, color="red", label="Fitted curve")
             elif final_method in ["gaussian", "gaussian+moments"]:
-                amp = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2]))
-                x0 = -coef[1] / (2.0 * coef[2])
-                sigma = np.sqrt(-1 / (2.0 * coef[2]))
-                y_plot = amp * np.exp(-((x_plot - x0) ** 2) / (2 * sigma**2))
-            else:
-                raise ValueError("Invalid method=" + str(final_method) + " value")
-            ax.plot(x_plot, y_plot, color="red", label="Fitted curve")
-            if final_method in ["gaussian", "gaussian+moments"]:
-                ax.axvline(x=x0, color="green", linestyle="--", label="Refined peak")
-                ax.axvline(x=x0 - 2.355 * sigma / 2, color="orange", linestyle="--", label="Fitted FWHM")
-                ax.axvline(x=x0 + 2.355 * sigma / 2, color="orange", linestyle="--")
+                # The Gaussian is only defined when the parabola fitted to
+                # log(y) is concave (coef[2] < 0); otherwise amp, x0 and
+                # sigma would be undefined (division by zero or sqrt of a
+                # negative number)
+                if len(coef) == 3 and coef[2] < 0:
+                    amp = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2]))
+                    x0 = -coef[1] / (2.0 * coef[2])
+                    sigma = np.sqrt(-1 / (2.0 * coef[2]))
+                    y_plot = amp * np.exp(-((x_plot - x0) ** 2) / (2 * sigma**2))
+                    ax.plot(x_plot, y_plot, color="red", label="Fitted curve")
+                    ax.axvline(x=x0 - 2.355 * sigma / 2, color="orange", linestyle="--", label="Fitted FWHM")
+                    ax.axvline(x=x0 + 2.355 * sigma / 2, color="orange", linestyle="--")
+                # refined_peak is always defined (it falls back to jmax)
+                ax.axvline(x=refined_peak - jmax, color="green", linestyle="--", label="Refined peak")
                 if fwhm_np_left is not None:
                     ax.axvline(x=fwhm_np_left - jmax, color="cyan", linestyle="--", label="non-parametric FWHM")
                 if fwhm_np_right is not None:
                     ax.axvline(x=fwhm_np_right - jmax, color="cyan", linestyle="--")
+            else:
+                raise ValueError("Invalid method=" + str(final_method) + " value")
             ax.legend()
             ymin, ymax = ax.get_ylim()
             if ymin > 0:
                 ymin = 0
             ax.set_ylim(ymin, ymax)
-            print("Refined peak location:", refined_peak)
-            plt.show(block=False)
-            plt.pause(0.001)
-            pause_debugplot(debugplot, pltshow=True, tight_layout=True)
+            if ax_external is None:
+                if debugplot >= 10:
+                    print("Refined peak location:", refined_peak)
+                plt.show(block=False)
+                plt.pause(0.001)
+                pause_debugplot(debugplot, pltshow=True, tight_layout=True, fig=fig)
 
     if method == "gaussian+moments":
         return xfpeaks, sfpeaks, dict_moments

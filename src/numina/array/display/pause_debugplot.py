@@ -12,7 +12,7 @@ import sys
 DEBUGPLOT_CODES = (0, -1, 1, -2, 2, -10, 10, -11, 11, -12, 12, -21, 21, -22, 22)
 
 
-def pause_debugplot(debugplot, optional_prompt=None, pltshow=False, tight_layout=True):
+def pause_debugplot(debugplot, optional_prompt=None, pltshow=False, tight_layout=True, fig=None):
     """Ask the user to press RETURN to continue after plotting.
 
     Parameters
@@ -37,6 +37,8 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False, tight_layout
     tight_layout : bool
         If True, and pltshow=True, a call to plt.tight_layout() is
         also performed.
+    fig : matplotlib.figure.Figure
+        If not None, the figure to be closed when debugplot is negative.
 
     """
     from numina.array.display.matplotlib_qt import plt
@@ -76,4 +78,7 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False, tight_layout
             cdummy = sys.stdin.readline().strip()  # noqa: F841
 
     if debugplot_ in [1, 2, 11, 12, 21, 22] and pltclose:
-        plt.close()
+        if fig is not None:
+            plt.close(fig)
+        else:
+            plt.close()
