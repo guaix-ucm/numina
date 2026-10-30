@@ -25,6 +25,34 @@ from .query import Ignore
 
 
 class EntryHolder:
+    """Descriptor that holds a typed value of a recipe input or result.
+
+    The values are stored in the ``_numina_desc_val`` dictionary of the
+    instance, under the key ``dest``.
+
+    Parameters
+    ----------
+    tipo : DataType, type or None
+        Type of the entry. ``None`` gives a ``NullType``; ``bool``, ``str``,
+        ``int``, ``float``, ``complex`` and ``list`` give a ``PlainPythonType``;
+        other classes are instantiated without arguments; other objects are
+        used as they are.
+    description : str
+        Description of the entry.
+    destination : str or None
+        Name of the field. If ``None``, the name of the attribute is used.
+    optional : bool
+        If ``True``, the entry can be undefined.
+    default
+        Default value of the entry.
+    choices : list, optional
+        The possible values of the entry.
+    validation : bool, optional
+        If ``False``, the values are not validated.
+    alias : str, optional
+        Alternative name of the field.
+    """
+
     def __init__(self, tipo, description, destination, optional, default, choices=None, validation=True, alias=None):
 
         super().__init__()
@@ -85,6 +113,7 @@ class EntryHolder:
         instance._numina_desc_val[self.dest] = cval
 
     def convert(self, val):
+        """Convert `val` with the type of the entry."""
         return self.type.convert(val)
 
     def validate(self, val):
@@ -103,6 +132,16 @@ class EntryHolder:
         return True
 
     def default_value(self):
+        """Return the default value of the entry.
+
+        The converted ``default`` if defined, otherwise the internal default
+        of the type if defined, otherwise ``None`` if the entry is optional.
+
+        Raises
+        ------
+        ValueError
+            If there is no default value and the entry is not optional.
+        """
         if self.default is not None:
             return self.convert(self.default)
         if self.type.internal_default is not None:
@@ -116,7 +155,26 @@ class EntryHolder:
 
 
 class Result(EntryHolder):
-    """Result holder for RecipeResult."""
+    """Result holder for RecipeResult.
+
+    Parameters
+    ----------
+    ptype : DataType or type
+        Type of the result.
+    description : str, optional
+        Description of the result.
+    validation : bool, optional
+        If ``False``, the values are not validated.
+    destination : str, optional
+        Name of the field in the RecipeResult object. If ``None``, the name
+        of the attribute is used.
+    optional : bool, optional
+        If ``True``, the result can be undefined.
+    default : optional
+        Default value of the result.
+    choices : list, optional
+        The possible values of the result.
+    """
 
     def __init__(
         self, ptype, description="", validation=True, destination=None, optional=False, default=None, choices=None
@@ -138,6 +196,7 @@ class Result(EntryHolder):
         return f"Result(type={self.type!r}, dest={self.dest!r})"
 
     def convert(self, val):
+        """Convert `val` with the output conversion of the type."""
         return self.type.convert_out(val)
 
 
@@ -235,6 +294,11 @@ class Requirement(EntryHolder):
     choices : list of values, optional
         The possible values of the inputs. Any other value will raise
         an exception
+    validation : bool, optional
+        If ``False``, the values are not validated.
+    query_opts : optional
+        Options of the search of the value, for example
+        :class:`~numina.core.query.ResultOf` or :class:`~numina.core.query.Ignore`.
     alias : str, optional
         Alternative name of the field in the RecipeInput object.
 
@@ -295,9 +359,11 @@ class Requirement(EntryHolder):
         self.hidden = False
 
     def convert(self, val):
+        """Convert `val` with the input conversion of the type."""
         return self.type.convert_in(val)
 
     def query_options(self, options=None):
+        """Return `options` if given, otherwise the query options of the requirement."""
 
         if options:
             effective_options = options
@@ -306,6 +372,7 @@ class Requirement(EntryHolder):
         return effective_options
 
     def _check_dest_is_set(self):
+        """Raise ValueError if the destination is not set."""
         if self.dest is None:
             raise ValueError(
                 "destination value is not set, " "use the constructor to set destination='value' " "explicitly"
@@ -446,10 +513,12 @@ class Requirement(EntryHolder):
             return self.type.query_constraints()
 
     def tag_names(self):
+        """Return the names of the tags of the type of the requirement."""
         return self.type.tag_names()
 
 
 def _process_nelem(nlem):
+    """Return whether `nlem` declares a list, and its (min, max) number of elements."""
     if nlem is None:
         return False, (None, None)
     if isinstance(nlem, int):
@@ -464,6 +533,12 @@ def _process_nelem(nlem):
 
 
 def _recursive_type(value, nmin=None, nmax=None, accept_scalar=True):
+    """Return the type inferred from the default value of a parameter.
+
+    Lists and tuples give a ``ListOfType`` of the type of their first element
+    (``AnyType`` if empty), dicts and scalars give a ``PlainPythonType``,
+    other objects are returned as they are.
+    """
     if isinstance(value, (list, tuple)):
         # Continue with contents of list
         if len(value) == 0:
@@ -502,6 +577,8 @@ class Parameter(Requirement):
     choices: list of  plain python type, optional
         The possible values of the inputs. Any other value will raise
         an exception
+    validation: bool, optional
+        If ``False``, the values are not validated.
     validator: callable, optional
         A custom validator for inputs
     accept_scalar: bool, optional

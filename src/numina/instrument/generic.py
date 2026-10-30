@@ -44,6 +44,11 @@ class ComponentGeneric(DeviceBase):
         properties=None,
         setup=None,
     ) -> "Self":
+        """Create the device named ``comp_id`` as an instance of a new subclass with ``properties``.
+
+        The subclass, named after the class and ``name``, is built with ``make_component_class``.
+        ``setup`` is ignored.
+        """
         class_name = "{base_name}_{name}".format(base_name=cls.__name__, name=name)
         ncls = make_component_class(class_name, cls, properties=properties)
         obj = ncls.__new__(ncls)
@@ -51,6 +56,7 @@ class ComponentGeneric(DeviceBase):
         return obj
 
     def get_value(self, path: str, **state):
+        """Return the value of the property at ``path``, with its device configured temporarily with ``state``."""
         device_path, prop_name = self.split_path(path)
 
         dev = self.get_device_seq(device_path)
@@ -62,6 +68,7 @@ class ComponentGeneric(DeviceBase):
         return value
 
     def configure_me_with_header(self, hdr):
+        """Set the properties mapped to header keywords with their values in ``hdr``, unless they are None."""
         for el, key in self._mappings.items():
             val = key.get_value(hdr)
             if val is not None:
@@ -76,10 +83,13 @@ class ComponentGeneric(DeviceBase):
         return my_deps
 
     def get_property_names(self):
+        """Return the names of the configurable properties."""
         return self._property_configurable
 
 
 class InstrumentGeneric(ComponentGeneric):
+    """Instrument assembled from a configuration, the same as ``ComponentGeneric``."""
+
     pass
 
 
@@ -91,6 +101,11 @@ def make_component_class(
     baseclass: Type[ComponentGeneric],
     properties: "dict[str, PropertyBase] | None" = None,
 ) -> Type[ComponentGeneric]:
+    """Create a subclass of ``baseclass`` named ``name``, with the property descriptors ``properties``.
+
+    The properties are set as class attributes, and their names are recorded as read-only or
+    configurable. Their header keyword definitions, if any, are recorded in ``_mappings``.
+    """
     # Inject properties as descriptors in the class instance
     cls = type(name, (baseclass,), {})
 

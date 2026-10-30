@@ -18,6 +18,13 @@ _logger = logging.getLogger(__name__)
 
 
 def mode_run_common(args, extra_args, config, mode):
+    """Run the reduction in mode ``obs`` (observing blocks) or ``rec`` (recipe, not implemented).
+
+    Raises
+    ------
+    ValueError
+        If ``mode`` is not ``obs`` or ``rec``.
+    """
     # FIXME: implement 'recipe' run mode
     if mode == "rec":
         print("Mode not implemented yet")

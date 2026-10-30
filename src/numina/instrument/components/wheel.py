@@ -35,6 +35,10 @@ class Carrousel(HWDevice):
         Name of the device.
     capacity : int
         Number of positions.
+    origin : ElementOrigin, optional
+        Origin of the configuration of the device.
+    parent : DeviceBase, optional
+        Parent device.
     """
 
     def __init__(

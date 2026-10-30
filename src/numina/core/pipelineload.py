@@ -177,6 +177,7 @@ def load_mode_validator(obs_mode, node):
 
 
 def load_pipelines(instrument, node):
+    """Load the pipelines of `instrument`, by name. The pipeline ``default`` is required."""
     keys = ["default"]
     check_section(node, "pipelines", keys=keys)
 
@@ -187,6 +188,18 @@ def load_pipelines(instrument, node):
 
 
 def load_confs(package, node):
+    """Load the instrument configurations, by file name.
+
+    They are read from the module in the key ``path`` of `node`, by default
+    ``<package>.instrument.configs``.
+
+    Returns
+    -------
+    confs : dict
+        The contents of the configuration files, by file name.
+    modpath : str
+        The module from which the configurations were read.
+    """
     import numina.instrument.assembly as asbl
 
     keys = []
@@ -203,6 +216,7 @@ def load_confs(package, node):
 
 
 def load_pipeline(instrument, name, node):
+    """Build the ``Pipeline`` `name` of `instrument` from its node."""
 
     keys = ["recipes", "version"]
     check_section(node, "pipeline", keys=keys)
@@ -221,6 +235,12 @@ def load_pipeline(instrument, name, node):
 
 
 def load_recipe(name, node):
+    """Return the description of a recipe (or product) as a dict with key ``class``.
+
+    `node` is the name of the class, or a dict with the key ``class`` and
+    optionally ``args``, ``kwargs``, ``links`` and ``state``. The ``links``
+    are converted to ``ResultOf`` queries. A dict `node` is modified in place.
+    """
 
     recipe = {"class": ""}
 
@@ -251,6 +271,7 @@ def load_link(node):
 
 
 def load_base(name, node):
+    """Load the descriptions of the classes in `node`, by key, with ``load_recipe``."""
 
     # keys = ['recipes', 'version']
     # check_section(node, 'pipeline', keys=keys)
@@ -262,6 +283,10 @@ def load_base(name, node):
 
 
 def load_prods(node, allmodes):
+    """Build the ``ProductEntry`` objects of the products provided by the modes.
+
+    The entries whose mode is not in `allmodes` are ignored.
+    """
     result = []
     for entry in node:
         name = entry["name"]
@@ -280,6 +305,20 @@ def load_prods(node, allmodes):
 
 
 def load_instrument(package, node, confclass=None, default_requirements=None):
+    """Build the ``InstrumentDRP`` from the contents of its ``drp.yaml``.
+
+    Parameters
+    ----------
+    package : str
+        The package of the DRP.
+    node : dict
+        The contents of ``drp.yaml``.
+    confclass : optional
+        Object whose method ``mode_loader`` transforms the node of each
+        observing mode before loading it.
+    default_requirements : dict, optional
+        Default values of the requirements, by profile, pipeline and mode.
+    """
     # Verify keys...
     keys = ["name", "configurations", "modes", "pipelines"]
     check_section(node, "root", keys=keys)

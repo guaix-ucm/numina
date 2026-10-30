@@ -78,6 +78,7 @@ class DataModel:
         self.extractor = self.extractor_map["fits"]
 
     def default_mappings(self):
+        """Return the default definitions of the values, by name, as accepted by ``FITSKeyExtractor``."""
         return {
             "instrument": "INSTRUME",
             "object": "OBJECT",
@@ -174,6 +175,7 @@ class DataModel:
         return values
 
     def gather_info_oresult(self, ob):
+        """Return the summary of information of each image of the observation result `ob`."""
         return [self.gather_info(f) for f in ob.images]
 
     def get_quality_control(self, img):

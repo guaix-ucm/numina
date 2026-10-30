@@ -39,11 +39,13 @@ except ImportError:
 
 
 def ignore_gtc_check(value=True):
+    """Make ``check_gtc`` return False if `value` is True."""
     global _ignore_gtc_check
     _ignore_gtc_check = value
 
 
 def check_gtc():
+    """Return True if running in GTC (the module ``DF`` is available), unless the check is ignored."""
     if _ignore_gtc_check:
         return False
     else:

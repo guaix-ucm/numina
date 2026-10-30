@@ -11,11 +11,15 @@ from .wheel import Wheel
 
 
 class Stop:
+    """Object in the closed position of a ``Shutter``."""
+
     def __init__(self, name):
         self.name = name
 
 
 class Open:
+    """Object in the open position of a ``Shutter``."""
+
     def __init__(self, name):
         self.name = name
 
@@ -30,6 +34,18 @@ class Shutter(Wheel):
         self.move_to(1)  # Open by default
 
     def configure_(self, value):
+        """Move the shutter to the position given by ``value``.
+
+        ``value`` is ``"open"`` or ``"closed"``, in any case, or the index of the
+        position, 1 for open and 0 for closed.
+
+        Raises
+        ------
+        ValueError
+            If ``value`` is a string other than ``"open"`` or ``"closed"``.
+        TypeError
+            If ``value`` is neither a string nor an integer.
+        """
         # Let's see what is value:
         # a string
         if isinstance(value, str):
@@ -49,7 +65,9 @@ class Shutter(Wheel):
         self.move_to(val)
 
     def open(self):
+        """Move the shutter to the open position."""
         self.move_to(1)
 
     def close(self):
+        """Move the shutter to the closed position."""
         self.move_to(0)

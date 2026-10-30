@@ -13,7 +13,15 @@ import json
 
 
 class RunCounter:
-    """Run number counter"""
+    """Run number counter
+
+    Parameters
+    ----------
+    template : str
+        Template of the file names, with a ``%`` format for the run number.
+    last : int, optional
+        Next run number.
+    """
 
     def __init__(self, template, last=1):
         self.template = template
@@ -27,7 +35,18 @@ class RunCounter:
 
 
 class PersistentRunCounter(RunCounter):
-    """Persistent run number counter"""
+    """Persistent run number counter
+
+    Parameters
+    ----------
+    template : str
+        Template of the file names, with a ``%`` format for the run number.
+    last : int, optional
+        Next run number, used if the file ``pstore`` does not exist.
+    pstore : str, optional
+        JSON file with the next run number. It is created if it does not exist,
+        and updated when leaving a ``with`` block.
+    """
 
     def __init__(
         self,
@@ -62,6 +81,7 @@ class PersistentRunCounter(RunCounter):
         return self
 
     def __exit__(self, exc_type, exc_val, exc_tb):
+        """Store the next run number in the file ``pstore``."""
         self.store()
 
 

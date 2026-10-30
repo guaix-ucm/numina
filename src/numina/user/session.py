@@ -69,6 +69,7 @@ class Session:
         self.datamanager = create_datamanager(self.config, reqfile, profile_path_extra=profile_path)
 
     def _path(self, name):
+        """Return the path of ``name`` relative to the base directory."""
         return os.path.join(self.basedir, name)
 
     @property
@@ -129,6 +130,13 @@ class Session:
         return self._require_registry().set_priority(product, priority)
 
     def _require_registry(self):
+        """Return the registry of reductions.
+
+        Raises
+        ------
+        ValueError
+            If the session has no registry.
+        """
         if self.registry is None:
             raise ValueError("the session has no registry of reductions, use Session(db=...)")
         return self.registry

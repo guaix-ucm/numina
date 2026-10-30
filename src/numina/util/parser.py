@@ -12,6 +12,10 @@ import ast
 
 
 def split_type_name(name):
+    """Split ``"name(args)"`` in the name and the text of the arguments.
+
+    If there are no parentheses, the arguments are an empty string.
+    """
     fp = name.find("(")
     sp = name.find(")")
     if (fp == -1) or (sp == -1) or (sp < fp):

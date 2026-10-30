@@ -64,6 +64,12 @@ def load(fd):
 
 
 def loads(data):
+    """Build a structured object from the dictionary `data`.
+
+    If `data` has the key ``type_fqn``, an object of the class with that
+    fully qualified name is created and its state is set from `data`.
+    Otherwise, `data` is returned.
+    """
     # FIXME: duplicated
     if "type_fqn" in data:
         type_fqn = data["type_fqn"]
@@ -82,6 +88,8 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
 
     instrument: str
         Instrument name
+    datamodel : DataModel or class, optional
+        Data model of the instrument, see ``DataTypeBase``.
 
     Attributes
     ----------
@@ -106,13 +114,16 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
 
     @property
     def calibid(self):
+        """Identifier of the calibration, ``uuid:`` followed by its UUID."""
         return f"uuid:{self.uuid}"
 
     @property
     def default(self):
+        """Default value, always None."""
         return None
 
     def __getstate__(self):
+        """Return the state written to the JSON file, with the name and the fully qualified name of the type."""
 
         st = super().__getstate__()
 
@@ -125,6 +136,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
         return st
 
     def __setstate__(self, state):
+        """Restore the object, setting each key of `state` except ``contents`` and ``quality_control`` as attribute."""
         super().__setstate__(state)
         # self.add_dialect_info('gtc', DF.TYPE_STRUCT)
 
@@ -145,10 +157,12 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
             return f"{sclass}()"
 
     def writeto(self, name):
+        """Write the object to the JSON file `name`."""
         return writeto(self, name)
 
     @classmethod
     def _datatype_dump(cls, obj, where):
+        """Write `obj` to the JSON file `where` plus ``.json``, return the name of the file."""
 
         filename = where + ".json"
         writeto(obj, filename)
@@ -156,6 +170,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
 
     @classmethod
     def _datatype_load(cls, obj):
+        """Load an object of this class from the JSON file `obj`."""
         try:
             with builtins.open(obj, "r") as fd:
                 state = json.load(fd)
@@ -168,6 +183,7 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
 
     @staticmethod
     def create_meta_info():
+        """Return the initial metadata, with unknown mode, instrument and recipe."""
         meta_info = {}
         meta_info["mode_name"] = "unknown"
         meta_info["instrument_name"] = "unknown"
@@ -240,10 +256,12 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
 
     @property
     def meta(self):
+        """Metadata of the object, updated with ``update_meta_info``."""
         self._base_info = self.update_meta_info()
         return self._base_info
 
     def update_metadata(self, recipe):
+        """Store the observing mode, the instrument, and the name and version of `recipe` in the metadata."""
         try:
             self.meta_info["mode_name"] = recipe.mode.key
         except AttributeError:
@@ -254,6 +272,11 @@ class BaseStructuredCalibration(numina.types.product.DataProductMixin, numina.ty
         self.meta_info["recipe_version"] = recipe.__version__
 
     def update_metadata_origin(self, obresult_meta):
+        """Store the origin of the data in the metadata, from the metadata of the observation result.
+
+        The origin holds the UUIDs of the observing block and of the
+        instrument configuration, the observation date and the frames.
+        """
         origin = self.meta_info["origin"]
         origin["block_uuid"] = obresult_meta["block_uuid"]
         origin["insconf_uuid"] = obresult_meta["insconf_uuid"]

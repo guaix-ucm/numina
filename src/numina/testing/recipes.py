@@ -25,18 +25,26 @@ warnings.warn(
 
 
 class MasterBias(prod.DataProductMixin, frame.DataFrameType):
+    """Master bias product for testing."""
+
     pass
 
 
 class MasterDark(prod.DataProductMixin, frame.DataFrameType):
+    """Master dark product for testing."""
+
     pass
 
 
 class ImageTest(frame.DataFrameType):
+    """Image type for testing."""
+
     pass
 
 
 class BiasRecipe(numina.core.BaseRecipe):
+    """Recipe for testing that produces a master bias."""
+
     master_bias = numina.core.Result(MasterBias)
 
     def __init__(self, *args, **kwds):
@@ -45,10 +53,14 @@ class BiasRecipe(numina.core.BaseRecipe):
 
 
 class DarkRecipe(numina.core.BaseRecipe):
+    """Recipe for testing that produces a master dark."""
+
     master_dark = numina.core.Result(MasterDark)
 
 
 class ImageRecipe(numina.core.BaseRecipe):
+    """Recipe for testing that requires a master bias and a master dark."""
+
     obresult = reqs.ObservationResultRequirement()
     master_bias = numina.core.Requirement(MasterBias, "Master Bias")
     master_dark = numina.core.Requirement(MasterDark, "Master Dark")
@@ -56,6 +68,8 @@ class ImageRecipe(numina.core.BaseRecipe):
 
 
 class ImageRecipeCom(numina.core.BaseRecipe):
+    """Recipe for testing that requires a previous accumulated image and produces an image and a new accumulated one."""
+
     obresult = reqs.ObservationResultRequirement()
     accum_in = numina.core.Requirement(ImageTest, "previous accum")
     result_image = numina.core.Result(ImageTest)

@@ -15,6 +15,18 @@ from numina.datamodel import DataModel
 
 
 def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True) -> dict:
+    """Return the tags `tag_keys` of the observation result `obsres`.
+
+    The tags are read from its first frame (see ``get_sample_frame``) with
+    ``extract_tags_from_img``, the labels of `obsres` have precedence. Without
+    frames, the tags are an empty dict.
+
+    Raises
+    ------
+    ValueError
+        With `strict`, if the tags of a frame or a result of `obsres`, or of
+        its children, are different.
+    """
     sample = obsres.get_sample_frame()
     if sample is None:
         return {}
@@ -35,6 +47,11 @@ def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True
 
 
 def extract_tags_from_img(img, tag_keys, datamodel: DataModel, base=None) -> dict:
+    """Return the tags `tag_keys` of the image `img`.
+
+    The values in the dict `base` have precedence, the others are extracted
+    from `img` with the FITS extractor of `datamodel`.
+    """
 
     base = base or {}
     fits_extractor = datamodel.extractor_map["fits"]

@@ -17,7 +17,13 @@ from .dataholders import Requirement
 
 
 class ObservationResultRequirement(Requirement):
-    """The Recipe requires the result of an observation."""
+    """The Recipe requires the result of an observation.
+
+    Parameters
+    ----------
+    query_opts : optional
+        Options of the search of the observation result.
+    """
 
     def __init__(self, query_opts=None):
 

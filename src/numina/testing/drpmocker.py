@@ -16,6 +16,7 @@ import numina.drps.drpsystem
 
 
 def create_mock_entry_point(drploader, entry_name, group="numina.pipeline.1"):
+    """Return an entry point named ``entry_name`` whose ``load`` returns ``drploader``."""
 
     value = f"{entry_name}.loader"
 
@@ -28,7 +29,16 @@ def create_mock_entry_point(drploader, entry_name, group="numina.pipeline.1"):
 
 
 class DRPMocker:
-    """Mocks the DRP loading process for testing."""
+    """Mocks the DRP loading process for testing.
+
+    The entry points of the group ``numina.pipeline.1`` are replaced by the
+    DRPs added with ``add_drp``, and the cache of system DRPs is emptied.
+
+    Parameters
+    ----------
+    monkeypatch : pytest.MonkeyPatch
+        Fixture used to patch the DRP loading functions.
+    """
 
     def __init__(self, monkeypatch):
         self.monkeypatch = monkeypatch
@@ -50,6 +60,16 @@ class DRPMocker:
         self.monkeypatch.setattr(numina.drps.drpsystem, "entry_points", mock_return)
 
     def add_drp(self, name, loader):
+        """Add a mocked DRP entry point.
+
+        Parameters
+        ----------
+        name : str
+            Name of the entry point.
+        loader : callable or str
+            Function that returns the ``InstrumentDRP``, or the contents of
+            a ``drp.yaml`` file, loaded with ``drp_load_data``.
+        """
 
         if callable(loader):
             ep = create_mock_entry_point(loader, name)

@@ -214,6 +214,23 @@ def ramp_array(
 # This is not used...
 # Old code used to detect cosmic rays in the ramp
 def _ramp(data, saturation, dt, gain, ron, nsig):
+    """Compute the slope of a ramp of one pixel, splitting it at the glitches.
+
+    Samples at or above ``saturation`` are removed. The slope of each interval
+    between glitches with at least two samples is computed with ``_slope``,
+    and the slopes are averaged with inverse variance weights.
+
+    Returns
+    -------
+    average : float
+        Weighted average of the slopes.
+    variance : float
+        Variance of the average.
+    npix : int
+        Number of samples used.
+    glitches : list of int
+        Indices of the samples after each glitch.
+    """
     nsdata = data[data < saturation]
 
     # Finding glitches in the pixels
@@ -228,6 +245,15 @@ def _ramp(data, saturation, dt, gain, ron, nsig):
 
 
 def _rglitches(nsdata, gain, ron, nsig):
+    """Split a ramp in the differences that deviate more than ``nsig`` sigma from the median difference.
+
+    Returns
+    -------
+    intervals : list of slice
+        Intervals of the ramp between glitches.
+    glitches : list of int
+        Indices of the samples after each glitch.
+    """
     diffs = nsdata[1:] - nsdata[:-1]
     psmedian = numpy.median(diffs)
     sigma = math.sqrt(abs(psmedian / gain) + 2 * ron * ron)
@@ -247,6 +273,24 @@ def _rglitches(nsdata, gain, ron, nsig):
 
 
 def _slope(nsdata, dt, gain, ron):
+    """Compute the slope of a ramp by least squares.
+
+    The variance is the sum of the readout limited and the photon limited terms.
+
+    Returns
+    -------
+    slope : float
+        The slope.
+    variance : float
+        Variance of the slope.
+    nn : int
+        Number of samples.
+
+    Raises
+    ------
+    ValueError
+        If there are less than two samples.
+    """
 
     if len(nsdata) < 2:
         raise ValueError("Two points needed to compute the slope")

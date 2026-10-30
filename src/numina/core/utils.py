@@ -23,9 +23,11 @@ class AlwaysFailRecipe(BaseRecipe):
     """A Recipe that always fails."""
 
     def __init__(self, *args, **kwargs):
+        """Create the recipe, the arguments are not passed to the base class."""
         super().__init__()
 
     def run(self, requirements):
+        """Raise TypeError."""
         raise TypeError("This Recipe always fails")
 
 
@@ -33,9 +35,11 @@ class AlwaysSuccessRecipe(BaseRecipe):
     """A Recipe that always successes."""
 
     def __init__(self, *args, **kwargs):
+        """Create the recipe, the arguments are not passed to the base class."""
         super().__init__()
 
     def run(self, recipe_input):
+        """Return a result without values."""
         return self.create_result()
 
 
@@ -45,13 +49,16 @@ class OBSuccessRecipe(BaseRecipe):
     obresult = ObservationResultRequirement()
 
     def __init__(self, *args, **kwargs):
+        """Create the recipe, the arguments are not passed to the base class."""
         super().__init__()
 
     def run(self, recipe_input):
+        """Return a result without values."""
         return self.create_result()
 
 
 class Combine(BaseRecipe):
+    """Recipe that combines the images of the results of the children of an observing block."""
 
     obresult = ObservationResultRequirement()
     method = dh.Parameter("mean", "Method of combination")
@@ -60,6 +67,7 @@ class Combine(BaseRecipe):
     result = dh.Result(DataFrameType)
 
     def run(self, recipe_input):
+        """Combine the frames of the observation result with the function ``method`` of ``numina.array.combine``."""
         import numina.array.combine as c
         from numina.processing.combine import combine_frames
 
@@ -70,6 +78,7 @@ class Combine(BaseRecipe):
         return self.create_result(result=result)
 
     def build_recipe_input(self, obsres, dal):
+        """Build the input, adding to the frames of `obsres` the field ``field`` of the results of its children."""
         import numina.exceptions
 
         result = {}

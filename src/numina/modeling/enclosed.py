@@ -19,10 +19,12 @@ class EnclosedGaussian(Fittable1DModel):
 
     @staticmethod
     def evaluate(x, amplitude, stddev):
+        """Evaluate ``amplitude * (1 - exp(-0.5 * (x / stddev)**2))``."""
         return amplitude * (1 - np.exp(-0.5 * (x / stddev) ** 2))
 
     @staticmethod
     def fit_deriv(x, amplitude, stddev):
+        """Return the derivatives of the model with respect to ``amplitude`` and ``stddev``."""
         z = (x / stddev) ** 2
         t = np.exp(-0.5 * z)
         d_amplitude = -t + 1.0

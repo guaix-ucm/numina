@@ -114,6 +114,7 @@ def plan_install(zip_path, destination):
 
 
 def _crc32(path):
+    """Return the CRC-32 of the contents of the file ``path``."""
     value = 0
     with open(path, "rb") as fd:
         for block in iter(lambda: fd.read(1 << 20), b""):

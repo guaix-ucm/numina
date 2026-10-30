@@ -21,6 +21,7 @@ warnings.warn(
 
 @pytest.fixture
 def pattri_header():
+    """Return a FITS header of the test instrument PATTRI."""
     hdr = fits.Header()
     hdr["FILTER"] = "R"  # filter -> PATTRI.wheel.filter -> FILTER
     hdr["tag0"] = "tag0_A"
@@ -46,6 +47,7 @@ def pattri_header():
 
 @pytest.fixture
 def pattri_header2():
+    """Return a FITS header of the test instrument PATTRI, with all the robot arms inactive."""
     hdr = fits.Header()
     hdr["POS"] = 3
     hdr["FILTER"] = "R"
@@ -71,6 +73,7 @@ def pattri_header2():
 
 @pytest.fixture
 def pattri_header_err():
+    """Return a FITS header of the test instrument PATTRI with integer values in TAG0 and TAG1."""
     hdr = fits.Header()
     hdr["POS"] = 3
     hdr["tag1"] = 1
@@ -82,6 +85,7 @@ def pattri_header_err():
 
 @pytest.fixture
 def pattri_state():
+    """Return a dictionary with the state of the components of the test instrument PATTRI."""
     state = dict()
     state["PATTRI"] = {}
     state["PATTRI.wheel"] = {"label": "U"}

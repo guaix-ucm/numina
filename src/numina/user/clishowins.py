@@ -15,6 +15,7 @@ import numina.instrument.assembly as asbl
 
 
 def register(subparsers, config):
+    """Add the ``show-instruments`` command to the parser."""
     parser_show_ins = subparsers.add_parser("show-instruments", help="show registered instruments")
 
     parser_show_ins.set_defaults(command=show_instruments, verbose=0, what="om")
@@ -33,6 +34,7 @@ def register(subparsers, config):
 
 
 def show_instruments(args, extra_args, config):
+    """Print the instruments of the DRPs, all or those named in the command line."""
 
     sys_drps = numina.drps.get_system_drps()
     prof_store = asbl.load_panoply_store(sys_drps, args.profilepath)
@@ -51,6 +53,7 @@ def show_instruments(args, extra_args, config):
 
 
 def print_instrument(instrument, prof_store, modes=True):
+    """Print the version, profiles, datamodel, pipelines and, if ``modes``, observing modes of an instrument."""
     print("Instrument:", instrument.name)
     print(f" version is '{instrument.version}'")
     for key, val in prof_store.items():
@@ -72,4 +75,5 @@ def print_instrument(instrument, prof_store, modes=True):
 
 
 def print_no_instrument(name):
+    """Print that there is no instrument named ``name``."""
     print("No instrument named:", name)

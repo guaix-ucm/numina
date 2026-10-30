@@ -15,6 +15,7 @@ from .clirundal import mode_run_common
 
 
 def register(subparsers, config):
+    """Add the ``run-recipe`` command to the parser."""
     parser_run_recipe = subparsers.add_parser("run-recipe", help="run a recipe")
 
     parser_run_recipe.set_defaults(command=mode_run_recipe)
@@ -48,4 +49,5 @@ def register(subparsers, config):
 
 
 def mode_run_recipe(args, extra_args, config):
+    """Run a recipe directly (not implemented, prints a message), return the exit status."""
     return mode_run_common(args, extra_args, config, mode="rec")

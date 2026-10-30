@@ -16,6 +16,7 @@ M_SQRT_2_PI = math.sqrt(2 * math.pi)
 
 
 def norm_pdf_t(x):
+    """Return the probability density function of the standard normal distribution at ``x``."""
     return np.exp(-0.5 * x * x) / M_SQRT_2_PI
 
 
@@ -60,8 +61,10 @@ class GaussBox(Fittable1DModel):
 
     @staticmethod
     def evaluate(x, amplitude, mean, stddev, hpix):
+        """Evaluate the model with ``gauss_box_model``."""
         return gauss_box_model(x, amplitude, mean, stddev, hpix)
 
     @staticmethod
     def fit_deriv(x, amplitude, mean, stddev, hpix):
+        """Return the derivatives with respect to the parameters with ``gauss_box_model_deriv``."""
         return gauss_box_model_deriv(x, amplitude, mean, stddev, hpix)

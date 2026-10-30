@@ -70,6 +70,22 @@ def subarray_match(shape, ref, sshape, sref=None):
 
 
 def combine_shape(shapes, offsets):
+    """Compute the shape of the array that contains several offset arrays.
+
+    Parameters
+    ----------
+    shapes : array_like
+        Shapes of the arrays, one row per array.
+    offsets : array_like
+        Offset of the lower corner of each array, in the same order as the axes of ``shapes``.
+
+    Returns
+    -------
+    finalshape : tuple
+        Shape of the array that contains all the arrays.
+    offsetsp : numpy.ndarray
+        Offsets relative to the lower corner of the final array (the minimum offset is 0).
+    """
     # Computing final array size and new offsets
     sharr = numpy.asarray(shapes)
     offarr = numpy.asarray(offsets)
@@ -81,6 +97,28 @@ def combine_shape(shapes, offsets):
 
 
 def combine_shapes(shapes, refs, order="rc"):
+    """Compute the shape of the array that contains several arrays aligned by a reference pixel.
+
+    Parameters
+    ----------
+    shapes : array_like
+        Shapes of the arrays, one row per array.
+    refs : array_like
+        Coordinates of the reference pixel in each array. The arrays are placed
+        so that their reference pixels coincide.
+    order : {"rc", "xy"}
+        Order of the coordinates in ``refs`` (and in the returned reference pixel):
+        "rc" for row, column and "xy" for x, y.
+
+    Returns
+    -------
+    finalshape : tuple
+        Shape of the array that contains all the arrays.
+    subshapes : list of tuple of slice
+        Region of the final array covered by each array.
+    ref_final : tuple
+        Coordinates of the reference pixel in the final array, in ``order``.
+    """
 
     # Order 'rc' -> row column
     # Order 'xy' -> xy coordinates
@@ -120,6 +158,32 @@ def combine_shapes(shapes, refs, order="rc"):
 
 
 def resize_array(data, finalshape, region, window=None, scale=1, fill=0.0, conserve=True, dtype=None):
+    """Place an array in a region of a new, larger array.
+
+    Parameters
+    ----------
+    data : numpy.ndarray
+        Input array.
+    finalshape : tuple
+        Shape of the new array.
+    region : tuple of slice
+        Region of the new array where the data is copied.
+    window : tuple of slice, optional
+        If given, only ``data[window]`` is used.
+    scale : int
+        Each pixel is repeated ``scale`` times along each axis (see ``rebin_scale``).
+    fill : float
+        Value of the pixels outside ``region``.
+    conserve : bool
+        If True, divide the data by ``scale**2`` to conserve the total sum.
+    dtype : data-type, optional
+        Type of the new array, the type of ``data`` by default.
+
+    Returns
+    -------
+    numpy.ndarray
+        The new array.
+    """
 
     if window is not None:
         data = data[window]
@@ -142,6 +206,18 @@ def resize_array(data, finalshape, region, window=None, scale=1, fill=0.0, conse
 
 
 def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, conserve=True, fill=0.0):
+    """Place several arrays in new arrays of shape ``finalshape``, at the given offsets.
+
+    The region of each array is computed with ``subarray_match`` from its offset
+    in ``offsetsp`` and ``shape``. The other arguments are passed to ``resize_array``.
+
+    Returns
+    -------
+    rarrays : list of numpy.ndarray
+        The new arrays.
+    regions : list of tuple of slice
+        Region of the final shape covered by each array.
+    """
     rarrays = []
     regions = []
     for array, rel_offset in zip(arrays, offsetsp):
@@ -153,6 +229,10 @@ def resize_arrays(arrays, shape, offsetsp, finalshape, window=None, scale=1, con
 
 
 def resize_arrays_alt(arrays, regions, finalshape, window=None, scale=1, conserve=True, fill=0.0):
+    """Place several arrays in the given regions of new arrays of shape ``finalshape``.
+
+    The arguments are passed to ``resize_array``. Return the list of new arrays.
+    """
     rarrays = []
     for array, region in zip(arrays, regions):
         newdata = resize_array(array, finalshape, region, window=window, fill=fill, scale=scale, conserve=conserve)
@@ -240,30 +320,41 @@ def fixpix2(data, mask, iterations=3, out=None):
 
 
 def correct_dark(data, dark, dtype="float32"):
+    """Subtract the dark from the data and return the result as ``dtype``."""
     result = data - dark
     result = result.astype(dtype)
     return result
 
 
 def correct_flatfield(data, flat, dtype="float32"):
+    """Divide the data by the flat field and return the result as ``dtype``."""
     result = data / flat
     result = result.astype(dtype)
     return result
 
 
 def correct_sky(data, sky, dtype="float32"):
+    """Subtract the sky from the data and return the result as ``dtype``."""
     result = data - sky
     result = result.astype(dtype)
     return result
 
 
 def correct_nonlinearity(data, polynomial, dtype="float32"):
+    """Evaluate the polynomial on the data and return the result as ``dtype``.
+
+    The coefficients in ``polynomial`` are in the order of ``numpy.polyval``, highest degree first.
+    """
     result = numpy.polyval(polynomial, data)
     result = result.astype(dtype)
     return result
 
 
 def compute_sky_advanced(data, omasks):
+    """Return an array filled with the median of the unmasked pixels of the first image.
+
+    Only ``data[0]`` and ``omasks[0]`` are used; pixels where the mask is not 0 are excluded.
+    """
     d = data[0]
     m = omasks[0]
     median_sky = numpy.median(d[m == 0])
@@ -273,6 +364,7 @@ def compute_sky_advanced(data, omasks):
 
 
 def compute_median_background(img, omask, region):
+    """Return the median of the pixels of ``img`` in ``region`` where ``omask`` is 0."""
     d = img[region]
     m = omask[region]
     median_sky = numpy.median(d[m == 0])

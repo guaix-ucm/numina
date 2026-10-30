@@ -31,6 +31,8 @@ _logger = logging.getLogger(__name__)
 
 @attrs.define
 class ComponentCollection:
+    """Record with the attributes ``dirname`` and ``paths``."""
+
     dirname = attrs.field()
     paths = attrs.field()
 
@@ -39,6 +41,25 @@ def load_paths_store(
     pkg_paths: "Iterable[str] | None" = None,
     file_paths: "Iterable[FileLike] | None" = None,
 ) -> dict[str, typing.Any]:
+    """Load the JSON configuration files of several directories.
+
+    Each ``.json`` file is validated with the schema ``instconf``, and its ``origin`` key
+    is set to the ``ElementOrigin`` built from its contents. The directories in ``file_paths``
+    are read before the packages in ``pkg_paths``. A file with the name of a file read
+    before replaces it, with a warning.
+
+    Parameters
+    ----------
+    pkg_paths
+        Names of the packages with configuration files.
+    file_paths
+        Directories with configuration files.
+
+    Returns
+    -------
+    dict
+        The contents of the files, by file name.
+    """
     comp_store = {}
     # Prepare file paths
     if file_paths is None:

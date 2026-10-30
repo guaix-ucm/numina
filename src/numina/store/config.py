@@ -36,10 +36,18 @@ def is_json_structured(pathname):
 
 
 class DataLoaders:
+    """Registry of functions that load files, selected by the MIME type of the file."""
+
     def __init__(self):
         self._loaders = []
 
     def register(self, mtype, is_func=None, priority=20):
+        """Return a decorator that registers a loader of files of MIME type `mtype`.
+
+        The loader is used only if ``is_func(pathname)`` is True, for all the
+        files of the type if `is_func` is None. The loaders are stored in a
+        heap by `priority`.
+        """
 
         if is_func is None:
 
@@ -53,6 +61,13 @@ class DataLoaders:
         return wrapper
 
     def dispatch(self, pathname):
+        """Load `pathname` with the first registered loader that accepts it.
+
+        Raises
+        ------
+        TypeError
+            If no loader accepts the file.
+        """
 
         mmtype, enc = mimetypes.guess_type(pathname)
         # This is ordered by priority
@@ -63,6 +78,7 @@ class DataLoaders:
             raise TypeError(f"nothing loads {pathname}")
 
     def __call__(self, pathname):
+        """Load `pathname`, as ``dispatch``."""
         return self.dispatch(pathname)
 
 

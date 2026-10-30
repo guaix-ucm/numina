@@ -19,13 +19,16 @@ class DrpBase:
         pass
 
     def query_by_name(self, name):
+        """Return the DRP named `name`, this base class has no DRPs and raises ``KeyError``."""
         raise KeyError(name)
 
     def query_all(self):
+        """Return the DRPs by name, an empty dictionary in this base class."""
         return {}
 
     @staticmethod
     def instrumentdrp_check(drpins, entryname):
+        """Check whether `drpins` is an ``InstrumentDRP`` named `entryname`, warn with ``RuntimeWarning`` if not."""
         import numina.core.pipeline
 
         if isinstance(drpins, numina.core.pipeline.InstrumentDRP):
@@ -45,6 +48,7 @@ class DrpGeneric(DrpBase):
     """Store DRPs.in a dictionary"""
 
     def __init__(self, drps=None):
+        """Store `drps`, a dictionary of DRPs by name, empty if None."""
         super().__init__()
         self.drps = drps
 
@@ -59,6 +63,7 @@ class DrpGeneric(DrpBase):
 
     @property
     def drps(self):
+        """Dictionary of the DRPs, by name. Setting it to None stores an empty dictionary."""
         return self._drps
 
     @drps.setter

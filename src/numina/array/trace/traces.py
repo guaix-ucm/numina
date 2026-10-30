@@ -70,6 +70,11 @@ def trace(arr, x, y, axis=0, background=0.0, step=4, hs=1, tol=2, maxdis=2.0, ga
 
 
 def tracing_limits(size, col, step, hs):
+    """Return the first and last positions of the grid ``col + k * step`` within the tracing range.
+
+    The range covers an axis of ``size`` pixels, leaving a margin of more than
+    ``hs`` and at most ``hs + step`` pixels at each border.
+    """
     m = col % step
     k0 = (hs + step - m) / step
     r0 = int(math.floor(k0))

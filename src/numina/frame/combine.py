@@ -22,6 +22,7 @@ from numina.keydef import KeyDefinition
 
 
 def _m_base(calc, img, mask, region):
+    """Apply ``calc`` to the pixels of the primary HDU of ``img`` in ``region`` where ``mask`` is not > 0."""
     full_f = img[0].data
     arr = full_f[region]
     if mask is not None:
@@ -33,14 +34,17 @@ def _m_base(calc, img, mask, region):
 
 
 def _m_mean(img, mask, region):
+    """Return the mean of the valid pixels of the image in the region."""
     return _m_base(numpy.mean, img, mask, region)
 
 
 def _m_median(img, mask, region):
+    """Return the median of the valid pixels of the image in the region."""
     return _m_base(numpy.median, img, mask, region)
 
 
 def _m_mode(img, mask, region):
+    """Return the mode (half sample mode) of the valid pixels of the image in the region."""
     from numina.array.mode import mode_half_sample
 
     return _m_base(mode_half_sample, img, mask, region)
@@ -50,17 +54,32 @@ _method_map = {"mean": _m_mean, "median": _m_median, "mode": _m_mode}
 
 
 class Extension:
+    """Reference to an extension of each image, used to pass the masks to ``combine``.
+
+    Parameters
+    ----------
+    name : str
+        Name of the extension.
+    """
+
     def __init__(self, name):
         self.name = name
 
 
 class _ExtractKeyword:
-    """The value of a keyword in each image, defined by a KeyDefinition"""
+    """The value of a keyword in each image, defined by a KeyDefinition
+
+    Parameters
+    ----------
+    keydef : KeyDefinition
+        Definition of the keyword.
+    """
 
     def __init__(self, keydef):
         self.keydef = keydef
 
     def __call__(self, img, mask, region):
+        """Return the value of the keyword in ``img``, raise KeyError if it is not found."""
         value = self.keydef(img)
         if value is None:
             raise KeyError(f"keyword {self.keydef.key!r} not found in HDU {self.keydef.ext!r}")
@@ -75,6 +94,22 @@ def _is_schema_keyword(value):
 
 
 def _inspect_method(value):
+    """Convert a value of ``zeros``, ``scales`` or ``weights`` of ``combine`` into a sequence or a callable.
+
+    Returns
+    -------
+    value : object
+        None, a sequence with a value per image or a callable ``func(img, mask, region)``.
+    is_func : bool
+        True if ``value`` is a callable to be applied to each image.
+
+    Raises
+    ------
+    KeyError
+        If ``value`` is a string that is not a valid method.
+    TypeError
+        If ``value`` is not of a valid type.
+    """
     if value is None:
         return value, False
     elif isinstance(value, str):
@@ -222,6 +257,7 @@ def combine(
 
 
 def __getattr__(name):
+    """Return ``SchemaKeyword`` for the deprecated name ``Keyword``, with a warning."""
     if name == "Keyword":
         warnings.warn(
             "numina.frame.combine.Keyword is deprecated, it will be removed in 0.42, "

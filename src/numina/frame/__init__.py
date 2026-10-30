@@ -14,11 +14,13 @@ import numina.array
 
 
 def get_hdu_shape(header):
+    """Return the shape given by the NAXISn keywords of a header, in FITS order ``(NAXIS1, NAXIS2, ...)``."""
     ndim = header["naxis"]
     return tuple(header.get(f"NAXIS{i:d}") for i in range(1, ndim + 1))
 
 
 def custom_slice_to_str(slc):
+    """Return a string ``start:stop`` or ``start:stop:step`` representing a slice."""
     if slc.step is None:
         return f"{slc.start:d}:{slc.stop:d}"
     else:
@@ -26,11 +28,18 @@ def custom_slice_to_str(slc):
 
 
 def custom_region_to_str(region):
+    """Return a string ``[start:stop,start:stop,...]`` representing a tuple of slices."""
     jints = [custom_slice_to_str(slc) for slc in region]
     return "[" + ",".join(jints) + "]"
 
 
 def resize_hdu(hdu, newshape, region, window=None, fill=0.0, scale=1, conserve=True, dtype=None):
+    """Return a new HDU, of the same class as ``hdu``, with its data placed in a region of a larger array.
+
+    The data is resized with ``numina.array.resize_array``. The header is a copy of
+    the original one, with the keyword NVALREGI set to ``region`` and, if ``window``
+    is given, the keyword OVALREGI set to ``window``.
+    """
     # from numina.array import resize_array
 
     basedata = hdu.data
@@ -47,6 +56,11 @@ def resize_hdu(hdu, newshape, region, window=None, fill=0.0, scale=1, conserve=T
 
 
 def resize_hdul(hdul, newshape, region, extensions=None, window=None, scale=1, fill=0.0, conserve=True):
+    """Return a new HDUList with the HDUs in ``extensions`` resized with ``resize_hdu``.
+
+    ``extensions`` is a list of HDU indices, only the primary HDU by default.
+    The other HDUs are copied unchanged into the new HDUList.
+    """
     from numina.frame import resize_hdu
 
     if extensions is None:
@@ -64,6 +78,11 @@ def resize_hdul(hdul, newshape, region, extensions=None, window=None, scale=1, f
 def resize_fits(
     fitsfile, newfilename, newshape, region, window=None, scale=1, fill=0.0, overwrite=True, conserve=True, dtype=None
 ):
+    """Resize the primary HDU of a FITS file with ``resize_hdu`` and write it to a new file.
+
+    ``fitsfile`` is a file name or an HDUList. The new file contains only the resized
+    HDU, written as the primary HDU.
+    """
 
     close_on_exit = False
     if isinstance(fitsfile, str):

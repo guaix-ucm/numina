@@ -16,6 +16,17 @@ from numina.array.utils import coor_to_pix_1d
 
 
 def compute_fwhm_2d_simple(img, xc, yc):
+    """Compute the FWHM along the row and the column that pass through a point of an image.
+
+    The peak is the value of the pixel that contains ``(xc, yc)``.
+
+    Returns
+    -------
+    peak : float
+        Value of the peak.
+    fwhm_x, fwhm_y : float
+        FWHM along the x and y axes, -99 if it cannot be computed (see ``compute_fwhm_1d``).
+    """
 
     X = np.arange(0, img.shape[1], 1.0)
     Y = np.arange(0, img.shape[0], 1.0)
@@ -35,6 +46,18 @@ def compute_fwhm_2d_simple(img, xc, yc):
 
 
 def compute_fwhm_2d_spline(img, xc, yc):
+    """Compute the FWHM along x and y through a point of an image interpolated with a spline.
+
+    The image is interpolated with a bivariate spline; the peak is the value of
+    the spline at ``(xc, yc)``.
+
+    Returns
+    -------
+    peak : float
+        Value of the peak.
+    fwhm_x, fwhm_y : float
+        FWHM along the x and y axes, -99 if it cannot be computed (see ``compute_fwhm_1d``).
+    """
 
     X = np.arange(0.0, img.shape[1], 1.0)
     Y = np.arange(0.0, img.shape[0], 1.0)
@@ -105,6 +128,29 @@ def _fwhm_side_lineal(uu, vv):
 
 
 def compute_fwhm_1d(uu, vv, uc, upix):
+    """Compute the width of a profile from its zero crossings on both sides of a peak.
+
+    Parameters
+    ----------
+    uu : numpy.ndarray
+        Coordinates of the profile.
+    vv : numpy.ndarray
+        Profile minus the level of interest (half the peak for the FWHM).
+    uc : float
+        Coordinate of the peak.
+    upix : int
+        Index of the peak in ``uu`` and ``vv``.
+
+    Returns
+    -------
+    fwhm : float
+        The width. If only one side crosses zero, twice the distance from ``uc`` to the crossing.
+        -99 if no side crosses zero.
+    code : int
+        0 if computed from both sides, 1 if computed from one side, 2 if it failed.
+    msg : str
+        Description of the code.
+    """
 
     _fwhm_side = _fwhm_side_lineal
 

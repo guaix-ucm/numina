@@ -60,6 +60,11 @@ _json_deserial_func_map = {
 
 
 def convert_function(node):
+    """Rebuild a function from its serialized form.
+
+    ``node`` is a dictionary with the type of function in ``function``
+    (``spline1d``, ``polynomial`` or ``polynomial1d``) and its parameters in ``params``.
+    """
     tipo = node["function"]
     args = node["params"]
 
@@ -71,11 +76,13 @@ def convert_function(node):
 
 @singledispatch
 def json_serial_function(_):
+    """Return the serialized form of a function, an empty dictionary for unsupported types."""
     return {}
 
 
 @json_serial_function.register(UnivariateSpline)
 def json_serial_u(val):
+    """Return the serialized form of a ``UnivariateSpline``, with its private ``_eval_args``."""
     serial = {}
     # This is generic and should be somewhere else
     serial["function"] = "spline1d"
@@ -85,6 +92,7 @@ def json_serial_u(val):
 
 @json_serial_function.register(nppol.Polynomial)
 def json_serial_p(val):
+    """Return the serialized form of a ``Polynomial``, with its coefficients."""
     serial = {}
     # This is generic and should be somewhere else
     serial["function"] = "polynomial1d"

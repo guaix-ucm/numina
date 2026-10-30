@@ -46,6 +46,7 @@ class KeyDefinition:
         #    def selector(x): return x  # noqa: E731
 
     def _get_header(self, head: HDUList | Header) -> Header:
+        """Return `head` if it is a Header, or the header of the extension ``ext`` if it is an HDUList."""
         match head:
             case HDUList():
                 return head[self.ext].header
@@ -77,6 +78,7 @@ class KeyDefinition:
         hdr[self.key] = true_value
 
     def __call__(self, head: HDUList | Header):
+        """Return the value of the keyword in `head`, as ``get_value``."""
         return self.get_value(head)
 
 

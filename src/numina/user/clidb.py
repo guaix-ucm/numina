@@ -34,6 +34,7 @@ TASK_STATES = {0: "created", 1: "running", 2: "finished", 3: "failed"}
 
 
 def register(subparsers, config):
+    """Add the ``db`` command and its subcommands to the parser."""
     complete_config(config)
     parser_db = subparsers.add_parser(
         "db",
@@ -202,6 +203,7 @@ def _cell(field, value):
 
 
 def _tags_line(doc):
+    """Return the tags of a product as ``KEY=VALUE`` pairs, sorted by key."""
     tags = doc.get("tags") or {}
     if not tags:
         return "(no tags)"

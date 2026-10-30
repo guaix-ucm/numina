@@ -221,6 +221,27 @@ def run_reduce(
 
 
 def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingTask:
+    """Run the recipe of a reduction task.
+
+    Load the observing block of the task, select its recipe, build the recipe
+    input through the DAL of ``datastore``, install the files in the work
+    directory and run the recipe there, logging to ``processing.log`` in the
+    results directory. The run information is recorded in the task. The task
+    is not stored, ``run_reduce`` does that.
+
+    Returns
+    -------
+    ProcessingTask
+        The task, with the result of the recipe and its final state.
+
+    Raises
+    ------
+    ValueError
+        If the recipe input cannot be built, or if a requirement of the
+        observing block is not used by the recipe and ``strict_inputs`` is set.
+    numina.exceptions.ValidationError
+        If the recipe input is not valid.
+    """
 
     obsid = task.request_params["oblock_id"]
     request_profile = task.request_params["instrument_configuration"]

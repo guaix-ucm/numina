@@ -23,6 +23,7 @@ _logger = logging.getLogger(__name__)
 
 
 def register(subparsers, config):
+    """Add the ``inittree`` command to the parser."""
     parser = subparsers.add_parser(
         "inittree",
         help="install the calibrations of an instrument",
@@ -49,11 +50,13 @@ def register(subparsers, config):
 
 
 def error(msg):
+    """Print an error message of ``numina inittree`` and return the exit status 2."""
     print(f"numina inittree: error: {msg}", file=sys.stderr)
     return 2
 
 
 def list_datasets(drps):
+    """Print the datasets of calibrations declared by each DRP and return 0."""
     found = False
     for name, drp in sorted(drps.query_all().items()):
         for dataset in getattr(drp, "calibrations", None) or []:

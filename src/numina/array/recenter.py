@@ -17,6 +17,19 @@ from numina.array.utils import image_box
 
 # returns y,x
 def _centering_centroid_loop(data, center, box):
+    """Compute one iteration of the centroid in a box around ``center``, in (y, x) order.
+
+    The background is the minimum of the box. The centroid uses the pixels above
+    the mean of the background-subtracted box. If there are none, or their sum is
+    not positive, the input center is returned.
+
+    Returns
+    -------
+    center : tuple
+        New center, in (y, x) order.
+    background : float
+        Background of the box.
+    """
     # extract raster image
     sl = image_box(center, data.shape, box)
     raster = data[sl]
@@ -45,6 +58,7 @@ def _centering_centroid_loop(data, center, box):
 
 
 def _centering_centroid_loop_xy(data, center_xy, box):
+    """Compute one iteration of the centroid like ``_centering_centroid_loop``, with centers in (x, y) order."""
     center_yx = center_xy[::-1]
 
     ncenter_yx, back = _centering_centroid_loop(data, center_yx, box)

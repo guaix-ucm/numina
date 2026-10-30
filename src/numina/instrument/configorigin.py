@@ -21,11 +21,25 @@ class UndefinedOrigin:
     """Origin not defined"""
 
     def is_valid_date(self, _):
+        """Return True, an undefined origin is valid for any date."""
         return True
 
 
 class ElementOrigin:
-    """Description of the origin of a particular configuration"""
+    """Description of the origin of a particular configuration
+
+    Parameters
+    ----------
+    name
+        Name of the configuration.
+    uuid_in
+        UUID of the configuration.
+    date_start, date_end
+        Start and end of the validity of the configuration, None if unbounded.
+        Strings are parsed as ISO 8601 dates.
+    description
+        Description of the configuration.
+    """
 
     def __init__(
         self,
@@ -47,6 +61,7 @@ class ElementOrigin:
 
     @staticmethod
     def _isoparse(date: str | datetime):
+        """Parse ``date`` if it is an ISO 8601 string, return it unchanged otherwise."""
         if isinstance(date, str):
             return isoparse(date)
         else:
@@ -77,10 +92,16 @@ class ElementOrigin:
 
     @classmethod
     def from_dict(cls, val: dict[str, typing.Any]) -> "ElementOrigin":
+        """Create the origin from a configuration dictionary, with the keys of ``from_keys``."""
         return cls.from_keys(**val)
 
     @classmethod
     def from_keys(cls, **kwargs) -> "ElementOrigin":
+        """Create the origin from keyword arguments.
+
+        The keys ``name``, ``uuid``, ``date_start`` and ``date_end`` are required, and
+        ``description`` is optional. Empty dates mean unbounded. Other keys are ignored.
+        """
 
         # Parse kwargs
         name = kwargs["name"]

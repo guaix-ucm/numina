@@ -35,6 +35,7 @@ class DataProductMixin(DataTypeBase):
 
     @classmethod
     def isproduct(cls):
+        """Return True, the type is a data product."""
         return True
 
     def name(self):
@@ -78,11 +79,13 @@ class DataProductMixin(DataTypeBase):
         return result
 
     def update_meta_info(self):
+        """Return the metadata of the base class, with the quality control."""
         result = super().update_meta_info()
         result["quality_control"] = self.quality_control.name
         return result
 
     def __getstate__(self):
+        """Return the state of the base class, with the quality control."""
         st = {}
         st["quality_control"] = self.quality_control
 
@@ -91,6 +94,7 @@ class DataProductMixin(DataTypeBase):
         return st
 
     def __setstate__(self, state):
+        """Restore the quality control (UNKNOWN if missing), then the state of the base class."""
         qcval = state.get("quality_control", "UNKNOWN")
         self.quality_control = convert_qc(qcval)
 
@@ -98,6 +102,16 @@ class DataProductMixin(DataTypeBase):
 
 
 class DataProductType(DataProductMixin, DataType):
+    """Data type of a data product.
+
+    Parameters
+    ----------
+    ptype : type
+        Python type of the values.
+    default : optional
+        Default value.
+    """
+
     def __init__(self, ptype, default=None):
         super().__init__(ptype, default=default)
 
@@ -109,6 +123,7 @@ class ConfigurationTag:
     """
 
     def __init_subclass__(cls, **kwargs):
+        """Warn that ConfigurationTag is deprecated."""
         super().__init_subclass__(**kwargs)
         warnings.warn(
             "ConfigurationTag is deprecated, it is not used by numina and will be removed",
@@ -118,6 +133,7 @@ class ConfigurationTag:
 
     @classmethod
     def isconfiguration(cls):
+        """Deprecated, return True."""
         warnings.warn(
             "ConfigurationTag is deprecated, it is not used by numina and will be removed",
             DeprecationWarning,

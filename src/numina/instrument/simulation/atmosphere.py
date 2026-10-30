@@ -84,7 +84,13 @@ class SeeingSizeModel:
 
 
 class ConstSeeing:
-    """Seeing with a constant FWHM"""
+    """Seeing with a constant FWHM
+
+    Parameters
+    ----------
+    seeing : float
+        FWHM of the seeing.
+    """
 
     def __init__(self, seeing):
         self._s = seeing

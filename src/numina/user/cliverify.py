@@ -36,12 +36,15 @@ _logger = logging.getLogger(__name__)
 
 
 class Status(enum.Enum):
+    """Result of the verification of a file."""
+
     VALID = "OK"
     INVALID = "INVALID"
     NOT_CHECKED = "NOT CHECKED"
 
 
 def register(subparsers, config):
+    """Add the ``verify`` command to the parser."""
     parser_verify = subparsers.add_parser(
         "verify",
         help="verify images and observation results",

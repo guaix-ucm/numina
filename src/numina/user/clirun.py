@@ -157,6 +157,7 @@ def add_reduction_options(parser):
 
 
 def register(subparsers, config):
+    """Add the ``run`` command to the parser."""
     complete_config(config)
     parser_run = subparsers.add_parser("run", help="process a observation result")
     add_reduction_options(parser_run)
@@ -182,4 +183,5 @@ def register(subparsers, config):
 
 
 def mode_run_obsmode(args, extra_args, config):
+    """Reduce the observing blocks of the files of the command line, return the exit status."""
     return mode_run_common(args, extra_args, config, mode="obs")

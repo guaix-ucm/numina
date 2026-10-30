@@ -21,6 +21,7 @@ def working_directory(path):
 
 @contextlib.contextmanager
 def ignored(*exceptions):
+    """Context manager that suppresses the given exceptions."""
 
     # by Raymond Hettinger
     # https://www.youtube.com/watch?v=OSGv2VnC0go&t=1215s

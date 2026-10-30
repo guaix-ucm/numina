@@ -19,10 +19,12 @@ class FITSHistoryHandler(logging.Handler):
     """Logging handler using HISTORY FITS cards"""
 
     def __init__(self, header):
+        """Add the messages as HISTORY cards to `header`."""
         logging.Handler.__init__(self)
         self.header = header
 
     def emit(self, record):
+        """Add the formatted record to the header as a HISTORY card."""
         msg = self.format(record)
         self.header.add_history(msg)
 

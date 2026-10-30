@@ -21,7 +21,19 @@ class FlowError(Exception):
 
 
 class SerialFlow(node.Node):
-    """A flow where Nodes are executed sequentially."""
+    """A flow where Nodes are executed sequentially.
+
+    Parameters
+    ----------
+    nodeseq : list of Node
+        The nodes, the number of outputs of each node must be the number
+        of inputs of the next one.
+
+    Raises
+    ------
+    FlowError
+        If the outputs of a node do not match the inputs of the next one.
+    """
 
     def __init__(self, nodeseq):
         # Checking inputs and out puts are correct
@@ -51,6 +63,7 @@ class SerialFlow(node.Node):
         self.nodeseq[key] = value
 
     def run(self, img):
+        """Pass ``img`` through the nodes in order and return the output of the last one."""
         out = img
         for nd in self.nodeseq:
             out = nd(out)
@@ -58,7 +71,14 @@ class SerialFlow(node.Node):
 
 
 class ParallelFlow(node.Node):
-    """A flow where Nodes are executed in parallel."""
+    """A flow where Nodes are executed in parallel.
+
+    Parameters
+    ----------
+    nodeseq : list of Node
+        The nodes. The inputs and outputs of the flow are those of the
+        nodes, concatenated.
+    """
 
     def __init__(self, nodeseq):
         self.nodeseq = nodeseq
@@ -67,6 +87,11 @@ class ParallelFlow(node.Node):
         super().__init__(nin, nout)
 
     def run(self, args):
+        """Run each node with its item of ``args`` and return the outputs in a tuple.
+
+        If some node has more than one output, the outputs of all the nodes
+        are concatenated in the tuple.
+        """
         out = []
         for func, arg in zip(self.nodeseq, args):
             r = func(arg)
@@ -91,6 +116,14 @@ class ParallelFlow(node.Node):
 
 
 class MixerFlow(node.Node):
+    """Node that selects, reorders and repeats its inputs.
+
+    Parameters
+    ----------
+    table : list of int
+        Index of the input returned in each output.
+    """
+
     def __init__(self, table):
         nin = max(table) + 1
         nout = len(table)
@@ -98,6 +131,7 @@ class MixerFlow(node.Node):
         self.table = table
 
     def run(self, args):
+        """Return the inputs in the order of the table."""
         assert len(args) == self.ninputs
 
         return tuple(args[idx] for idx in self.table)

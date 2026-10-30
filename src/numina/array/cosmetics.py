@@ -30,6 +30,19 @@ _logger = logging.getLogger(__name__)
 
 
 def update_mask(mask, gmask, newmask, value):
+    """Set ``value`` in the pixels of ``mask`` selected by ``newmask`` among the good pixels.
+
+    ``newmask`` indexes the array ``mask[gmask]``. The mask is modified in place.
+
+    Returns
+    -------
+    mask : numpy.ndarray
+        The updated mask.
+    gmask : numpy.ndarray
+        Boolean array, True for the pixels equal to ``PIXEL_VALID``.
+    smask : numpy.ndarray
+        Boolean array, True for the pixels different from ``PIXEL_VALID``.
+    """
     f1_mask = mask[gmask]
     f1_mask[newmask] = value
     mask[gmask] = f1_mask
@@ -200,6 +213,11 @@ def ccdmask(
 
 
 def robust_std(valid, central, siglev):
+    """Estimate the standard deviation of ``valid`` around ``central`` from its percentiles.
+
+    The percentiles that correspond to ``-siglev`` and ``+siglev`` in a normal
+    distribution are computed, and their distance is divided by ``2 * siglev``.
+    """
     import scipy.stats
 
     qns = 100 * scipy.stats.norm.cdf(siglev)
@@ -215,6 +233,17 @@ def robust_std(valid, central, siglev):
 
 
 def comp_ratio(img1, img2, mask):
+    """Compute the ratio ``img1 / img2``, set to 0 in invalid pixels.
+
+    Invalid pixels are those where ``mask`` is 1 or where any of the images is <= 0.
+
+    Returns
+    -------
+    ratio : numpy.ndarray
+        The ratio of the images.
+    invalid : numpy.ndarray
+        Boolean array, True for the invalid pixels.
+    """
     mask = mask == 1
     mask1 = img1 <= 0
     mask2 = img2 <= 0

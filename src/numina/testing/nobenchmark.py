@@ -11,6 +11,7 @@ import pytest
 
 
 def _no_bench_func(method, *args, **kwds):
+    """Call ``method`` with the arguments and return its result."""
     return method(*args, **kwds)
 
 

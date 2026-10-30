@@ -25,6 +25,8 @@ class Status(enum.Enum):
 
 
 class Transition(enum.Enum):
+    """Inputs of the state machine of the components."""
+
     RESET = 0
     END_RESET = 1
     CONFIGURE = 2
@@ -33,6 +35,12 @@ class Transition(enum.Enum):
 
 
 class State:
+    """State machine of a component, that starts in ``Status.ACTIVE``.
+
+    The attributes ``enter_configure``, ``exit_configure``, ``enter_reset`` and the like
+    are ``Signal`` objects emitted by ``transition``.
+    """
+
     def __init__(self):
         self.current = Status.ACTIVE
         #
@@ -47,9 +55,19 @@ class State:
 
     @property
     def is_configuring(self) -> bool:
+        """Whether the status is ``Status.CONFIGURING``."""
         return self.current == Status.CONFIGURING
 
     def transition(self, inpt: Transition) -> None:
+        """Change the status with the input ``inpt``, emitting the signals of the transition.
+
+        - ``ACTIVE``: ``CONFIGURE`` moves to ``CONFIGURING`` and ``RESET`` to ``RESETTING``.
+        - ``CONFIGURING``: ``END_CONFIGURE`` moves to ``ACTIVE``, ``CONFIGURE`` is ignored.
+        - ``RESETTING``: ``END_RESET`` moves to ``ACTIVE``, ``RESET`` is ignored.
+        - ``FAILED``: ``RESET`` moves to ``RESETTING``, the other inputs are ignored.
+
+        Any other input moves to ``FAILED``.
+        """
         match self.current:
             case Status.FAILED:
                 match inpt:
@@ -95,6 +113,7 @@ class State:
 
     @contextlib.contextmanager
     def managed_configure(self) -> Generator["State", None, None]:
+        """Keep the status ``CONFIGURING`` during a ``with`` block."""
         self.transition(Transition.CONFIGURE)
         try:
             yield self

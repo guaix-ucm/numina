@@ -13,6 +13,8 @@ import enum
 
 
 class QC(enum.Enum):
+    """Quality control flag of a data product."""
+
     GOOD = 1
     PARTIAL = 2
     BAD = 3

@@ -27,7 +27,13 @@ _base_schema = {
 
 
 class DataFrameType(DataType):
-    """A type of DataFrame."""
+    """A type of DataFrame.
+
+    Parameters
+    ----------
+    datamodel : DataModel or class, optional
+        Data model of the instrument, see ``DataTypeBase``.
+    """
 
     db_info_keys = [
         "instrument",
@@ -74,6 +80,7 @@ class DataFrameType(DataType):
 
     @headerschema.setter
     def headerschema(self, value):
+        """Deprecated, set the schema returned by the property."""
         warnings.warn(
             "DataFrameType.headerschema is deprecated, it will be removed in 0.42, use header_schema",
             DeprecationWarning,
@@ -132,9 +139,11 @@ class DataFrameType(DataType):
             numina.schemas.validate_headers(hdulist, self.header_schema)
 
     def _datatype_dump(self, obj, where):
+        """Save the frame with ``dump_dataframe``, return the name of the file."""
         return dump_dataframe(obj, where)
 
     def _datatype_load(self, obj):
+        """Return a DataFrame for the file `obj`, or None if `obj` is None."""
         if obj is None:
             return None
         else:
@@ -163,6 +172,12 @@ class DataFrameType(DataType):
 
 
 def get_filename_dataframe(obj, where):
+    """Return the name of the FITS file where the DataFrame `obj` is saved.
+
+    It is None if `obj` is None or does not have an HDUList in memory,
+    the ``filename`` of `obj` if it has one, and otherwise the name
+    built from `where` with ``get_filename_hdulist``.
+    """
     # save fits file
     if obj is None or obj.frame is None:
         return None
@@ -173,6 +188,16 @@ def get_filename_dataframe(obj, where):
 
 
 def get_filename_hdulist(hdul, hint):
+    """Return the name of the FITS file where `hdul` is saved.
+
+    If `hint` is a string, the name is `hint` plus ``.fits``. If it is
+    callable, it is called with `hdul` and returns the name.
+
+    Raises
+    ------
+    ValueError
+        If `hint` is neither a string nor callable.
+    """
     ext = ".fits"
 
     if isinstance(hint, str):
@@ -185,6 +210,12 @@ def get_filename_hdulist(hdul, hint):
 
 
 def dump_dataframe(obj, where):
+    """Write the HDUList in memory of the DataFrame `obj` to a FITS file.
+
+    The name of the file is given by ``get_filename_dataframe``, an
+    existing file is overwritten. Returns the name of the file, or None
+    if nothing is written.
+    """
     # save fits file
 
     fname = get_filename_dataframe(obj, where)

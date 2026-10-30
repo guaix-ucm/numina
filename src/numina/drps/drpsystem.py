@@ -22,6 +22,7 @@ class DrpSystem(DrpGeneric):
     """Load DRPs from the system."""
 
     def __init__(self, entry_point="numina.pipeline.1"):
+        """Find the DRPs in the entry point group `entry_point`, they are not loaded until ``load`` is called."""
         self.entry = entry_point
         super().__init__()
 

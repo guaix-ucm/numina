@@ -18,10 +18,13 @@ from .product import DataProductType
 
 
 class LinesCatalog(DataProductType):
+    """Data product type of a catalog of lines, as a numpy array."""
+
     def __init__(self):
         super().__init__(ptype=numpy.ndarray)
 
     def _datatype_load(self, obj):
+        """Load the catalog from an ECSV file or a text file."""
         if is_ecsv(obj):
             return load_ecsv_array(obj)
         with open(obj, "r") as fd:

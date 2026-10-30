@@ -43,24 +43,36 @@ class PixelInterval1D:
 
     @property
     def shape(self):
+        """Number of pixels in the interval."""
         return self.pix2 - self.pix1
 
     @property
     def slice(self):
+        """Slice covering the interval."""
         return slice(self.pix1, self.pix2)
 
     @classmethod
     def from_coordinates(cls, x1, x2):
+        """Create the interval of the pixels that contain the coordinates ``x1`` and ``x2``."""
         pix1, pix2 = cls.pixel_range(x1, x2)
         return cls(pix1, pix2)
 
     @classmethod
     def pixel_range(cls, x1, x2):
+        """Return the pixel indices ``(pix1, pix2)`` that cover the coordinates ``x1`` and ``x2``.
+
+        Coordinates are rounded to the nearest pixel (pixel centers are at integer values)
+        and ``pix2`` is one past the pixel of ``x2``.
+        """
         iws = [int(math.floor(w + 0.5)) for w in [x1, x2]]
         pix1, pix2 = iws
         return pix1, pix2 + 1
 
     def union(self, other):
+        """Return the smallest interval that contains both intervals.
+
+        If one of the intervals is empty, the other is returned.
+        """
         if self:
             if other:
                 npix2 = max(self.pix2, other.pix2)
@@ -72,6 +84,11 @@ class PixelInterval1D:
             return other
 
     def intersection(self, other):
+        """Return the intersection of both intervals.
+
+        If the intervals do not overlap, an empty interval is returned.
+        If one of the intervals is empty, the other is returned.
+        """
         if self:
             if other:
                 if (other.pix1 < self.pix2) and (self.pix1 < other.pix2):
@@ -86,6 +103,7 @@ class PixelInterval1D:
             return other
 
     def __eq__(self, other):
+        """Compare the limits of the intervals. All empty intervals are equal."""
         if isinstance(other, type(self)):
             if not (self or other):
                 # if both are empty, are equal
@@ -102,6 +120,7 @@ class PixelInterval1D:
         return not (self == other)
 
     def __len__(self):
+        """Return the number of pixels in the interval."""
         return self.shape
 
 
@@ -123,23 +142,34 @@ class PixelInterval:
 
     @property
     def shape(self):
+        """Number of pixels along each axis."""
         return tuple(intl.shape for intl in self.intervals)
 
     @property
     def slice(self):
+        """Tuple of slices covering the box."""
         return tuple(intl.slice for intl in self.intervals)
 
     @classmethod
     def pixel_range(cls, *args):
+        """Return the pixel ranges of pairs of coordinates, one pair per axis.
+
+        See ``PixelInterval1D.pixel_range``.
+        """
         return tuple(PixelInterval1D.pixel_range(*arg) for arg in args)
 
     @classmethod
     def from_coordinates(cls, *args):
+        """Create the box of the pixels that contain pairs of coordinates, one pair per axis."""
         newargs = cls.pixel_range(*args)
         return cls(*newargs)
 
     @classmethod
     def from_intervals(cls, intervals):
+        """Create a box from a sequence of ``PixelInterval1D``, one per axis.
+
+        The ``axis`` attribute of the intervals is updated in place.
+        """
         result = super().__new__(cls)
         result.intervals = list(intervals)
         # update axis
@@ -149,6 +179,13 @@ class PixelInterval:
         return result
 
     def union(self, other):
+        """Return the smallest box that contains both boxes.
+
+        Raises
+        ------
+        NotImplementedError
+            If the boxes have different dimensions.
+        """
         if self.ndim == other.ndim:
             intl = [s.union(o) for s, o in zip(self.intervals, other.intervals)]
             return self.from_intervals(intl)
@@ -156,6 +193,13 @@ class PixelInterval:
             raise NotImplementedError
 
     def intersection(self, other):
+        """Return the intersection of both boxes, computed axis by axis.
+
+        Raises
+        ------
+        NotImplementedError
+            If the boxes have different dimensions.
+        """
         if self.ndim == other.ndim:
             intl = [s.intersection(o) for s, o in zip(self.intervals, other.intervals)]
             return self.from_intervals(intl)
@@ -163,6 +207,7 @@ class PixelInterval:
             raise NotImplementedError
 
     def __eq__(self, other):
+        """Compare the intervals of the boxes. Empty boxes with the same dimension are equal."""
         if isinstance(other, type(self)):
 
             if self.ndim != other.ndim:
@@ -179,6 +224,7 @@ class PixelInterval:
         return not (self == other)
 
     def __len__(self):
+        """Return the number of pixels in the box (0 for a box without axes)."""
         if self.intervals:
             result = 1
             for intl in self.intervals:
@@ -206,6 +252,7 @@ class BoundingBox(PixelInterval):
 
     @classmethod
     def from_coordinates(cls, x1, x2, y1, y2):
+        """Create the box of the pixels that contain the coordinates ``x1``, ``x2``, ``y1`` and ``y2``."""
         newargs = (y1, y2), (x1, x2)
         dum = cls.pixel_range(*newargs)
         ix1, ix2 = dum[1]

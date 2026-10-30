@@ -17,6 +17,7 @@ import scipy.ndimage as ndimage
 
 
 def _interpolation(z, sx, sy, mx, my):
+    """Resample the ``(mx, my)`` array ``z`` to shape ``(sx, sy)`` with spline interpolation."""
     # Spline to original size
     x, y = numpy.ogrid[-1 : 1 : complex(0, mx), -1 : 1 : complex(0, my)]
     newx, newy = numpy.mgrid[-1 : 1 : complex(0, sx), -1 : 1 : complex(0, sy)]

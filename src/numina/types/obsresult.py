@@ -57,7 +57,14 @@ def validate_raw_frames(obj, mode):
 
 
 class ObservationResultType(DataType):
-    """The type of ObservationResult."""
+    """The type of ObservationResult.
+
+    Parameters
+    ----------
+    rawtype : optional
+        Type of the raw images, stored in the attribute ``rawtype``.
+        If None, ``DataFrameType``.
+    """
 
     def __init__(self, rawtype=None):
         super().__init__(ptype=ObservationResult)

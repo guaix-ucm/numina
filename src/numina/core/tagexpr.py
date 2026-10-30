@@ -59,7 +59,14 @@ def filter_tree(condition, tree):
 
 
 class Expression:
-    """Base class for expressions"""
+    """Base class for expressions
+
+    Parameters
+    ----------
+    *args
+        The child nodes. Arguments that are not an ``Expression`` are
+        wrapped in a ``ConstExpr``.
+    """
 
     def __init__(self, *args):
 
@@ -79,12 +86,15 @@ class Expression:
             self._places.update(node.places())
 
     def fields(self):
+        """Return the names of the tags used in the expression."""
         return self._fields
 
     def tags(self):
+        """Return the names of the placeholders of the expression, as ``places``."""
         return self._places
 
     def places(self):
+        """Return the names of the placeholders of the expression."""
         return self._places
 
     def is_terminal(self):
@@ -92,6 +102,7 @@ class Expression:
         return len(self.nodes) == 0
 
     def copy(self):
+        """Return a copy of the expression tree, the leaf nodes are shared."""
 
         def copy_node(node, children):
             return node.clone(children)
@@ -99,24 +110,35 @@ class Expression:
         return map_tree(copy_node, self)
 
     def __eq__(self, other):
+        """Return the expression ``self == other``."""
         return PredEq(self, other)
 
     def __gt__(self, other):
+        """Return the expression ``self > other``."""
         return PredGt(self, other)
 
     def __ge__(self, other):
+        """Return the expression ``self >= other``."""
         return PredGe(self, other)
 
     def __le__(self, other):
+        """Return the expression ``self <= other``."""
         return PredLe(self, other)
 
     def __lt__(self, other):
+        """Return the expression ``self < other``."""
         return PredLt(self, other)
 
     def __ne__(self, other):
+        """Return the expression ``self != other``."""
         return PredNe(self, other)
 
     def __or__(self, other):
+        """Return the expression ``self OR other``.
+
+        `other` can be a compound expression or a bool, ``True`` gives ``True``
+        and ``False`` gives ``self``.
+        """
         if isinstance(other, CompoundExpr):
             return PredOr(self, other)
 
@@ -129,9 +151,15 @@ class Expression:
         return NotImplemented
 
     def __ror__(self, other):
+        """Return the expression ``other OR self``, see ``__or__``."""
         return self.__or__(other)
 
     def __and__(self, other):
+        """Return the expression ``self AND other``.
+
+        `other` can be a compound expression or a bool, ``True`` gives ``self``
+        and ``False`` gives ``False``.
+        """
         if isinstance(other, CompoundExpr):
             return PredAnd(self, other)
 
@@ -144,13 +172,16 @@ class Expression:
         return NotImplemented
 
     def __rand__(self, other):
+        """Return the expression ``other AND self``, see ``__and__``."""
         return self.__and__(other)
 
     def __invert__(self):
+        """Return the expression ``NOT self``."""
         return PredNot(self)
 
     @staticmethod
     def map_tree(visitor, tree):
+        """Apply `visitor` to the nodes of `tree`, from the leaves to the root."""
         return map_tree(visitor, tree)
 
     def fill_placeholders(self, **kwargs):
@@ -167,6 +198,11 @@ class Expression:
     fill_tags = fill_placeholders
 
     def eval(self, **kwargs):
+        """Evaluate the expression with the values of the tags in `kwargs`.
+
+        The tags without value and the placeholders remain unevaluated, and
+        then the result can be an expression.
+        """
 
         def eval_nodes(node, children):
             if isinstance(node, BinaryExpr):
@@ -179,11 +215,20 @@ class Expression:
         return map_tree(eval_nodes, self)
 
     def clone(self, children):
+        """Return a node like this one, with the child nodes `children`."""
         raise NotImplementedError
 
 
 class AtomicExpr(Expression):
-    """ "Atomic expression"""
+    """Atomic expression
+
+    Parameters
+    ----------
+    name : str
+        Name of the node.
+    value
+        Value of the node.
+    """
 
     def __init__(self, name, value):
         super().__init__()
@@ -192,7 +237,15 @@ class AtomicExpr(Expression):
 
 
 class TagRepr(AtomicExpr):
-    """A representation of a Tag"""
+    """A representation of a Tag
+
+    Parameters
+    ----------
+    name : str
+        Name of the tag.
+    metadata : dict, optional
+        Description of the tag, such as its ``type`` and ``description``.
+    """
 
     def __init__(self, name, metadata=None):
         super().__init__(name, name)
@@ -200,9 +253,11 @@ class TagRepr(AtomicExpr):
         self._fields.add(name)
 
     def clone(self, nodes):
+        """Return the node itself."""
         return self
 
     def eval(self, **kwargs):
+        """Return the value of the tag in `kwargs`, or the node itself if it is not there."""
         if self.value in kwargs:
             return kwargs[self.value]
         else:
@@ -213,7 +268,13 @@ class TagRepr(AtomicExpr):
 
 
 class Placeholder(AtomicExpr):
-    """A representation of a value expected to be substituted"""
+    """A representation of a value expected to be substituted
+
+    Parameters
+    ----------
+    name : str
+        Name of the placeholder.
+    """
 
     def __init__(self, name):
         super().__init__(name, name)
@@ -223,26 +284,36 @@ class Placeholder(AtomicExpr):
         return f"Placeholder({self.name})"
 
     def clone(self, nodes):
+        """Return the node itself."""
         return self
 
     def eval(self, **kwargs):
+        """Return the node itself, the placeholder was not substituted."""
         # Not substituted, the expression is incomplete
         return self
 
 
 class ConstExpr(AtomicExpr):
-    """A representation of a constant value"""
+    """A representation of a constant value
+
+    Parameters
+    ----------
+    value
+        The constant value.
+    """
 
     def __init__(self, value):
         super().__init__("ConstExpr", value)
 
     def clone(self, nodes):
+        """Return the node itself."""
         return self
 
     def __repr__(self):
         return f"ConstExpr({self.value})"
 
     def eval(self, **kwargs):
+        """Return the constant value."""
         return self.value
 
 
@@ -257,18 +328,41 @@ class CompoundExpr(Expression):
 
 
 class UnaryExpr(CompoundExpr):
+    """Expression with an operator and one operand.
+
+    Parameters
+    ----------
+    pred : Expression or value
+        The operand, a value that is not an expression is a ``ConstExpr``.
+    oper : callable
+        The operator, applied to the value of the operand by ``eval``.
+    """
+
     def __init__(self, pred, oper):
         super().__init__(pred)
         self.pred = self.nodes[0]
         self.operator = oper
 
     def clone(self, nodes):
+        """Return a new expression of the same class, with the operand ``nodes[0]``."""
         # The subclasses take only the operand, as in BinaryExpr
         new = self.__class__(nodes[0])
         return new
 
 
 class BinaryExpr(CompoundExpr):
+    """Expression with an operator and two operands.
+
+    Parameters
+    ----------
+    lhs, rhs : Expression or value
+        The operands, a value that is not an expression is a ``ConstExpr``.
+    oper : callable
+        The operator, applied to the values of the operands by ``eval``.
+    op_rep : str
+        Representation of the operator, used by ``str``.
+    """
+
     def __init__(self, lhs, rhs, oper, op_rep):
         super().__init__(lhs, rhs)
         self.lhs = self.nodes[0]
@@ -277,6 +371,7 @@ class BinaryExpr(CompoundExpr):
         self.op_rep = op_rep
 
     def clone(self, nodes):
+        """Return a new expression of the same class, with the operands ``nodes[0]`` and ``nodes[1]``."""
         new = self.__class__(nodes[0], nodes[1])
         return new
 
@@ -285,52 +380,80 @@ class BinaryExpr(CompoundExpr):
 
 
 class PredAnd(BinaryExpr):
+    """Expression ``lhs AND rhs``."""
+
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs, operator.and_, "AND")
 
 
 class PredOr(BinaryExpr):
+    """Expression ``lhs OR rhs``."""
+
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs, operator.or_, "OR")
 
 
 class PredNot(UnaryExpr):
+    """Expression ``NOT pred``."""
+
     def __init__(self, pred):
         super().__init__(pred, operator.not_)
 
 
 class PredEq(BinaryExpr):
+    """Expression ``lhs == rhs``."""
+
     def __init__(self, lhs, rhs):
         super().__init__(lhs, rhs, operator.eq, "==")
 
 
 class PredGt(BinaryExpr):
+    """Expression ``key > value``."""
+
     def __init__(self, key, value):
         super().__init__(key, value, operator.gt, ">")
 
 
 class PredGe(BinaryExpr):
+    """Expression ``key >= value``."""
+
     def __init__(self, key, value):
         super().__init__(key, value, operator.ge, ">=")
 
 
 class PredLe(BinaryExpr):
+    """Expression ``key <= value``."""
+
     def __init__(self, key, value):
         super().__init__(key, value, operator.le, "<=")
 
 
 class PredLt(BinaryExpr):
+    """Expression ``key < value``."""
+
     def __init__(self, key, value):
         super().__init__(key, value, operator.lt, "<")
 
 
 class PredNe(BinaryExpr):
+    """Expression ``key != value``."""
+
     def __init__(self, key, value):
         super().__init__(key, value, operator.ne, "!=")
 
 
 class ConstraintAdapter:
-    """For GTC"""
+    """For GTC
+
+    Parameters
+    ----------
+    key : str
+        Name of the tag.
+    value
+        Value compared with the tag.
+    oper : callable
+        Comparison operator, from the ``operator`` module.
+    """
 
     def __init__(self, key, value, oper):
         self.key = key
@@ -343,11 +466,23 @@ class ConstraintAdapter:
 
 
 def adapter(tree):
+    """Return a ``ConstraintAdapter`` for a node whose children are all leaves, otherwise None.
+
+    The key is the name of the left operand and the value the value of the
+    right operand.
+    """
     if tree.nodes and all(node.is_terminal() for node in tree.nodes):
         return ConstraintAdapter(tree.lhs.name, tree.rhs.value, tree.operator)
 
 
 def query_expr_from_attr(attrs):
+    """Build the query expression of the tag descriptions `attrs`.
+
+    Each tag must be equal to the placeholder of the same name, and the
+    conditions are joined with AND. Without tags, ``ConstExprTrue``.
+    The elements of `attrs` have the attributes ``name``, ``type`` and
+    ``description``.
+    """
     # Create a query descriptor from a sequence for fields
     if len(attrs) == 0:
         return ConstExprTrue

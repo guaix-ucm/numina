@@ -14,6 +14,7 @@ from numina.user.clishowins import print_no_instrument
 
 
 def register(subparsers, config):
+    """Add the ``show-modes`` command to the parser."""
     parser_show_mode = subparsers.add_parser("show-modes", help="show information of observing modes")
 
     parser_show_mode.set_defaults(command=show_observingmodes, verbose=0, what="om")
@@ -26,6 +27,7 @@ def register(subparsers, config):
 
 
 def show_observingmodes(args, extra_args, config):
+    """Print the observing modes of the DRPs, filtered by instrument and by mode key."""
 
     drpsys = numina.drps.get_system_drps()
 
@@ -49,6 +51,7 @@ def show_observingmodes(args, extra_args, config):
 
 
 def print_obsmode(obsmode, instrument, ins=False):
+    """Print the name, key, summary and instrument of an observing mode."""
     print(f"Observing Mode: {obsmode.name!r} ({obsmode.key})")
     print(" summary:", obsmode.summary)
     print(" instrument:", instrument.name)

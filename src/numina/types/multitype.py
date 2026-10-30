@@ -15,6 +15,14 @@ import numina.types.datatype as dt
 
 
 class MultiType(dt.DataType):
+    """Data type whose values can be of any of several types.
+
+    Parameters
+    ----------
+    *args
+        The types, or their classes, which are instantiated.
+    """
+
     def __init__(self, *args):
 
         node_type = []
@@ -29,6 +37,13 @@ class MultiType(dt.DataType):
         self.current_node = None
 
     def validate(self, obj):
+        """Validate `obj` with the current type, or with the first of the types that accepts it.
+
+        Raises
+        ------
+        numina.exceptions.ValidationError
+            If none of the types accepts `obj`.
+        """
         if self.current_node:
             return self.current_node.validate(obj)
         else:
@@ -44,11 +59,13 @@ class MultiType(dt.DataType):
             raise nexcep.ValidationError(obj, internal_m)
 
     def isproduct(self):
+        """Return whether the current type is a data product, True if there is no current type."""
         if self.current_node:
             return self.current_node.isproduct()
         return True
 
     def tag_names(self):
+        """Return the tag names of the current type, or of all the types."""
         if self.current_node:
             return self.current_node.tag_names()
         else:
@@ -68,6 +85,7 @@ class MultiType(dt.DataType):
             return {}
 
     def descriptive_name(self):
+        """Return the descriptive names of the types, joined with ``or``."""
         start, remain = self.node_type[0], self.node_type[1:]
         build_str = [start.descriptive_name()]
         for x in remain:
@@ -76,6 +94,13 @@ class MultiType(dt.DataType):
         return " ".join(build_str)
 
     def _datatype_load(self, obj):
+        """Load `obj` with the first of the types that can load it.
+
+        Raises
+        ------
+        TypeError
+            If all the types fail with KeyError.
+        """
         import numina.store
 
         faillures = []

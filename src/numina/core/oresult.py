@@ -16,6 +16,16 @@ from numina.types.dataframe import DataFrame
 
 
 class ObservingBlockBase:
+    """Base of the observing blocks, with their frames and their relations.
+
+    Parameters
+    ----------
+    instrument : str, optional
+        Name of the instrument.
+    mode : str, optional
+        Name of the observing mode.
+    """
+
     def __init__(self, instrument="UNKNOWN", mode="UNKNOWN"):
         self.id = 1
         self.instrument = instrument
@@ -78,6 +88,7 @@ class ObservationResult(ObservingBlock):
 
     @property
     def images(self):
+        """The frames of the observation result, an alias of ``frames``."""
         return self.frames
 
     @images.setter

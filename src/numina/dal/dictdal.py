@@ -36,6 +36,23 @@ class BaseDictDAL(AbsDrpDAL):
     _RESERVED_MODE_NAMES = ["nulo", "container", "root", "raiz"]
 
     def __init__(self, drps, ob_table, prod_table, req_table, extra_data=None, components=None):
+        """Create the DAL from the tables of observing blocks, products and requirements.
+
+        Parameters
+        ----------
+        drps : DrpBase
+            The DRPs, queried by instrument name.
+        ob_table : dict
+            Observing blocks, by id.
+        prod_table : dict
+            Products, by instrument and instrument profile.
+        req_table : dict
+            Requirements, by instrument, instrument profile, pipeline and mode.
+        extra_data : dict, optional
+            Values of the requirements given in the command line, by name.
+        components : dict, optional
+            Components of the instrument configurations.
+        """
         super().__init__(drps)
         # Check that the structure of the base is correct
         self.ob_table = ob_table
@@ -80,9 +97,11 @@ class BaseDictDAL(AbsDrpDAL):
             raise NoResultFound(msg)
 
     def has_extra(self, name):
+        """Check whether a value for requirement `name` was given in the command line."""
         return name in self.extra_data
 
     def oblock_from_id(self, obsid):
+        """Return the observing block with id `obsid`, built from the table of observing blocks."""
 
         este = self.ob_table[obsid]
         oblock = oblock_from_dict(este)
@@ -101,6 +120,19 @@ class BaseDictDAL(AbsDrpDAL):
         return self.obsres_from_oblock(oblock, as_mode, profile=profile)
 
     def obsres_from_oblock(self, oblock, as_mode=None, profile=None):
+        """Build the observation result of the observing block `oblock`.
+
+        The observing block is copied, not modified. `as_mode` replaces the
+        observing mode and `profile` is the uuid of the requested instrument
+        configuration, as in ``obsres_from_oblock_id``. Unless the mode is a
+        reserved name, the observation result is passed through the
+        ``build_ob`` method of the observing mode.
+
+        Raises
+        ------
+        ValueError
+            If there is no DRP for the instrument.
+        """
 
         from numina.core.oresult import ObservationResult
 
@@ -166,9 +198,11 @@ class BaseDictDAL(AbsDrpDAL):
             self.assign_configuration(obsres)
 
     def assembly_instrument(self, keyval, date, by_key="name"):
+        """Assemble the instrument configuration `keyval` (selected by `by_key`) from the components of the DAL."""
         return assembly_instrument(self.components, keyval, date, by_key=by_key)
 
     def search_product(self, name, tipo, obsres, options=None):
+        """Return the product `name` of type `tipo`, from the command line or from the table of products."""
         # returns StoredProduct
         ins = obsres.instrument
         profile = obsres.profile
@@ -185,6 +219,13 @@ class BaseDictDAL(AbsDrpDAL):
             return value
 
     def search_parameter(self, name, tipo, obsres, options=None):
+        """Return the parameter `name` of type `tipo`, from the command line or from the table of requirements.
+
+        Raises
+        ------
+        NoResultFound
+            If the parameter is not in the requirements of the mode, with tags compatible with those of `obsres`.
+        """
         # returns StoredProduct
         instrument = obsres.instrument
         profile = obsres.profile
@@ -217,11 +258,29 @@ class BaseDictDAL(AbsDrpDAL):
                 raise NoResultFound(msg)
 
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
+        """Return an empty list, this DAL does not search results of other observing blocks."""
         # mode field node could go together...
         return []
 
 
 class Dict2DAL(BaseDictDAL):
+    """Dictionary based DAL built from the contents of a control file.
+
+    Parameters
+    ----------
+    drps : DrpBase
+        The DRPs, queried by instrument name.
+    obtable : dict
+        Observing blocks, by id.
+    base : dict
+        Contents of the control file, with the keys ``products`` and
+        ``requirements`` (or ``parameters``).
+    extra_data : dict, optional
+        Values of the requirements given in the command line, by name.
+    components : dict, optional
+        Components of the instrument configurations.
+    """
+
     def __init__(self, drps, obtable, base, extra_data=None, components=None):
 
         prod_table = base.get("products", {})
@@ -234,11 +293,13 @@ class Dict2DAL(BaseDictDAL):
         super().__init__(drps, obtable, prod_table, req_table, extra_data, components=components)
 
     def new_task_id(self, request, request_params):
+        """Return the id of a new task, the id of the observing block for ``reduce`` requests, otherwise 1."""
         if request == "reduce":
             return request_params.get("oblock_id", 1)
         return 1
 
     def new_task(self, request, request_params):
+        """Create a ``ProcessingTask`` for `request`, with the id given by ``new_task_id``."""
 
         from numina import __version__
         from numina.user.helpers import ProcessingTask
@@ -254,16 +315,20 @@ class Dict2DAL(BaseDictDAL):
         return task
 
     def update_task(self, task):
+        """Do nothing, the tasks are not stored in this DAL."""
         pass
 
     def update_result(self, task, serialized, filename):
+        """Do nothing, the results are not stored in this DAL."""
         pass
 
     def dump(self, fp):
+        """Write the tables of the DAL to the file object `fp`, in YAML."""
         state = self.dump_data()
         yaml.dump(state, fp)
 
     def dump_data(self):
+        """Return the tables of the DAL as a dictionary, in the format of a control file."""
         state = {}
         state["version"] = 1
         state["products"] = self.prod_table
@@ -273,6 +338,26 @@ class Dict2DAL(BaseDictDAL):
 
 
 class BaseHybridDAL(Dict2DAL):
+    """Dictionary based DAL that also finds products and results in directories.
+
+    Parameters
+    ----------
+    drps : DrpBase
+        The DRPs, queried by instrument name.
+    rootdir : str
+        Root directory of the calibration products.
+    obtable : dict
+        Observing blocks, by id.
+    base : dict
+        Contents of the control file.
+    extra_data : dict, optional
+        Values of the requirements given in the command line, by name.
+    basedir : str, optional
+        Directory the directories of the results are relative to,
+        the current directory by default.
+    components : dict, optional
+        Components of the instrument configurations.
+    """
 
     def __init__(
         self,
@@ -298,6 +383,16 @@ class BaseHybridDAL(Dict2DAL):
         super().__init__(drps, obtable, base, extra_data=extra_data, components=components)
 
     def add_obs(self, obtable):
+        """Add the observing blocks of the list `obtable` to the table.
+
+        The observing blocks already in the table are ignored, with a warning.
+        The ``parent`` of the children of each added block is set.
+
+        Raises
+        ------
+        ValueError
+            If a child of an observing block is not in the table.
+        """
         obdict = {}
         for ob in obtable:
             obid = ob["id"]
@@ -319,6 +414,7 @@ class BaseHybridDAL(Dict2DAL):
                     raise ValueError(msg) from None
 
     def search_product(self, name, tipo, obsres, options=None):
+        """Return the product `name` of type `tipo`, from the command line, the registry or the table of products."""
         if name in self.extra_data:
             val = self.extra_data[name]
             content = numina.store.load(tipo, val)
@@ -364,6 +460,7 @@ class BaseHybridDAL(Dict2DAL):
         return StoredProduct(id=prod["id"], content=content, tags=prod["tags"])
 
     def _search_prod_table(self, name, tipo, obsres):
+        """Search the product in the table of products, implemented in subclasses."""
         raise NotImplementedError
 
     @staticmethod
@@ -393,6 +490,11 @@ class BaseHybridDAL(Dict2DAL):
         return value if isinstance(value, datetime.datetime) else None
 
     def product_loader(self, tipo, name, path):
+        """Load the product `name` of type `tipo` from `path`, a tuple (path, kind).
+
+        If kind is 0, the file is loaded with ``numina.store.load``. Otherwise,
+        it is a GTC result file in JSON and its element `name` is returned.
+        """
         path, kind = path
         if kind == 0:
             return numina.store.load(tipo, path)
@@ -405,6 +507,12 @@ class BaseHybridDAL(Dict2DAL):
                 return elem[name]
 
     def search_previous_obsres(self, obsres, node=None):
+        """Return the ids of the observing blocks before `obsres`, the nearest first.
+
+        If `node` is ``prev-rel`` and `obsres` has a parent, the blocks are the
+        previous children of the parent. Otherwise, they are the blocks added
+        to the DAL before `obsres`.
+        """
 
         if node is None:
             node = "prev"
@@ -424,13 +532,29 @@ class BaseHybridDAL(Dict2DAL):
             return self.search_previous_obsid_all(obsres.id)
 
     def search_previous_obsid_all(self, obsid):
+        """Return the ids of the observing blocks added before `obsid`, the nearest first."""
         idx = self.ob_ids.index(obsid)
         return reversed(self.ob_ids[:idx])
 
     def search_result_id(self, node_id, tipo, field, mode=None):
+        """Return the field `field` of the result of the observing block `node_id`, implemented in subclasses."""
         raise NotImplementedError
 
     def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
+        """Return the value of a result of other observing blocks, described by `result_desc`.
+
+        The node of `result_desc` selects the observing blocks: with ``children``,
+        a list with the values of the children; with ``prev`` and ``prev-rel``,
+        the value of the nearest previous block that has it; with ``last``, the
+        value in the most recent result of the mode in the registry.
+
+        Raises
+        ------
+        NoResultFound
+            If the value is not found.
+        TypeError
+            If the node is unknown.
+        """
 
         _logger.debug("search relative result for %s", name)
 
@@ -519,10 +643,12 @@ class BaseHybridDAL(Dict2DAL):
             return StoredProduct(id=node_id, content=content, tags={})
 
     def build_product_path(self, drp, conf, name, tipo, obsres):
+        """Return the path of the product, a tuple (path, kind), searched in the root directory."""
         path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
         return path
 
     def dump_data(self):
+        """Return the tables of the DAL, with the root directory and the ids of the observing blocks."""
         state = super().dump_data()
         state["rootdir"] = self.rootdir
         state["ob_ids"] = self.ob_ids
@@ -544,6 +670,20 @@ class HybridDAL(BaseHybridDAL):
         resultdir_tmpl="obsid{obsid}_results",
         resultfile_tmpl="result.json",
     ):
+        """Create the DAL and add the observing blocks of `obtable`.
+
+        Parameters
+        ----------
+        drps, rootdir, base, extra_data, components, basedir
+            As in ``BaseHybridDAL``.
+        obtable : list of dict
+            Observing blocks.
+        resultdir_tmpl : str, optional
+            Template of the directories of the results of the observing blocks,
+            with the fields ``{obsid}`` and ``{taskid}``.
+        resultfile_tmpl : str, optional
+            Template of the names of the result files, with the same fields.
+        """
 
         # Templates to find the results of other OBs,
         # the same used by DataManager to store them
@@ -609,6 +749,18 @@ class HybridDAL(BaseHybridDAL):
             return StoredProduct(id=0, content=content, tags=obsres.tags)
 
     def search_result_id(self, node_id, tipo, field, mode=None):
+        """Return the field `field` of the result of the observing block `node_id`.
+
+        The result is the one recorded in the registry, if there is one.
+        Otherwise, it is read from the directory and the file built with the
+        templates, with the id of the observing block as id of the task.
+
+        Raises
+        ------
+        NoResultFound
+            If the mode of the observing block is not `mode` (when given),
+            or if the result or the field is not found.
+        """
         cobsres = self.obsres_from_oblock_id(node_id)
 
         if mode is not None:

@@ -20,6 +20,7 @@ class ExtEncoder(json.JSONEncoder):
     """ "Encode numpy.floats and numpy.integer"""
 
     def default(self, obj):
+        """Encode numpy scalars and arrays, dates, time intervals and ``QC`` values."""
         if isinstance(obj, numpy.integer):
             return int(obj)
         elif isinstance(obj, numpy.floating):

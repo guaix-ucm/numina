@@ -33,6 +33,21 @@ _logger = logging.getLogger(__name__)
 
 
 def load_panoply_store(sys_drps=None, defpath=None) -> dict:
+    """Load the instrument configurations of the DRPs and of an additional directory.
+
+    Parameters
+    ----------
+    sys_drps : optional
+        Loaded DRPs, an object with a ``drps`` mapping. The configurations are read
+        from the ``profiles`` package of each DRP.
+    defpath : str or path-like, optional
+        Directory with additional configuration files.
+
+    Returns
+    -------
+    dict
+        The configurations, by file name, as returned by ``load_paths_store``.
+    """
     if defpath is None:
         file_paths = []
     else:
@@ -218,10 +233,12 @@ def assembly_component(comp_store, keyval: str, date: str | datetime, dest=None,
 
 
 def assembly_property(comp_store, keyval: str, date: str | datetime, dest=None, by_key="name") -> PropertiesBlock:
+    """Assemble the properties element whose ``by_key`` is ``keyval``, valid for ``date``."""
     return assembly_element(comp_store, ElementEnum.ELEM_PROPERTIES, keyval, date, dest=dest, by_key=by_key)
 
 
 def assembly_setup(comp_store, keyval: str, date: str | datetime, dest: str = None, by_key="name") -> SetupBlock:
+    """Assemble the setup element whose ``by_key`` is ``keyval``, valid for ``date``."""
     return assembly_element(comp_store, ElementEnum.ELEM_SETUP, keyval, date, dest=dest, by_key=by_key)
 
 
@@ -299,6 +316,16 @@ def process_setup(
     setup_block: "Iterable[dict[str, Any]]",
     date: str | datetime,
 ) -> SetupBlock:
+    """Build the setup block ``setup_id`` from the entries of a ``setup`` section.
+
+    An entry with ``values`` stores them under its ``id`` (``"values"`` by default). An entry
+    with ``name`` or ``uuid`` references a setup element, whose values are merged in the block.
+
+    Raises
+    ------
+    ValueError
+        If an entry has none of the expected forms.
+    """
     setup_objects = {}
     for entry in setup_block:
         match entry:
@@ -326,6 +353,23 @@ def process_setup(
 
 
 def process_properties(comp_store, prop_block, date: str | datetime) -> dict[str, PropertyBase]:
+    """Build the property descriptors of the entries of a ``properties`` section.
+
+    The keys of each entry select the descriptor: ``values`` and ``depends`` give a
+    ``PropertyEntry``, ``one_of`` a ``PropertyModOneOf``, ``limits`` a ``PropertyModLimits``
+    and ``references`` a ``PropertyProxy``. An entry with ``name`` or ``uuid`` takes the
+    property with the same ``id`` from that properties element.
+
+    Returns
+    -------
+    dict
+        The descriptors, by the ``id`` of each entry.
+
+    Raises
+    ------
+    ValueError
+        If an entry has none of the expected forms, or its ``one_of`` list is empty.
+    """
     prop_objects: dict[str, PropertyBase] = {}
     for entry in prop_block:
         key = entry["id"]
@@ -360,6 +404,16 @@ def process_properties(comp_store, prop_block, date: str | datetime) -> dict[str
 
 
 def process_components(comp_store, comp_block, date: str | datetime) -> list[CG]:
+    """Assemble the components of the entries of a ``components`` section.
+
+    Each entry references a component element by ``name`` or ``uuid``. Its ``id``, if present,
+    is the name of the device.
+
+    Raises
+    ------
+    ValueError
+        If an entry has neither ``name`` nor ``uuid``.
+    """
     # Add components when device is initialised
     # print('load components')
     comp_objects = []
@@ -379,6 +433,7 @@ def process_components(comp_store, comp_block, date: str | datetime) -> list[CG]
 
 
 def process_key_def(rest: dict[str, Any], default) -> KeyDefinition | None:
+    """Return the ``KeyDefinition`` of the ``key`` and ``ext`` of a property entry, None without ``key``."""
     key = rest.get("key")
     ext = rest.get("ext")
     if key is not None:

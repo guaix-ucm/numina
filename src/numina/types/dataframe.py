@@ -22,6 +22,18 @@ class DataFrame:
     An image opened from a file should be passed as `filename`. If it is
     passed as `frame`, numina can close it (after extracting metadata, for
     example) before its data are read, and a RuntimeWarning is emitted.
+
+    Parameters
+    ----------
+    frame : astropy.io.fits.HDUList, optional
+        The image in memory.
+    filename : str, optional
+        The name of the file of the image.
+
+    Raises
+    ------
+    ValueError
+        If both `frame` and `filename` are None.
     """
 
     def __init__(self, frame=None, filename=None):
@@ -38,6 +50,7 @@ class DataFrame:
         self.filename = filename
 
     def open(self):
+        """Return the HDUList in memory, or open the file in read-only mode."""
         if self.frame is None:
             return fits.open(self.filename, mode="readonly")
         else:
@@ -45,6 +58,7 @@ class DataFrame:
 
     @property
     def label(self):
+        """The name of the file."""
         return self.filename
 
     def __repr__(self):
@@ -57,6 +71,7 @@ class DataFrame:
             return fmt % (self.filename, self.frame)
 
     def __numina_load__(self, obj):
+        """Return a DataFrame for the file `obj`, or None if `obj` is None."""
         if obj is None:
             return None
         else:

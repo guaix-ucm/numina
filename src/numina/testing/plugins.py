@@ -158,12 +158,14 @@ def datamanager_remote(tmp_path_factory, request):
 
 
 def pytest_report_header(config):
+    """Report in the header of pytest whether pytest-benchmark is not installed."""
     if not HAS_BENCHMARCK:
         return "pytest-benchmark not installed"
     return ""
 
 
 def pytest_addoption(parser):
+    """Add the command line options of the comparison of recipe results."""
     parser.addoption(
         "--resultcmp", action="store_true", help="enable comparison of recipe results to reference results stored"
     )
@@ -180,6 +182,7 @@ def pytest_addoption(parser):
 
 
 def pytest_configure(config):
+    """Add the marker ``result_compare`` and register the ``ResultCompPlugin``."""
 
     config.getini("markers").append(
         "result_compare: Apply to tests that provide recipe results to compare with a reference"

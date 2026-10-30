@@ -36,6 +36,20 @@ MODIFY_WINDOW = 1.0
 
 
 class DataManager:
+    """Manager of the directories, files and records of the reductions.
+
+    Parameters
+    ----------
+    basedir : str
+        Base directory, where the work and result directories are created.
+    datadir : str
+        Directory of the raw data.
+    backend : numina.dal.dictdal.HybridDAL
+        DAL with the observing blocks, the recipes and their inputs.
+    registry : numina.dal.registry.Registry, optional
+        Registry of the reductions.
+    """
+
     def __init__(self, basedir, datadir, backend, registry=None):
         self.basedir = basedir
         self.datadir = datadir
@@ -68,6 +82,7 @@ class DataManager:
         self.product_tmpl = check_template(product_tmpl, PRODUCT_TEMPLATE_FIELDS)
 
     def serializer(self, data, fd):
+        """Write ``data`` in JSON to the file object ``fd``, with ``ExtEncoder``."""
         import json
 
         json.dump(data, fd, indent=2, cls=ExtEncoder)
@@ -114,6 +129,12 @@ class DataManager:
         return task
 
     def store_task(self, task):
+        """Store a task and its result.
+
+        Write the products of the result, the result file and the task file in
+        the results directory of the task, and update the task and its result in
+        the DAL and, if there is one, in the registry.
+        """
 
         result_dir_rel = task.request_runinfo["results_dir"]
         result_dir = os.path.join(self.basedir, result_dir_rel)
@@ -164,6 +185,7 @@ class DataManager:
                 self.registry.new_result(task, result_repr, result_file)
 
     def create_workenv(self, task):
+        """Return the ``WorkEnvironment`` of a task, with the directory names of the templates."""
 
         obsid = task.request_params["oblock_id"]
         work_dir = fill_template(self.workdir_tmpl, obsid=obsid, taskid=task.id)
@@ -175,6 +197,11 @@ class DataManager:
 
 
 class ProcessingTask:
+    """Reduction task, with its request, its run information, its result and its state.
+
+    The state is 0 (created), 1 (running), 2 (finished) or 3 (failed).
+    """
+
     def __init__(self):
 
         self.result = None
@@ -191,11 +218,26 @@ class ProcessingTask:
 
     @classmethod
     def _init_runinfo(cls):
+        """Return the initial run information, with unknown runner and runner version."""
         request_runinfo = dict(runner="unknown", runner_version="unknown")
         return request_runinfo
 
 
 class WorkEnvironment:
+    """Data, work and results directories of a reduction.
+
+    Parameters
+    ----------
+    datadir : str
+        Directory of the raw data.
+    basedir : str
+        Base directory of the work and results directories.
+    workdir : str
+        Work directory, relative to ``basedir``.
+    resultsdir : str
+        Results directory, relative to ``basedir``.
+    """
+
     def __init__(self, datadir, basedir, workdir, resultsdir):
 
         self.basedir = basedir
@@ -213,6 +255,7 @@ class WorkEnvironment:
         self._installed = {}
 
     def sane_work(self):
+        """Create the work and results directories if they do not exist."""
         _logger.debug("check workdir for working: %r", self.workdir_rel)
         make_sure_path_exists(self.workdir)
 
@@ -220,6 +263,13 @@ class WorkEnvironment:
         make_sure_path_exists(self.resultsdir)
 
     def installfiles_stage1(self, obsres, action="copy"):
+        """Install the frames of the observation result in the work directory.
+
+        Each frame is copied or linked (``action`` is ``copy`` or ``link``) to the
+        work directory, and its filename is replaced by the destination path.
+        Relative filenames are relative to the data directory. Frames with the
+        same name get the UUID of their header in the name. Return ``obsres``.
+        """
         import astropy.io.fits as fits
 
         install_if_needed = self._calc_install_if_needed(action)
@@ -261,6 +311,7 @@ class WorkEnvironment:
         return obsres
 
     def _calc_install_if_needed(self, action):
+        """Return the method that installs a file with ``action`` (``copy`` or ``link``)."""
         if action not in ["copy", "link"]:  # , 'symlink', 'hardlink']:
             raise ValueError(f"{action} action is not allowed")
 
@@ -275,6 +326,12 @@ class WorkEnvironment:
         return install_if_needed
 
     def installfiles_stage2(self, reqs, action="copy"):
+        """Install the frames of the recipe input ``reqs`` in the work directory.
+
+        Each frame is copied or linked (``action`` is ``copy`` or ``link``) from
+        the data directory, and its filename is replaced by the name of the
+        installed file.
+        """
         _logger.debug("installing files from requirements")
 
         install_if_needed = self._calc_install_if_needed(action)
@@ -297,9 +354,11 @@ class WorkEnvironment:
 
     # Used by numina-plugin-db
     def copyfiles_stage1(self, obsres):
+        """Copy the frames of the observation result to the work directory."""
         return self.installfiles_stage1(obsres, action="copy")
 
     def check_duplicates(self, tails):
+        """Return the set of names that appear more than once in ``tails``."""
         seen = set()
         dupes = set()
         for tail in tails:
@@ -311,6 +370,7 @@ class WorkEnvironment:
 
     # Used by numina-plugin-db
     def copyfiles_stage2(self, reqs):
+        """Copy the frames of the recipe input to the work directory."""
         return self.installfiles_stage2(reqs, action="copy")
 
     def _destination(self, src, name):
@@ -349,6 +409,10 @@ class WorkEnvironment:
         shutil.copy2(src, dest)
 
     def link_if_needed(self, key, src, dest):
+        """Create ``dest`` as a symbolic link to ``src``, replacing ``dest`` if it exists.
+
+        ``key`` is used in the log.
+        """
         _logger.debug("linking %r to %r", key, self.workdir)
         try:
             # Remove destination
@@ -381,6 +445,7 @@ def is_copy_of(src, dest, modify_window=MODIFY_WINDOW):
 
 
 def make_sure_path_exists(path):
+    """Create the directory ``path`` and its parents, if it does not exist."""
     try:
         os.makedirs(path)
     except (OSError, IOError) as exception:
@@ -389,6 +454,7 @@ def make_sure_path_exists(path):
 
 
 def create_com_store(sys_drps, profile_path_extra=None):
+    """Return the store of instrument profiles of the DRPs, and of the directory ``profile_path_extra``."""
     import numina.instrument.assembly as asbl
 
     com_store = asbl.load_panoply_store(sys_drps, profile_path_extra)
@@ -396,6 +462,14 @@ def create_com_store(sys_drps, profile_path_extra=None):
 
 
 def deep_merge(initial_schema, loaded_data):
+    """Merge the control data ``loaded_data`` into ``initial_schema`` and return it.
+
+    The keys other than ``requirements`` replace those of ``initial_schema``.
+    The entries of ``requirements`` (by instrument, profile, pipeline and
+    mode) are merged: an entry with the name and tags of an existing entry
+    replaces its content, the others are appended. ``initial_schema`` is
+    modified in place.
+    """
     # copy all keys except requirements
     for key in loaded_data:
         if key == "requirements":
@@ -446,6 +520,26 @@ def process_format_version_1(
     resultdir_tmpl="obsid{obsid}_results",
     resultfile_tmpl="result.json",
 ) -> HybridDAL:
+    """Return the DAL of a control file in format 1.
+
+    Parameters
+    ----------
+    sys_drps : numina.drps.drpsystem.DrpSystem
+        The DRPs.
+    components : dict
+        Store of instrument profiles.
+    basedir : str
+        Base directory of the reductions.
+    rootdir : str
+        Directory of calibrations.
+    loaded_data : dict
+        Contents of the control file.
+    loaded_data_extra : dict, optional
+        Extra values of the control, from the command line.
+    resultdir_tmpl, resultfile_tmpl : str
+        Templates of the names of the results directory and the result file,
+        used to find the results of other observing blocks.
+    """
     backend = HybridDAL(
         sys_drps,
         rootdir,
@@ -478,6 +572,30 @@ def run_templates(section, db_section=None):
 
 
 def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=None) -> DataManager:
+    """Create the ``DataManager`` of a reduction from the configuration and the control file.
+
+    The default requirements of the DRPs are merged with those of the control
+    file. The directories and the templates of names are read from
+    ``[tool.run]`` (and ``[tool.db]``), and the registry of reductions is
+    opened if ``[tool.db]`` has ``file``.
+
+    Parameters
+    ----------
+    config : configparser.ConfigParser
+        Configuration of numina, with the section ``[tool.run]``.
+    reqfile : str or None
+        Control file, in format 1.
+    extra_control : dict, optional
+        Extra values of the control, as strings that are parsed as YAML.
+    profile_path_extra : str, optional
+        Directory with additional instrument configurations.
+
+    Raises
+    ------
+    ValueError
+        If the format of the control file is not 1, or the control file
+        is not valid.
+    """
 
     # This should go before we load CL file
     # load additional reduction defaults
@@ -647,6 +765,13 @@ class ReductionRequests:
     document (see ``request-schema.json``). A request with ``id``
     applies to that observing block, a request without ``id`` to all
     the others.
+
+    Parameters
+    ----------
+    requests : dict, optional
+        Requests by id of the observing block.
+    default : dict, optional
+        Request of the blocks without their own request.
     """
 
     #: The keys of a request and the arguments of run_reduce

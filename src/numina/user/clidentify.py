@@ -15,6 +15,7 @@ _logger = logging.getLogger(__name__)
 
 
 def register(subparsers, config):
+    """Add the ``identify`` command to the parser."""
     parser_identify = subparsers.add_parser("identify", help="identify")
     parser_identify.set_defaults(command=identify)
     parser_identify.add_argument("files", nargs="+", help="identify files in CL")
@@ -23,6 +24,7 @@ def register(subparsers, config):
 
 
 def identify(args, extra_args, config):
+    """Print the instrument and the instrument profile of each FITS file of the command line."""
 
     # This function loads the recipes
     import numina.drps

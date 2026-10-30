@@ -93,6 +93,13 @@ def _check_window_width(window_width):
 
 
 def filter_array_margins(arr, ipeaks, window_width=5):
+    """Remove the peaks closer than ``window_width // 2`` pixels to the borders of ``arr``.
+
+    Raises
+    ------
+    ValueError
+        If ``window_width`` is not odd or is less than 3.
+    """
     _check_window_width(window_width)
 
     max_number = (len(arr) - 1) - (window_width // 2)

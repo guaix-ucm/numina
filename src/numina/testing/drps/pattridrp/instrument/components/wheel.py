@@ -20,6 +20,8 @@ from numina.instrument.components.wheel import Wheel
 
 
 class FilterName(enum.Enum):
+    """Filters of the test wheel."""
+
     U = 2131
     B = 2134
     V = 2135
@@ -49,6 +51,7 @@ class PWheel(Wheel):
         properties=None,
         setup=None,
     ) -> Self:
+        """Create the wheel with the filters listed in the value ``wheel`` of ``setup``, by ``FilterName``."""
         def_filters = []
         if setup is not None:
             def_filters = setup.values["wheel"]["filters"]
@@ -62,6 +65,7 @@ class PWheel(Wheel):
         return obj
 
     def configure_me_with_header(self, hdr):
+        """Select the filter in the keyword ``FILTER`` of ``hdr``, or move to the position in ``POS`` (1 by default)."""
         if "FILTER" in hdr:
             self.label = hdr["FILTER"]
         else:
@@ -70,4 +74,5 @@ class PWheel(Wheel):
         self.is_configured = True
 
     def my_depends(self):
+        """Return the dependencies of the wheel, ``filter``."""
         return {"filter"}

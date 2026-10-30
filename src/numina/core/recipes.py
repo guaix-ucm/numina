@@ -103,6 +103,7 @@ class BaseRecipe:
         cls.RecipeResult = result_class
 
     def __new__(cls, *args, **kwargs):
+        """Create the recipe and set its attributes from the keyword arguments."""
         # The attributes are set here, and not in __init__, so that they
         # are defined in recipes that do not pass the arguments to
         # super().__init__. __init__ sets them again with configure,
@@ -128,6 +129,12 @@ class BaseRecipe:
         self.configure(**kwargs)
 
     def configure(self, **kwds):
+        """Set attributes of the recipe from keyword arguments.
+
+        The keywords used are ``version``, ``instrument``, ``mode``,
+        ``runinfo``, ``intermediate_results`` and ``validate_inputs``,
+        the others are ignored.
+        """
         if "version" in kwds:
             self.__version__ = kwds["version"]
 
@@ -137,10 +144,12 @@ class BaseRecipe:
                 setattr(self, kwd, kwds[kwd])
 
     def __setstate__(self, state):
+        """Configure the recipe with the dictionary `state`, see ``configure``."""
         self.configure(**state)
 
     @staticmethod
     def create_default_runinfo():
+        """Return the default information of the run, a dict."""
         runinfo = {
             "data_dir": None,
             "results_dir": None,
@@ -166,17 +175,24 @@ class BaseRecipe:
 
     @classmethod
     def requirements(cls):
+        """Return the requirements of the recipe, by name."""
         return cls.RecipeInput.stored()
 
     @classmethod
     def products(cls):
+        """Return the results of the recipe, by name."""
         return cls.RecipeResult.stored()
 
     @classmethod
     def tag_names(cls):
+        """Return the set of the names of the tags of the requirements."""
         return cls.RecipeInput.tag_names()
 
     def run(self, recipe_input):
+        """Process `recipe_input` and return the result, the recipes override it.
+
+        This implementation returns a result without values.
+        """
         return self.create_result()
 
     def run_qc(self, recipe_input, recipe_result):
@@ -236,6 +252,7 @@ class BaseRecipe:
             fits.writeto(name, array, overwrite=True)
 
     def save_structured_as_json(self, structured, name):
+        """Save the state of `structured` in the JSON file `name`, if intermediate results are enabled."""
         if self.intermediate_results:
             # Since Python 3.11 all objects have __getstate__,
             # and the __getstate__ of a dict is None
@@ -328,9 +345,26 @@ class BaseRecipe:
         return self.create_input(**result)
 
     def extract_tags_from_ref(self, ref, tag_keys, base=None):
+        """Return the tags `tag_keys` of the image `ref`, see ``extract_tags_from_img``."""
         return extract_tags_from_img(ref, tag_keys, self.datamodel, base=base)
 
     def get_filters(self, imgtypes, getters):
+        """Select the getters that apply to the requirements of the recipe.
+
+        Parameters
+        ----------
+        imgtypes : sequence
+            For each element of `getters`, a type or None. The getter is
+            used if the type of a requirement is an instance of the type,
+            and always if None.
+        getters : sequence
+            Getters, or iterables of getters.
+
+        Returns
+        -------
+        list
+            The selected getters, the iterables are flattened.
+        """
         import collections.abc
 
         used_getters = []
@@ -356,6 +390,12 @@ class BaseRecipe:
         return used_getters
 
     def init_filters_generic(self, rinput, getters_seq, ins):
+        """Build a ``SerialFlow`` of correctors for each sequence of getters.
+
+        Each getter is called as ``getter(rinput, meta, ins, datamodel)``,
+        where ``meta`` is the result of :meth:`gather_info`, and returns
+        a corrector.
+        """
         import numina.ext.gtc
         import numina.util.flow as flowmod
 
@@ -379,6 +419,10 @@ class BaseRecipe:
         return reduction_flows
 
     def init_filters(self, rinput, ins=None):
+        """Build the correction flows with the getters of :meth:`create_getters`.
+
+        By default, `ins` is the configuration of the observation result.
+        """
         # Defined to be overloaded
         if ins is None:
             ins = rinput.obresult.configuration
@@ -387,9 +431,11 @@ class BaseRecipe:
         return self.init_filters_generic(rinput, getters_seq, ins)
 
     def create_getters(self):
+        """Return the sequences of getters used by :meth:`init_filters`, none by default."""
         return []
 
     def gather_info(self, recipeinput):
+        """Return the metadata of the images and observation results of `recipeinput`, by field."""
         # Requires collaboration from datamodel
         from numina.core import DataFrame
 

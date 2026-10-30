@@ -112,6 +112,7 @@ class DataLoaders:
             raise TypeError(f"nothing handles {pathname}")
 
     def __call__(self, pathname):
+        """Call the function that handles `pathname`, see :meth:`dispatch`."""
         return self.dispatch(pathname)
 
 

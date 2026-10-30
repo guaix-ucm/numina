@@ -16,11 +16,14 @@ from .device import DeviceBase
 
 
 class HWDevice(DeviceBase):
+    """Device whose properties are the public data descriptors of its class, such as properties."""
 
     def init_config_info(self) -> dict[str, typing.Any]:
+        """Return the initial dictionary of ``get_properties``, with the name of the device."""
         return dict(name=self.name)
 
     def get_property_names(self) -> list[str]:
+        """Return the names of the public data descriptors of the class."""
         result = []
         for key in dir(self.__class__):
             if key.startswith("_"):

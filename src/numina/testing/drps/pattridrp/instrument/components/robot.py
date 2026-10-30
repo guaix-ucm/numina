@@ -19,6 +19,22 @@ from numina.instrument.hwdevice import HWDevice
 
 
 class Robot(HWDevice):
+    """Robot arm of the test instrument, with an angle and an active flag.
+
+    Parameters
+    ----------
+    name
+        Name of the device.
+    model
+        Model of the robot, an element of the ``ypos`` list of the robot model.
+    idx
+        Index of the robot, used in the names of the header keywords.
+    active : bool, optional
+        Whether the robot is active.
+    parent
+        Parent device.
+    """
+
     def __init__(
         self,
         name: str,
@@ -34,12 +50,14 @@ class Robot(HWDevice):
         self.model = model
 
     def configure_me_with_header(self, hdr):
+        """Read the angle and the active flag from the keywords ``Rnn_ANGL`` and ``Rnn_ACTV`` of ``hdr``."""
         with self.state.managed_configure():
             self.angle = hdr.get(f"R{self.idx:02d}_ANGL", 0)
             self.active = hdr.get(f"R{self.idx:02d}_ACTV", True)
 
     @property
     def angle(self):
+        """Angle of the robot, that can be set only if it is active or being configured."""
         return self.angle_
 
     @angle.setter
@@ -53,6 +71,7 @@ class Robot(HWDevice):
 
     @property
     def active(self):
+        """Whether the robot is active."""
         return self.active_
 
     @active.setter
@@ -61,6 +80,20 @@ class Robot(HWDevice):
 
 
 class RobotPos(HWDevice):
+    """Positioner with a ``Robot`` child for each element of the ``ypos`` list of the robot model.
+
+    Parameters
+    ----------
+    name
+        Name of the device.
+    robot_model : dict
+        Robot model, with the list ``ypos``.
+    origin
+        Origin of the configuration.
+    parent
+        Parent device.
+    """
+
     def __init__(
         self,
         name: str,
@@ -85,6 +118,7 @@ class RobotPos(HWDevice):
         properties=None,
         setup=None,
     ) -> "RobotPos":
+        """Create the device with the robot model in the value ``robotmodel`` of ``setup``."""
 
         robot_model = setup.values["robotmodel"]
         obj = cls.__new__(cls)

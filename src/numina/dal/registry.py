@@ -113,6 +113,7 @@ class JSONStore(Store):
     """
 
     def __init__(self, filename):
+        """Load the documents of `filename`, if the file exists."""
         self.filename = filename
         self._data = self._empty()
         self._depth = 0
@@ -122,10 +123,18 @@ class JSONStore(Store):
 
     @staticmethod
     def _empty():
+        """Return the contents of an empty registry."""
         return {"format": REGISTRY_FORMAT, "version": REGISTRY_VERSION, "collections": {}}
 
     @staticmethod
     def _load(filename):
+        """Load the registry stored in `filename`.
+
+        Raises
+        ------
+        ValueError
+            If the file is not a numina registry or its version is not supported.
+        """
         with open(filename) as fd:
             data = json.load(fd)
         if not isinstance(data, dict) or data.get("format") != REGISTRY_FORMAT:
@@ -136,6 +145,7 @@ class JSONStore(Store):
         return data
 
     def _collection(self, name):
+        """Return the collection `name`, created empty if it does not exist."""
         return self._data["collections"].setdefault(name, {"next_id": 1, "documents": {}})
 
     @contextlib.contextmanager
@@ -158,6 +168,8 @@ class JSONStore(Store):
             self._write()
 
     def _write(self):
+        """Write the documents to the file, atomically."""
+
         def write(fp):
             json.dump(self._data, fp, indent=2, cls=ExtEncoder)
 
@@ -186,6 +198,7 @@ class JSONStore(Store):
         return copy.deepcopy(self._document(collection, docid))
 
     def _document(self, collection, docid):
+        """Return a document, not a copy, ``KeyError`` if it does not exist."""
         try:
             return self._collection(collection)["documents"][str(docid)]
         except KeyError:
@@ -227,6 +240,12 @@ class Registry:
     """
 
     def __init__(self, filename, basedir=None, store=None):
+        """Open the registry stored in `filename`.
+
+        `basedir` is the directory the paths of the results are relative to,
+        the current directory by default. `store` replaces the default
+        ``JSONStore`` of `filename`.
+        """
         self.filename = filename
         #: Base directory, the paths of the results are relative to it
         self.basedir = os.getcwd() if basedir is None else basedir
@@ -264,6 +283,7 @@ class Registry:
             return self._record_oblock(oblock["id"], oblock)
 
     def _record_oblock(self, oblock_id, oblock):
+        """Record the definition of an observing block, return ``new``, ``updated`` or ``unchanged``."""
         existing = self.store.find("oblocks", oblock_id=oblock_id)
         doc = {"oblock_id": oblock_id, "definition": oblock}
         if not existing:
@@ -529,6 +549,7 @@ class Registry:
         raise ValueError(f"task {task_id} has not finished, it has no result")
 
     def _path(self, name):
+        """Return the absolute path of `name`, relative to the base directory."""
         return os.path.abspath(os.path.join(self.basedir, name))
 
     def _result_value(self, result, field):

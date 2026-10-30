@@ -18,7 +18,19 @@ from numina.util.jsonencoder import ExtEncoder
 
 
 class ResultCompPlugin:
-    """Plugin to compare the results fo reductions"""
+    """Plugin to compare the results fo reductions
+
+    Parameters
+    ----------
+    config : pytest.Config
+        Configuration of pytest.
+    reference_dir : str, optional
+        Directory with the reference results.
+    generate_dir : str, optional
+        Directory where the reference results are generated, instead of compared.
+    enabled : bool
+        If False, the tests marked with ``result_compare`` run, but their results are not compared.
+    """
 
     def __init__(self, config, reference_dir=None, generate_dir=None, enabled=True):
         self.config = config
@@ -27,6 +39,11 @@ class ResultCompPlugin:
         self.enabled = enabled
 
     def pytest_runtest_setup(self, item):
+        """Wrap the tests marked with ``result_compare`` to compare or generate their results.
+
+        The wrapper runs the test and stores the recipe result it returns. Then, it compares
+        the result with the reference, or writes it in the generation directory and skips the test.
+        """
         import functools
 
         compare = item.get_closest_marker("result_compare")
@@ -133,6 +150,7 @@ class ResultCompPlugin:
 
 
 def compare_eq_sequence(left, right):
+    """Return a list of messages describing the first difference between two sequences."""
     explanation = []
     for i in range(min(len(left), len(right))):
         if left[i] != right[i]:
@@ -146,6 +164,18 @@ def compare_eq_sequence(left, right):
 
 
 def compare_result_dirs(resdir1, resdir2, atol=0.0, rtol=1e-7):
+    """Compare a reference result directory with a generated one.
+
+    The directories must have the same files. FITS files are compared with
+    ``FITSDiff``, ignoring the keywords HISTORY, UUID and NUMXVER; other files are not compared.
+
+    Returns
+    -------
+    identical : bool
+        True if the directories are considered equal.
+    msg : str or list of str
+        Report of the differences.
+    """
     # First is reference, second is generated
     # print('compare contents of', resdir1, resdir2)
     # Compare dir contents
@@ -182,6 +212,10 @@ def compare_result_dirs(resdir1, resdir2, atol=0.0, rtol=1e-7):
 
 
 def generate_manifest(recipe_result):
+    """Store the products of ``recipe_result`` in the working directory and return its description.
+
+    The returned dictionary contains the stored values, the QC flag and the UUID of the result.
+    """
     import numina.store
 
     saveres = dict(values={})

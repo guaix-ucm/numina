@@ -13,6 +13,7 @@ import numpy
 
 
 def _powers(order):
+    """Yield the pairs of powers ``(x, y)`` of the terms of a 2D polynomial of total degree ``order``."""
     for rank in range(order + 1):
         for bi in range(rank + 1):
             ai = rank - bi
@@ -139,6 +140,16 @@ def vertex_of_quadratic(coeffs):
 
 
 class FitOne:
+    """Plane ``z = a + b * x + c * y`` fitted by least squares to a set of points.
+
+    Parameters
+    ----------
+    x, y : numpy.ndarray
+        Coordinates of the points.
+    z : numpy.ndarray
+        Values in the points.
+    """
+
     def __init__(self, x, y, z):
         """Fit a plane to a region using least squares."""
         x = x.astype("float")
@@ -158,6 +169,7 @@ class FitOne:
         self.pf = numpy.linalg.solve(aa, bb)
 
     def __call__(self, x, y):
+        """Evaluate the plane in the points ``(x, y)``."""
         xf = x.astype("float") - self.xm
         yf = y.astype("float") - self.ym
         return self.pf[0] + self.pf[1] * xf + self.pf[2] * yf

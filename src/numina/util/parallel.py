@@ -19,6 +19,7 @@ class _Dispatcher:
     """Handle the records of the processes with the loggers of the main process"""
 
     def handle(self, record):
+        """Handle the record with the logger of its name, if the logger is enabled for its level."""
         logger = logging.getLogger(record.name)
         if logger.isEnabledFor(record.levelno):
             logger.handle(record)

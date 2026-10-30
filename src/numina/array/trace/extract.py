@@ -15,7 +15,19 @@ from .traces import axis_to_dispaxis
 
 
 class Aperture:
-    """Spectroscopic aperture."""
+    """Spectroscopic aperture.
+
+    Parameters
+    ----------
+    bbox
+        Bounding box of the aperture.
+    borders
+        Borders of the aperture.
+    axis : {0, 1}, optional
+        Spatial axis of the array.
+    id : optional
+        Identifier of the aperture.
+    """
 
     def __init__(self, bbox, borders, axis=0, id=None):
         self.bbox = bbox
@@ -26,6 +38,34 @@ class Aperture:
 
 
 def extract_simple_rss(arr, borders, axis=0, out=None):
+    """Extract the spectra between pairs of borders by summing the pixels along the spatial axis.
+
+    Partial pixels at the borders are weighted by the fraction covered.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        2D image.
+    borders : sequence of tuple
+        Tuples ``(idx, b1, b2)``, where ``idx`` is the 1-based index of the
+        spectrum and ``b1``, ``b2`` are callables that return the lower and
+        upper border for each pixel along the dispersion axis.
+    axis : {0, 1}
+        Spatial axis of the array.
+    out : numpy.ndarray, optional
+        Output array. If None, a new array is created with as many rows as the
+        ``idx`` of the last element of ``borders``.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array with one extracted spectrum per row.
+
+    Raises
+    ------
+    ValueError
+        If ``axis`` is not 0 or 1, or ``borders`` is empty.
+    """
 
     # If arr is not in native byte order, the C-extension won't work
     if arr.dtype.byteorder != "=":
@@ -60,6 +100,32 @@ def extract_simple_rss(arr, borders, axis=0, out=None):
 
 
 def extract_simple_rss_apers(arr, apers, axis=0, out=None):
+    """Extract the spectra of a sequence of ``Aperture`` by summing the pixels along the spatial axis.
+
+    Each spectrum is extracted only in the range of its bounding box along the
+    dispersion axis; the rest of its row in ``out`` is not changed.
+
+    Parameters
+    ----------
+    arr : numpy.ndarray
+        2D image.
+    apers : sequence of Aperture
+        Apertures, all with the same ``axis`` as the array.
+    axis : {0, 1}
+        Spatial axis of the array.
+    out : numpy.ndarray, optional
+        Output array. If None, a new array of zeros with one row per aperture is created.
+
+    Returns
+    -------
+    numpy.ndarray
+        Array with one extracted spectrum per row.
+
+    Raises
+    ------
+    ValueError
+        If ``axis`` is not 0 or 1, or it is different from the axis of an aperture.
+    """
 
     # If arr is not in native byte order, the C-extension won't work
     if arr.dtype.byteorder != "=":

@@ -52,6 +52,7 @@ _JSON_TYPES = {dict: "object", list: "array", str: "string", int: "integer", flo
 
 
 def _json_type(value):
+    """Return the name of the JSON type of `value`, or of its Python type if it has none."""
     if value is None:
         return "null"
     return _JSON_TYPES.get(type(value), type(value).__name__)
@@ -68,6 +69,7 @@ def _message(error):
 
 
 def _location(error):
+    """Return the path of the error in the instance, as ``key -> key``, or ``top level``."""
     path = [str(part) for part in error.absolute_path]
     return " -> ".join(path) if path else "top level"
 
@@ -119,6 +121,7 @@ def convert_headers(hdulist):
 
 
 def _leaf_errors(error):
+    """Yield the errors without sub-errors (``context``) under `error`."""
     if error.context:
         for sub_error in error.context:
             yield from _leaf_errors(sub_error)

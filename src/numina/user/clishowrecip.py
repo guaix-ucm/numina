@@ -18,6 +18,7 @@ from numina.user.clishowins import print_no_instrument
 
 
 def register(subparsers, config):
+    """Add the ``show-recipes`` command to the parser."""
     parser_show_rec = subparsers.add_parser("show-recipes", help="show information of recipes")
 
     parser_show_rec.set_defaults(command=show_recipes, template=False)
@@ -33,6 +34,7 @@ def register(subparsers, config):
 
 
 def show_recipes(args, extra_args, config):
+    """Print the recipes of the DRPs, filtered by instrument, by mode and by recipe class."""
 
     drpsys = numina.drps.get_system_drps()
 
@@ -83,6 +85,7 @@ def show_recipes(args, extra_args, config):
 
 
 def print_requirements(recipe, pad=""):
+    """Print the requirements of a recipe that are not hidden, one per line prefixed by ``pad``."""
 
     for req in recipe.requirements().values():
         if req.hidden:
@@ -101,6 +104,10 @@ def print_requirements(recipe, pad=""):
 
 
 def print_recipe(recipe, name=None, insname=None, pipename=None, modename=None):
+    """Print the name, summary, instrument, pipeline, mode and requirements of a recipe class.
+
+    If printing fails, a warning is issued instead of raising.
+    """
     try:
         if name is None:
             name = recipe.__module__ + "." + recipe.__name__

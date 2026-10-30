@@ -33,11 +33,13 @@ class _Alias:
         self.dest = dest
 
     def __get__(self, instance, owner):
+        """Return the value of the field ``dest``."""
         if instance is None:
             return self
         return getattr(instance, self.dest)
 
     def __set__(self, instance, value):
+        """Set the value of the field ``dest``."""
         setattr(instance, self.dest, value)
 
 
@@ -76,6 +78,7 @@ class RecipeInOut:
     _numina_field_type = None
 
     def __init_subclass__(cls, **kwargs):
+        """Collect the fields of the class and its bases, and create the aliases."""
         super().__init_subclass__(**kwargs)
 
         stored = {}
@@ -99,6 +102,11 @@ class RecipeInOut:
                 setattr(cls, value.alias, _Alias(value.dest))
 
     def __init__(self, *args, **kwds):
+        """Set the fields from the keyword arguments, the positional arguments are ignored.
+
+        Raises ValueError with the list of the errors of all the fields,
+        including the required fields without value.
+        """
         super().__init__()
         # Used to hold set values
         self._numina_desc_val = {}
@@ -139,10 +147,12 @@ class RecipeInOut:
             raise ValueError(all_msg_errors)
 
     def attrs(self):
+        """Return the values of the fields, by name."""
         return self._numina_desc_val
 
     @classmethod
     def stored(cls):
+        """Return the fields of the class, by name."""
         return cls.__numina_stored__
 
     def validate(self):
@@ -192,6 +202,7 @@ class RecipeInOut:
 
     @classmethod
     def tag_names(cls):
+        """Return the set of the names of the tags of the types of the fields."""
         qfields = set()
         for key, req in cls.stored().items():
             tag_n = req.tag_names()
@@ -257,6 +268,15 @@ class RecipeResultBase(RecipeInOut):
 
 
 class RecipeResult(RecipeResultBase):
+    """The result of a recipe, with its quality control and its uuid.
+
+    Parameters
+    ----------
+    qc : numina.types.qc.QC, optional
+        Quality control of the result, by default ``QC.UNKNOWN``.
+    ``**kwds``
+        The values of the fields of the result.
+    """
 
     def __init__(self, *args, **kwds):
 
@@ -272,6 +292,7 @@ class RecipeResult(RecipeResultBase):
         super().__init__(*args, **kwds)
 
     def store_to(self, where, product_tmpl="{name}", fields=None):
+        """Save the values of the result, adding its ``qc`` and ``uuid`` to the serialized form."""
         saveres = super().store_to(where, product_tmpl=product_tmpl, fields=fields)
 
         saveres["qc"] = self.qc.name
@@ -279,6 +300,7 @@ class RecipeResult(RecipeResultBase):
         return saveres
 
     def time_it(self, time1, time2):
+        """Write the start and end times of the run in the images of the result."""
         import numina.types.dataframe as dataframe
 
         values = self.attrs()
@@ -290,6 +312,7 @@ class RecipeResult(RecipeResultBase):
                 self.add_computation_time(hdul, time1, time2)
 
     def add_computation_time(self, img, time1, time2):
+        """Write `time1` and `time2` in NUMUTC1 and NUMUTC2 of the primary header of `img`, return `img`."""
         img[0].header["NUMUTC1"] = time1.isoformat()
         img[0].header["NUMUTC2"] = time2.isoformat()
         return img
@@ -317,6 +340,7 @@ class define_result:
         self.klass = resultClass
 
     def __call__(self, klass):
+        """Set the result class of the recipe `klass`."""
         klass.RecipeResult = self.klass
         return klass
 
@@ -341,12 +365,14 @@ class define_input:
         self._set_class(input_class)
 
     def _set_class(self, input_class):
+        """Store `input_class`, raise TypeError if it does not derive from RecipeInput."""
         if not issubclass(input_class, RecipeInput):
             msg = f"{input_class!r} does not derive from RecipeInput"
             raise TypeError(msg)
         self.klass = input_class
 
     def __call__(self, klass):
+        """Set the input class of the recipe `klass`."""
         klass.RecipeInput = self.klass
         return klass
 

@@ -20,12 +20,21 @@ _logger = logging.getLogger(__name__)
 
 
 def promote_hdulist(hdulist, totype="float32"):
+    """Return a new HDUList with the data of the image HDUs converted to ``totype``.
+
+    Each HDU is converted with ``promote_hdu``.
+    """
     nn = [promote_hdu(hdu, totype=totype) for hdu in hdulist]
     newhdulist = fits.HDUList(nn)
     return newhdulist
 
 
 def promote_hdu(hdu, totype="float32"):
+    """Return a copy of a primary or image HDU with its data converted to ``totype``.
+
+    The header is copied. HDUs without data and HDUs of other types are
+    returned unchanged.
+    """
     if hdu.data is None:
         return hdu
     newdata = hdu.data.astype(totype)
@@ -49,7 +58,19 @@ class SimpleDataModel(dm.DataModel):
 
 
 class Corrector(node.Node):
-    """A Node that corrects a frame from instrumental signatures."""
+    """A Node that corrects a frame from instrumental signatures.
+
+    Parameters
+    ----------
+    datamodel : numina.datamodel.DataModel, optional
+        Data model used to access the data and headers of the frame.
+        If not given, a ``SimpleDataModel`` is used.
+    calibid : str
+        Identifier of the calibration, recorded in the header of the corrected frame.
+    dtype : str
+        Data type of the corrected data. Integer images are promoted to it before
+        ``run``, and the subclasses that convert the data use it.
+    """
 
     def __init__(self, datamodel=None, calibid="calibid-unknown", dtype="float32"):
         super().__init__()
@@ -61,6 +82,7 @@ class Corrector(node.Node):
         self.calibid = calibid
 
     def __call__(self, img):
+        """Correct ``img``, promoting integer data to ``dtype`` before calling ``run``."""
         if img[0].data.dtype.kind in "iu":
             # The corrections are done in place, integer data
             # (such as the uint16 images of GCS) are promoted to self.dtype
@@ -71,6 +93,7 @@ class Corrector(node.Node):
         return img
 
     def get_imgid(self, img, prefix=False):
+        """Return the identifier of the image, computed with ``numina.datamodel.get_imgid``."""
         return dm.get_imgid(img, prefix=prefix)
 
 
@@ -78,7 +101,22 @@ TagOptionalCorrector = Corrector
 
 
 class BadPixelCorrector(Corrector):
-    """A Node that corrects a frame from bad pixels."""
+    """A Node that corrects a frame from bad pixels.
+
+    Parameters
+    ----------
+    badpixelmask : numpy.ndarray
+        Bad pixel mask, nonzero values mark the bad pixels.
+    datamodel : numina.datamodel.DataModel, optional
+        Data model used to access the data of the frame.
+    calibid : str
+        Identifier of the mask, recorded in the header of the corrected frame.
+    dtype : str
+        Data type to which integer images are promoted, float images keep their type.
+    hwin, wwin : int
+        Half height and half width of the window used to compute the median
+        that replaces each bad pixel.
+    """
 
     def __init__(self, badpixelmask, datamodel=None, calibid="calibid-unknown", dtype="float32", hwin=2, wwin=2):
 
@@ -89,6 +127,7 @@ class BadPixelCorrector(Corrector):
         self.wwin = wwin
 
     def run(self, img):
+        """Replace the bad pixels of the primary data by the median of their neighbours."""
         import numina.array.bpm as bpm
 
         imgid = self.get_imgid(img)
@@ -109,7 +148,21 @@ class BadPixelCorrector(Corrector):
 
 
 class BiasCorrector(Corrector):
-    """A Node that corrects a frame from bias."""
+    """A Node that corrects a frame from bias.
+
+    Parameters
+    ----------
+    biasmap : numpy.ndarray
+        Bias image subtracted from the data.
+    biasvar : numpy.ndarray, optional
+        Variance of the bias image. If given, it is added to the variance of the frame.
+    datamodel : numina.datamodel.DataModel, optional
+        Data model used to access the data of the frame.
+    calibid : str
+        Identifier of the bias, recorded in the header of the corrected frame.
+    dtype : str
+        Data type to which integer images are promoted, float images keep their type.
+    """
 
     def __init__(self, biasmap, biasvar=None, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
@@ -121,6 +174,7 @@ class BiasCorrector(Corrector):
         self.biasvar = biasvar
 
     def run(self, img):
+        """Subtract the bias from the data and, if ``biasvar`` was given, update the variance."""
 
         imgid = self.get_imgid(img)
 
@@ -147,7 +201,22 @@ class BiasCorrector(Corrector):
 
 
 class DarkCorrector(Corrector):
-    """A Node that corrects a frame from dark current."""
+    """A Node that corrects a frame from dark current.
+
+    Parameters
+    ----------
+    darkmap : numpy.ndarray
+        Dark current per unit of time, scaled by the dark time of the frame.
+    darkvar : numpy.ndarray, optional
+        Variance of the dark current. If given, it is scaled by the square
+        of the dark time and added to the variance of the frame.
+    datamodel : numina.datamodel.DataModel, optional
+        Data model used to access the data and the dark time of the frame.
+    calibid : str
+        Identifier of the dark, recorded in the header of the corrected frame.
+    dtype : str
+        Data type to which integer images are promoted, float images keep their type.
+    """
 
     def __init__(self, darkmap, darkvar=None, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
@@ -160,6 +229,7 @@ class DarkCorrector(Corrector):
         self.darkvar = darkvar
 
     def run(self, img):
+        """Subtract the dark current scaled by the dark time of the frame."""
 
         etime = self.datamodel.get_darktime(img)
 
@@ -182,7 +252,19 @@ class DarkCorrector(Corrector):
 
 
 class NonLinearityCorrector(Corrector):
-    """A Node that corrects a frame from non-linearity."""
+    """A Node that corrects a frame from non-linearity.
+
+    Parameters
+    ----------
+    polynomial : array_like
+        Coefficients of the correction polynomial, in the order used by ``numpy.polyval``.
+    datamodel : numina.datamodel.DataModel, optional
+        Data model used to access the data of the frame.
+    calibid : str
+        Identifier of the calibration, recorded in the header of the corrected frame.
+    dtype : str
+        Data type of the corrected data.
+    """
 
     def __init__(self, polynomial, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
@@ -193,6 +275,7 @@ class NonLinearityCorrector(Corrector):
         self.polynomial = polynomial
 
     def run(self, img):
+        """Replace the data by the correction polynomial evaluated on the data."""
         imgid = self.get_imgid(img)
         _logger.debug("correcting non linearity in %s", imgid)
 
@@ -210,7 +293,19 @@ class NonLinearityCorrector(Corrector):
 
 
 class FlatFieldCorrector(Corrector):
-    """A Node that corrects a frame from flat-field."""
+    """A Node that corrects a frame from flat-field.
+
+    Parameters
+    ----------
+    flatdata : numpy.ndarray
+        Flat-field image that divides the data.
+    datamodel : numina.datamodel.DataModel, optional
+        Data model used to access the data of the frame.
+    calibid : str
+        Identifier of the flat-field, recorded in the header of the corrected frame.
+    dtype : str
+        Data type of the corrected data.
+    """
 
     def __init__(self, flatdata, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
@@ -222,6 +317,7 @@ class FlatFieldCorrector(Corrector):
         self.flat_stats = flatdata.mean()
 
     def run(self, img):
+        """Divide the data by the flat-field."""
         imgid = self.get_imgid(img)
 
         _logger.debug("correcting flat in %s", imgid)
@@ -241,7 +337,20 @@ class FlatFieldCorrector(Corrector):
 
 
 class SkyCorrector(Corrector):
-    """A Node that corrects a frame from sky."""
+    """A Node that corrects a frame from sky.
+
+    Parameters
+    ----------
+    skydata : numpy.ndarray
+        Sky image subtracted from the data.
+    datamodel : numina.datamodel.DataModel, optional
+        Data model used to access the data of the frame and to decide
+        whether the sky is subtracted.
+    calibid : str
+        Identifier of the sky, recorded in the header of the corrected frame.
+    dtype : str
+        Data type of the corrected data.
+    """
 
     def __init__(self, skydata, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
@@ -253,6 +362,7 @@ class SkyCorrector(Corrector):
         self.calib_stats = skydata.mean()
 
     def run(self, img):
+        """Subtract the sky, if ``datamodel.do_sky_correction`` returns True for the frame."""
         imgid = self.get_imgid(img)
 
         if self.datamodel.do_sky_correction(img):
@@ -277,7 +387,17 @@ class SkyCorrector(Corrector):
 
 
 class DivideByExposure(Corrector):
-    """A Node that divides its input by exposure time."""
+    """A Node that divides its input by exposure time.
+
+    Parameters
+    ----------
+    datamodel : numina.datamodel.DataModel, optional
+        Data model used to access the header and the exposure time of the frame.
+    calibid : str
+        Not used by this node.
+    dtype : str
+        Data type to which integer images are promoted.
+    """
 
     def __init__(self, datamodel=None, calibid="calibid-unknown", dtype="float32"):
 
@@ -286,6 +406,10 @@ class DivideByExposure(Corrector):
         super().__init__(datamodel=datamodel, calibid=calibid, dtype=dtype)
 
     def run(self, img):
+        """Divide the data (and the variance, if present) by the exposure time when BUNIT is ADU.
+
+        Frames with BUNIT equal to ADU/s, without BUNIT or with other values are not changed.
+        """
         imgid = self.get_imgid(img)
         hdr = self.datamodel.get_header(img)
         bunit = hdr.get("BUNIT")

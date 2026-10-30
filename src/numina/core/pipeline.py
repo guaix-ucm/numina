@@ -20,7 +20,23 @@ import numina.datamodel
 
 
 class Pipeline:
-    """Base class for pipelines."""
+    """Base class for pipelines.
+
+    Parameters
+    ----------
+    instrument : str
+        Name of the instrument.
+    name : str
+        Name of the pipeline.
+    recipes : dict
+        Description of the recipe of each observing mode, by mode key.
+    version : int, optional
+        Version of the pipeline.
+    products : dict, optional
+        Description of the product class of each mode, by mode key.
+    provides : list of ProductEntry, optional
+        The products provided by the observing modes.
+    """
 
     def __init__(self, instrument, name, recipes, version=1, products=None, provides=None):
         self.instrument = instrument
@@ -41,11 +57,18 @@ class Pipeline:
             self._provides_by_r[k.mode] = k
 
     def _get_base_class(self, entry):
+        """Import the class named in the ``class`` key of `entry`."""
 
         recipe_fqn = entry["class"]
         return numina.util.objimport.import_object(recipe_fqn)
 
     def _get_base_object(self, entry):
+        """Build an object of the class of `entry`, with its ``args`` and ``kwargs``.
+
+        The ``links`` of the entry are passed as the keyword argument
+        ``query_options``, and its ``state``, if present, is set with
+        ``__setstate__``.
+        """
 
         Cls = self._get_base_class(entry)
 
@@ -97,6 +120,11 @@ class Pipeline:
 
     # Used by numina-plugin-db
     def load_product_from_name(self, label):
+        """Build the product type named `label`, as ``Class(arg1=val1, ...)``.
+
+        The class is the product class of the pipeline registered under
+        the part of `label` before the parenthesis.
+        """
 
         short, _ = numina.util.parser.split_type_name(label)
         klass = self.load_product_class(short)
@@ -299,6 +327,21 @@ class InstrumentDRP:
 
 
 class ProductEntry:
+    """Product provided by an observing mode of a pipeline.
+
+    Parameters
+    ----------
+    name : str
+        Name of the product type.
+    mode : str
+        Key of the observing mode that provides the product.
+    field : str
+        Name of the result of the recipe that holds the product.
+    alias : str, optional
+        Short name of the product. By default, the last component of
+        `name` split by dots.
+    """
+
     def __init__(self, name, mode, field, alias=None):
         self.name = name
         self.mode = mode
@@ -315,7 +358,13 @@ class ProductEntry:
 
 
 class ObservingMode:
-    """Observing modes of an Instrument."""
+    """Observing modes of an Instrument.
+
+    Parameters
+    ----------
+    instrument : str, optional
+        Name of the instrument.
+    """
 
     def __init__(self, instrument=""):
         self.name = ""
@@ -340,6 +389,14 @@ class ObservingMode:
         return True
 
     def build_ob(self, partial_ob, backend, options=None):
+        """Complete the observing block `partial_ob` and return it.
+
+        If the options (`options`, or ``build_ob_options`` if not given)
+        are a ``ResultOf``, the results of other observing blocks are
+        searched with ``backend.search_result_relative`` and added to
+        ``partial_ob.results``, by id. The method can be replaced with the
+        key ``builder`` of the mode in ``drp.yaml``.
+        """
 
         mod = options or self.build_ob_options
 

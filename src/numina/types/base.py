@@ -15,7 +15,20 @@ from numina.datamodel import DataModel
 
 
 class DataTypeBase:
-    """Base class for input/output types of recipes."""
+    """Base class for input/output types of recipes.
+
+    Parameters
+    ----------
+    datamodel : DataModel or class, optional
+        Data model of the instrument, or its class, which is instantiated.
+        If None, a ``numina.datamodel.DataModel`` is used.
+    query_expr : optional
+        Query expression of the type. It replaces the expression built
+        from the class attribute ``__tags__``.
+    tags : list of str, optional
+        Names of the query attributes of the data model used to build the
+        query expression. It replaces `query_expr`.
+    """
 
     def __init__(self, *args, **kwds):
         import numina.core.tagexpr as tagexpr
@@ -56,15 +69,19 @@ class DataTypeBase:
         self.query_opts = []
 
     def __getstate__(self):
+        """Return an empty state, the attributes of the type are not saved."""
         return {}
 
     def __setstate__(self, state):
+        """Do nothing, the attributes of the type are not restored."""
         pass
 
     def _datatype_dump(self, obj, where):
+        """Return `obj` unchanged, subclasses save it to a file."""
         return obj
 
     def _datatype_load(self, obj):
+        """Return `obj` unchanged, subclasses load it from a file."""
         return obj
 
     def query_constraints(self):
@@ -153,4 +170,5 @@ class DataTypeBase:
         return {}
 
     def tag_names(self):
+        """Return the names of the tags in the query expression."""
         return self.names_t
