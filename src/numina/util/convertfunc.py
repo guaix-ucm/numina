@@ -45,7 +45,8 @@ def json_deserial_func_p(args):
     -------
     numpy.polynomial.polynomial.Polynomial
     """
-    if args:
+    # args is a list (from JSON) or an array (from pickle or deepcopy)
+    if args is not None and len(args) > 0:
         value = nppol.Polynomial(args)
     else:
         value = nppol.Polynomial([0.0])
@@ -64,6 +65,11 @@ def convert_function(node):
 
     ``node`` is a dictionary with the type of function in ``function``
     (``spline1d``, ``polynomial`` or ``polynomial1d``) and its parameters in ``params``.
+
+    ``node`` is the output of ``json_serial_function``, used directly (for
+    example, in ``__setstate__`` called by ``pickle`` or ``copy.deepcopy``)
+    or after a round trip through JSON, so the parameters can be numpy
+    arrays or lists.
     """
     tipo = node["function"]
     args = node["params"]
