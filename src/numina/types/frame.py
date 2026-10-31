@@ -6,6 +6,7 @@
 # License-Filename: LICENSE.txt
 #
 
+import shutil
 import warnings
 
 from astropy.io import fits
@@ -179,8 +180,11 @@ def get_filename_dataframe(obj, where):
     built from `where` with ``get_filename_hdulist``.
     """
     # save fits file
-    if obj is None or obj.frame is None:
+    if obj is None:
         return None
+    elif obj.frame is None:
+        # Only a file, it is copied with the name given by where
+        return get_filename_hdulist(obj, where)
     elif obj.filename:
         return obj.filename
     else:
@@ -221,7 +225,13 @@ def dump_dataframe(obj, where):
     fname = get_filename_dataframe(obj, where)
 
     if fname:
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore")
-            obj.frame.writeto(fname, overwrite=True, output_verify="warn")
+        if obj.frame is None:
+            try:
+                shutil.copyfile(obj.filename, fname)
+            except shutil.SameFileError:
+                pass
+        else:
+            with warnings.catch_warnings():
+                warnings.simplefilter("ignore")
+                obj.frame.writeto(fname, overwrite=True, output_verify="warn")
     return fname

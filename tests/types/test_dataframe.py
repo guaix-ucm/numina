@@ -42,3 +42,48 @@ def test_empty_hdulist():
 def test_no_frame_no_filename():
     with pytest.raises(ValueError):
         DataFrame()
+
+
+def test_frame_and_filename_none():
+    with pytest.raises(ValueError, match="cannot be both None"):
+        DataFrame()
+
+
+def test_dump_dataframe_filename(fitsfile, tmp_path, monkeypatch):
+    """A DataFrame with only a file is copied to the results (issue #271)"""
+    from numina.types.frame import dump_dataframe
+
+    monkeypatch.chdir(tmp_path)
+    fname = dump_dataframe(DataFrame(filename=str(fitsfile)), "result_image")
+    assert fname == "result_image.fits"
+    with fits.open(fname) as hdul:
+        assert hdul[0].data.sum() == 9
+
+
+def test_dump_dataframe_frame(tmp_path, monkeypatch):
+    from numina.types.frame import dump_dataframe
+
+    monkeypatch.chdir(tmp_path)
+    hdul = fits.HDUList([fits.PrimaryHDU(data=numpy.ones((2, 2)))])
+    fname = dump_dataframe(DataFrame(frame=hdul), "result_image")
+    assert fname == "result_image.fits"
+    with fits.open(fname) as hdul2:
+        assert hdul2[0].data.sum() == 4
+
+
+def test_dump_dataframe_same_file(tmp_path, monkeypatch):
+    """The file is not copied onto itself"""
+    from numina.types.frame import dump_dataframe
+
+    monkeypatch.chdir(tmp_path)
+    fits.PrimaryHDU(data=numpy.ones((2, 2))).writeto("result_image.fits")
+    fname = dump_dataframe(DataFrame(filename="result_image.fits"), "result_image")
+    assert fname == "result_image.fits"
+    with fits.open(fname) as hdul:
+        assert hdul[0].data.sum() == 4
+
+
+def test_dump_dataframe_none():
+    from numina.types.frame import dump_dataframe
+
+    assert dump_dataframe(None, "result_image") is None

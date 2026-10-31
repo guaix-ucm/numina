@@ -38,7 +38,7 @@ class DataFrame:
 
     def __init__(self, frame=None, filename=None):
         if frame is None and filename is None:
-            raise ValueError("only one in frame and filename can be None")
+            raise ValueError("frame and filename cannot be both None")
         if isinstance(frame, fits.HDUList) and len(frame) > 0 and frame.fileinfo(0) is not None:
             source = frame.fileinfo(0).get("filename")
             msg = (
