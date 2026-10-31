@@ -165,3 +165,31 @@ def test_frames_in_memory_are_readable(my_datamodel):
 
     assert tags == {"filter": "FILTER-A"}
     assert hdul[0].data.sum() == 6
+
+
+def _frame_with_filter(value):
+    img = fits.PrimaryHDU(data=[1, 2, 3], header=fits.Header())
+    img.header["FILTER"] = value
+    return DataFrame(frame=fits.HDUList(img))
+
+
+def test_ob_with_children(my_datamodel):
+    """The children of the OB are ids, their results are checked in results (issue #263)"""
+    ob = ObservationResult()
+    ob.frames = [_frame_with_filter("FILTER-A")]
+    ob.children = [1, 2]
+    ob.results = {1: _frame_with_filter("FILTER-A"), 2: _frame_with_filter("FILTER-A")}
+
+    tags = extract_tags_from_obsres(ob, ["filter"], my_datamodel)
+
+    assert tags == {"filter": "FILTER-A"}
+
+
+def test_ob_with_children_different_tags(my_datamodel):
+    """A result of a child with different tags raises ValueError"""
+    ob = ObservationResult()
+    ob.children = [1, 2]
+    ob.results = {1: _frame_with_filter("FILTER-A"), 2: _frame_with_filter("FILTER-B")}
+
+    with pytest.raises(ValueError):
+        extract_tags_from_obsres(ob, ["filter"], my_datamodel)

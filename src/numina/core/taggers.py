@@ -26,14 +26,9 @@ def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True
                 this_tags = extract_tags_from_img(img, tag_keys, datamodel, base=obsres.labels)
                 if this_tags != final_tags:
                     raise ValueError(f"tags in image {frame} are {this_tags} ! = {final_tags}")
-
-        for res in obsres.children:
-            res_tags = res.tags
-            for t in tag_keys:
-                if final_tags[t] != res_tags[t]:
-                    msg = f"wrong tag {t} in product {res}"
-                    raise ValueError(msg)
-
+        # obsres.children holds the ids of the children OBs. Their results,
+        # when used, have been added to obsres.frames or obsres.results,
+        # and have been checked in the previous loop
         return final_tags
     else:
         return final_tags
