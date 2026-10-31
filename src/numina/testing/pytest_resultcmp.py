@@ -173,7 +173,7 @@ def compare_result_dirs(resdir1, resdir2, atol=0.0, rtol=1e-7):
     -------
     identical : bool
         True if the directories are considered equal.
-    msg : str or list of str
+    msg : str
         Report of the differences.
     """
     # First is reference, second is generated
