@@ -83,7 +83,7 @@ class Combine(BaseRecipe):
 
         result = {}
         result["obresult"] = obsres
-        for key in ["method", "field"]:
+        for key in ["method", "method_kwargs", "field"]:
             req = self.requirements()[key]
             query_option = self.query_options.get(key)
             try:

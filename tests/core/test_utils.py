@@ -61,3 +61,30 @@ def test_combine2(method, kwargs, result):
     assert numpy.allclose(hdul[0].data, [[result]])
 
     assert hdul[0].header["NUM-NCOM"] == nimages
+
+
+class _NoDAL:
+    """A DAL without parameters or results"""
+
+    def has_extra(self, name):
+        return False
+
+    def search_parameter(self, name, tipo, obsres, options=None):
+        import numina.exceptions
+
+        raise numina.exceptions.NoResultFound(name)
+
+    def search_result_relative(self, name, tipo, obsres, result_desc, options=None):
+        return []
+
+
+def test_combine_build_recipe_input_method_kwargs():
+    """method_kwargs is read from the observation result (issue #271)"""
+    obresult = ObservationResult()
+    obresult.requirements = {"method": "minmax", "method_kwargs": {"nmin": 1, "nmax": 1}}
+
+    recipe = Combine()
+    r_input = recipe.build_recipe_input(obresult, _NoDAL())
+
+    assert r_input.method == "minmax"
+    assert r_input.method_kwargs == {"nmin": 1, "nmax": 1}
