@@ -104,3 +104,18 @@ def test_lower_limit(size, col, step, hs):
 
     assert vcalc_min == vreal_min
     assert vcalc_max == vreal_max
+
+
+@pytest.mark.parametrize("gauss", [1, 0])
+def test_trace_axis1(gauss):
+    """Trace with axis=1 is the trace of the transposed array (issue #261)"""
+    arr = np.zeros((100, 100))
+    arr[47, 45:55] = 10.0
+    arr[48, 45:55] = 100.0
+    arr[49, 45:55] = 12.0
+
+    mm0 = trace(arr, 48.0, 48.0, step=1, gauss=gauss)
+    mm1 = trace(arr.T, 48.0, 48.0, axis=1, step=1, gauss=gauss)
+
+    # x and y are swapped, the peak value is the same
+    assert_allclose(mm1, mm0[:, [1, 0, 2]])

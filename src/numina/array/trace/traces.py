@@ -64,7 +64,7 @@ def trace(arr, x, y, axis=0, background=0.0, step=4, hs=1, tol=2, maxdis=2.0, ga
 
     if axis == 1:
         # Flip X,Y columns
-        return result[:, ::-1]
+        return result[:, [1, 0, 2]]
 
     return result
 
