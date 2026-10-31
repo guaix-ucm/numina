@@ -175,9 +175,9 @@ class DataFrameType(DataType):
 def get_filename_dataframe(obj, where):
     """Return the name of the FITS file where the DataFrame `obj` is saved.
 
-    It is None if `obj` is None or does not have an HDUList in memory,
-    the ``filename`` of `obj` if it has one, and otherwise the name
-    built from `where` with ``get_filename_hdulist``.
+    It is None if `obj` is None. If `obj` has an HDUList in memory and a
+    ``filename``, it is the ``filename``. Otherwise, it is the name built
+    from `where` with ``get_filename_hdulist``.
     """
     # save fits file
     if obj is None:
@@ -214,11 +214,12 @@ def get_filename_hdulist(hdul, hint):
 
 
 def dump_dataframe(obj, where):
-    """Write the HDUList in memory of the DataFrame `obj` to a FITS file.
+    """Write the DataFrame `obj` to a FITS file.
 
     The name of the file is given by ``get_filename_dataframe``, an
-    existing file is overwritten. Returns the name of the file, or None
-    if nothing is written.
+    existing file is overwritten. The HDUList in memory of `obj` is
+    written or, if it has none, its file is copied. Returns the name of
+    the file, or None if nothing is written.
     """
     # save fits file
 

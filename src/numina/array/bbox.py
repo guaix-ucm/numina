@@ -87,7 +87,7 @@ class PixelInterval1D:
         """Return the intersection of both intervals.
 
         If the intervals do not overlap, an empty interval is returned.
-        If one of the intervals is empty, the other is returned.
+        If one of the intervals is empty, the empty one is returned.
         """
         if self:
             if other:

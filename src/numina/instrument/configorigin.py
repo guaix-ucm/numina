@@ -33,7 +33,7 @@ class ElementOrigin:
     name
         Name of the configuration.
     uuid_in
-        UUID of the configuration.
+        UUID of the configuration, a ``uuid.UUID`` or a string.
     date_start, date_end
         Start and end of the validity of the configuration, None if unbounded.
         Strings are parsed as ISO 8601 dates.
