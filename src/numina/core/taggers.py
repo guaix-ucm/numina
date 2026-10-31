@@ -24,8 +24,8 @@ def extract_tags_from_obsres(obsres, tag_keys, datamodel: DataModel, strict=True
     Raises
     ------
     ValueError
-        With `strict`, if the tags of a frame or a result of `obsres`, or of
-        its children, are different.
+        With `strict`, if the tags of the frames or the results of `obsres`
+        are different.
     """
     sample = obsres.get_sample_frame()
     if sample is None:
