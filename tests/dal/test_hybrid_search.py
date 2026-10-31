@@ -379,3 +379,24 @@ def test_observation_date_closes_file():
     frame = Frame()
     BaseHybridDAL._observation_date(FakeObsres(frame), FakeDrp("2020-01-01T00:00:00"))
     assert frame.closed
+
+
+def test_without_components_uses_drp_profiles(drps, tmp_path):
+    """Without components, the configurations are the profiles of the DRPs (issue #271)"""
+    dal = make_dal(drps, None, tmp_path)
+    assert dal.components is None
+    obsres = dal.obsres_from_oblock_id(2, profile=PROFILE)
+    assert obsres.configuration.name == "TEST1"
+    instrument = dal.assembly_instrument(PROFILE, None, by_key="uuid")
+    assert instrument.name == "TEST1"
+
+
+def test_search_recipe_from_ob_pipeline(drps, components, tmp_path, monkeypatch):
+    """The pipeline argument is used, the pipeline of the OB by default (issue #271)"""
+    dal = make_dal(drps, components, tmp_path)
+    obsres = dal.obsres_from_oblock_id(2, profile=PROFILE)
+    calls = []
+    monkeypatch.setattr(dal, "search_recipe", lambda ins, mode, pipeline: calls.append(pipeline))
+    dal.search_recipe_from_ob(obsres)
+    dal.search_recipe_from_ob(obsres, pipeline="other")
+    assert calls == [obsres.pipeline, "other"]

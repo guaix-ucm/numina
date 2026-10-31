@@ -37,9 +37,10 @@ class AbsDrpDAL(DALInterface):
         drp = self.drps.query_by_name(ins)
         return drp.get_recipe_object(mode, pipeline_name=pipeline)
 
-    def search_recipe_from_ob(self, ob, pipeline="default"):
-        """Return the recipe of the mode of `ob`, in the pipeline of `ob`."""
+    def search_recipe_from_ob(self, ob, pipeline=None):
+        """Return the recipe of the mode of `ob`, in `pipeline` or, if not given, in the pipeline of `ob`."""
         instrument = ob.instrument
         mode = ob.mode
-        pipeline = ob.pipeline
+        if pipeline is None:
+            pipeline = ob.pipeline
         return self.search_recipe(instrument, mode, pipeline)

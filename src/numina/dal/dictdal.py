@@ -19,7 +19,7 @@ import numina.store
 import numina.store.gtc.load as gtcload
 from numina.core.oresult import oblock_from_dict
 from numina.exceptions import NoResultFound
-from numina.instrument.assembly import assembly_instrument, configure_obresult
+from numina.instrument.assembly import assembly_instrument, configure_obresult, load_panoply_store
 from numina.util.context import working_directory
 
 from .absdal import AbsDrpDAL
@@ -51,7 +51,8 @@ class BaseDictDAL(AbsDrpDAL):
         extra_data : dict, optional
             Values of the requirements given in the command line, by name.
         components : dict, optional
-            Components of the instrument configurations.
+            Components of the instrument configurations. If not given, the
+            profiles of the DRPs are used.
         """
         super().__init__(drps)
         # Check that the structure of the base is correct
@@ -59,7 +60,8 @@ class BaseDictDAL(AbsDrpDAL):
         self.prod_table = prod_table
         self.req_table = req_table
         self.extra_data = extra_data if extra_data else {}
-        self.components = components if components else {}
+        # None: the configurations are the profiles of the DRPs
+        self.components = components
         #: Where the values returned by the searches were found, by name
         self.sources = {}
 
@@ -198,8 +200,16 @@ class BaseDictDAL(AbsDrpDAL):
             self.assign_configuration(obsres)
 
     def assembly_instrument(self, keyval, date, by_key="name"):
-        """Assemble the instrument configuration `keyval` (selected by `by_key`) from the components of the DAL."""
-        return assembly_instrument(self.components, keyval, date, by_key=by_key)
+        """Assemble the instrument configuration `keyval` (selected by `by_key`).
+
+        The configurations are the components of the DAL or, if it has none,
+        the profiles of the DRPs.
+        """
+        if self.components is None:
+            comp_store = load_panoply_store(self.drps)
+        else:
+            comp_store = self.components
+        return assembly_instrument(comp_store, keyval, date, by_key=by_key)
 
     def search_product(self, name, tipo, obsres, options=None):
         """Return the product `name` of type `tipo`, from the command line or from the table of products."""
@@ -278,7 +288,8 @@ class Dict2DAL(BaseDictDAL):
     extra_data : dict, optional
         Values of the requirements given in the command line, by name.
     components : dict, optional
-        Components of the instrument configurations.
+        Components of the instrument configurations. If not given, the
+        profiles of the DRPs are used.
     """
 
     def __init__(self, drps, obtable, base, extra_data=None, components=None):
@@ -356,7 +367,8 @@ class BaseHybridDAL(Dict2DAL):
         Directory the directories of the results are relative to,
         the current directory by default.
     components : dict, optional
-        Components of the instrument configurations.
+        Components of the instrument configurations. If not given, the
+        profiles of the DRPs are used.
     """
 
     def __init__(

@@ -23,7 +23,7 @@ class DALInterface(metaclass=ABCMeta):
         pass
 
     @abstractmethod
-    def search_recipe_from_ob(self, ob, pipeline="default"):
+    def search_recipe_from_ob(self, ob, pipeline=None):
         """Return the recipe of the mode of the observing block `ob`."""
         # returns RecipeClass
         pass
