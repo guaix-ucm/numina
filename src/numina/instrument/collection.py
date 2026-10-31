@@ -45,8 +45,10 @@ def load_paths_store(
 
     Each ``.json`` file is validated with the schema ``instconf``, and its ``origin`` key
     is set to the ``ElementOrigin`` built from its contents. The directories in ``file_paths``
-    are read before the packages in ``pkg_paths``. A file with the name of a file read
-    before replaces it, with a warning.
+    are read before the packages in ``pkg_paths``, and have priority: a file with the name of
+    a file read before is ignored, with a warning. So the configurations of ``file_paths`` replace
+    those of the packages with the same file name, and are the first in the collection (the first
+    is used when several are valid for a date, see ``find_element``).
 
     Parameters
     ----------
@@ -67,23 +69,29 @@ def load_paths_store(
     if pkg_paths is None:
         pkg_paths = []
 
-    paths1 = [pathlib.Path(f_path) for f_path in file_paths]
-    paths2 = [importlib.resources.files(p_path) for p_path in pkg_paths]
+    # The name of each directory or package, and its path
+    paths1 = [(str(f_path), pathlib.Path(f_path)) for f_path in file_paths]
+    paths2 = [(p_path, importlib.resources.files(p_path)) for p_path in pkg_paths]
 
     # Directory where each file was read
     file_dirs = {}
-    for path in itertools.chain(paths1, paths2):
+    for label, path in itertools.chain(paths1, paths2):
         for obj in path.iterdir():
             if obj.suffix == ".json":
+                if obj.name in comp_store:
+                    # The first file read has priority
+                    _logger.warning(
+                        "configuration file %s in %s is ignored, the one in %s is used",
+                        obj.name,
+                        label,
+                        file_dirs[obj.name],
+                    )
+                    continue
                 with obj.open() as fd:
                     cont = json.load(fd)
                     validate_schema(cont, "instconf", source=str(obj))
                     cont["origin"] = ElementOrigin.from_dict(cont)
-                    if obj.name in comp_store:
-                        _logger.warning(
-                            "configuration file %s in %s replaces the one in %s", obj.name, path, file_dirs[obj.name]
-                        )
                     comp_store[obj.name] = cont
-                    file_dirs[obj.name] = path
+                    file_dirs[obj.name] = label
 
     return comp_store

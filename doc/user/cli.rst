@@ -44,7 +44,10 @@ It is called like this::
 
 .. option:: --profile-path path
 
-   Directory with additional instrument configurations.
+   Directory with additional instrument configurations. They have priority
+   over the configurations of the DRPs: a file with the same name as a file
+   of the DRP replaces it, and when several configurations are valid for the
+   date of the observation, the one of this directory is used.
 
 .. option:: -p, --pipeline 'name'
 

@@ -79,7 +79,7 @@ def test_numina_run_profile_path(run_setup, extra_dir, tmp_path):
 
 
 def test_replaced_file_warning(tmp_path, caplog):
-    """A file with the same name as one of the DRP replaces it, with a warning"""
+    """A file with the same name as one of the DRP replaces it, with a warning (issue #268)"""
     extra = tmp_path / "extra"
     extra.mkdir()
     conf = make_test1_configuration(NEW_PROFILE, "2020-01-01T00:00:00")
@@ -88,7 +88,7 @@ def test_replaced_file_warning(tmp_path, caplog):
     with caplog.at_level(logging.WARNING, logger="numina.instrument.collection"):
         store = load_paths_store(["tests.support.drps.configs"], [str(extra)])
 
-    assert "configuration file instrument-test1.json in" in caplog.text
-    assert "replaces the one in" in caplog.text
-    # The file of the DRP is used
-    assert str(store["instrument-test1.json"]["origin"].uuid) != NEW_PROFILE
+    assert "configuration file instrument-test1.json in tests.support.drps.configs is ignored" in caplog.text
+    assert f"the one in {extra} is used" in caplog.text
+    # The file of the additional directory is used
+    assert str(store["instrument-test1.json"]["origin"].uuid) == NEW_PROFILE
