@@ -52,7 +52,11 @@ def json_deserial_func_p(args):
     return value
 
 
-_json_deserial_func_map = {"spline1d": json_deserial_func_u, "polynomial": json_deserial_func_p}
+_json_deserial_func_map = {
+    "spline1d": json_deserial_func_u,
+    "polynomial": json_deserial_func_p,
+    "polynomial1d": json_deserial_func_p,
+}
 
 
 def convert_function(node):
