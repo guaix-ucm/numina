@@ -329,3 +329,11 @@ def test_bbox4():
 def test_bbox5():
     bc = bbox.BoundingBox(1, 3, 3, 80)
     assert bc.extent == (0.5, 2.5, 2.5, 79.5)
+
+
+@pytest.mark.parametrize("empty", [bbox.PixelInterval1D(3, 3), bbox.PixelInterval1D(9, 9)])
+def test_pixin1d_intersection_empty(empty):
+    """The intersection with an empty interval is empty (issue #271)"""
+    b1 = bbox.PixelInterval1D(1, 8)
+    assert not b1.intersection(empty)
+    assert not empty.intersection(b1)

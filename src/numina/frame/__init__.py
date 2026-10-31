@@ -55,21 +55,21 @@ def resize_hdu(hdu, newshape, region, window=None, fill=0.0, scale=1, conserve=T
     return newhdu
 
 
-def resize_hdul(hdul, newshape, region, extensions=None, window=None, scale=1, fill=0.0, conserve=True):
+def resize_hdul(hdul, newshape, region, extensions=None, window=None, scale=1, fill=0.0, conserve=True, dtype=None):
     """Return a new HDUList with the HDUs in ``extensions`` resized with ``resize_hdu``.
 
     ``extensions`` is a list of HDU indices, only the primary HDU by default.
     The other HDUs are copied unchanged into the new HDUList.
     """
-    from numina.frame import resize_hdu
-
     if extensions is None:
         extensions = [0]
 
     nhdul = [None] * len(hdul)
     for ext, hdu in enumerate(hdul):
         if ext in extensions:
-            nhdul[ext] = resize_hdu(hdu, newshape, region, fill=fill, window=window, scale=scale, conserve=conserve)
+            nhdul[ext] = resize_hdu(
+                hdu, newshape, region, fill=fill, window=window, scale=scale, conserve=conserve, dtype=dtype
+            )
         else:
             nhdul[ext] = hdu
     return fits.HDUList(nhdul)

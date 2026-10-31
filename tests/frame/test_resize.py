@@ -131,3 +131,12 @@ def test_resize_fits_overwrite(tmp_path):
     nf.resize_fits(str(filename), newfilename, (4, 6), region)
     with fits.open(newfilename) as hdul:
         assert hdul[0].data.shape == (4, 6)
+
+
+def test_resize_hdul_dtype():
+    """resize_hdul passes dtype to resize_hdu (issue #271)"""
+    region = (slice(1, 3), slice(2, 5))
+
+    result = nf.resize_hdul(hdulist(), (4, 6), region, dtype="float64")
+
+    assert result[0].data.dtype == numpy.float64

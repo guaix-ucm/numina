@@ -98,9 +98,11 @@ class PixelInterval1D:
                 else:
                     return PixelInterval1D(self.pix2, self.pix2, axis=self.axis)
             else:
-                return self
+                # other is empty
+                return other
         else:
-            return other
+            # self is empty
+            return self
 
     def __eq__(self, other):
         """Compare the limits of the intervals. All empty intervals are equal."""

@@ -47,7 +47,6 @@ class Node(metaclass=abc.ABCMeta):
 
     def __call__(self, img):
         """Run the node, as ``run``."""
-        self.obtain_tuple(img)
         return self.run(img)
 
     def obtain_tuple(self, arg):
