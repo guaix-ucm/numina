@@ -63,9 +63,9 @@ class Corrector(node.Node):
     def __call__(self, img):
         if img[0].data.dtype.kind in "iu":
             # The corrections are done in place, integer data
-            # (such as the uint16 images of GCS) are promoted to float
-            _logger.debug("change dtype to float32, old is %s", img[0].data.dtype)
-            img = promote_hdulist(img)
+            # (such as the uint16 images of GCS) are promoted to self.dtype
+            _logger.debug("change dtype to %s, old is %s", self.dtype, img[0].data.dtype)
+            img = promote_hdulist(img, totype=self.dtype)
         img = self.run(img)
 
         return img
@@ -136,8 +136,7 @@ class BiasCorrector(Corrector):
             _logger.debug("update variance with bias")
             variance = self.datamodel.get_variance(img)
             variance += self.biasvar
-            # FIXME
-            img[1].data = variance
+            img["variance"].data = variance
         hdr = img["primary"].header
         hdr["NUM-BS"] = self.calibid
         hdr["history"] = f"Bias correction with {self.calibid}"
@@ -173,8 +172,7 @@ class DarkCorrector(Corrector):
         if self.update_variance:
             variance = self.datamodel.get_variance(img)
             variance += self.darkvar * etime * etime
-            # FIXME
-            img[1].data = variance
+            img["variance"].data = variance
         hdr = img["primary"].header
         hdr["NUM-DK"] = self.calibid
         hdr["history"] = f"Dark correction with {self.calibid}"
@@ -195,7 +193,8 @@ class NonLinearityCorrector(Corrector):
         self.polynomial = polynomial
 
     def run(self, img):
-        _logger.debug("correcting non linearity in %s", img)
+        imgid = self.get_imgid(img)
+        _logger.debug("correcting non linearity in %s", imgid)
 
         data = self.datamodel.get_data(img)
 

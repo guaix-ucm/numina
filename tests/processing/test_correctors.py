@@ -207,3 +207,41 @@ def test_divide_by_exposure_unknown_unit(caplog):
 def test_divide_by_exposure_no_unit():
     result = proc.DivideByExposure()(image(10, EXPTIME=2.0))
     assert numpy.allclose(result[0].data, 10)
+
+
+def image_mask_first(value, variance, mask=7.0):
+    """An image with the extension MASK before VARIANCE"""
+    hdul = image(value)
+    hdul.append(fits.ImageHDU(numpy.full((4, 5), mask, dtype="float32"), name="MASK"))
+    hdul.append(fits.ImageHDU(numpy.full((4, 5), variance, dtype="float32"), name="VARIANCE"))
+    return hdul
+
+
+@pytest.mark.parametrize(
+    "corrector, variance",
+    [
+        (proc.BiasCorrector(numpy.full((4, 5), 2.0), biasvar=numpy.full((4, 5), 0.5)), 1.5),
+        (proc.DarkCorrector(numpy.full((4, 5), 0.5), darkvar=numpy.full((4, 5), 0.25)), 1.25),
+    ],
+)
+def test_corrector_variance_not_first_extension(corrector, variance):
+    """The variance is written in the extension VARIANCE, not in the second HDU (issue #270)"""
+    result = corrector(image_mask_first(10, variance=1.0))
+    assert numpy.allclose(result["MASK"].data, 7.0)
+    assert numpy.allclose(result["VARIANCE"].data, variance)
+
+
+def test_corrector_promotes_integers_to_dtype():
+    """Integer images are promoted to the dtype of the corrector (issue #270)"""
+    corrector = proc.BiasCorrector(numpy.full((4, 5), 2.0), dtype="float64")
+    result = corrector(image(10, dtype="uint16"))
+    assert result[0].data.dtype == numpy.float64
+    assert numpy.allclose(result[0].data, 8)
+
+
+def test_nonlinearity_corrector_logs_imgid(caplog):
+    """The log shows the id of the image, not the HDUList (issue #270)"""
+    corrector = proc.NonLinearityCorrector([0.0, 1.0], calibid="linid")
+    with caplog.at_level(logging.DEBUG, logger="numina.processing"):
+        corrector(image(3))
+    assert f"correcting non linearity in {UUID}" in caplog.text
