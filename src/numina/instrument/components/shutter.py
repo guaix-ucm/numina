@@ -21,12 +21,12 @@ class Open:
 
 
 class Shutter(Wheel):
-    """Shutter with two positions, OPEN and CLOSE"""
+    """Shutter with two positions, OPEN and STOP"""
 
     def __init__(self, name="Shutter", parent=None):
         super().__init__(name, capacity=2, parent=parent)
-        self.put_in_pos(Stop(name="STOP"), 0)  # FIXME
-        self.put_in_pos(Open(name="OPEN"), 1)  # FIXME
+        self.put_in_pos(Stop(name="STOP"), 0)
+        self.put_in_pos(Open(name="OPEN"), 1)
         self.move_to(1)  # Open by default
 
     def configure_(self, value):
@@ -39,11 +39,11 @@ class Shutter(Wheel):
             elif val == "closed":
                 val = 0
             else:
-                raise ValueError("Not allowed value %s", value)
+                raise ValueError(f"Not allowed value {value=}")
         elif isinstance(value, int):
             val = value
         else:
-            raise TypeError("Not allowed type %s", type(value))
+            raise TypeError(f"Not allowed type {type(value)}")
 
         # Move to value
         self.move_to(val)
