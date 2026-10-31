@@ -56,7 +56,7 @@ def trace(arr, x, y, axis=0, background=0.0, step=4, hs=1, tol=2, maxdis=2.0, ga
     if axis == 0:
         arr3 = arr2
     elif axis == 1:
-        arr3 = arr2.t
+        arr3 = arr2.T
     else:
         raise ValueError("'axis' must be 0 or 1")
 
