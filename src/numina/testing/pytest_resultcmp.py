@@ -155,8 +155,10 @@ def compare_result_dirs(resdir1, resdir2, atol=0.0, rtol=1e-7):
     # as assert cont1 == cont2
     if cont1 != cont2:
         exp = compare_eq_sequence(cont1, cont2)
-        return False, exp
+        return False, "\n".join(exp)
 
+    # The reports of the files that are different
+    reports = []
     for fname in cont1:
         fname1 = os.path.join(resdir1, fname)
         fname2 = os.path.join(resdir2, fname)
@@ -167,11 +169,15 @@ def compare_result_dirs(resdir1, resdir2, atol=0.0, rtol=1e-7):
 
             ignore_keywords = ["HISTORY", "UUID", "NUMXVER"]
             diff = FITSDiff(fname1, fname2, rtol=rtol, atol=atol, ignore_keywords=ignore_keywords)
-            return diff.identical, diff.report()
+            if not diff.identical:
+                reports.append(diff.report())
         elif ext == ".json":
             print("json comparator, not implemented")
         else:
             print("ignoring ", ext, "file")
+
+    if reports:
+        return False, "\n".join(reports)
     return True, "ok"
 
 
