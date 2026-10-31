@@ -53,6 +53,8 @@ class ElementOrigin:
 
         if isinstance(uuid_in, str):
             self.uuid = uuid.UUID(uuid_in)
+        else:
+            self.uuid = uuid_in
 
         self.date_start = self._isoparse(date_start)
         self.date_end = self._isoparse(date_end)

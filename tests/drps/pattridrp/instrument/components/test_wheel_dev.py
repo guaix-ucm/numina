@@ -28,3 +28,13 @@ def test_wheel4(pattri_ins):
     assert "label" in props
     # selected comes from init_config_info()
     assert "selected" not in props
+
+
+def test_from_component_parent():
+    """from_component sets the parent (issue #271)"""
+    from numina.instrument.device import DeviceBase
+
+    parent = DeviceBase("parent")
+    wheel = PWheel.from_component("Wheel", "wheel", parent=parent)
+    assert wheel.parent is parent
+    assert parent.children["wheel"] is wheel

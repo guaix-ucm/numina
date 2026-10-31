@@ -89,3 +89,12 @@ def test_create_dict():
     assert origin.date_start.isoformat() == values["date_start"]
     assert origin.date_end.isoformat() == values["date_end"]
     assert origin.description == values.get("description", "")
+
+
+def test_origin_uuid_object():
+    """The uuid can be a uuid.UUID, not only a string (issue #271)"""
+    import uuid
+
+    cuuid = uuid.UUID("c27287cd-90d1-417c-8238-f5ff220f818d")
+    origin = ElementOrigin("origin", cuuid)
+    assert origin.uuid == cuuid

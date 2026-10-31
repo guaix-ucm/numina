@@ -57,7 +57,7 @@ class PWheel(Wheel):
             def_filters = setup.values["wheel"]["filters"]
 
         obj = cls.__new__(cls)
-        obj.__init__(comp_id, origin=origin)
+        obj.__init__(comp_id, origin=origin, parent=parent)
 
         for idx, el in enumerate(def_filters):
             obj.put_in_pos(FilterName[el], idx)

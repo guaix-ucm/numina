@@ -70,22 +70,25 @@ class DeviceBase:
         if self.origin is not None:
             self.uuid = self.origin.uuid
 
-    def set_parent(self, new_parent: "DeviceBase") -> None:
+    def set_parent(self, new_parent: "DeviceBase | None") -> None:
         """Remove the device from the children of its parent and add it to those of ``new_parent``.
+
+        With ``new_parent`` None, the device has no parent.
 
         Raises
         ------
         ValueError
-            If ``new_parent`` already has a child with the name of the device.
+            If ``new_parent`` already has another child with the name of the device.
+            The device is not changed.
         """
-        if self.parent:
+        # Check before changing anything
+        if new_parent is not None and new_parent.children.get(self.name, self) is not self:
+            raise ValueError(f"{self.name} already registered with new_parent")
+        if self.parent is not None:
             del self.parent.children[self.name]
-        if new_parent:
-            if self.name in new_parent.children:
-                raise ValueError(f"{self.name} already registered with new_parent")
-            else:
-                new_parent.children[self.name] = self
-                self.parent = new_parent
+        self.parent = new_parent
+        if new_parent is not None:
+            new_parent.children[self.name] = self
 
     def get_device(self, path: str) -> "DeviceBase":
         """Return the descendant device at ``path``, a dot-separated sequence of names.

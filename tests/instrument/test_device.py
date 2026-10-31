@@ -89,3 +89,32 @@ def test_end():
     assert res1 == {"children": ["obj2"]}
     res2 = obj2.end_config_info({})
     assert res2 == {}
+
+
+def test_device_set_parent_none():
+    """With None, the device has no parent (issue #271)"""
+    obj1 = DeviceBase("obj1")
+    obj2 = DeviceBase("obj2", parent=obj1)
+    obj2.set_parent(None)
+    assert obj2.parent is None
+    assert len(obj1.children) == 0
+
+
+def test_device_set_parent_name_clash():
+    """On a name clash, the device keeps its parent (issue #271)"""
+    obj1 = DeviceBase("obj1")
+    obj2 = DeviceBase("obj2", parent=obj1)
+    other = DeviceBase("other")
+    DeviceBase("obj2", parent=other)
+    with pytest.raises(ValueError):
+        obj2.set_parent(other)
+    assert obj2.parent is obj1
+    assert obj1.children["obj2"] is obj2
+
+
+def test_device_set_parent_same():
+    obj1 = DeviceBase("obj1")
+    obj2 = DeviceBase("obj2", parent=obj1)
+    obj2.set_parent(obj1)
+    assert obj2.parent is obj1
+    assert obj1.children["obj2"] is obj2
