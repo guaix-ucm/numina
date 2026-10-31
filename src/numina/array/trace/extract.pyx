@@ -56,7 +56,7 @@ def extract_simple_intl(FType[:,:] data, IType[:] xx,
                 w = pa + 0.5 - a
                 acc += data[pa, x] * w
 
-            if pb < data.shape[1] and pb >= 0:
+            if pb < data.shape[0] and pb >= 0:
                 w = b - (pb -0.5)
                 acc += data[pb, x] * w
             for c in range(pa + 1, pb):
