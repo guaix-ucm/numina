@@ -182,4 +182,4 @@ def register(subparsers, config):
 
 
 def mode_run_obsmode(args, extra_args, config):
-    mode_run_common(args, extra_args, config, mode="obs")
+    return mode_run_common(args, extra_args, config, mode="obs")
