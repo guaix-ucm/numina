@@ -32,15 +32,16 @@ class MultiType(dt.DataType):
         if self.current_node:
             return self.current_node.validate(obj)
         else:
-            faillures = []
             for subtype in self.node_type:
                 try:
                     return subtype.validate(obj)
-                except nexcep.ValidationError as val_err:
-                    faillures.append(val_err)
-            else:
-                internal_m = tuple(v.args[1] for v in faillures)
-                raise nexcep.ValidationError(obj, internal_m)
+                except nexcep.ValidationError:
+                    pass
+            # All the subtypes failed. The arguments are those of
+            # DataType.validate, the types are taken from the subtypes,
+            # as not every validate raises with the type in args[1]
+            internal_m = tuple(subtype.internal_type for subtype in self.node_type)
+            raise nexcep.ValidationError(obj, internal_m)
 
     def isproduct(self):
         if self.current_node:

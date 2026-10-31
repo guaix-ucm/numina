@@ -13,7 +13,7 @@
 import pytest
 
 import numina.exceptions
-from numina.types.datatype import DataType
+from numina.types.datatype import DataType, NullType
 from numina.types.multitype import MultiType
 from numina.types.structured import BaseStructuredCalibration
 
@@ -205,3 +205,24 @@ def test_load_multitype(tmpdir):
 
         with pytest.raises(TypeError):
             numina.store.load(multi, filename3)
+
+
+class TypeMsg(DataType):
+    """A type whose validation fails with a message only"""
+
+    def __init__(self):
+        super().__init__(BVal)
+
+    def validate(self, obj):
+        raise numina.exceptions.ValidationError("always invalid")
+
+
+@pytest.mark.parametrize("other", [NullType, TypeMsg])
+def test_validate_failure_short_args(other):
+    """Subtypes that raise ValidationError with less than 2 arguments (issue #269)"""
+    multi = MultiType(TypeA, other)
+
+    with pytest.raises(numina.exceptions.ValidationError) as excinfo:
+        multi.validate(3)
+
+    assert excinfo.value.args == (3, (AVal, other().internal_type))
