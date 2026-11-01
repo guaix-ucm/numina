@@ -22,6 +22,7 @@ from .dataholders import Requirement, Result
 import numina.store.dump
 import numina.types.qc
 from numina.types.datatype import ListOfType
+from numina.types.multitype import MultiType
 
 _logger = logging.getLogger(__name__)
 
@@ -451,8 +452,9 @@ class TagsChecker:
     A check for the class attribute ``__checkers__`` of a RecipeInput,
     run by its method ``validate``. The tags of each product are checked
     with the query expression of the type of its requirement, as in the
-    automatic selection of products. Without observation result there is
-    nothing to check.
+    automatic selection of products. In a list of products (ListOfType),
+    the tags of each element are checked. Without observation result there
+    is nothing to check.
 
     Examples
     --------
@@ -475,7 +477,13 @@ class TagsChecker:
             if key == "obresult" or value is None:
                 continue
             rtype = stored[key].type
-            check_product_tags(key, f"the value of {key}", rtype, rtype.extract_tags(value), obresult.tags)
+            if isinstance(rtype, ListOfType):
+                etype = rtype.node_type
+                for idx, element in enumerate(value):
+                    what = f"the element {idx} of {key}"
+                    check_product_tags(key, what, etype, etype.extract_tags(element), obresult.tags)
+            else:
+                check_product_tags(key, f"the value of {key}", rtype, rtype.extract_tags(value), obresult.tags)
 
 
 _MISSING = object()
@@ -487,7 +495,8 @@ def check_product_tags(key, what, rtype, tags, ob_tags):
     The tags are checked with the query expression of `rtype`, the type of
     the requirement `key`, with the tags of the observation result in its
     placeholders. With a type of several types (MultiType), the tags must
-    match one of them. Types that are not products are not checked.
+    match one of them. Types that are not products, such as a list of products
+    (ListOfType), are not checked.
 
     Parameters
     ----------
@@ -506,7 +515,8 @@ def check_product_tags(key, what, rtype, tags, ob_tags):
     numina.exceptions.ValidationError
         If the tags do not match.
     """
-    node_types = getattr(rtype, "node_type", None) or [rtype]
+    # node_type is the list of types of a MultiType, but the type of the elements of a ListOfType
+    node_types = rtype.node_type if isinstance(rtype, MultiType) else [rtype]
     exprs = [node.query_expr for node in node_types if node.isproduct() and hasattr(node, "query_expr")]
     if not exprs:
         return

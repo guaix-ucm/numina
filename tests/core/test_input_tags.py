@@ -2,11 +2,12 @@
 
 import pytest
 
-from numina.core import BaseRecipe, ObservationResult, Requirement
+from numina.core import BaseRecipe, ObservationResult, Parameter, Requirement
 from numina.core.recipeinout import RecipeInput, TagsChecker
 from numina.core.requirements import ObservationResultRequirement
 from numina.exceptions import ValidationError
 from numina.keydef import QueryAttribute
+from numina.types.datatype import ListOfType, PlainPythonType
 from numina.types.multitype import MultiType
 from numina.types.structured import BaseStructuredCalibration
 
@@ -36,10 +37,25 @@ class TracedRecipe(BaseRecipe):
     master_apertures = Requirement(MultiType(ModelMap, TracesMap), "Apertures", optional=True)
 
 
+class ListedRecipe(BaseRecipe):
+    """A recipe with lists, of values and of products"""
+
+    RecipeInput = CheckedRecipeInput
+    obresult = ObservationResultRequirement()
+    nlines = Parameter([5], "A list of values", as_list=True)
+    knots = Requirement(
+        MultiType(PlainPythonType(ref=3), ListOfType(PlainPythonType(ref=0.0))),
+        "A value or a list of values",
+        default=3,
+        optional=True,
+    )
+    all_traces = Requirement(ListOfType(TracesMap), "A list of products", optional=True)
+
+
 @pytest.fixture(autouse=True)
 def drp_test1(drpmocker):
     """The DRP of TEST1, used to validate the observation result"""
-    drpmocker.add_drp("TEST1", make_drp({"traced": TracedRecipe}))
+    drpmocker.add_drp("TEST1", make_drp({"traced": TracedRecipe, "listed": ListedRecipe}))
 
 
 def calibration(cls, **tags):
@@ -101,3 +117,26 @@ def test_checks_of_input():
         ValidationError, match="TagsChecker: requirement master_traces: the value of master_traces has vph=LR-U"
     ):
         rinput.validate()
+
+
+def listed_input(**kwargs):
+    ob = ObservationResult(instrument="TEST1", mode="listed")
+    ob.tags = {"vph": "HR-R", "insmode": "LCB"}
+    return ListedRecipe().create_input(obresult=ob, **kwargs)
+
+
+@pytest.mark.parametrize("knots", [3, [1.0, 2.0, 3.0]])
+def test_lists_of_values(knots):
+    """Lists of values are not checked (#279)"""
+    ListedRecipe().validate_input(listed_input(nlines=[5, 10], knots=knots))
+
+
+def test_list_of_products():
+    """The tags of each element of a list of products are checked"""
+    traces = [calibration(TracesMap, vph="HR-R", insmode="LCB"), calibration(TracesMap, vph="HR-R", insmode="LCB")]
+    ListedRecipe().validate_input(listed_input(all_traces=traces))
+
+    traces[1] = calibration(TracesMap, vph="LR-U", insmode="LCB")
+    msg = "requirement all_traces: the element 1 of all_traces has vph=LR-U, the observing block has vph=HR-R"
+    with pytest.raises(ValidationError, match=msg):
+        ListedRecipe().validate_input(listed_input(all_traces=traces))
