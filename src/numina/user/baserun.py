@@ -155,6 +155,20 @@ def check_reference_tags(recipe, obsres, resolved):
             check_product_tags(key, what, req.type, tags, obsres.tags)
 
 
+def reference_tags(recipe, resolved):
+    """Return the tags of the products of the references, by the name of the requirement
+
+    `resolved` are the references resolved by resolve_references, by the
+    name or the alias of the requirement.
+    """
+    by_name = {}
+    for req in recipe.requirements().values():
+        for name in (req.dest, getattr(req, "alias", None)):
+            if name is not None:
+                by_name[name] = req
+    return {by_name[key].dest: tags for key, (_, tags) in resolved.items() if key in by_name}
+
+
 def run_reduce(
     datastore: DataManager,
     obsid,
@@ -301,6 +315,9 @@ def run_task_reduce(task: ProcessingTask, datastore: DataManager) -> ProcessingT
             rinput = recipe.build_recipe_input(obsres, datastore.backend)
             # The tags of obsres are extracted in build_recipe_input
             check_reference_tags(recipe, obsres, references)
+            # The products of the references are found with the tags of the registry
+            if hasattr(rinput, "found_tags"):
+                rinput.found_tags().update(reference_tags(recipe, references))
         except (ValueError, numina.exceptions.ValidationError) as err:
             _logger.error("During recipe input construction")
             _logger.error("%s", err)

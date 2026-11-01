@@ -48,6 +48,7 @@ def test_automatic_selection(session):
     session.run(10)
     assert testdrp.SEEN[-1] == second["uuid"]
     assert last_inputs(session)["master_bias"]["product_id"] == second["id"]
+    assert last_inputs(session)["master_bias"]["tags"] == second["tags"]
 
 
 @pytest.mark.parametrize("by", ["id", "uuid"])

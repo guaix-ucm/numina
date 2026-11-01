@@ -6,6 +6,7 @@ import numina.core
 import numina.dal.stored
 import numina.exceptions
 import numina.types.datatype as dt
+from numina.types.multitype import MultiType
 from numina.types.structured import BaseStructuredCalibration
 from numina.core.dataholders import Requirement
 from numina.core.recipes import BaseRecipe
@@ -127,3 +128,48 @@ def test_custom_on_query_not_found():
 
     with pytest.raises(ValueError, match="'param' not found"):
         recipe.build_recipe_input(obsres, dal)
+
+
+class TaggedDal:
+    """A DAL that returns products with the tags of the query"""
+
+    def search_product(self, name, stype, obsres, options=None):
+        return numina.dal.stored.StoredProduct(id=1, content=obsres.tags["a"], tags={"a": obsres.tags["a"]})
+
+    def search_parameter(self, name, stype, obsres, options=None):
+        raise numina.exceptions.NoResultFound(name)
+
+
+def test_query_with_tags_scalar():
+    obsres = numina.core.ObservationResult()
+    obsres.tags = {"a": 3}
+    req = Requirement(One, description="scalar", destination="req")
+    assert req.query_with_tags(TaggedDal(), obsres) == (3, {"a": 3})
+
+
+def test_query_with_tags_list():
+    """A list searched element by element has the tags of each element"""
+    obsres = numina.core.ObservationResult()
+    obsres.tags = [{"a": 1}, {"a": 2}]
+    req = Requirement(dt.ListOfType(One), description="list", destination="req")
+    assert req.query_with_tags(TaggedDal(), obsres) == ([1, 2], [{"a": 1}, {"a": 2}])
+
+
+def test_query_with_tags_multitype():
+    obsres = numina.core.ObservationResult()
+    obsres.tags = {"a": 3}
+    req = Requirement(MultiType(One, dt.ListOfType(One)), description="multi", destination="req")
+    assert req.query_with_tags(TaggedDal(), obsres) == (3, {"a": 3})
+
+
+def test_query_with_tags_unknown():
+    """The values of the observation result and of overridden queries have unknown tags"""
+    obsres = numina.core.ObservationResult()
+    obsres.tags = {"a": 3}
+    obsres.labels = {"req": 7}
+    req = LabelRequirement(dt.PlainPythonType(ref=1), description="label", destination="req")
+    assert req.query_with_tags(TaggedDal(), obsres) == (7, None)
+
+    req = DefaultProductRequirement(One, description="custom", destination="req")
+    assert req.query_with_tags(TaggedDal(), obsres) == (42, None)
+    assert req.query(TaggedDal(), obsres) == 42

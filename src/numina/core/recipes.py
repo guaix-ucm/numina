@@ -34,6 +34,17 @@ from ..exceptions import NoResultFound
 from numina.core.taggers import extract_tags_from_obsres, extract_tags_from_img
 
 
+def _query_with_tags(req, dal, obsres, options):
+    """Query the value of the requirement `req`, return the value and its tags
+
+    A requirement whose class overrides ``query`` is queried with it,
+    and the tags of its value are unknown (None).
+    """
+    if isinstance(req, Requirement) and type(req).query is Requirement.query:
+        return req.query_with_tags(dal, obsres, options=options)
+    return req.query(dal, obsres, options=options), None
+
+
 class BaseRecipe:
     """Base class for all instrument recipes
 
@@ -301,10 +312,14 @@ class BaseRecipe:
         The requirements are queried with `ob`, which is modified: a requirement
         of type ObservationResult adds to it the results of other OBs (ResultOf),
         and the tags are extracted from it. The caller uses these changes.
+
+        The tags with which the DAL found each product are stored in the
+        input, see :meth:`numina.core.recipeinout.RecipeInput.found_tags`.
         """
         import numina.types.obsresult as obtype
 
         result = {}
+        found_tags = {}
 
         if isinstance(ob, ObservationResult):
             obsres = ob
@@ -338,11 +353,16 @@ class BaseRecipe:
                 if key == ob_query_field:
                     result[key] = obsres
                 else:
-                    result[key] = req.query(dal, obsres, options=query_option)
+                    result[key], tags = _query_with_tags(req, dal, obsres, query_option)
+                    if tags is not None:
+                        found_tags[key] = tags
             except NoResultFound as notfound:
                 req.on_query_not_found(notfound)
 
-        return self.create_input(**result)
+        recipe_input = self.create_input(**result)
+        if hasattr(recipe_input, "found_tags"):
+            recipe_input.found_tags().update(found_tags)
+        return recipe_input
 
     def extract_tags_from_ref(self, ref, tag_keys, base=None):
         """Return the tags `tag_keys` of the image `ref`, see ``extract_tags_from_img``."""

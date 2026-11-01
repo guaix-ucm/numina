@@ -24,7 +24,7 @@ from numina.util.context import working_directory
 
 from .absdal import AbsDrpDAL
 from .stored import StoredProduct, StoredParameter, StoredResult
-from .diskfiledal import build_product_path
+from .diskfiledal import build_product_path, find_product_path
 from .utils import check_template, fill_template, tags_are_valid
 
 _logger = logging.getLogger(__name__)
@@ -225,7 +225,7 @@ class BaseDictDAL(AbsDrpDAL):
             return StoredProduct(id=0, tags={}, content=content)
         else:
             value = self.search_prod_type_tags(tipo, ins, profile, tags, pipeline)
-            self.record_source(name, "control file")
+            self.record_source(name, "control file", tags=value.tags)
             return value
 
     def search_parameter(self, name, tipo, obsres, options=None):
@@ -435,7 +435,7 @@ class BaseHybridDAL(Dict2DAL):
         if self.registry is not None:
             try:
                 value = self._search_registry_product(tipo, obsres)
-                self.record_source(name, "registry", product_id=value.id)
+                self.record_source(name, "registry", product_id=value.id, tags=value.tags)
                 return value
             except NoResultFound as err:
                 _logger.debug("%s", err)
@@ -659,6 +659,14 @@ class BaseHybridDAL(Dict2DAL):
         path = build_product_path(drp, self.rootdir, conf, name, tipo, obsres)
         return path
 
+    def find_product_path(self, drp, conf, name, tipo, obsres):
+        """Return the path of the product, a tuple (path, kind), and the tags of its directory.
+
+        The product is searched in the root directory, see
+        :func:`numina.dal.diskfiledal.find_product_path`.
+        """
+        return find_product_path(drp, self.rootdir, conf, name, tipo, obsres)
+
     def dump_data(self):
         """Return the tables of the DAL, with the root directory and the ids of the observing blocks."""
         state = super().dump_data()
@@ -749,16 +757,17 @@ class HybridDAL(BaseHybridDAL):
                     path = self.build_product_path(drp, profile, name, tipo, obsres)
                     _logger.debug("path is %s", path)
                     rprod["content"] = self.product_loader(tipo, name, path)
-                self.record_source(name, "control file")
+                self.record_source(name, "control file", tags=rprod["tags"])
                 return StoredProduct(**rprod)
         else:
             # Not in table, try file directly
             _logger.debug("%s not in table, try file directly", tipo)
-            path = self.build_product_path(drp, profile, name, tipo, obsres)
-            _logger.debug("path is %s", path)
+            # The tags are those of the directory where the file is found
+            path, tags = self.find_product_path(drp, profile, name, tipo, obsres)
+            _logger.debug("path is %s, tags are %s", path, tags)
             content = self.product_loader(tipo, name, path)
-            self.record_source(name, "calibrations directory", path=path)
-            return StoredProduct(id=0, content=content, tags=obsres.tags)
+            self.record_source(name, "calibrations directory", path=path, tags=tags)
+            return StoredProduct(id=0, content=content, tags=tags)
 
     def search_result_id(self, node_id, tipo, field, mode=None):
         """Return the field `field` of the result of the observing block `node_id`.

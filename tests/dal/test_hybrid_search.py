@@ -72,7 +72,7 @@ def test_product_in_table(drps, components, tmp_path, calibdir):
 
     assert result.id == 7
     assert result.content.filename == "other.fits"
-    assert dal.sources["master_bias"] == {"source": "control file"}
+    assert dal.sources["master_bias"] == {"source": "control file", "tags": {}}
 
 
 def test_product_in_table_without_content(drps, components, tmp_path, calibdir):
@@ -95,7 +95,8 @@ def test_product_in_directory(drps, components, tmp_path, calibdir):
     path = str(calibdir / "mbias.fits")
     assert result.id == 0
     assert result.content.filename == path
-    assert dal.sources["master_bias"] == {"source": "calibrations directory", "path": (path, 0)}
+    assert result.tags == {}
+    assert dal.sources["master_bias"] == {"source": "calibrations directory", "path": (path, 0), "tags": {}}
 
 
 def test_product_in_directory_gtc(drps, components, tmp_path, calibdir):

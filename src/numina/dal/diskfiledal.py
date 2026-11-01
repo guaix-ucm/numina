@@ -103,19 +103,26 @@ def _product_label(drp, tipo, default):
         return default
 
 
-def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
-    """Search the file of the product `name` of type `tipo` in `rootdir`.
+def find_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
+    """Search the file of the product `name` of type `tipo` in `rootdir`, with its tags.
 
     The directories searched are ``rootdir/instrument/conf/label/tag1/tag2...``,
     where label is the alias of the product in the DRP (or the name of the
     type) and the tags are the values of the tags of `ob`, sorted by name.
     All the combinations of tags are tried, from the longest one.
 
+    The directories only hold the values of the tags; their names are
+    those of the combination of tags of the directory where the file is
+    found. For example, with the tags ``insmode``, ``speclamp`` and ``vph``,
+    a file in ``LinesCatalog/ThNe/HR-R`` has the tags ``speclamp=ThNe`` and
+    ``vph=HR-R``, and a file in a less specific directory has fewer tags.
+
     Returns
     -------
-    str or tuple
-        The value returned by ``build_final_path`` of the finder `cls`,
-        a tuple (path, kind) with ``FileFinderGTC``.
+    tuple
+        The value returned by ``build_final_path`` of the finder `cls`
+        (a tuple (path, kind) with ``FileFinderGTC``), and a dictionary
+        with the tags of the directory where the file was found.
 
     Raises
     ------
@@ -130,21 +137,44 @@ def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
     label = _product_label(drp, tipo, tipo.name())
 
     # search results of these OBs
-    # build path based in combinations of tags
-    vals = [ob.tags[k] for k in sorted(ob.tags.keys())]
-    for com in _combinations(vals):
-        directory = os.path.join(rootdir, ob.instrument, conf, label, *com)
+    # build path based in combinations of tags, sorted by name
+    items = [(key, ob.tags[key]) for key in sorted(ob.tags.keys())]
+    for com in _combinations(items):
+        directory = os.path.join(rootdir, ob.instrument, conf, label, *(value for _, value in com))
         _logger.debug("try directory %s", directory)
         try:
             for value in file_finder.candidates(directory):
                 if file_finder.check(directory, value):
-                    return file_finder.build_final_path(directory, value)
+                    return file_finder.build_final_path(directory, value), dict(com)
         except OSError as msg:
             _logger.debug("%s", msg)
     else:
         msg = f"type {label} compatible with tags {ob.tags!r} not found"
         _logger.info("%s", msg)
         raise NoResultFound(msg)
+
+
+def build_product_path(drp, rootdir, conf, name, tipo, ob, cls=FileFinderGTC):
+    """Search the file of the product `name` of type `tipo` in `rootdir`.
+
+    The directories searched are those of :func:`find_product_path`:
+    ``rootdir/instrument/conf/label/tag1/tag2...``, where label is the
+    alias of the product in the DRP (or the name of the type) and the tags
+    are the values of the tags of `ob`, sorted by name.
+
+    Returns
+    -------
+    str or tuple
+        The value returned by ``build_final_path`` of the finder `cls`,
+        a tuple (path, kind) with ``FileFinderGTC``.
+
+    Raises
+    ------
+    NoResultFound
+        If no file is found.
+    """
+    path, _ = find_product_path(drp, rootdir, conf, name, tipo, ob, cls=cls)
+    return path
 
 
 DAL_USE_OFFLINE_CALIBS = True

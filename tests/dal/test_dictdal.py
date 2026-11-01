@@ -157,7 +157,7 @@ def test_search_product(basedictdal):
     res = basedictdal.search_product("demo", DemoType2(), FakeObsres())
     assert res.id == 3
     assert res.content == {"demo2": 3}
-    assert basedictdal.sources["demo"] == {"source": "control file"}
+    assert basedictdal.sources["demo"] == {"source": "control file", "tags": {"field2": "B"}}
 
 
 def test_search_product_extra_data(basedictdal):

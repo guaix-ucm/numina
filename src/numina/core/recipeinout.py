@@ -216,6 +216,20 @@ class RecipeInput(RecipeInOut):
 
     _numina_field_type = Requirement
 
+    def found_tags(self):
+        """Return the tags with which each value was found, by name
+
+        A dictionary, filled by the recipe that builds the input
+        (:meth:`numina.core.recipes.BaseRecipe.build_recipe_input`) with
+        the tags of the products found by the DAL: those of the directory
+        of the calibration tree, of the registry or of the control file
+        where the product was found. For a list searched element by
+        element, a list with the tags of each element. The values whose
+        tags are unknown are not in the dictionary. The dictionary can be
+        updated in place.
+        """
+        return self.__dict__.setdefault("_numina_found_tags", {})
+
 
 class RecipeResultBase(RecipeInOut):
     """The result of a Recipe."""
@@ -456,6 +470,12 @@ class TagsChecker:
     the tags of each element are checked. Without observation result there
     is nothing to check.
 
+    The tags of a product are its own (:meth:`DataType.extract_tags`) and,
+    for those it does not have, the tags with which it was found
+    (:meth:`RecipeInput.found_tags`), such as the directory of the
+    calibration tree where the DAL found a file without tags. The products
+    whose tags are unknown are not checked, see :func:`check_product_tags`.
+
     Examples
     --------
     The input of the recipes of a pipeline, with the check::
@@ -473,17 +493,29 @@ class TagsChecker:
         if obresult is None:
             return
         stored = recipe_input.stored()
+        found_tags = recipe_input.found_tags() if hasattr(recipe_input, "found_tags") else {}
         for key, value in recipe_input.attrs().items():
             if key == "obresult" or value is None:
                 continue
             rtype = stored[key].type
+            found = found_tags.get(key)
             if isinstance(rtype, ListOfType):
                 etype = rtype.node_type
                 for idx, element in enumerate(value):
                     what = f"the element {idx} of {key}"
-                    check_product_tags(key, what, etype, etype.extract_tags(element), obresult.tags)
+                    efound = found[idx] if isinstance(found, list) and idx < len(found) else found
+                    tags = _product_tags(etype, element, efound)
+                    check_product_tags(key, what, etype, tags, obresult.tags)
             else:
-                check_product_tags(key, f"the value of {key}", rtype, rtype.extract_tags(value), obresult.tags)
+                tags = _product_tags(rtype, value, found)
+                check_product_tags(key, f"the value of {key}", rtype, tags, obresult.tags)
+
+
+def _product_tags(rtype, value, found):
+    """The tags of a product: its own tags, completed with the tags with which it was found"""
+    tags = dict(found) if isinstance(found, dict) else {}
+    tags.update(rtype.extract_tags(value))
+    return tags
 
 
 _MISSING = object()
@@ -496,7 +528,9 @@ def check_product_tags(key, what, rtype, tags, ob_tags):
     the requirement `key`, with the tags of the observation result in its
     placeholders. With a type of several types (MultiType), the tags must
     match one of them. Types that are not products, such as a list of products
-    (ListOfType), are not checked.
+    (ListOfType), are not checked. If the query expression has tags and
+    `tags` is empty, the tags of the product are unknown: it is not checked
+    and a warning is logged.
 
     Parameters
     ----------
@@ -520,9 +554,12 @@ def check_product_tags(key, what, rtype, tags, ob_tags):
     exprs = [node.query_expr for node in node_types if node.isproduct() and hasattr(node, "query_expr")]
     if not exprs:
         return
+    names = sorted(set().union(*(expr.tags() for expr in exprs)))
+    if names and not tags:
+        _logger.warning("requirement %s: the tags of %s are unknown, they are not checked", key, what)
+        return
     if any(expr.fill_placeholders(**ob_tags).eval(**tags) is True for expr in exprs):
         return
-    names = sorted(set().union(*(expr.tags() for expr in exprs)))
     different = [name for name in names if tags.get(name, _MISSING) != ob_tags.get(name, _MISSING)]
     if different:
         product_tags = ", ".join(f"{name}={tags[name]}" if name in tags else f"no tag {name}" for name in different)

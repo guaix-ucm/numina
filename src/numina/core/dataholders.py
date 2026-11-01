@@ -380,6 +380,25 @@ class Requirement(EntryHolder):
 
     def query(self, dal, obsres, options=None):
         """Search the value of the requirement, see the notes of the class"""
+        value, _ = self.query_with_tags(dal, obsres, options=options)
+        return value
+
+    def query_with_tags(self, dal, obsres, options=None):
+        """Search the value of the requirement, with the tags of the product found
+
+        The search is that of :meth:`query`. The tags are only known when
+        the DAL is queried by the methods of this class: if a subclass
+        overrides ``query_on_dal``, ``query_on_dal_rec`` or
+        ``query_on_dal_base``, its values have unknown tags.
+
+        Returns
+        -------
+        tuple
+            The value and its tags: those of the product found by the DAL,
+            a list with the tags of each element in a list searched element
+            by element, or None if they are unknown (values of the
+            observation result, results, parameters and default values).
+        """
         from numina.core.query import ResultOf
 
         self._check_dest_is_set()
@@ -388,29 +407,43 @@ class Requirement(EntryHolder):
 
         if isinstance(q_options, Ignore):
             # we do not perform any query
-            return self.default
+            return self.default, None
 
         # The values given in the command line have the highest priority,
         # the DAL returns them before searching anywhere else.
         # DALs that do not derive from DALInterface may not have has_extra
         has_extra = getattr(dal, "has_extra", None)
         if has_extra is not None and has_extra(self.dest):
-            return self.query_on_dal(dal, obsres, options=q_options)
+            return self._query_on_dal(dal, obsres, options=q_options)
 
         try:
-            return self.query_on_ob(obsres)
+            return self.query_on_ob(obsres), None
         except NoResultFound:
             pass
 
         if isinstance(q_options, ResultOf):
             value = dal.search_result_relative(self.dest, self.type, obsres, result_desc=q_options)
-            return value.content
+            return value.content, None
 
-        return self.query_on_dal(dal, obsres, options=q_options)
+        return self._query_on_dal(dal, obsres, options=q_options)
+
+    def _overrides(self, name):
+        """Whether the class of the requirement overrides the method `name` of Requirement"""
+        return getattr(type(self), name) is not getattr(Requirement, name)
+
+    # The methods _query_on_dal* return the value and its tags. They call
+    # the method query_on_dal* of the subclass if it is overridden (with
+    # unknown tags), and the implementation of this class otherwise.
 
     def query_on_dal(self, dal, obsres, options=None):
         """Search the value of the requirement in the DAL"""
-        return self.query_on_dal_rec(self.type, dal, obsres, options=options)
+        value, _ = self._query_on_dal_rec(self.type, dal, obsres, options=options)
+        return value
+
+    def _query_on_dal(self, dal, obsres, options=None):
+        if self._overrides("query_on_dal"):
+            return self.query_on_dal(dal, obsres, options=options), None
+        return self._query_on_dal_rec(self.type, dal, obsres, options=options)
 
     def query_on_dal_rec(self, this_type, dal, obsres, options=None):
         """Search a value of type `this_type` in the DAL.
@@ -420,6 +453,15 @@ class Requirement(EntryHolder):
         set of tags of the observation result. Otherwise, one query,
         with the first set of tags if there are several.
         """
+        value, _ = self._query_on_dal_rec_impl(this_type, dal, obsres, options=options)
+        return value
+
+    def _query_on_dal_rec(self, this_type, dal, obsres, options=None):
+        if self._overrides("query_on_dal_rec"):
+            return self.query_on_dal_rec(this_type, dal, obsres, options=options), None
+        return self._query_on_dal_rec_impl(this_type, dal, obsres, options=options)
+
+    def _query_on_dal_rec_impl(self, this_type, dal, obsres, options=None):
         import numina.types.multitype as mt
 
         mtype = isinstance(this_type, mt.MultiType)
@@ -431,7 +473,7 @@ class Requirement(EntryHolder):
             for next_type in this_type.node_type:
 
                 try:
-                    return self.query_on_dal_rec(next_type, dal, obsres, options=options)
+                    return self._query_on_dal_rec(next_type, dal, obsres, options=options)
                 except NoResultFound as notfound:
                     failures.append((next_type, notfound))
             else:
@@ -442,20 +484,32 @@ class Requirement(EntryHolder):
 
         if not scalar and this_type.multi_query:
             query_tags = obsres.tags if isinstance(obsres.tags, list) else [obsres.tags]
-            return [
-                self.query_on_dal_rec(next_type, dal, _with_tags(obsres, tags), options=options) for tags in query_tags
+            found = [
+                self._query_on_dal_rec(next_type, dal, _with_tags(obsres, tags), options=options) for tags in query_tags
             ]
+            return [value for value, _ in found], [tags for _, tags in found]
         else:
             tags = obsres.tags[0] if isinstance(obsres.tags, list) else obsres.tags
-            return self.query_on_dal_base(this_type, dal, _with_tags(obsres, tags), options=options)
+            return self._query_on_dal_base(this_type, dal, _with_tags(obsres, tags), options=options)
 
     def query_on_dal_base(self, next_type, dal, obsres, options=None):
         """Query one value of type `next_type` to the DAL"""
+        value, _ = self._query_on_dal_base_impl(next_type, dal, obsres, options=options)
+        return value
+
+    def _query_on_dal_base(self, next_type, dal, obsres, options=None):
+        if self._overrides("query_on_dal_base"):
+            return self.query_on_dal_base(next_type, dal, obsres, options=options), None
+        return self._query_on_dal_base_impl(next_type, dal, obsres, options=options)
+
+    def _query_on_dal_base_impl(self, next_type, dal, obsres, options=None):
         if next_type.isproduct():
             value = dal.search_product(self.dest, next_type, obsres, options=options)
+            # DALs that do not return a StoredProduct may not have tags
+            return value.content, getattr(value, "tags", None)
         else:
             value = dal.search_parameter(self.dest, next_type, obsres, options=options)
-        return value.content
+            return value.content, None
 
     def on_query_not_found(self, notfound):
         """Called by build_recipe_input when the value is not found"""

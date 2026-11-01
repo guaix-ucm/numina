@@ -1,7 +1,14 @@
 import pytest
 
 from numina.core.pipeline import InstrumentDRP, Pipeline, ProductEntry
-from numina.dal.diskfiledal import DiskFileDAL, FileFinder, FileFinderGTC, _combinations, build_product_path
+from numina.dal.diskfiledal import (
+    DiskFileDAL,
+    FileFinder,
+    FileFinderGTC,
+    _combinations,
+    build_product_path,
+    find_product_path,
+)
 from numina.exceptions import NoResultFound
 
 
@@ -117,6 +124,38 @@ def test_build_product_path(tmp_path):
     make_file(base / "ProductName" / "J" / "result.json")
     path = build_product_path(FakeDrp(), str(tmp_path), "default", "name", Product(), FakeOb())
     assert path == (str(base / "ProductName" / "J" / "result.json"), 1)
+
+
+@pytest.mark.parametrize(
+    "tags",
+    [
+        {"filter": "J", "grism": "A"},
+        {"grism": "A"},
+        {"filter": "J"},
+        {},
+    ],
+)
+def test_find_product_path_tags(tmp_path, tags):
+    """The tags are those of the directory where the file is found, with the values sorted by name"""
+    directory = tmp_path / "INS" / "default" / "ProductName"
+    for value in (tags[key] for key in sorted(tags)):
+        directory = directory / value
+    make_file(directory / "calib.json")
+
+    path, found = find_product_path(FakeDrp(), str(tmp_path), "default", "name", Product(), FakeOb())
+    assert path == (str(directory / "calib.json"), 0)
+    assert found == tags
+
+
+def test_find_product_path_most_specific(tmp_path):
+    base = tmp_path / "INS" / "default" / "ProductName"
+    make_file(base / "calib.json")
+    make_file(base / "A" / "calib.json")
+    make_file(base / "J" / "A" / "calib.json")
+
+    path, found = find_product_path(FakeDrp(), str(tmp_path), "default", "name", Product(), FakeOb())
+    assert path == (str(base / "J" / "A" / "calib.json"), 0)
+    assert found == {"filter": "J", "grism": "A"}
 
 
 def test_build_product_path_alias(tmp_path):

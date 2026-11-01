@@ -1,5 +1,7 @@
 """The tags of the products of the input of a recipe, checked with TagsChecker"""
 
+import logging
+
 import pytest
 
 from numina.core import BaseRecipe, ObservationResult, Parameter, Requirement
@@ -140,3 +142,51 @@ def test_list_of_products():
     msg = "requirement all_traces: the element 1 of all_traces has vph=LR-U, the observing block has vph=HR-R"
     with pytest.raises(ValidationError, match=msg):
         ListedRecipe().validate_input(listed_input(all_traces=traces))
+
+
+def test_found_tags_complete_the_value():
+    """The tags with which the value was found are used for those it does not have"""
+    rinput = recipe_input(calibration(TracesMap, vph="HR-R"))
+    rinput.found_tags()["master_traces"] = {"vph": "LR-U", "insmode": "LCB"}
+    TracedRecipe().validate_input(rinput)
+
+    rinput.found_tags()["master_traces"] = {"insmode": "MOS"}
+    with pytest.raises(ValidationError, match="the value of master_traces has insmode=MOS"):
+        TracedRecipe().validate_input(rinput)
+
+
+def test_found_tags_of_list():
+    """The tags of each element of a list searched element by element"""
+    traces = [calibration(TracesMap), calibration(TracesMap)]
+    rinput = listed_input(all_traces=traces)
+    rinput.found_tags()["all_traces"] = [{"vph": "HR-R", "insmode": "LCB"}, {"vph": "LR-U", "insmode": "LCB"}]
+    msg = "requirement all_traces: the element 1 of all_traces has vph=LR-U, the observing block has vph=HR-R"
+    with pytest.raises(ValidationError, match=msg):
+        ListedRecipe().validate_input(rinput)
+
+
+def test_unknown_tags(caplog):
+    """A product without tags is not checked, with a warning"""
+    rinput = recipe_input(calibration(TracesMap))
+    with caplog.at_level(logging.WARNING):
+        TracedRecipe().validate_input(rinput)
+    assert "requirement master_traces: the tags of the value of master_traces are unknown" in caplog.text
+
+
+def test_no_warning_without_tags_in_the_query(caplog):
+    """A type without tags in its query does not need the tags of its value"""
+
+    class Untagged(BaseStructuredCalibration):
+        pass
+
+    class UntaggedRecipe(BaseRecipe):
+        RecipeInput = CheckedRecipeInput
+        obresult = ObservationResultRequirement()
+        calib = Requirement(Untagged, "A product without tags")
+
+    ob = ObservationResult(instrument="TEST1", mode="traced")
+    ob.tags = {"vph": "HR-R"}
+    recipe = UntaggedRecipe()
+    with caplog.at_level(logging.WARNING):
+        recipe.validate_input(recipe.create_input(obresult=ob, calib=calibration(Untagged)))
+    assert "unknown" not in caplog.text
