@@ -24,6 +24,9 @@
 .. automodule:: numina.dal.registry
    :members:
 
+.. automodule:: numina.dal.calibindex
+   :members:
+
 
 .. automodule:: numina.dal.utils
    :members:

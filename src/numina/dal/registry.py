@@ -215,6 +215,20 @@ class JSONStore(Store):
         return copy.deepcopy(result)
 
 
+class MemoryStore(JSONStore):
+    """Collections of documents kept in memory, never written to a file"""
+
+    def __init__(self):
+        """Create an empty store."""
+        self.filename = None
+        self._data = self._empty()
+        self._depth = 0
+        self._saved = None
+
+    def _write(self):
+        """Do nothing, the documents are only in memory."""
+
+
 def _format_time(value):
     """Time in ISO format, None if not set"""
     if isinstance(value, datetime.datetime):
@@ -373,20 +387,52 @@ class Registry:
                 self.store.insert("products", prod_doc)
         return result_id
 
+    def add_installed(self, envelope, path):
+        """Record the installed calibration file `path`, with its envelope, return its id
+
+        The product has the origin ``installed`` and priority 0. Its
+        profile is that of the envelope, None if the data do not depend
+        on the profile.
+        """
+        conditions = envelope.get("conditions", {})
+        provenance = envelope.get("provenance", {})
+        doc = {
+            "origin": "installed",
+            "priority": 0,
+            "instrument": envelope["instrument"],
+            "profile": envelope.get("profile"),
+            "type": envelope["type"],
+            "format": envelope["format"],
+            "uuid": envelope["uuid"],
+            "qc": envelope.get("quality_control", "UNKNOWN"),
+            "tags": envelope["tags"],
+            "validity": envelope.get("validity"),
+            "time_create": provenance.get("creation_date"),
+            "time_obs": conditions.get("observation_date"),
+            "content": os.fspath(path),
+            "envelope": envelope,
+        }
+        with self.store.transaction():
+            return self.store.insert("products", doc)
+
     def select_product(self, instrument, profile, valid=None, date=None):
         """The product with the highest priority, with QC not BAD
 
-        The product has the given instrument and profile, and
-        ``valid(product)`` is True, if `valid` is not None.
+        The product has the given instrument, the given profile or
+        none (its data do not depend on the profile), and
+        ``valid(product)`` is True, if `valid` is not None. If `date`
+        (a datetime) is not None, it is in the validity of the product.
 
         Among the products with the same priority, the product observed
-        closest to `date` (a datetime), if it is not None, and then the
-        most recent.
+        closest to `date`, if it is not None, and then the most recent.
         """
         candidates = [
             prod
-            for prod in self.store.find("products", instrument=instrument, profile=profile)
-            if prod["qc"] != "BAD" and (valid is None or valid(prod))
+            for prod in self.store.find("products", instrument=instrument)
+            if prod.get("profile") in (None, profile)
+            and prod["qc"] != "BAD"
+            and _in_validity(prod.get("validity"), date)
+            and (valid is None or valid(prod))
         ]
         if not candidates:
             return None
@@ -612,6 +658,34 @@ def _time_distance(time_obs, date):
         value = value.replace(tzinfo=None)
         date = date.replace(tzinfo=None)
     return abs((value - date).total_seconds())
+
+
+def _as_datetime(value):
+    """The datetime of an ISO string (a date is its midnight), None if it is not valid"""
+    try:
+        return datetime.datetime.fromisoformat(value)
+    except (TypeError, ValueError):
+        return None
+
+
+def _in_validity(validity, date):
+    """True if `date` is in the interval of `validity`, or either is unknown
+
+    The interval includes its ``start`` and excludes its ``end``. A
+    missing end (or start) means an open interval.
+    """
+    if not validity or date is None:
+        return True
+    for key, inside in (("start", lambda limit: limit <= date), ("end", lambda limit: date < limit)):
+        limit = _as_datetime(validity.get(key))
+        if limit is None:
+            continue
+        if (limit.tzinfo is None) != (date.tzinfo is None):
+            limit = limit.replace(tzinfo=None)
+            date = date.replace(tzinfo=None)
+        if not inside(limit):
+            return False
+    return True
 
 
 def _most_recent(docs):

@@ -61,7 +61,8 @@ priority``), then the one observed closest to the observing block, then
 the most recent. The values in the requirements of the observing block and those given
 with ``--parameter-NAME=VALUE`` have priority over the registry, and the
 products in the control file and in ``calibsdir`` are used if there is none
-in the registry.
+in the registry. The products without profile (installed calibrations
+whose data do not depend on the profile) are valid for any profile.
 
 The results of other observing blocks requested by a recipe with
 ``ResultOf("MODE.field", node="last")`` are the most recent result of the

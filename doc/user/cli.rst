@@ -474,6 +474,20 @@ nothing is installed, unless ``--overwrite`` is given.
 ``.numina.cfg`` of the current directory, and the section
 ``[tool.inittree.INSTRUMENT]`` records the dataset installed.
 
+``numina run`` selects the calibrations of ``calibsdir`` in two ways:
+
+* The files with envelope (self-describing files, see
+  :mod:`numina.store.envelope`) under ``calibsdir/INSTRUMENT`` are
+  indexed, whatever their directory, and selected as the products of a
+  registry: same instrument and type, the profile of the observation or
+  none, tags compatible with those of the observation, a validity that
+  contains the date of the observation, and a format that the type reads.
+* The files without envelope are found by their path,
+  ``calibsdir/INSTRUMENT/PROFILE/TYPE/TAG1/TAG2...``, with the values of
+  the tags sorted by name.
+
+The files with envelope are used first.
+
 .. program:: numina inittree
 
 .. option:: instrument

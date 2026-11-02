@@ -16,6 +16,7 @@ import json
 import yaml
 
 import numina.store
+import numina.store.envelope
 import numina.store.gtc.load as gtcload
 from numina.core.oresult import oblock_from_dict
 from numina.exceptions import NoResultFound
@@ -23,6 +24,7 @@ from numina.instrument.assembly import assembly_instrument, configure_obresult, 
 from numina.util.context import working_directory
 
 from .absdal import AbsDrpDAL
+from .calibindex import index_calibrations
 from .stored import StoredProduct, StoredParameter, StoredResult
 from .diskfiledal import build_product_path, find_product_path
 from .utils import check_template, fill_template, tags_are_valid
@@ -447,29 +449,94 @@ class BaseHybridDAL(Dict2DAL):
         The product must have the same instrument, profile and type,
         and tags compatible with those of obsres.
         """
+        prod = self._select_registry_product(self.registry, tipo, obsres, "the registry")
+        _logger.debug("product id=%s from the registry, %s", prod["id"], prod["content"])
+        path = os.path.join(self.registry.basedir, prod["content"])
+        content = numina.store.load(tipo, path)
+        return StoredProduct(id=prod["id"], content=content, tags=prod["tags"])
+
+    def _select_registry_product(self, registry, tipo, obsres, where):
+        """The product of type `tipo` for obsres selected in `registry`, see ``Registry.select_product``
+
+        The product must have the same instrument and type, the same
+        profile or none, tags compatible with those of obsres, and a
+        format that `tipo` reads (format 1 if the product has none).
+
+        Raises
+        ------
+        NoResultFound
+            If there is no such product. The message names the products
+            discarded only because of their format.
+        """
         drp = self.drps.query_by_name(obsres.instrument)
         label = drp.product_label(tipo)
         labels = {label, label[:-2] if label.endswith("()") else label}
         pred = tipo.query_expr.fill_placeholders(**obsres.tags)
+        formats = getattr(tipo, "__numina_formats__", None)
+        unreadable = []
 
         def valid(prod):
             if prod["type"] not in labels:
                 return False
             # pred.eval must return True, non bool values mean that it is incomplete
-            if pred.eval(**prod["tags"]) is True:
-                return True
-            _logger.debug("product id=%s discarded, its tags %s do not match %s", prod["id"], prod["tags"], obsres.tags)
-            return False
+            if pred.eval(**prod["tags"]) is not True:
+                _logger.debug(
+                    "product id=%s discarded, its tags %s do not match %s", prod["id"], prod["tags"], obsres.tags
+                )
+                return False
+            if formats is not None and prod.get("format", 1) not in formats:
+                _logger.debug("product id=%s discarded, format %s", prod["id"], prod["format"])
+                unreadable.append(prod)
+                return False
+            return True
 
         date = self._observation_date(obsres, drp)
-        prod = self.registry.select_product(obsres.instrument, obsres.profile, valid, date=date)
+        prod = registry.select_product(obsres.instrument, obsres.profile, valid, date=date)
         if prod is None:
-            msg = f"type {label} compatible with tags {obsres.tags} not found in the registry"
+            msg = f"type {label} compatible with tags {obsres.tags} not found in {where}"
+            if unreadable:
+                found = ", ".join(f"{doc['content']} (format {doc['format']})" for doc in unreadable)
+                msg += f"; this version reads formats {', '.join(map(str, sorted(formats)))}, found {found}"
             raise NoResultFound(msg)
-        _logger.debug("product id=%s from the registry, %s", prod["id"], prod["content"])
-        path = os.path.join(self.registry.basedir, prod["content"])
-        content = numina.store.load(tipo, path)
-        return StoredProduct(id=prod["id"], content=content, tags=prod["tags"])
+        return prod
+
+    def calibrations_index(self, instrument):
+        """The index of the calibration files of `instrument`, a registry in memory, or None
+
+        The index has the files with envelope in the directory of
+        calibrations of the instrument, ``rootdir/instrument``. It is
+        built the first time it is used.
+        """
+        indexes = self.__dict__.setdefault("_calibrations_indexes", {})
+        if instrument not in indexes:
+            directory = os.path.join(self.rootdir, instrument) if self.rootdir else ""
+            if directory and os.path.isdir(directory):
+                indexes[instrument] = index_calibrations(directory)
+            else:
+                indexes[instrument] = None
+        return indexes[instrument]
+
+    def _search_index_product(self, name, tipo, obsres):
+        """The product `name` of type `tipo` in the index of calibration files
+
+        Raises
+        ------
+        NoResultFound
+            If there is no index or the product is not in it.
+        """
+        index = self.calibrations_index(obsres.instrument)
+        if index is None:
+            raise NoResultFound(f"no calibrations of {obsres.instrument} in '{self.rootdir}'")
+        prod = self._select_registry_product(index, tipo, obsres, f"the calibrations of {index.basedir}")
+        path = prod["content"]
+        _logger.debug("product %s from the calibrations index, %s", prod["uuid"], path)
+        if getattr(tipo, "__numina_formats__", None) is not None:
+            # The envelope has already been read
+            content = numina.store.envelope.load(tipo, path, envelope=prod["envelope"])
+        else:
+            content = numina.store.load(tipo, path)
+        self.record_source(name, "calibrations index", path=path, uuid=prod["uuid"], tags=prod["tags"])
+        return StoredProduct(id=prod["uuid"], content=content, tags=prod["tags"])
 
     def _search_prod_table(self, name, tipo, obsres):
         """Search the product in the table of products, implemented in subclasses."""
@@ -760,10 +827,19 @@ class HybridDAL(BaseHybridDAL):
                 self.record_source(name, "control file", tags=rprod["tags"])
                 return StoredProduct(**rprod)
         else:
-            # Not in table, try file directly
+            # Not in table, try the files with envelope
+            try:
+                return self._search_index_product(name, tipo, obsres)
+            except NoResultFound as err:
+                _logger.debug("%s", err)
+                index_error = err
+            # Then the file by its path
             _logger.debug("%s not in table, try file directly", tipo)
             # The tags are those of the directory where the file is found
-            path, tags = self.find_product_path(drp, profile, name, tipo, obsres)
+            try:
+                path, tags = self.find_product_path(drp, profile, name, tipo, obsres)
+            except NoResultFound as err:
+                raise NoResultFound(f"{err} in the calibrations directory; {index_error}") from err
             _logger.debug("path is %s, tags are %s", path, tags)
             content = self.product_loader(tipo, name, path)
             self.record_source(name, "calibrations directory", path=path, tags=tags)

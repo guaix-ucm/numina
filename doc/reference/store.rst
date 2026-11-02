@@ -7,3 +7,6 @@
 
 .. automodule:: numina.store.dump
    :members:
+
+.. automodule:: numina.store.envelope
+   :members:

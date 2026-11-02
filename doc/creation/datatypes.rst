@@ -78,3 +78,24 @@ functions `numina.store.dump` and `numina.store.load`.
 
 In this example, `tag` is an argument of type `TraceMap` and `obj` is of
 type `dict`.
+
+
+Formats of the files
+####################
+A type can declare the formats of its files that numina reads in the class
+attribute ``__numina_formats__``: the number of each format and the name of
+the method that reads a file in that format. Files without envelope are
+format 1 (see :mod:`numina.store.envelope`).
+
+.. code-block:: python
+
+    from numina.types.product import DataProductType
+
+    class LinesCatalog(DataProductType):
+        __numina_formats__ = {1: "_datatype_load", 2: "_load_ecsv_table"}
+
+When the type is loaded from a file, `numina.store.load` reads the envelope
+of the file, checks that its type is the name of the type and that its
+format is declared, and reads the file with the method of the format. A
+file in a format that is not declared is not read, the error names the
+file, the formats read and the package to update.

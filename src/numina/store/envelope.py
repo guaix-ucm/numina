@@ -156,7 +156,7 @@ def read_envelope(path):
 
     Raises
     ------
-    SchemaValidationError
+    numina.schemas.SchemaValidationError
         If the envelope is not valid.
     """
     reader = _READERS.get(container(path))
@@ -221,14 +221,16 @@ def is_file(obj):
     return isinstance(obj, (str, os.PathLike)) and os.path.isfile(obj)
 
 
-def load(tipo, path):
+def load(tipo, path, envelope=None):
     """Load the value of type `tipo` from the file `path`, with the reader of its format
 
-    The envelope of the file is read and checked with
-    :func:`check_envelope`. The value is read with the method of
-    `tipo` named in ``__numina_formats__`` for the format.
+    The envelope of the file is read, unless it is given in
+    `envelope`, and checked with :func:`check_envelope`. The value is
+    read with the method of `tipo` named in ``__numina_formats__`` for
+    the format.
     """
-    envelope = read_envelope(path)
+    if envelope is None:
+        envelope = read_envelope(path)
     fmt = check_envelope(tipo, path, envelope)
     _logger.debug("loading %s in format %d from %s", tipo.name(), fmt, path)
     reader = getattr(tipo, tipo.__numina_formats__[fmt])
