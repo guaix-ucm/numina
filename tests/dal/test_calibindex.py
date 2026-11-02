@@ -1,7 +1,9 @@
 """Index of the installed calibration files, from their envelopes"""
 
 import datetime
+import json
 import logging
+import pathlib
 
 import astropy.io.fits as fits
 import numpy
@@ -224,3 +226,127 @@ def test_select_validity(date, expected):
 def test_select_outside_validity():
     registry = registry_with({"uuid": "old", "profile": None, "validity": {"end": "2017-01-01"}})
     assert registry.select_product("TEST1", PROFILE, date=datetime.datetime(2018, 1, 1)) is None
+
+
+def test_cache(calibs, calibindex_cache, monkeypatch):
+    """The second index reads only the new and changed files"""
+    from numina.dal import calibindex
+
+    index_calibrations(str(calibs))
+    assert len(list(calibindex_cache.glob("*.json"))) == 1
+
+    read = []
+    original = calibindex.read_envelope
+
+    def counting(path):
+        read.append(path)
+        return original(path)
+
+    monkeypatch.setattr(calibindex, "read_envelope", counting)
+    index = index_calibrations(str(calibs))
+    assert read == []
+    assert len(index.products()) == 4
+
+    write_lines(calibs / "catalogs", "mr.ecsv", "MR-B", 4500.0, "lines-mr")
+    lines_lr = calibs / "catalogs" / "lr.ecsv"
+    lines_lr.write_text(lines_lr.read_text().replace("3600.0", "3601.00"))
+    (calibs / "catalogs" / "hr.ecsv").unlink()
+    index = index_calibrations(str(calibs))
+    assert sorted(read) == [str(calibs / "catalogs" / "lr.ecsv"), str(calibs / "catalogs" / "mr.ecsv")]
+    assert sorted(prod["uuid"] for prod in index.products()) == ["bias-1", "bias-other", "lines-lr", "lines-mr"]
+
+
+def test_cache_other_version(calibs, calibindex_cache, monkeypatch):
+    """Each version of numina has its own cache, they do not discard each other"""
+    import numina
+    from numina.dal import calibindex
+
+    version = numina.__version__
+    index_calibrations(str(calibs))
+    read = []
+    original = calibindex.read_envelope
+
+    def counting(path):
+        read.append(path)
+        return original(path)
+
+    monkeypatch.setattr(calibindex, "read_envelope", counting)
+    monkeypatch.setattr(numina, "__version__", "0.0.1")
+    index_calibrations(str(calibs))
+    # All the files are read: README.md, the 2 catalogs and the 2 bias
+    assert len(read) == 5
+    assert len(list(calibindex_cache.glob("*.json"))) == 2
+
+    read.clear()
+    monkeypatch.setattr(numina, "__version__", version)
+    index = index_calibrations(str(calibs))
+    assert read == []
+    assert len(index.products()) == 4
+
+
+def test_cache_unused_pruned(calibs, tmp_path, calibindex_cache):
+    """The caches not used in CACHE_MAX_AGE days are removed, the used ones are kept"""
+    import os
+    import time
+
+    from numina.dal import calibindex
+
+    other = tmp_path / "other"
+    write_bias(other / "bias-other.fits")
+    index_calibrations(str(calibs))
+    index_calibrations(str(other))
+    path_calibs = calibindex.cache_path(str(calibs), str(calibindex_cache))
+    path_other = calibindex.cache_path(str(other), str(calibindex_cache))
+    old = time.time() - (calibindex.CACHE_MAX_AGE + 1) * 86400
+    for path in (path_calibs, path_other):
+        os.utime(path, (old, old))
+    # calibs is used, its cache is touched
+    index_calibrations(str(calibs))
+    assert os.path.getmtime(path_calibs) > old
+    # A cache is written, the cache of other is removed
+    write_lines(calibs / "catalogs", "mr.ecsv", "MR-B", 4500.0, "lines-mr")
+    index_calibrations(str(calibs))
+    assert sorted(calibindex_cache.glob("*.json")) == [pathlib.Path(path_calibs)]
+
+
+def test_cache_invalid_envelope_warns(calibs, caplog):
+    """The error is kept in the cache, and the warning is given again"""
+    path = calibs / "bad.fits"
+    write_bias(path)
+    with fits.open(path, mode="update") as hdul:
+        del hdul[0].header["NUMTYPE"]
+    index_calibrations(str(calibs))
+    with caplog.at_level(logging.WARNING, logger="numina.dal.calibindex"):
+        index_calibrations(str(calibs))
+    assert "bad.fits not indexed" in caplog.text
+
+
+def test_cache_pruned(tmp_path, calibindex_cache):
+    old = tmp_path / "old"
+    write_bias(old / "bias-old.fits")
+    index_calibrations(str(old))
+    write_bias(tmp_path / "new" / "bias-new.fits")
+    for path in old.iterdir():
+        path.unlink()
+    old.rmdir()
+    index_calibrations(str(tmp_path / "new"))
+    caches = list(calibindex_cache.glob("*.json"))
+    assert [json.loads(path.read_text())["directory"] for path in caches] == [str(tmp_path / "new")]
+
+
+def test_cache_not_writable(calibs, tmp_path, caplog):
+    cache_dir = tmp_path / "readonly"
+    cache_dir.mkdir()
+    cache_dir.chmod(0o500)
+    try:
+        index = index_calibrations(str(calibs), cache_dir=str(cache_dir))
+    finally:
+        cache_dir.chmod(0o700)
+    assert len(index.products()) == 4
+    assert list(cache_dir.iterdir()) == []
+
+
+def test_without_cache(calibs, calibindex_cache):
+    index = index_calibrations(str(calibs), cache=False)
+    assert len(index.products()) == 4
+    assert list(calibindex_cache.iterdir()) == []

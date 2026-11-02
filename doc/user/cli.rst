@@ -486,7 +486,9 @@ nothing is installed, unless ``--overwrite`` is given.
   ``calibsdir/INSTRUMENT/PROFILE/TYPE/TAG1/TAG2...``, with the values of
   the tags sorted by name.
 
-The files with envelope are used first.
+The files with envelope are used first. Their envelopes are kept in a cache
+(``~/.cache/numina/calibindex`` in linux), so that only the files that are
+new or have changed are read again, see :mod:`numina.dal.calibindex`.
 
 .. program:: numina inittree
 
