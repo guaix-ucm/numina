@@ -15,15 +15,17 @@ and it is validated with the schema ``envelope-schema.json`` of
 :mod:`numina.schemas`:
 
 ECSV
-    The ``meta`` of the YAML header of the table.
+    The ``meta`` of the YAML header of the table. Only the header is
+    read.
 FITS
     Keywords of the primary header, see :data:`FITS_KEYWORDS`. A FITS
-    file has an envelope if it has the keyword ``NUMENV``.
+    file has an envelope if it has the keyword ``NUMENV``. Only the
+    primary header is read.
 JSON
-    An object ``meta`` in the top level, separated from ``data``.
+    An object ``meta`` in the top level, separated from ``data``. The
+    whole file is parsed, but ``data`` is not interpreted.
 
-The envelope is read without loading the contents of the file. A file
-without envelope is format 1.
+A file without envelope is format 1.
 
 A type declares the formats of its files that numina reads in the
 class attribute ``__numina_formats__``, a mapping from the number of the
@@ -132,7 +134,10 @@ def _read_fits(path):
 
 
 def _read_json(path):
-    """The envelope of a JSON file, its object ``meta``, or None if it has none"""
+    """The envelope of a JSON file, its object ``meta``, or None if it has none
+
+    The whole file is parsed, JSON cannot be read in parts.
+    """
     with builtins.open(path, encoding="utf-8") as fd:
         data = json.load(fd)
     meta = data.get("meta") if isinstance(data, dict) else None
