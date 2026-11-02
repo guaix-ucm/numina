@@ -26,6 +26,7 @@ from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
+from .peaks_spectrum import odd_window_width
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
@@ -190,8 +191,10 @@ def check_wlcalib_sp(
         Minimum signal in the peaks.
     nwinwidth_initial : int
         Width of the window where each peak must be initially found.
+        It must be an odd integer >= 3.
     nwinwidth_refined : int
         Width of the window where each peak must be refined.
+        It must be an odd integer >= 3.
     ntimes_match_wv : float
         Times CDELT1 to match measured and expected wavelengths.
     poldeg_residuals : int
@@ -689,10 +692,16 @@ def main(args=None):
     parser.add_argument("--interactive", help="Allows the user to modify de residuals fit", action="store_true")
     parser.add_argument("--threshold", help="Minimum signal in the line peaks (default=0)", default=0, type=float)
     parser.add_argument(
-        "--nwinwidth_initial", help="Window width where each peak must be found " "(default=7)", type=int, default=7
+        "--nwinwidth_initial",
+        help="Window width where each peak must be found (odd integer >= 3, default=7)",
+        type=odd_window_width,
+        default=7,
     )
     parser.add_argument(
-        "--nwinwidth_refined", help="Window width where each peak must be refined " "(default=5)", type=int, default=5
+        "--nwinwidth_refined",
+        help="Window width where each peak must be refined (odd integer >= 3, default=5)",
+        type=odd_window_width,
+        default=5,
     )
     parser.add_argument(
         "--ntimes_match_wv",

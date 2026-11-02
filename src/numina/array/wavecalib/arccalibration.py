@@ -1770,8 +1770,10 @@ def refine_arccalibration(
         list.
     nwinwidth_initial : int
         Initial window width to search for line peaks in spectrum.
+        It must be an odd integer >= 3.
     nwinwidth_refined : int
-        Window width to refine line peak location.
+        Window width to refine line peak location. It must be an
+        odd integer >= 3.
     times_sigma_reject : float
         Times sigma to reject points in the fit.
     interactive : bool

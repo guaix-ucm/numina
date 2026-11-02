@@ -35,6 +35,7 @@ from scipy import ndimage
 
 from . import core
 from .arccalibration import refine_arccalibration
+from .peaks_spectrum import odd_window_width
 from ...tools.arg_file_is_new import arg_file_is_new
 
 from numina.tools.initialize_script_with_args import NuminaScriptDefinition
@@ -78,10 +79,16 @@ def main(args=None):
         "--minimum_threshold", help="Minimum threshold to detect lines" " (default=0)", default=0, type=float
     )
     parser.add_argument(
-        "--nwinwidth_initial", help="Initial window width to detect lines" " (default=7)", default=7, type=int
+        "--nwinwidth_initial",
+        help="Initial window width to detect lines (odd integer >= 3, default=7)",
+        default=7,
+        type=odd_window_width,
     )
     parser.add_argument(
-        "--nwinwidth_refined", help="Refined window width to detect lines" " (default=5)", default=5, type=int
+        "--nwinwidth_refined",
+        help="Refined window width to detect lines (odd integer >= 3, default=5)",
+        default=5,
+        type=odd_window_width,
     )
     parser.add_argument(
         "--npix_avoid_border", help="Number of pixels in the borders to be avoided" " (default=6)", default=6, type=int

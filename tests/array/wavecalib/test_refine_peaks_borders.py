@@ -40,3 +40,10 @@ def test_spectrum_shorter_than_window():
     sx = profile(np.arange(6, dtype=float), 2.0, "gaussian")
     with pytest.raises(ValueError, match="Unexpected"):
         refine_peaks_spectrum(sx, np.array([2]), nwinwidth=7, method="gaussian")
+
+
+@pytest.mark.parametrize("nwinwidth", [1, 2, 4, 6])
+def test_invalid_nwinwidth_raises_valueerror(nwinwidth):
+    sx = profile(np.arange(50, dtype=float), 20.3, "gaussian")
+    with pytest.raises(ValueError, match="odd integer"):
+        refine_peaks_spectrum(sx, np.array([20]), nwinwidth=nwinwidth, method="gaussian")

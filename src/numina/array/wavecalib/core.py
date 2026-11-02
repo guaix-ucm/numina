@@ -210,10 +210,11 @@ def find_fxpeaks(
             Minimum value of the threshold.
     nwinwidth_initial : int
         Width of the window where each peak must be found using
-        the initial method (approximate)
+        the initial method (approximate). It must be an odd
+        integer >= 3.
     nwinwidth_refined : int
         Width of the window where each peak location will be
-        refined.
+        refined. It must be an odd integer >= 3.
     npix_avoid_border : int
             Number of pixels at the borders of the spectrum where peaks
             are not considered. If zero, the actual number will be

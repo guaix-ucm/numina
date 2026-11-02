@@ -17,6 +17,37 @@ from ..display.pause_debugplot import pause_debugplot
 _trapz = getattr(np, "trapezoid", None) or np.trapz
 
 
+def odd_window_width(nwinwidth):
+    """Check that a window width is an odd integer >= 3.
+
+    The window used to find or refine a peak at pixel i is
+    [i - nwinwidth // 2, i + nwinwidth // 2], which contains exactly
+    nwinwidth pixels only when nwinwidth is odd.
+
+    This function can also be used as the ``type`` of an argparse
+    argument, since argparse reports the ValueError as a usage error.
+
+    Parameters
+    ----------
+    nwinwidth : int or str
+        Window width.
+
+    Returns
+    -------
+    int
+        Validated window width.
+
+    Raises
+    ------
+    ValueError
+        If nwinwidth is not an odd integer >= 3.
+    """
+    value = int(nwinwidth)
+    if value < 3 or value % 2 == 0:
+        raise ValueError(f"nwinwidth={nwinwidth} must be an odd integer >= 3")
+    return value
+
+
 def fwhm_nonparametric(x, y, debugplot=0):
     """
     Non-parametric FWHM: distance between the half-maximum crossings
@@ -257,7 +288,8 @@ def find_highest_peaks_spectrum(
         value is less than -1, an error will be raised. The cleaning is done in order
         to avoid finding the same peak again or finding a peak that is too close to it.
     nwinwidth : int
-        Width of the window where each peak must be found.
+        Width of the window where each peak must be found. It must be
+        an odd integer >= 3.
     threshold : float
         Minimum signal in the peaks.
     nborder_to_ignore : int
@@ -290,8 +322,7 @@ def find_highest_peaks_spectrum(
         raise ValueError("nmaxpeaks must be at least 1")
     if nclean_around_peak < -1:
         raise ValueError("nclean_around_peak must be -1 or non-negative")
-    if nwinwidth < 1:
-        raise ValueError("nwinwidth must be at least 1")
+    odd_window_width(nwinwidth)
     if threshold < 0:
         raise ValueError("threshold must be non-negative")
     if len(sx) < nmaxpeaks:
@@ -392,7 +423,10 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     sx : numpy.ndarray
         Input 1D array of floats.
     nwinwidth : int
-        Width of the window where each peak must be found.
+        Width of the window where each peak must be found. It must be
+        an odd integer >= 3. The window around pixel i is
+        [i - nwinwidth // 2, i + nwinwidth // 2], so peaks closer than
+        nwinwidth // 2 pixels to the borders are not detected.
     threshold : float
         Minimum signal in the peaks.
     debugplot : int
@@ -418,8 +452,7 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
         raise ValueError(f"{sx.ndim=} must be 1")
 
     sx_shape = sx.shape
-    if nwinwidth < 2:
-        raise ValueError(f"nwinwidth={nwinwidth} must be at least 2")
+    odd_window_width(nwinwidth)
 
     nmed = nwinwidth // 2
 
@@ -488,7 +521,8 @@ def refine_peaks_spectrum(
         These values can be the output from the function
         find_peaks_spectrum().
     nwinwidth : int
-        Width of the window where each peak must be refined.
+        Width of the window where each peak must be refined, i.e. number
+        of pixels used in the fit. It must be an odd integer >= 3.
     method : string
         "poly2" : fit to a 2nd order polynomial
         "gaussian" : fit to a Gaussian
@@ -538,6 +572,7 @@ def refine_peaks_spectrum(
 
     """
 
+    odd_window_width(nwinwidth)
     nmed = nwinwidth // 2
 
     npeaks = len(ixpeaks)
