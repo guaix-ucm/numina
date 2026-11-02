@@ -18,10 +18,29 @@ from .product import DataProductType
 
 
 class LinesCatalog(DataProductType):
-    """Data product type of a catalog of lines, as a numpy array."""
+    """Data product type of a catalog of lines, as a numpy array.
+
+    The files are read in two formats:
+
+    1. Text files, and ECSV files without envelope. The array has the
+       numeric columns of the file.
+    2. ECSV files with envelope, with the columns ``wavelength``,
+       ``flag`` (1 for the lines used in the initial calibration),
+       ``intensity`` and, optionally, ``comment``. The array has the
+       columns wavelength, flag and intensity.
+    """
+
+    __numina_formats__ = {1: "_datatype_load", 2: "_load_ecsv_table"}
+
+    #: Columns of the array read from a file in format 2
+    ecsv_columns = ("wavelength", "flag", "intensity")
 
     def __init__(self):
         super().__init__(ptype=numpy.ndarray)
+
+    def _load_ecsv_table(self, path):
+        """Load the catalog from an ECSV file in format 2, see ``ecsv_columns``."""
+        return load_ecsv_array(path, self.ecsv_columns)
 
     def _datatype_load(self, obj):
         """Load the catalog from an ECSV file or a text file."""

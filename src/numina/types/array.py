@@ -21,7 +21,21 @@ class ArrayType(DataType):
         Format of the numbers when the array is saved to a text file.
     default : optional
         Default value.
+
+    Notes
+    -----
+    The files are read in two formats:
+
+    1. Text files and CSV files, and ECSV files without envelope.
+    2. ECSV files with envelope. If ``ecsv_columns`` is not None, the
+       array has these columns, in this order; otherwise, it has the
+       numeric columns of the table.
     """
+
+    __numina_formats__ = {1: "_datatype_load", 2: "_load_ecsv_table"}
+
+    #: Names of the columns of an ECSV file in format 2 that make the array, None for the numeric columns
+    ecsv_columns = None
 
     def __init__(self, fmt="%.18e", default=None):
         super().__init__(ptype=numpy.ndarray, default=default)
@@ -56,6 +70,10 @@ class ArrayType(DataType):
             res = obj
         return res
 
+    def _load_ecsv_table(self, path):
+        """Load the array from an ECSV file in format 2, see ``ecsv_columns``."""
+        return load_ecsv_array(path, self.ecsv_columns)
+
 
 class ArrayNType(ArrayType):
     """A type of array with a number of dimensions.
@@ -85,18 +103,30 @@ def is_ecsv(path):
         return False
 
 
-def load_ecsv_array(path):
+def load_ecsv_array(path, names=None):
     """Load the numeric columns of an ECSV file in a 2D array
 
     The array has a row for each row of the table, and a column for
     each numeric column, in the same order. The other columns (for
     example, comments) are ignored. It is the array that loadtxt
     returns for a text file with only these columns.
+
+    If `names` is not None, the array has the columns `names`, in that
+    order, and they must be numeric.
     """
     from astropy.table import Table
 
     table = Table.read(path, format="ascii.ecsv")
-    columns = [col for col in table.itercols() if col.dtype.kind in "biuf"]
+    if names is None:
+        columns = [col for col in table.itercols() if col.dtype.kind in "biuf"]
+    else:
+        missing = [name for name in names if name not in table.colnames]
+        if missing:
+            raise ValueError(f"{path}: the table does not have the columns {', '.join(missing)}")
+        columns = [table[name] for name in names]
+        not_numeric = [col.name for col in columns if col.dtype.kind not in "biuf"]
+        if not_numeric:
+            raise ValueError(f"{path}: the columns {', '.join(not_numeric)} are not numeric")
     if not columns:
         raise ValueError(f"{path}: the table does not have numeric columns")
     return numpy.column_stack([numpy.asarray(col, dtype=float) for col in columns])

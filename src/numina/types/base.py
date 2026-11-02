@@ -17,6 +17,13 @@ from numina.datamodel import DataModel
 class DataTypeBase:
     """Base class for input/output types of recipes.
 
+    The formats of the files of the type that numina reads are declared
+    in the class attribute ``__numina_formats__``, a mapping from the number of
+    the format to the name of the method that reads a file in that
+    format. Files without envelope are format 1. If ``__numina_formats__`` is
+    None, the files are read with ``_datatype_load`` without checking
+    their envelope. See :mod:`numina.store.envelope`.
+
     Parameters
     ----------
     datamodel : DataModel or class, optional
@@ -29,6 +36,9 @@ class DataTypeBase:
         Names of the query attributes of the data model used to build the
         query expression. It replaces `query_expr`.
     """
+
+    #: Formats of the files read by the type, number -> name of the method that reads them
+    __numina_formats__ = None
 
     def __init__(self, *args, **kwds):
         import numina.core.tagexpr as tagexpr

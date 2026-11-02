@@ -1,0 +1,80 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://numina.readthedocs.io/en/stable/envelope-schema.json",
+  "title": "Envelope of a calibration file",
+  "description": "Metadata that describe a calibration file: what it is, in which format, when it applies and where it comes from. It is the same in the FITS headers, the meta of an ECSV table and the meta object of a JSON file. New optional keys do not change the version of the envelope",
+  "type": "object",
+  "required": ["envelope", "type", "format", "instrument", "uuid", "tags"],
+  "properties": {
+    "envelope": {
+      "description": "Version of the envelope, defined by numina",
+      "const": 1
+    },
+    "type": {
+      "description": "Name of the type of the data in the DRP, as in the products of drp.yaml",
+      "type": "string",
+      "minLength": 1
+    },
+    "format": {
+      "description": "Version of the format of the contents, defined by each type. Files without envelope are format 1",
+      "type": "integer",
+      "minimum": 1
+    },
+    "instrument": {
+      "description": "Name of the instrument",
+      "type": "string",
+      "minLength": 1
+    },
+    "uuid": {
+      "description": "Unique identifier of the file",
+      "type": "string",
+      "minLength": 1
+    },
+    "profile": {
+      "description": "UUID of the profile (configuration of the instrument), only if the data depend on it",
+      "type": "string",
+      "minLength": 1
+    },
+    "tags": {
+      "description": "Tags compared by equality with those of the observation when the data are selected",
+      "type": "object",
+      "additionalProperties": {"type": ["string", "number", "boolean"]}
+    },
+    "conditions": {
+      "description": "Physical conditions of the data, to select the closest or to check a range",
+      "type": "object"
+    },
+    "validity": {
+      "description": "Interval of dates in which the data can be used, in ISO 8601. Without end, the interval is open",
+      "type": "object",
+      "properties": {
+        "start": {"type": "string"},
+        "end": {"type": "string"}
+      },
+      "additionalProperties": false
+    },
+    "quality_control": {
+      "description": "Quality of the data",
+      "enum": ["GOOD", "PARTIAL", "BAD", "UNKNOWN"]
+    },
+    "provenance": {
+      "description": "Origin of the data: DRP and version, numina version, recipe, mode, block, input frames, creation date",
+      "type": "object"
+    },
+    "description": {
+      "description": "Free text",
+      "type": "string"
+    },
+    "references": {
+      "description": "References that describe the data",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "properties": {
+          "note": {"type": "string"},
+          "url": {"type": "string"}
+        }
+      }
+    }
+  }
+}

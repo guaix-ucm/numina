@@ -23,6 +23,11 @@ def load(tag, obj):
     the method ``_datatype_load(obj)``; ``__numina_load__(obj)`` is also
     supported, and used first. If it defines none, `obj` is returned.
 
+    If the type declares the formats it reads (``__numina_formats__``) and
+    `obj` is a file, the type and the format of the envelope of the
+    file are checked, and the file is read with the method of its
+    format, see :func:`numina.store.envelope.load`.
+
     Parameters
     ----------
     tag : DataType
@@ -34,6 +39,12 @@ def load(tag, obj):
     -------
     The value.
     """
+
+    if getattr(tag, "__numina_formats__", None) is not None:
+        from . import envelope
+
+        if envelope.is_file(obj):
+            return envelope.load(tag, obj)
 
     if hasattr(tag, "__numina_load__"):
         return tag.__numina_load__(obj)

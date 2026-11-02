@@ -52,6 +52,9 @@ class DataFrameType(DataType):
 
     tags_keys = []
 
+    #: FITS files are format 1, with or without envelope (keyword NUMENV)
+    __numina_formats__ = {1: "_datatype_load"}
+
     #: JSON schema of the headers of the frames, converted with
     #: :func:`numina.schemas.convert_headers`, or its validator. None,
     #: the headers are not validated.
