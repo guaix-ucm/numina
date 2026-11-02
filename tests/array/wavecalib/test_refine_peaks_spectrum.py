@@ -128,3 +128,47 @@ def test_input_is_not_modified(method):
     sx_orig = sx.copy()
     refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method)
     np.testing.assert_array_equal(sx, sx_orig)
+
+
+# --- gaussian+moments ---------------------------------------------------------------
+
+
+def test_gaussian_moments_values():
+    # Single line on a cutout: flux in the units of sx (amplitude * sigma * sqrt(2 pi))
+    amplitude, center, sigma = 250.0, 30.3, 2.0
+    sx = gaussian_line(60, center, amplitude=amplitude, sigma=sigma)
+    _, _, dict_moments = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="gaussian+moments")
+    assert dict_moments["flux"] == pytest.approx(amplitude * sigma * np.sqrt(2 * np.pi), rel=1e-6)
+    assert dict_moments["centroid"] == pytest.approx(center, abs=1e-6)
+    assert dict_moments["sigma"] == pytest.approx(sigma, rel=1e-3)
+    assert dict_moments["skewness"] == pytest.approx(0.0, abs=1e-6)
+    assert dict_moments["kurtosis_excess"] == pytest.approx(0.0, abs=1e-2)
+    fwhm = 2 * np.sqrt(2 * np.log(2)) * sigma
+    assert dict_moments["fwhm_np"] == pytest.approx(fwhm, rel=2e-2)
+    assert dict_moments["fwhm_np_left"] < center < dict_moments["fwhm_np_right"]
+
+
+def test_gaussian_moments_flux_independent_of_peak_window():
+    # The flux must not depend on the maximum within the fitting window
+    # (the windows of jmax=28 and jmax=32 do not include the line centre)
+    sx = gaussian_line(60, 30.0, amplitude=100.0, sigma=2.0)
+    flux = [
+        refine_peaks_spectrum(sx, np.array([jmax]), nwinwidth=3, method="gaussian+moments")[2]["flux"]
+        for jmax in [28, 30, 32]
+    ]
+    assert flux == pytest.approx([flux[0]] * 3)
+
+
+@pytest.mark.parametrize("debugplot", [0, 10])
+def test_gaussian_moments_non_positive_flux_returns_none(caplog, debugplot):
+    # Positive values around the line but negative integrated flux: previously
+    # the ValueError raised by line_moments was not caught
+    sx = gaussian_line(60, 30.0, amplitude=10.0, sigma=1.0) - 1.0
+    sx[29:32] += 1.0
+    with caplog.at_level(logging.WARNING, logger="numina.array.wavecalib.peaks_spectrum"):
+        xfpeaks, _, dict_moments = refine_peaks_spectrum(
+            sx, np.array([30]), nwinwidth=3, method="gaussian+moments", debugplot=debugplot
+        )
+    assert dict_moments is None
+    assert xfpeaks[0] == pytest.approx(30.0, abs=1e-6)
+    assert any("not positive" in r.getMessage() for r in caplog.records) == (debugplot == 10)

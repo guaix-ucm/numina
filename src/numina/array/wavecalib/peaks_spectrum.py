@@ -80,16 +80,12 @@ def fwhm_nonparametric(x, y, debugplot=0):
 
     Returns
     -------
-    fwhm : float
-        Full width at half maximum, in the units of x.
-    x_left, x_right : float
-        Positions of the half-maximum crossings.
-
-    Raises
-    ------
-    ValueError
-        If the profile does not fall below half maximum on either side
-        within the supplied range.
+    fwhm : float or None
+        Full width at half maximum, in the units of x. None if either
+        half-maximum crossing is not found.
+    x_left, x_right : float or None
+        Positions of the half-maximum crossings. None if the profile does
+        not fall below half maximum on the corresponding side.
     """
     x, y = np.asarray(x, float), np.asarray(y, float)
     ipk = np.argmax(y)  # index of the peak sample
@@ -589,8 +585,9 @@ def refine_peaks_spectrum(
         "poly2" : fit to a 2nd order polynomial
         "gaussian" : fit to a Gaussian
         "gaussian+moments" : fit to a Gaussian and compute moments. This is only
-        available when the number of peaks is 1, since the moments are computed for
-        the whole line profile.
+        available when the number of peaks is 1, since the moments and the
+        non-parametric FWHM are computed using the whole array sx, which must
+        therefore contain a single continuum-subtracted line.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
     title : str or None
@@ -623,14 +620,18 @@ def refine_peaks_spectrum(
     sxpeaks : numpy.ndarray
         1D array of floats. When fitting Gaussians, this array stores the fitted line
         widths (sigma). Otherwise, this array returns zeros. If when fitting a Gaussian
-        the fitted width is not defined, the corresponding value in this array is set to None.
-    dict_moments : list of dict
-        Computed moments of the fitted peak. Returned only when method="gaussian+moments"
+        the fitted width is not defined, the corresponding value in this array is set to NaN.
+    dict_moments : dict or None
+        Computed moments of the line. Returned only when method="gaussian+moments"
         (and the number of peaks is 1). Otherwise, this value is not returned to keep
-        the compatibility with the existing code. The list contains a dictionary with
-        the following keys: 'flux', 'centroid', 'sigma', 'skewness', 'kurtosis_excess'.
-        In addition, the dictionary contains the non-parametric FWHM and its left and right
-        crossings, with the keys: 'fwhm_np', 'fwhm_np_left', and 'fwhm_np_right'.
+        the compatibility with the existing code. The dictionary contains the keys
+        'flux' (integrated flux, in the units of sx times pixels), 'centroid',
+        'sigma', 'skewness' and 'kurtosis_excess' (see line_moments), and the
+        non-parametric FWHM and its left and right crossings, with the keys
+        'fwhm_np', 'fwhm_np_left' and 'fwhm_np_right' (see fwhm_nonparametric).
+        Positions and widths are in pixels. It is None when the Gaussian fit
+        cannot be performed (e.g. the poly2 method is used instead) or when the
+        integrated flux is not positive.
 
     """
 
@@ -736,14 +737,29 @@ def refine_peaks_spectrum(
                 else:
                     sfpeaks[iline] = np.sqrt(-1 / (2.0 * coef[2]))
                 if final_method == "gaussian+moments":
-                    # compute the moments of the fitted peak
-                    dict_moments = line_moments(x_full, y_full, debugplot=debugplot)
-                    # compute the non-parametric FWHM and its left and right crossings
-                    fwhm_np, fwhm_np_left, fwhm_np_right = fwhm_nonparametric(x_full, y_full)
-                    # add the non-parametric FWHM and its left and right crossings to the moments dictionary
-                    dict_moments["fwhm_np"] = fwhm_np
-                    dict_moments["fwhm_np_left"] = fwhm_np_left
-                    dict_moments["fwhm_np_right"] = fwhm_np_right
+                    # compute the moments of the line; sx is assumed to contain
+                    # a single continuum-subtracted line
+                    try:
+                        dict_moments = line_moments(x_full, y_full, debugplot=debugplot)
+                    except ValueError as e:
+                        if abs(debugplot) >= 10:
+                            _logger.warning(f"{e} Returning dict_moments=None.")
+                        dict_moments = None
+                    if dict_moments is None:
+                        fwhm_np = None
+                        fwhm_np_left = None
+                        fwhm_np_right = None
+                    else:
+                        # y_full is normalized to the peak flux: express the
+                        # integrated flux in the units of sx
+                        if sx_peak_flux > 0:
+                            dict_moments["flux"] *= sx_peak_flux
+                        # compute the non-parametric FWHM and its left and right crossings
+                        fwhm_np, fwhm_np_left, fwhm_np_right = fwhm_nonparametric(x_full, y_full, debugplot=debugplot)
+                        # add the non-parametric FWHM and its left and right crossings to the moments dictionary
+                        dict_moments["fwhm_np"] = fwhm_np
+                        dict_moments["fwhm_np_left"] = fwhm_np_left
+                        dict_moments["fwhm_np_right"] = fwhm_np_right
                 else:
                     fwhm_np = None
                     fwhm_np_left = None
