@@ -15,9 +15,6 @@ from numpy.polynomial import Polynomial
 from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
-# np.trapezoid en NumPy >= 2.0; np.trapz en versiones anteriores
-_trapz = getattr(np, "trapezoid", None) or np.trapz
-
 _logger = logging.getLogger(__name__)
 
 
@@ -171,17 +168,17 @@ def line_moments(x, y, window=None, debugplot=0):
         x, y = x[m], y[m]
 
     # Zeroth moment: integrated flux
-    m0 = _trapz(y, x)
+    m0 = np.trapezoid(y, x)
     if m0 <= 0:
         raise ValueError(
-            "Integrated flux is not positive; the moments are " "not defined. Check the window and the continuum."
+            "Integrated flux is not positive; the moments are not defined. Check the window and the continuum."
         )
 
     # First moment: flux-weighted centroid
-    mu = _trapz(x * y, x) / m0
+    mu = np.trapezoid(x * y, x) / m0
 
     # Second central moment: standard deviation of the profile
-    var = _trapz((x - mu) ** 2 * y, x) / m0
+    var = np.trapezoid((x - mu) ** 2 * y, x) / m0
     if var < 0:
         if abs(debugplot) >= 10:
             _logger.warning("Negative variance encountered in line_moments; setting sigma to NaN.")
@@ -191,8 +188,8 @@ def line_moments(x, y, window=None, debugplot=0):
 
     # Standardized third and fourth central moments
     if sigma > 0:
-        skew = _trapz((x - mu) ** 3 * y, x) / (m0 * sigma**3)
-        kurt = _trapz((x - mu) ** 4 * y, x) / (m0 * sigma**4) - 3.0  # excess
+        skew = np.trapezoid((x - mu) ** 3 * y, x) / (m0 * sigma**3)
+        kurt = np.trapezoid((x - mu) ** 4 * y, x) / (m0 * sigma**4) - 3.0  # excess
     else:
         skew = np.nan
         kurt = np.nan
@@ -472,7 +469,7 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     """
 
     if not isinstance(sx, np.ndarray):
-        raise TypeError(f"{sx=} must be a numpy.ndarray")
+        raise TypeError(f"sx must be a numpy.ndarray, not {type(sx).__name__}")
     elif sx.ndim != 1:
         raise ValueError(f"{sx.ndim=} must be 1")
 
@@ -680,18 +677,21 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
         # abscissae of the fitted pixels relative to jmax; the window may be
         # off-centre when the peak is close to the borders of the spectrum
         x_fit = np.arange(j1, j2, dtype=float) - jmax
-        # it is important to create a copy in the next instruction in
-        # order to avoid modifying the original array when normalizing
-        # the data to be fitted
-        y_fit = np.copy(sx[j1:j2].astype(float))
-        y_full = np.copy(sx).astype(float)
-        x_full = np.arange(len(sx), dtype=float)
+        # astype() returns a copy, so the original array is not modified
+        # when normalizing the data to be fitted
+        y_fit = sx[j1:j2].astype(float)
+        # the whole spectrum is only needed for a single peak: to compute
+        # the moments (gaussian+moments) and to plot the original data
+        if npeaks == 1:
+            y_full = sx.astype(float)
+            x_full = np.arange(len(sx), dtype=float)
         sx_peak_flux = y_fit.max()
         # normalize only by a positive maximum: dividing by a negative value
         # would flip the profile and hide the check for non-positive values
         if sx_peak_flux > 0:
             y_fit /= sx_peak_flux  # normalize to maximum value
-            y_full /= sx_peak_flux  # normalize to maximum value
+            if npeaks == 1:
+                y_full /= sx_peak_flux  # normalize to maximum value
 
         if method in ["gaussian", "gaussian+moments"]:
             # check that there are no negative or null values
