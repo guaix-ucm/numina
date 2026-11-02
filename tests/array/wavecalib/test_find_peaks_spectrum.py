@@ -1,10 +1,4 @@
-"""Tests of find_peaks_spectrum
-
-The tests marked as xfail(strict=True) describe the desired behaviour in
-cases that the current implementation handles incorrectly. When the
-function is fixed, they will start to pass and pytest will report them
-as XPASS (failure), so the marker must then be removed.
-"""
+"""Tests of find_peaks_spectrum"""
 
 import numpy as np
 import pytest
@@ -22,24 +16,33 @@ def gaussian_lines(npix, centers, amplitude=100.0, sigma=2.0):
 
 
 def reference_find_peaks(sx, nwinwidth, threshold=0):
-    """Straightforward reimplementation of the documented algorithm.
+    """Reimplementation of the documented algorithm based on runs.
 
-    A pixel i is a peak when sx[i] > threshold, the signal is
-    non-decreasing in [i - nmed, i] and non-increasing in [i, i + nmed],
-    with nmed = nwinwidth // 2. After a peak is found, the search
-    resumes at i + nwinwidth - 1.
+    The spectrum is split into runs [p1, p2] of consecutive equal values
+    (p1 == p2 for isolated values). A run is a peak when sx[p1] > threshold,
+    the signal increases strictly before the run and decreases strictly
+    after it, and it is non-decreasing in [p1 - nmed, p1] and
+    non-increasing in [p2, p2 + nmed], with nmed = nwinwidth // 2. The
+    peak is located at (p1 + p2) // 2, and runs starting before
+    p2 + nwinwidth - 1 are not considered after a peak.
     """
     nmed = nwinwidth // 2
+    npix = len(sx)
+    # first and last pixel of each run of equal values
+    starts = np.flatnonzero(np.r_[True, sx[1:] != sx[:-1]])
+    ends = np.r_[starts[1:] - 1, npix - 1]
     peaks = []
-    i = nmed
-    while i < len(sx) - nmed:
-        left = sx[i - nmed : i + 1]
-        right = sx[i : i + nmed + 1]
-        if sx[i] > threshold and np.all(np.diff(left) >= 0) and np.all(np.diff(right) <= 0):
-            peaks.append(i)
-            i += nwinwidth - 1
-        else:
-            i += 1
+    next_allowed = nmed
+    for p1, p2 in zip(starts, ends):
+        if p1 < next_allowed or p1 >= npix - nmed or p2 + nmed >= npix:
+            continue
+        if not (sx[p1] > threshold and sx[p1 - 1] < sx[p1] and sx[p2 + 1] < sx[p2]):
+            continue
+        left_ok = all(sx[k] <= sx[k + 1] for k in range(p1 - nmed, p1))
+        right_ok = all(sx[k] >= sx[k + 1] for k in range(p2, p2 + nmed))
+        if left_ok and right_ok:
+            peaks.append((p1 + p2) // 2)
+            next_allowed = p2 + nwinwidth - 1
     return np.array(peaks, dtype=int)
 
 
@@ -97,6 +100,14 @@ def test_input_is_not_modified():
 def test_integer_input():
     sx = np.array([0, 1, 3, 7, 3, 1, 0, 0, 2, 9, 2, 0, 0])
     np.testing.assert_array_equal(find_peaks_spectrum(sx, nwinwidth=5), [3, 9])
+
+
+def test_unsigned_integer_input():
+    # The left flank 6 -> 3 -> 8 is not monotonic. A check based on
+    # np.diff would accept it for unsigned integers (3 - 6 wraps around)
+    values = [0, 6, 3, 8, 4, 1, 0]
+    assert find_peaks_spectrum(np.array(values, dtype=float), nwinwidth=5).size == 0
+    assert find_peaks_spectrum(np.array(values, dtype=np.uint16), nwinwidth=5).size == 0
 
 
 # --- basic detection ----------------------------------------------------------
@@ -186,6 +197,22 @@ def test_minimum_separation_between_peaks():
 
 @pytest.mark.parametrize("nwinwidth", [3, 5, 7, 11])
 @pytest.mark.parametrize("seed", [0, 1, 2])
+def test_random_spectra_with_ties_match_reference(nwinwidth, seed):
+    # Integer spectra with saturated lines: many runs of equal values
+    rng = np.random.default_rng(seed)
+    npix = 500
+    centers = rng.uniform(10, npix - 10, size=25)
+    sx = np.round(gaussian_lines(npix, centers, amplitude=30.0, sigma=2.0) + rng.normal(scale=1.0, size=npix))
+    sx = np.minimum(sx, 20.0)
+    threshold = 3.0
+    np.testing.assert_array_equal(
+        find_peaks_spectrum(sx, nwinwidth=nwinwidth, threshold=threshold),
+        reference_find_peaks(sx, nwinwidth, threshold),
+    )
+
+
+@pytest.mark.parametrize("nwinwidth", [3, 5, 7, 11])
+@pytest.mark.parametrize("seed", [0, 1, 2])
 def test_random_spectra_match_reference(nwinwidth, seed):
     # Random spectra (no ties) with lines and noise
     rng = np.random.default_rng(seed)
@@ -199,29 +226,66 @@ def test_random_spectra_match_reference(nwinwidth, seed):
     )
 
 
-# --- known defects (desired behaviour) -------------------------------------------
+# --- runs of equal values (plateaus) ------------------------------------------
 
 
-@pytest.mark.xfail(strict=True, reason="a constant signal above threshold is reported as several peaks")
-def test_constant_signal_has_no_peaks():
-    assert find_peaks_spectrum(np.ones(20), nwinwidth=5).size == 0
+@pytest.mark.parametrize(
+    "values, expected",
+    [
+        ([0, 1, 4, 7, 7, 4, 1, 0, 0], [3]),
+        ([0, 1, 4, 7, 7, 7, 4, 1, 0, 0], [4]),
+        ([0, 1, 4, 7, 7, 7, 7, 4, 1, 0, 0], [4]),
+        ([0, 1, 1, 3, 7, 3, 3, 1, 0, 0], [4]),
+        ([0, 1, 3, 3, 7, 4, 1, 0, 0, 0], [4]),
+        ([0, 1, 5, 3, 3, 5, 1, 0, 0], [2, 5]),
+    ],
+    ids=["2px-top", "3px-plateau", "4px-plateau", "flank-ties", "shoulder", "flat-valley"],
+)
+def test_runs_of_equal_values(values, expected):
+    # Same results as scipy.signal.find_peaks for nwinwidth=3
+    np.testing.assert_array_equal(find_peaks_spectrum(np.array(values, dtype=float), nwinwidth=3), expected)
 
 
-@pytest.mark.xfail(strict=True, reason="a flat-topped line is reported as several peaks")
-def test_plateau_gives_a_single_peak():
-    sx = np.array([0, 0, 1, 5, 5, 5, 5, 1, 0, 0], dtype=float)
-    ixpeaks = find_peaks_spectrum(sx, nwinwidth=3)
-    assert ixpeaks.size == 1
-    assert 3 <= ixpeaks[0] <= 6
+@pytest.mark.parametrize("dtype", [float, int])
+def test_constant_signal_has_no_peaks(dtype):
+    assert find_peaks_spectrum(np.ones(20, dtype=dtype), nwinwidth=5).size == 0
 
 
-@pytest.mark.xfail(strict=True, reason="comparisons with NaN are False, so the neighbours of a NaN become peaks")
+def test_saturated_line_gives_a_single_peak_at_its_centre():
+    sx = np.minimum(gaussian_lines(60, [30.0], amplitude=100.0, sigma=3.0), 60.0)
+    np.testing.assert_array_equal(find_peaks_spectrum(sx, nwinwidth=7), [30])
+
+
+def test_plateau_flank_beyond_border_is_ignored():
+    # The right flank [p2, p2 + nmed] of the plateau [6, 8] does not fit
+    sx = np.array([0, 0, 0, 1, 2, 3, 5, 5, 5, 4], dtype=float)
+    assert find_peaks_spectrum(sx, nwinwidth=5).size == 0
+
+
+def test_search_resumes_after_plateau():
+    # Plateau [2, 4] -> peak at 3; the search resumes at 4 + 3 - 1 = 6
+    sx = np.array([0, 1, 5, 5, 5, 1, 3, 1, 0], dtype=float)
+    np.testing.assert_array_equal(find_peaks_spectrum(sx, nwinwidth=3), [3, 6])
+
+
+def test_plateau_warning(capsys):
+    sx = np.array([0, 1, 4, 7, 7, 7, 7, 4, 1, 0, 0], dtype=float)
+    find_peaks_spectrum(sx, nwinwidth=3, debugplot=0)
+    assert "plateau" not in capsys.readouterr().out
+    find_peaks_spectrum(sx, nwinwidth=3, debugplot=10)
+    assert "WARNING: plateau of 4 pixels in [3, 6]" in capsys.readouterr().out
+
+
+# --- NaN values -------------------------------------------------------------------
+
+
 def test_nan_at_line_centre_does_not_create_peaks():
     sx = np.array([0, 1, 2, np.nan, 2, 1, 0, 0], dtype=float)
     assert find_peaks_spectrum(sx, nwinwidth=3).size == 0
 
 
-@pytest.mark.xfail(strict=True, reason="a NaN inside the window does not invalidate the peak")
-def test_nan_in_window_invalidates_peak():
-    sx = np.array([0, 1, np.nan, 5, 4, 3, 0, 0], dtype=float)
+@pytest.mark.parametrize("inan", [1, 2, 4, 5])
+def test_nan_in_window_invalidates_peak(inan):
+    sx = np.array([0, 1, 2, 5, 4, 3, 0, 0], dtype=float)
+    sx[inan] = np.nan
     assert find_peaks_spectrum(sx, nwinwidth=5).size == 0

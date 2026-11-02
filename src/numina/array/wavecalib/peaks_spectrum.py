@@ -418,6 +418,23 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     decreases monotonically. Peaks are found within a window of width
     nwinwidth.
 
+    A run of consecutive equal values (a plateau, e.g. a saturated line)
+    is treated as a single point. A run [p1, p2] (p1 == p2 when there is
+    no plateau) is a peak when:
+
+    - sx[p1] > threshold;
+    - the signal increases strictly when entering the run
+      (sx[p1 - 1] < sx[p1]) and decreases strictly when leaving it
+      (sx[p2 + 1] < sx[p2]);
+    - the signal is non-decreasing in [p1 - nwinwidth // 2, p1] and
+      non-increasing in [p2, p2 + nwinwidth // 2] (equal consecutive
+      values are allowed in the flanks).
+
+    The returned location of a plateau is (p1 + p2) // 2. After a peak
+    is found, the search resumes at p2 + nwinwidth - 1. A window that
+    contains NaN values is never accepted, since every comparison with
+    NaN is False.
+
     Parameters
     ----------
     sx : numpy.ndarray
@@ -468,30 +485,41 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     if sx_shape[0] < nwinwidth:
         raise ValueError(f"sx.shape[0]={sx_shape[0]} < nwinwidth={nwinwidth}, sx.shape={sx_shape}")
 
+    npix = sx_shape[0]
     i = nmed
-    while i < sx_shape[0] - nmed:
-        if sx[i] > threshold:
-            peak_ok = True
-            j = 0
-            loop = True
-            while loop:
-                if sx[i - nmed + j] > sx[i - nmed + j + 1]:
-                    peak_ok = False
-                j += 1
-                loop = (j < nmed) and peak_ok
+    while i < npix - nmed:
+        # Only the first pixel of a run of equal values can start a peak,
+        # and the signal must increase strictly when entering the run.
+        # The conditions are written so that a comparison involving NaN
+        # (always False) rejects the candidate.
+        if sx[i] > threshold and sx[i - 1] < sx[i]:
+            # last pixel of the run of values equal to sx[i]
+            p2 = i
+            while p2 + 1 < npix and sx[p2 + 1] == sx[i]:
+                p2 += 1
+            # the right flank [p2, p2 + nmed] must lie within the array
+            peak_ok = p2 + nmed < npix
             if peak_ok:
-                j = nmed + 1
-                loop = True
-                while loop:
-                    if sx[i - nmed + j - 1] < sx[i - nmed + j]:
-                        peak_ok = False
-                    j += 1
-                    loop = (j < nwinwidth) and peak_ok
+                # strict decrease when leaving the run, non-decreasing
+                # left flank and non-increasing right flank (pairwise
+                # comparisons instead of np.diff, which would wrap around
+                # for unsigned integer arrays)
+                left = sx[i - nmed : i + 1]
+                right = sx[p2 : p2 + nmed + 1]
+                peak_ok = sx[p2 + 1] < sx[p2] and np.all(left[:-1] <= left[1:]) and np.all(right[:-1] >= right[1:])
             if peak_ok:
-                xpeaks.append(i)
-                i += nwinwidth - 1
+                ipeak = (i + p2) // 2
+                if p2 > i and debugplot >= 10:
+                    print(
+                        f"find_peaks_spectrum> WARNING: plateau of {p2 - i + 1} pixels in [{i}, {p2}] "
+                        f"(possibly saturated), peak located at {ipeak}"
+                    )
+                xpeaks.append(ipeak)
+                i = p2 + nwinwidth - 1
             else:
-                i += 1
+                # no pixel inside the run can start a peak (no strict
+                # increase), so continue after the run
+                i = p2 + 1
         else:
             i += 1
 
