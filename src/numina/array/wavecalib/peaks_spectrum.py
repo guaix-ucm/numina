@@ -562,21 +562,23 @@ def refine_peaks_spectrum(
 
     for iline in range(npeaks):
         jmax = ixpeaks[iline]
-        x_fit = np.arange(-nmed, nmed + 1, dtype=float)
         # prevent possible problem when fitting a line too near to any
-        # of the borders of the spectrum
+        # of the borders of the spectrum (j2 is an exclusive index)
         j1 = jmax - nmed
         j2 = jmax + nmed + 1
         if j1 < 0:
             j1 = 0
             j2 = 2 * nmed + 1
-            if j2 >= len(sx):
+            if j2 > len(sx):
                 raise ValueError("Unexpected j2=" + str(j2) + " value when len(sx)=" + str(len(sx)))
-        if j2 >= len(sx):
+        if j2 > len(sx):
             j2 = len(sx)
             j1 = j2 - (2 * nmed + 1)
             if j1 < 0:
                 raise ValueError("Unexpected j1=" + str(j1) + " value when len(sx)=" + str(len(sx)))
+        # abscissae of the fitted pixels relative to jmax; the window may be
+        # off-centre when the peak is close to the borders of the spectrum
+        x_fit = np.arange(j1, j2, dtype=float) - jmax
         # it is important to create a copy in the next instruction in
         # order to avoid modifying the original array when normalizing
         # the data to be fitted
