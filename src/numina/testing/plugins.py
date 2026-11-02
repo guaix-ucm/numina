@@ -92,6 +92,18 @@ def drpmocker(monkeypatch):
     return DRPMocker(monkeypatch)
 
 
+@pytest.fixture(autouse=True)
+def calibindex_cache(tmp_path_factory, monkeypatch):
+    """The cache of the indexes of calibrations, in a temporary directory
+
+    The tests do not write the caches of their directories of calibrations
+    in the cache of the user, see :mod:`numina.dal.calibindex`.
+    """
+    cache_dir = tmp_path_factory.mktemp("calibindex")
+    monkeypatch.setattr("numina.dal.calibindex.default_cache_dir", lambda: str(cache_dir))
+    return cache_dir
+
+
 @pytest.fixture
 def run_config(tmp_path):
     """Configuration of 'numina.cfg', with the defaults and basedir in tmp_path"""
