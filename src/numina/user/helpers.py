@@ -26,6 +26,7 @@ from numina.dal.utils import PRODUCT_TEMPLATE_FIELDS, check_template, fill_templ
 from numina.util.jsonencoder import ExtEncoder
 from numina.types.frame import DataFrameType
 from numina.types.qc import QC
+from numina.user.inittree import check_installed_datasets
 from numina.util.context import working_directory
 
 _logger = logging.getLogger(__name__)
@@ -653,6 +654,7 @@ def create_datamanager(config, reqfile, extra_control=None, profile_path_extra=N
         if not os.path.isabs(calibsdir):
             calibsdir = os.path.join(basedir, calibsdir)
         calibsdir = os.path.normpath(calibsdir)
+        check_installed_datasets(config, sys_drps, calibsdir)
     else:
         calibsdir = ""
 

@@ -77,6 +77,7 @@ def test_install(setup, capsys):
     config.read(work / ".numina.cfg")
     assert config["tool.run"]["calibsdir"] == "calibrations"
     assert config["tool.inittree.TEST1"]["dataset"] == "calibrations-1.0"
+    assert config["tool.inittree.TEST1"]["calibsdir"] == str(work / "calibrations")
 
     # again, nothing changes
     status, lines, _ = inittree(capsys, "TEST1")
@@ -175,3 +176,60 @@ def test_check_hash(tmp_path):
         check_hash(path, "md5:0")
     with pytest.raises(ValueError, match="invalid hash"):
         check_hash(path, "crc:0")
+
+
+def installed_config(dataset, calibsdir=None):
+    config = configparser.ConfigParser()
+    config["tool.inittree.TEST1"] = {"dataset": dataset}
+    if calibsdir is not None:
+        config["tool.inittree.TEST1"]["calibsdir"] = str(calibsdir)
+    return config
+
+
+@pytest.mark.parametrize(
+    "dataset, recorded, expected",
+    [
+        ("calibrations-1.0", None, None),
+        ("old", None, "are old, an older dataset; the DRP uses calibrations-1.0"),
+        ("old", "/data/calibrations", "are old, an older dataset"),
+        ("other", None, "are other, a dataset that the DRP does not declare"),
+        # Installed in another directory, it is not the one in use
+        ("old", "/elsewhere", None),
+    ],
+)
+def test_check_installed_datasets(setup, caplog, dataset, recorded, expected):
+    import numina.drps
+    from numina.user.inittree import check_installed_datasets
+
+    drps = numina.drps.get_system_drps()
+    with caplog.at_level("WARNING", logger="numina.user.inittree"):
+        messages = check_installed_datasets(installed_config(dataset, recorded), drps, "/data/calibrations")
+    if expected is None:
+        assert messages == []
+        assert caplog.text == ""
+    else:
+        assert len(messages) == 1
+        assert expected in messages[0]
+        assert "install it in a new directory with 'numina inittree TEST1 --base-path DIR'" in messages[0]
+        assert expected in caplog.text
+
+
+def test_check_unknown_instrument(setup):
+    import numina.drps
+    from numina.user.inittree import check_installed_datasets
+
+    config = configparser.ConfigParser()
+    config["tool.inittree.OTHER"] = {"dataset": "old"}
+    assert check_installed_datasets(config, numina.drps.get_system_drps(), "/data/calibrations") == []
+
+
+def test_warning_in_run(setup, run_config, tmp_path, caplog):
+    """numina run warns when the calibrations in calibsdir are older than those of the DRP"""
+    from numina.user.helpers import create_datamanager
+
+    run_config["tool.run"]["basedir"] = str(tmp_path)
+    run_config["tool.run"]["calibsdir"] = "calibrations"
+    run_config["tool.inittree.TEST1"] = {"dataset": "old", "calibsdir": str(tmp_path / "calibrations")}
+    with caplog.at_level("WARNING", logger="numina.user.inittree"):
+        create_datamanager(run_config, None)
+    assert f"the calibrations of TEST1 in {tmp_path / 'calibrations'} are old" in caplog.text

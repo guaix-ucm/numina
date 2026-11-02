@@ -146,7 +146,8 @@ def update_config(cfg_path, base_path, drp, dataset):
     """Record the directory of calibrations and the dataset in a configuration file
 
     ``calibsdir`` in ``[tool.run]`` is set to `base_path`, and the section
-    ``[tool.inittree.<instrument>]`` records the dataset installed.
+    ``[tool.inittree.<instrument>]`` records the dataset installed and the
+    absolute path of `base_path`, see :func:`check_installed_datasets`.
     """
     import numina
 
@@ -162,6 +163,7 @@ def update_config(cfg_path, base_path, drp, dataset):
     section = f"tool.inittree.{drp.name}"
     config[section] = {
         "dataset": dataset["name"],
+        "calibsdir": os.path.abspath(base_path),
         "url": dataset["url"],
         "known_hash": dataset["known_hash"],
         "date": datetime.datetime.now().isoformat(timespec="seconds"),
@@ -169,3 +171,42 @@ def update_config(cfg_path, base_path, drp, dataset):
     }
     with open(cfg_path, "w") as fd:
         config.write(fd)
+
+
+def check_installed_datasets(config, drps, calibsdir):
+    """Warn if the dataset installed in `calibsdir` is not the last one declared by the DRP
+
+    The datasets installed are those recorded by :func:`update_config` in
+    the sections ``[tool.inittree.<instrument>]`` of `config`. A section
+    is checked if it was recorded for `calibsdir` (an absolute path), or
+    if it does not record the directory (configurations written by
+    previous versions of numina). Returns the list of messages of the
+    warnings.
+    """
+    messages = []
+    prefix = "tool.inittree."
+    for section in config.sections():
+        if not section.startswith(prefix):
+            continue
+        instrument = section[len(prefix) :]
+        values = config[section]
+        installed = values.get("dataset")
+        recorded = values.get("calibsdir")
+        if installed is None or (recorded is not None and os.path.normpath(recorded) != os.path.normpath(calibsdir)):
+            continue
+        try:
+            drp = drps.query_by_name(instrument)
+        except KeyError:
+            continue
+        names = [dataset["name"] for dataset in getattr(drp, "calibrations", None) or []]
+        if not names or installed == names[-1]:
+            continue
+        state = "an older dataset" if installed in names else "a dataset that the DRP does not declare"
+        msg = (
+            f"the calibrations of {instrument} in {calibsdir} are {installed}, {state}; "
+            f"the DRP uses {names[-1]}, install it in a new directory with "
+            f"'numina inittree {instrument} --base-path DIR'"
+        )
+        _logger.warning("%s", msg)
+        messages.append(msg)
+    return messages

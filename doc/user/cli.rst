@@ -472,7 +472,11 @@ nothing is installed, unless ``--overwrite`` is given.
 
 ``calibsdir`` is set in the section ``[tool.run]`` of the file
 ``.numina.cfg`` of the current directory, and the section
-``[tool.inittree.INSTRUMENT]`` records the dataset installed.
+``[tool.inittree.INSTRUMENT]`` records the dataset installed and its
+directory. ``numina run`` warns if the dataset installed in ``calibsdir``
+is not the last one declared by the DRP. To use a new dataset, install it
+in a new directory with ``--base-path``: the files of the previous dataset
+that are not in the new one would stay in the old directory.
 
 ``numina run`` selects the calibrations of ``calibsdir`` in two ways:
 
