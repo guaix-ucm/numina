@@ -299,7 +299,9 @@ def find_highest_peaks_spectrum(
         Width of the window where each peak must be found. It must be
         an odd integer >= 3.
     threshold : float
-        Minimum signal in the peaks.
+        Minimum signal in the peaks. It must be non-negative: the cleaned
+        pixels (and the ignored borders) are set to zero, so with a
+        negative threshold they could be detected as peaks.
     nborder_to_ignore : int
         Number of pixels to ignore at the borders of the input array.
     title: str or None
@@ -332,6 +334,7 @@ def find_highest_peaks_spectrum(
     if nclean_around_peak < -1:
         raise ValueError("nclean_around_peak must be -1 or non-negative")
     odd_window_width(nwinwidth)
+    # cleaned pixels are set to zero, which must not be above threshold
     if threshold < 0:
         raise ValueError("threshold must be non-negative")
     if len(sx) < nmaxpeaks:
@@ -562,9 +565,7 @@ def _parabola_vertex(coef, x_fit):
     return xvertex
 
 
-def refine_peaks_spectrum(
-    sx, ixpeaks, nwinwidth, method=None, geometry=None, title=None, debugplot=0, ax_external=None
-):
+def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=None, debugplot=0, ax_external=None):
     """Refine line peaks in spectrum.
 
     This function refines the locations of line peaks in a 1D spectrum by fitting
@@ -581,7 +582,8 @@ def refine_peaks_spectrum(
     nwinwidth : int
         Width of the window where each peak must be refined, i.e. number
         of pixels used in the fit. It must be an odd integer >= 3.
-    method : string
+    method : str
+        Fitting method (required):
         "poly2" : fit to a 2nd order polynomial
         "gaussian" : fit to a Gaussian
         "gaussian+moments" : fit to a Gaussian and compute moments. This is only
@@ -620,7 +622,8 @@ def refine_peaks_spectrum(
     sxpeaks : numpy.ndarray
         1D array of floats. When fitting Gaussians, this array stores the fitted line
         widths (sigma). Otherwise, this array returns zeros. If when fitting a Gaussian
-        the fitted width is not defined, the corresponding value in this array is set to NaN.
+        the fitted width is not defined, or the maximum of the fitted Gaussian lies
+        outside the fitting window, the corresponding value in this array is set to NaN.
     dict_moments : dict or None
         Computed moments of the line. Returned only when method="gaussian+moments"
         (and the number of peaks is 1). Otherwise, this value is not returned to keep
@@ -733,7 +736,11 @@ def refine_peaks_spectrum(
                             f"Non-negative quadratic coefficient encountered in refine_peaks_spectrum with gaussian "
                             f"around {jmax}; setting fitted width to NaN."
                         )
-                    sfpeaks[iline] = None
+                    sfpeaks[iline] = np.nan
+                elif xvertex is None:
+                    # concave parabola, but its maximum is outside the fitting
+                    # window: the fitted Gaussian does not describe the line
+                    sfpeaks[iline] = np.nan
                 else:
                     sfpeaks[iline] = np.sqrt(-1 / (2.0 * coef[2]))
                 if final_method == "gaussian+moments":
@@ -766,7 +773,7 @@ def refine_peaks_spectrum(
                     fwhm_np_right = None
             else:
                 refined_peak = 0.0 + jmax
-                sfpeaks[iline] = None
+                sfpeaks[iline] = np.nan
                 fwhm_np = None
                 fwhm_np_left = None
                 fwhm_np_right = None

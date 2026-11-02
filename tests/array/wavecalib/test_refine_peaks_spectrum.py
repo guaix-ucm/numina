@@ -81,8 +81,12 @@ def test_vertex_outside_window_returns_jmax(method):
     # previously 200 (poly2) or 190.5 (gaussian) was returned for jmax=30
     x = np.arange(60, dtype=float)
     sx = 100.0 - 1e-4 * (x - 200.0) ** 2
-    xfpeaks, _ = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method)
+    xfpeaks, sfpeaks = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method)
     assert xfpeaks[0] == 30.0
+    if method == "gaussian":
+        # the parabola fitted to log(y) is concave, but its maximum is far
+        # outside the window: the width is not meaningful
+        assert np.isnan(sfpeaks[0])
 
 
 @pytest.mark.parametrize("debugplot", [10, -10])
@@ -172,3 +176,17 @@ def test_gaussian_moments_non_positive_flux_returns_none(caplog, debugplot):
     assert dict_moments is None
     assert xfpeaks[0] == pytest.approx(30.0, abs=1e-6)
     assert any("not positive" in r.getMessage() for r in caplog.records) == (debugplot == 10)
+
+
+# --- arguments ----------------------------------------------------------------------
+
+
+def test_method_is_required():
+    with pytest.raises(TypeError, match="method"):
+        refine_peaks_spectrum(gaussian_line(60, 30.0), np.array([30]), nwinwidth=7)
+
+
+@pytest.mark.parametrize("method", [None, "gauss", "poly3"])
+def test_invalid_method(method):
+    with pytest.raises(ValueError, match="Invalid method"):
+        refine_peaks_spectrum(gaussian_line(60, 30.0), np.array([30]), nwinwidth=7, method=method)
