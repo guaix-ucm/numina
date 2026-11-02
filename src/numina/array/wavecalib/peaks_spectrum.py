@@ -7,6 +7,8 @@
 # License-Filename: LICENSE.txt
 #
 
+import logging
+
 import numpy as np
 from numpy.polynomial import Polynomial
 
@@ -15,6 +17,8 @@ from ..display.pause_debugplot import pause_debugplot
 
 # np.trapezoid en NumPy >= 2.0; np.trapz en versiones anteriores
 _trapz = getattr(np, "trapezoid", None) or np.trapz
+
+_logger = logging.getLogger(__name__)
 
 
 def odd_window_width(nwinwidth):
@@ -96,8 +100,8 @@ def fwhm_nonparametric(x, y, debugplot=0):
     while i > 0 and y[i] > half:
         i -= 1
     if y[i] > half:
-        if debugplot >= 10:
-            print("The line does not drop below half maximum on the left side; widen the range.")
+        if abs(debugplot) >= 10:
+            _logger.warning("The line does not drop below half maximum on the left side; widen the range.")
         x_left = None
     else:
         # Linear interpolation between samples i and i + 1
@@ -108,8 +112,8 @@ def fwhm_nonparametric(x, y, debugplot=0):
     while j < len(y) - 1 and y[j] > half:
         j += 1
     if y[j] > half:
-        if debugplot >= 10:
-            print("The line does not drop below half maximum on the right side; widen the range.")
+        if abs(debugplot) >= 10:
+            _logger.warning("The line does not drop below half maximum on the right side; widen the range.")
         x_right = None
     else:
         # Linear interpolation between samples j - 1 and j
@@ -183,8 +187,8 @@ def line_moments(x, y, window=None, debugplot=0):
     # Second central moment: standard deviation of the profile
     var = _trapz((x - mu) ** 2 * y, x) / m0
     if var < 0:
-        if debugplot >= 10:
-            print("WARNING: negative variance encountered in line_moments; " "setting sigma to NaN.")
+        if abs(debugplot) >= 10:
+            _logger.warning("Negative variance encountered in line_moments; setting sigma to NaN.")
         sigma = np.nan
     else:
         sigma = np.sqrt(var)
@@ -356,8 +360,8 @@ def find_highest_peaks_spectrum(
         # if no peaks are found, reduce the window width (minimum value: 3)
         while len(ixpeaks) < 1 and nwinwidth_effective - 2 >= 3:
             nwinwidth_effective -= 2
-            if debugplot != 0:
-                print(
+            if abs(debugplot) >= 10:
+                _logger.info(
                     "find_highest_peaks_spectrum> No peaks found, "
                     f"reducing nwinwidth_effective to {nwinwidth_effective}"
                 )
@@ -367,16 +371,16 @@ def find_highest_peaks_spectrum(
             # remaining value, provided it is above the threshold
             imax = np.argmax(sx_copy)
             if not sx_copy[imax] > threshold:
-                if debugplot != 0:
-                    print(f"find_highest_peaks_spectrum> only {i} peaks found above threshold={threshold}")
+                if abs(debugplot) >= 10:
+                    _logger.warning(f"find_highest_peaks_spectrum> only {i} peaks found above threshold={threshold}")
                 break
-            if debugplot != 0:
-                print("find_highest_peaks_spectrum> no peaks found, taking the maximum value as the peak")
+            if abs(debugplot) >= 10:
+                _logger.warning("find_highest_peaks_spectrum> no peaks found, taking the maximum value as the peak")
             ixpeaks = [imax]
         # peak values
         peak_values = sx_copy[ixpeaks]
-        if debugplot != 0:
-            print(f"debug> peak_values={peak_values}")
+        if abs(debugplot) >= 10:
+            _logger.info(f"find_highest_peaks_spectrum> peak_values={peak_values}")
         # find the index of the highest peak
         highest_peak_index = np.argmax(peak_values)
         # get the location of the highest peak
@@ -478,12 +482,12 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
 
     nmed = nwinwidth // 2
 
-    if debugplot >= 10:
-        print("find_peaks_spectrum> sx shape......:", sx_shape)
-        print("find_peaks_spectrum> nwinwidth.....:", nwinwidth)
-        print("find_peaks_spectrum> nmed..........:", nmed)
-        print("find_peaks_spectrum> data_threshold:", threshold)
-        print("find_peaks_spectrum> the first and last", nmed, "pixels will be ignored")
+    if abs(debugplot) >= 10:
+        _logger.info(f"find_peaks_spectrum> sx shape......: {sx_shape}")
+        _logger.info(f"find_peaks_spectrum> nwinwidth.....: {nwinwidth}")
+        _logger.info(f"find_peaks_spectrum> nmed..........: {nmed}")
+        _logger.info(f"find_peaks_spectrum> data_threshold: {threshold}")
+        _logger.info(f"find_peaks_spectrum> the first and last {nmed} pixels will be ignored")
 
     xpeaks = []  # list to store the peaks
 
@@ -514,9 +518,9 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
                 peak_ok = sx[p2 + 1] < sx[p2] and np.all(left[:-1] <= left[1:]) and np.all(right[:-1] >= right[1:])
             if peak_ok:
                 ipeak = (i + p2) // 2
-                if p2 > i and debugplot >= 10:
-                    print(
-                        f"find_peaks_spectrum> WARNING: plateau of {p2 - i + 1} pixels in [{i}, {p2}] "
+                if p2 > i and abs(debugplot) >= 10:
+                    _logger.warning(
+                        f"find_peaks_spectrum> plateau of {p2 - i + 1} pixels in [{i}, {p2}] "
                         f"(possibly saturated), peak located at {ipeak}"
                     )
                 xpeaks.append(ipeak)
@@ -530,9 +534,9 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
 
     ixpeaks = np.array(xpeaks, dtype=int)
 
-    if debugplot >= 10:
-        print("find_peaks_spectrum> number of peaks found:", len(ixpeaks))
-        print(ixpeaks)
+    if abs(debugplot) >= 10:
+        _logger.info(f"find_peaks_spectrum> number of peaks found: {len(ixpeaks)}")
+        _logger.info(f"find_peaks_spectrum> peaks: {ixpeaks}")
 
     return ixpeaks
 
@@ -688,9 +692,11 @@ def refine_peaks_spectrum(
         if method in ["gaussian", "gaussian+moments"]:
             # check that there are no negative or null values
             if y_fit.min() <= 0:
-                if debugplot >= 10:
-                    print("WARNING: negative or null value encountered" + " in refine_peaks_spectrum with gaussian.")
-                    print("         Using poly2 method instead.")
+                if abs(debugplot) >= 10:
+                    _logger.warning(
+                        f"Negative or null value encountered in refine_peaks_spectrum with {method} "
+                        f"around {jmax}; using poly2 method instead."
+                    )
                 final_method = "poly2"
             else:
                 final_method = method
@@ -704,8 +710,8 @@ def refine_peaks_spectrum(
             # use jmax when the fitted parabola has no maximum within the window
             xvertex = _parabola_vertex(coef, x_fit)
             refined_peak = jmax + (xvertex if xvertex is not None else 0.0)
-            if xvertex is None and debugplot >= 10:
-                print(f"WARNING: no maximum within the fitting window around {jmax} (poly2); using {jmax}")
+            if xvertex is None and abs(debugplot) >= 10:
+                _logger.warning(f"No maximum within the fitting window around {jmax} (poly2); using {jmax}")
             fwhm_np = None
             fwhm_np_left = None
             fwhm_np_right = None
@@ -718,15 +724,14 @@ def refine_peaks_spectrum(
                 # use jmax when the fitted parabola has no maximum within the window
                 xvertex = _parabola_vertex(coef, x_fit)
                 refined_peak = jmax + (xvertex if xvertex is not None else 0.0)
-                if xvertex is None and debugplot >= 10:
-                    print(f"WARNING: no maximum within the fitting window around {jmax} (gaussian); using {jmax}")
+                if xvertex is None and abs(debugplot) >= 10:
+                    _logger.warning(f"No maximum within the fitting window around {jmax} (gaussian); using {jmax}")
                 if coef[2] >= 0:
-                    if debugplot >= 10:
-                        print(
-                            "WARNING: non-negative quadratic coefficient "
-                            "encountered in refine_peaks_spectrum with gaussian."
+                    if abs(debugplot) >= 10:
+                        _logger.warning(
+                            f"Non-negative quadratic coefficient encountered in refine_peaks_spectrum with gaussian "
+                            f"around {jmax}; setting fitted width to NaN."
                         )
-                        print("Setting fitted width to None.")
                     sfpeaks[iline] = None
                 else:
                     sfpeaks[iline] = np.sqrt(-1 / (2.0 * coef[2]))
@@ -813,8 +818,8 @@ def refine_peaks_spectrum(
                 ymin = 0
             ax.set_ylim(ymin, ymax)
             if ax_external is None:
-                if debugplot >= 10:
-                    print("Refined peak location:", refined_peak)
+                if abs(debugplot) >= 10:
+                    _logger.info(f"Refined peak location: {refined_peak}")
                 plt.show(block=False)
                 plt.pause(0.001)
                 pause_debugplot(debugplot, pltshow=True, tight_layout=True, fig=fig)

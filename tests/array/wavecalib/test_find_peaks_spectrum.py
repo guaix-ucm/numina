@@ -1,5 +1,7 @@
 """Tests of find_peaks_spectrum"""
 
+import logging
+
 import numpy as np
 import pytest
 
@@ -268,12 +270,18 @@ def test_search_resumes_after_plateau():
     np.testing.assert_array_equal(find_peaks_spectrum(sx, nwinwidth=3), [3, 6])
 
 
-def test_plateau_warning(capsys):
+@pytest.mark.parametrize("debugplot", [10, -10])
+def test_plateau_warning(caplog, debugplot):
     sx = np.array([0, 1, 4, 7, 7, 7, 7, 4, 1, 0, 0], dtype=float)
-    find_peaks_spectrum(sx, nwinwidth=3, debugplot=0)
-    assert "plateau" not in capsys.readouterr().out
-    find_peaks_spectrum(sx, nwinwidth=3, debugplot=10)
-    assert "WARNING: plateau of 4 pixels in [3, 6]" in capsys.readouterr().out
+    logger_name = "numina.array.wavecalib.peaks_spectrum"
+    with caplog.at_level(logging.INFO, logger=logger_name):
+        find_peaks_spectrum(sx, nwinwidth=3, debugplot=0)
+    assert not caplog.records
+    with caplog.at_level(logging.INFO, logger=logger_name):
+        find_peaks_spectrum(sx, nwinwidth=3, debugplot=debugplot)
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    assert "plateau of 4 pixels in [3, 6]" in warnings[0].getMessage()
 
 
 # --- NaN values -------------------------------------------------------------------

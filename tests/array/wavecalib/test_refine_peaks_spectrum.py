@@ -1,5 +1,7 @@
 """Tests of refine_peaks_spectrum"""
 
+import logging
+
 import numpy as np
 import pytest
 
@@ -83,13 +85,19 @@ def test_vertex_outside_window_returns_jmax(method):
     assert xfpeaks[0] == 30.0
 
 
-def test_no_maximum_warning(capsys):
+@pytest.mark.parametrize("debugplot", [10, -10])
+def test_no_maximum_warning(caplog, debugplot):
     x = np.arange(60, dtype=float)
     sx = 10.0 + 0.5 * (x - 31.7) ** 2
-    refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2", debugplot=0)
-    assert "no maximum" not in capsys.readouterr().out
-    refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2", debugplot=10)
-    assert "WARNING: no maximum within the fitting window around 30" in capsys.readouterr().out
+    logger_name = "numina.array.wavecalib.peaks_spectrum"
+    with caplog.at_level(logging.INFO, logger=logger_name):
+        refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2", debugplot=0)
+    assert not caplog.records
+    with caplog.at_level(logging.INFO, logger=logger_name):
+        refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2", debugplot=debugplot)
+    warnings = [r for r in caplog.records if r.levelno == logging.WARNING]
+    assert len(warnings) == 1
+    assert "No maximum within the fitting window around 30" in warnings[0].getMessage()
 
 
 # --- normalization ----------------------------------------------------------------
