@@ -9,8 +9,12 @@
 
 import logging
 
+import warnings
+
 import numpy as np
 from numpy.polynomial import Polynomial
+from scipy.optimize import OptimizeWarning, curve_fit, minimize_scalar
+from scipy.special import erf
 
 from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
@@ -195,6 +199,133 @@ def line_moments(x, y, window=None, debugplot=0):
         kurt = np.nan
 
     return dict(flux=m0, centroid=mu, sigma=sigma, skewness=skew, kurtosis_excess=kurt)
+
+
+def skewnorm_profile(x, amp, xi, omega, alpha):
+    """Skew-normal line profile with free amplitude.
+
+    The profile is
+
+        y(x) = amp * exp(-z²/2) * [1 + erf(alpha z / sqrt(2))],  z = (x - xi) / omega
+
+    which is proportional to the skew-normal probability density
+    (2/omega) phi(z) Phi(alpha z). For alpha = 0 it reduces to a Gaussian
+    with amplitude amp, centre xi and standard deviation omega.
+
+    Parameters
+    ----------
+    x : array_like
+        Abscissae where the profile is evaluated.
+    amp : float
+        Amplitude (value of the Gaussian factor at x = xi).
+    xi : float
+        Location parameter. It is not the position of the maximum
+        unless alpha = 0.
+    omega : float
+        Scale parameter (must be positive).
+    alpha : float
+        Shape parameter. Positive values give a tail towards
+        increasing x.
+
+    Returns
+    -------
+    numpy.ndarray
+        Profile evaluated at x.
+    """
+    z = (np.asarray(x, dtype=float) - xi) / omega
+    return amp * np.exp(-0.5 * z**2) * (1.0 + erf(alpha * z / np.sqrt(2.0)))
+
+
+def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0):
+    """Fit a skew-normal profile starting from a Gaussian solution.
+
+    The fit starts at alpha = 0, where the skew-normal profile coincides
+    with the Gaussian defined by amp0, xi0 and omega0.
+
+    Parameters
+    ----------
+    x, y : numpy.ndarray
+        Data to fit. y must be continuum-subtracted.
+    amp0, xi0, omega0 : float
+        Amplitude, centre and standard deviation of the initial
+        Gaussian fit.
+    alpha_max : float, optional
+        Bound on the absolute value of the shape parameter. For large
+        |alpha| the profile tends to a half-normal and the parameters
+        become strongly degenerate.
+
+    Returns
+    -------
+    dict
+        Keys:
+        'amp', 'xi', 'omega', 'alpha' : fitted parameters;
+        'amp_err', 'xi_err', 'omega_err', 'alpha_err' : their
+        uncertainties from the covariance matrix (inf if it cannot
+        be estimated);
+        'mode' : position of the maximum of the profile;
+        'mean', 'std', 'skewness' : mean, standard deviation and
+        skewness of the skew-normal distribution.
+        Positions are in the same units and origin as x.
+
+    Raises
+    ------
+    RuntimeError
+        If the least-squares fit does not converge.
+
+    Notes
+    -----
+    Near alpha = 0, small changes in alpha and xi are degenerate to first
+    order, so alpha (and xi) are poorly constrained for nearly symmetric
+    lines, while the mode, the standard deviation and the skewness are
+    well determined.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    xrange = x.max() - x.min()
+    # xi may lie outside the data range when |alpha| is large, since it
+    # is not the position of the maximum
+    lower = [0.0, x.min() - xrange, 1e-3 * omega0, -alpha_max]
+    upper = [np.inf, x.max() + xrange, 10 * xrange, alpha_max]
+    p0 = np.clip([amp0, xi0, omega0, 0.0], lower, upper)
+
+    with warnings.catch_warnings():
+        # OptimizeWarning is issued when the covariance cannot be
+        # estimated; the uncertainties are then returned as inf
+        warnings.simplefilter("ignore", OptimizeWarning)
+        popt, pcov = curve_fit(skewnorm_profile, x, y, p0=p0, bounds=(lower, upper))
+    amp, xi, omega, alpha = popt
+    perr = np.sqrt(np.diag(pcov))
+
+    # Moments of the skew-normal distribution
+    delta = alpha / np.sqrt(1.0 + alpha**2)
+    b = delta * np.sqrt(2.0 / np.pi)
+    mean = xi + omega * b
+    std = omega * np.sqrt(1.0 - b**2)
+    skewness = (4.0 - np.pi) / 2.0 * b**3 / (1.0 - b**2) ** 1.5
+
+    # The mode has no closed form. The profile is log-concave and the
+    # mode lies in [xi - omega, xi + omega] (|m0(alpha)| < sqrt(2/pi) < 1)
+    res = minimize_scalar(
+        lambda t: -skewnorm_profile(t, amp, xi, omega, alpha),
+        bounds=(xi - omega, xi + omega),
+        method="bounded",
+        options={"xatol": 1e-8 * omega},
+    )
+
+    return dict(
+        amp=amp,
+        xi=xi,
+        omega=omega,
+        alpha=alpha,
+        amp_err=perr[0],
+        xi_err=perr[1],
+        omega_err=perr[2],
+        alpha_err=perr[3],
+        mode=res.x,
+        mean=mean,
+        std=std,
+        skewness=skewness,
+    )
 
 
 def zero_monotonic_flanks(signal, peak_idx, inplace=False):
@@ -587,6 +718,11 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
         available when the number of peaks is 1, since the moments and the
         non-parametric FWHM are computed using the whole array sx, which must
         therefore contain a single continuum-subtracted line.
+        "skewnorm" : fit to a Gaussian (as in "gaussian"), used as the initial
+        guess of a least-squares fit of a skew-normal profile (see
+        skewnorm_profile) to the whole array sx. As for "gaussian+moments",
+        this is only available when the number of peaks is 1, sx must contain
+        a single continuum-subtracted line, and it must have at least 7 pixels.
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
     title : str or None
@@ -616,9 +752,12 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
     -------
     fxpeaks : numpy.ndarray
         1D array of floats with the refined peak locations, in array coordinates.
+        With method="skewnorm", this is the mode of the fitted skew-normal
+        profile (not its location parameter xi).
     sxpeaks : numpy.ndarray
         1D array of floats. When fitting Gaussians, this array stores the fitted line
-        widths (sigma). Otherwise, this array returns zeros. If when fitting a Gaussian
+        widths (sigma). With method="skewnorm", it stores the standard deviation of
+        the fitted skew-normal distribution. Otherwise, this array returns zeros. If when fitting a Gaussian
         the fitted width is not defined, or the maximum of the fitted Gaussian lies
         outside the fitting window, the corresponding value in this array is set to NaN.
     dict_moments : dict or None
@@ -632,6 +771,13 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
         Positions and widths are in pixels. It is None when the Gaussian fit
         cannot be performed (e.g. the poly2 method is used instead) or when the
         integrated flux is not positive.
+    dict_skewnorm : dict or None
+        Returned only when method="skewnorm" (in place of dict_moments). It
+        contains the dictionary returned by fit_skewnorm, with the positions
+        'xi', 'mode' and 'mean' in array coordinates and 'amp' and 'amp_err'
+        in the units of sx. It is None when the skew-normal fit cannot be
+        performed; fxpeaks and sxpeaks then contain the result of the initial
+        Gaussian fit (or of poly2, when the Gaussian fit is not possible).
 
     """
 
@@ -650,16 +796,23 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
                 f"len(ax_external)={len(ax_external)}, npeaks={npeaks}"
             )
 
-    if method not in ["poly2", "gaussian", "gaussian+moments"]:
+    if method not in ["poly2", "gaussian", "gaussian+moments", "skewnorm"]:
         raise ValueError("Invalid method=" + str(method) + " value")
-    if method == "gaussian+moments" and npeaks > 1:
-        raise ValueError("method=gaussian+moments is only available when npeaks=1")
+    if method in ["gaussian+moments", "skewnorm"] and npeaks > 1:
+        raise ValueError(f"method={method} is only available when npeaks=1")
+    # the skew-normal profile has 4 free parameters
+    if method == "skewnorm" and len(sx) < 7:
+        raise ValueError(f"method=skewnorm requires at least 7 pixels in sx: len(sx)={len(sx)}")
 
     xfpeaks = np.zeros(npeaks, dtype=float)
     sfpeaks = np.zeros(npeaks, dtype=float)
 
     for iline in range(npeaks):
         jmax = ixpeaks[iline]
+        # skew-normal fit (method="skewnorm"), in the coordinates relative to
+        # jmax and in units of the normalized data, and returned dictionary
+        skn = None
+        dict_skewnorm = None
         # prevent possible problem when fitting a line too near to any
         # of the borders of the spectrum (j2 is an exclusive index)
         j1 = jmax - nmed
@@ -681,7 +834,8 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
         # when normalizing the data to be fitted
         y_fit = sx[j1:j2].astype(float)
         # the whole spectrum is only needed for a single peak: to compute
-        # the moments (gaussian+moments) and to plot the original data
+        # the moments (gaussian+moments), to fit the skew-normal profile
+        # (skewnorm) and to plot the original data
         if npeaks == 1:
             y_full = sx.astype(float)
             x_full = np.arange(len(sx), dtype=float)
@@ -693,7 +847,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
             if npeaks == 1:
                 y_full /= sx_peak_flux  # normalize to maximum value
 
-        if method in ["gaussian", "gaussian+moments"]:
+        if method in ["gaussian", "gaussian+moments", "skewnorm"]:
             # check that there are no negative or null values
             if y_fit.min() <= 0:
                 if abs(debugplot) >= 10:
@@ -720,7 +874,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
             fwhm_np_left = None
             fwhm_np_right = None
             dict_moments = None
-        elif final_method in ["gaussian", "gaussian+moments"]:
+        elif final_method in ["gaussian", "gaussian+moments", "skewnorm"]:
             poly_funct = Polynomial.fit(x_fit, np.log(y_fit), 2)
             poly_funct = Polynomial.cast(poly_funct)
             coef = poly_funct.coef
@@ -771,6 +925,36 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
                     fwhm_np = None
                     fwhm_np_left = None
                     fwhm_np_right = None
+                if final_method == "skewnorm":
+                    dict_moments = None
+                    if np.isnan(sfpeaks[iline]):
+                        if abs(debugplot) >= 10:
+                            _logger.warning(
+                                f"No valid initial Gaussian fit around {jmax}; skew-normal fit not performed."
+                            )
+                    else:
+                        amp0 = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2]))
+                        try:
+                            # fit to the whole spectrum, which is assumed to
+                            # contain a single continuum-subtracted line
+                            skn = fit_skewnorm(x_full - jmax, y_full, amp0, xvertex, sfpeaks[iline])
+                        except RuntimeError as e:
+                            if abs(debugplot) >= 10:
+                                _logger.warning(
+                                    f"Skew-normal fit around {jmax} did not converge ({e}); "
+                                    "using the initial Gaussian fit."
+                                )
+                    if skn is not None:
+                        refined_peak = skn["mode"] + jmax
+                        sfpeaks[iline] = skn["std"]
+                        # positions in array coordinates and amplitude in the
+                        # units of sx
+                        flux_scale = sx_peak_flux if sx_peak_flux > 0 else 1.0
+                        dict_skewnorm = dict(skn)
+                        for key in ["xi", "mode", "mean"]:
+                            dict_skewnorm[key] = skn[key] + jmax
+                        for key in ["amp", "amp_err"]:
+                            dict_skewnorm[key] = skn[key] * flux_scale
             else:
                 refined_peak = 0.0 + jmax
                 sfpeaks[iline] = np.nan
@@ -814,6 +998,14 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
             if final_method == "poly2":
                 y_plot = poly_funct(x_plot)
                 ax.plot(x_plot, y_plot, color="red", label="Fitted curve")
+            elif final_method == "skewnorm":
+                if skn is not None:
+                    y_plot = skewnorm_profile(x_plot, skn["amp"], skn["xi"], skn["omega"], skn["alpha"])
+                    ax.plot(x_plot, y_plot, color="red", label=f"Fitted skew-normal (alpha={skn['alpha']:.2f})")
+                    ax.axvline(x=skn["xi"], color="orange", linestyle=":", label="xi")
+                # refined_peak is always defined (it falls back to the
+                # Gaussian fit or to jmax)
+                ax.axvline(x=refined_peak - jmax, color="green", linestyle="--", label="Refined peak")
             elif final_method in ["gaussian", "gaussian+moments"]:
                 # The Gaussian is only defined when the parabola fitted to
                 # log(y) is concave (coef[2] < 0); otherwise amp, x0 and
@@ -849,5 +1041,7 @@ def refine_peaks_spectrum(sx, ixpeaks, nwinwidth, method, geometry=None, title=N
 
     if method == "gaussian+moments":
         return xfpeaks, sfpeaks, dict_moments
+    elif method == "skewnorm":
+        return xfpeaks, sfpeaks, dict_skewnorm
     else:
         return xfpeaks, sfpeaks
