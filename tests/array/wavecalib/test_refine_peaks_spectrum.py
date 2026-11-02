@@ -1,0 +1,122 @@
+"""Tests of refine_peaks_spectrum"""
+
+import numpy as np
+import pytest
+
+from numina.array.wavecalib.peaks_spectrum import _parabola_vertex, refine_peaks_spectrum
+
+
+def gaussian_line(npix, center, amplitude=100.0, sigma=2.0):
+    """Gaussian line evaluated at integer pixels"""
+    x = np.arange(npix, dtype=float)
+    return amplitude * np.exp(-0.5 * ((x - center) / sigma) ** 2)
+
+
+# --- _parabola_vertex -------------------------------------------------------------
+
+
+X_FIT = np.arange(-3, 4, dtype=float)
+
+
+@pytest.mark.parametrize(
+    "coef, expected",
+    [
+        ([1.0, 0.4, -1.0], 0.2),  # concave, vertex inside the window
+        ([1.0, 6.0, -1.0], 3.0),  # vertex exactly at the right edge
+        ([1.0, -6.0, -1.0], -3.0),  # vertex exactly at the left edge
+        ([1.0, 6.2, -1.0], None),  # vertex outside the window
+        ([1.0, 0.4, 1.0], None),  # convex: the vertex is a minimum
+        ([1.0, 0.4, 0.0], None),  # straight line
+        ([1.0, 0.4], None),  # not a parabola
+        ([1.0, 0.4, np.nan], None),
+    ],
+)
+def test_parabola_vertex(coef, expected):
+    result = _parabola_vertex(np.array(coef), X_FIT)
+    if expected is None:
+        assert result is None
+    else:
+        assert result == pytest.approx(expected)
+
+
+# --- regular lines --------------------------------------------------------------
+
+
+@pytest.mark.parametrize("method", ["gaussian", "gaussian+moments"])
+def test_gaussian_line(method):
+    sx = gaussian_line(60, 30.3)
+    result = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method)
+    assert result[0][0] == pytest.approx(30.3, abs=1e-6)
+    assert result[1][0] == pytest.approx(2.0, rel=1e-6)
+
+
+def test_poly2_parabolic_line():
+    x = np.arange(60, dtype=float)
+    sx = 100.0 - (x - 30.3) ** 2
+    xfpeaks, sfpeaks = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2")
+    assert xfpeaks[0] == pytest.approx(30.3, abs=1e-6)
+    assert sfpeaks[0] == 0.0
+
+
+# --- no maximum within the fitting window ----------------------------------------
+
+
+@pytest.mark.parametrize("method", ["poly2", "gaussian"])
+def test_convex_data_returns_jmax(method):
+    # Previously the vertex of the fitted parabola (a minimum, at 31.7)
+    # was returned as the peak
+    x = np.arange(60, dtype=float)
+    sx = 10.0 + 0.5 * (x - 31.7) ** 2
+    xfpeaks, sfpeaks = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method)
+    assert xfpeaks[0] == 30.0
+    if method == "gaussian":
+        assert np.isnan(sfpeaks[0])
+
+
+@pytest.mark.parametrize("method", ["poly2", "gaussian"])
+def test_vertex_outside_window_returns_jmax(method):
+    # Nearly flat concave profile with its maximum far from the window:
+    # previously 200 (poly2) or 190.5 (gaussian) was returned for jmax=30
+    x = np.arange(60, dtype=float)
+    sx = 100.0 - 1e-4 * (x - 200.0) ** 2
+    xfpeaks, _ = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method)
+    assert xfpeaks[0] == 30.0
+
+
+def test_no_maximum_warning(capsys):
+    x = np.arange(60, dtype=float)
+    sx = 10.0 + 0.5 * (x - 31.7) ** 2
+    refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2", debugplot=0)
+    assert "no maximum" not in capsys.readouterr().out
+    refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2", debugplot=10)
+    assert "WARNING: no maximum within the fitting window around 30" in capsys.readouterr().out
+
+
+# --- normalization ----------------------------------------------------------------
+
+
+def test_negative_spectrum_gaussian_falls_back_to_poly2():
+    # All values in the window are negative. Previously the data were
+    # divided by the (negative) maximum, which flipped the profile and
+    # passed the check for non-positive values
+    x = np.arange(60, dtype=float)
+    sx = -50.0 - (x - 30.3) ** 2
+    xfpeaks, sfpeaks = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="gaussian")
+    assert xfpeaks[0] == pytest.approx(30.3, abs=1e-6)
+    # poly2 does not provide a width
+    assert sfpeaks[0] == 0.0
+
+
+def test_negative_spectrum_gaussian_moments_returns_none():
+    # Previously meaningless moments were computed on the flipped profile
+    sx = -5.0 + 3.0 * np.exp(-0.5 * ((np.arange(60) - 20) / 2.0) ** 2)
+    _, _, dict_moments = refine_peaks_spectrum(sx, np.array([20]), nwinwidth=7, method="gaussian+moments")
+    assert dict_moments is None
+
+
+@pytest.mark.parametrize("method", ["poly2", "gaussian"])
+def test_input_is_not_modified(method):
+    sx = gaussian_line(60, 30.3)
+    sx_orig = sx.copy()
+    refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method)
+    np.testing.assert_array_equal(sx, sx_orig)

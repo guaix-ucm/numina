@@ -537,6 +537,31 @@ def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
     return ixpeaks
 
 
+def _parabola_vertex(coef, x_fit):
+    """Abscissa of the maximum of a fitted parabola, if acceptable.
+
+    Parameters
+    ----------
+    coef : numpy.ndarray
+        Coefficients (c0, c1, c2) of the parabola c0 + c1 x + c2 x².
+    x_fit : numpy.ndarray
+        Abscissae of the fitted points, in ascending order.
+
+    Returns
+    -------
+    float or None
+        Abscissa of the vertex, or None when the parabola is not concave
+        (c2 >= 0, so the vertex is not a maximum) or when the vertex lies
+        outside the range of x_fit.
+    """
+    if len(coef) != 3 or not coef[2] < 0:
+        return None
+    xvertex = -coef[1] / (2.0 * coef[2])
+    if not x_fit[0] <= xvertex <= x_fit[-1]:
+        return None
+    return xvertex
+
+
 def refine_peaks_spectrum(
     sx, ixpeaks, nwinwidth, method=None, geometry=None, title=None, debugplot=0, ax_external=None
 ):
@@ -654,7 +679,9 @@ def refine_peaks_spectrum(
         y_full = np.copy(sx).astype(float)
         x_full = np.arange(len(sx), dtype=float)
         sx_peak_flux = y_fit.max()
-        if sx_peak_flux != 0:
+        # normalize only by a positive maximum: dividing by a negative value
+        # would flip the profile and hide the check for non-positive values
+        if sx_peak_flux > 0:
             y_fit /= sx_peak_flux  # normalize to maximum value
             y_full /= sx_peak_flux  # normalize to maximum value
 
@@ -674,13 +701,11 @@ def refine_peaks_spectrum(
             poly_funct = Polynomial.fit(x_fit, y_fit, 2)
             poly_funct = Polynomial.cast(poly_funct)
             coef = poly_funct.coef
-            if len(coef) == 3:
-                if coef[2] != 0:
-                    refined_peak = -coef[1] / (2.0 * coef[2]) + jmax
-                else:
-                    refined_peak = 0.0 + jmax
-            else:
-                refined_peak = 0.0 + jmax
+            # use jmax when the fitted parabola has no maximum within the window
+            xvertex = _parabola_vertex(coef, x_fit)
+            refined_peak = jmax + (xvertex if xvertex is not None else 0.0)
+            if xvertex is None and debugplot >= 10:
+                print(f"WARNING: no maximum within the fitting window around {jmax} (poly2); using {jmax}")
             fwhm_np = None
             fwhm_np_left = None
             fwhm_np_right = None
@@ -690,10 +715,11 @@ def refine_peaks_spectrum(
             poly_funct = Polynomial.cast(poly_funct)
             coef = poly_funct.coef
             if len(coef) == 3:
-                if coef[2] != 0:
-                    refined_peak = -coef[1] / (2.0 * coef[2]) + jmax
-                else:
-                    refined_peak = 0.0 + jmax
+                # use jmax when the fitted parabola has no maximum within the window
+                xvertex = _parabola_vertex(coef, x_fit)
+                refined_peak = jmax + (xvertex if xvertex is not None else 0.0)
+                if xvertex is None and debugplot >= 10:
+                    print(f"WARNING: no maximum within the fitting window around {jmax} (gaussian); using {jmax}")
                 if coef[2] >= 0:
                     if debugplot >= 10:
                         print(
