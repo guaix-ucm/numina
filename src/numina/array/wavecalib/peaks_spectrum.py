@@ -204,8 +204,10 @@ def zero_monotonic_flanks(signal, peak_idx, inplace=False):
     """Set to zero the peak and its monotonically decreasing flanks.
 
     Starting at ``peak_idx``, move outwards in both directions, setting
-    values to zero while the signal keeps decreasing. Stop as soon as
-    the signal starts to increase again.
+    values to zero while the signal does not increase. Stop as soon as
+    the signal starts to increase again. Consecutive equal values (a
+    plateau around the peak or ties in the flanks) are also set to zero.
+    The cleaning also stops at NaN values.
 
     Parameters
     ----------
@@ -230,16 +232,18 @@ def zero_monotonic_flanks(signal, peak_idx, inplace=False):
 
     result[peak_idx] = 0.0
 
-    # Move to the right
+    # Move to the right. Equal values are included (<=): otherwise the
+    # remaining pixels of a plateau, or of a tie in a flank, would be
+    # detected as new peaks
     i = peak_idx + 1
-    while i < n and signal[i] < ref_right:
+    while i < n and signal[i] <= ref_right:
         ref_right = signal[i]
         result[i] = 0.0
         i += 1
 
     # Move to the left
     i = peak_idx - 1
-    while i >= 0 and signal[i] < ref_left:
+    while i >= 0 and signal[i] <= ref_left:
         ref_left = signal[i]
         result[i] = 0.0
         i -= 1
@@ -258,14 +262,18 @@ def find_highest_peaks_spectrum(
     debugplot=0,
     jupyter=False,
 ):
-    """Find a fixed number of highest peaks in 1D array.
+    """Find the highest peaks in 1D array (at most nmaxpeaks).
 
     Peaks are found iteratively. Every time a new peak is found, the area
     around this new peak is cleaned (set to zero) in order to avoid finding
     the same peak again or finding a peak that is too close to it.
     The area to be cleaned is defined by the parameter nclean_around_peak.
     The width of the window where each peak must be found is defined by
-    the parameter nwinwidth.
+    the parameter nwinwidth. If no peak is found, the window width is
+    reduced in steps of 2 down to 3; if there is still no peak, the
+    maximum remaining value is taken as the peak, provided it is above
+    threshold. Otherwise the search stops, and fewer than nmaxpeaks
+    peaks are returned.
 
     The borders of the input array can be ignored by setting the parameter
     nborder_to_ignore to a positive value. In this case, the first and last
@@ -314,6 +322,7 @@ def find_highest_peaks_spectrum(
     ixpeaks : numpy.ndarray
         1D array with the peak locations, in array coordinates (integers).
         The peaks are sorted in ascending order of their array coordinates.
+        It may contain fewer than nmaxpeaks elements.
     """
     # check input parameters
     if len(sx) < nwinwidth:
@@ -340,32 +349,30 @@ def find_highest_peaks_spectrum(
     if nborder_to_ignore > 0:
         sx_copy[:nborder_to_ignore] = 0
         sx_copy[-nborder_to_ignore:] = 0
-    # set the effective window width to the initial value
-    nwinwidth_effective = nwinwidth
     for i in range(nmaxpeaks):
-        loop = True
-        while loop:
-            # detect peaks in 1d array
+        # each peak is searched starting with the requested window width
+        nwinwidth_effective = nwinwidth
+        ixpeaks = find_peaks_spectrum(sx=sx_copy, nwinwidth=nwinwidth_effective, threshold=threshold, debugplot=0)
+        # if no peaks are found, reduce the window width (minimum value: 3)
+        while len(ixpeaks) < 1 and nwinwidth_effective - 2 >= 3:
+            nwinwidth_effective -= 2
+            if debugplot != 0:
+                print(
+                    "find_highest_peaks_spectrum> No peaks found, "
+                    f"reducing nwinwidth_effective to {nwinwidth_effective}"
+                )
             ixpeaks = find_peaks_spectrum(sx=sx_copy, nwinwidth=nwinwidth_effective, threshold=threshold, debugplot=0)
-            # if no peaks are found, reduce the window width and try again
-            if len(ixpeaks) < 1:
-                nwinwidth_effective -= 2
+        if len(ixpeaks) < 1:
+            # no peak found even with the smallest window: take the maximum
+            # remaining value, provided it is above the threshold
+            imax = np.argmax(sx_copy)
+            if not sx_copy[imax] > threshold:
                 if debugplot != 0:
-                    print(
-                        "find_highest_peaks_spectrum> No peaks found, "
-                        f"reducing nwinwidth_effective to {nwinwidth_effective}"
-                    )
-                # if the window width is too small, take the maximum value as the peak
-                if nwinwidth_effective < 2:
-                    if debugplot != 0:
-                        print(
-                            "find_highest_peaks_spectrum> nwinwidth_effective is too small, "
-                            "taking the maximum value as the peak"
-                        )
-                    ixpeaks = [np.argmax(sx_copy)]
-                    loop = False
-            else:
-                loop = False
+                    print(f"find_highest_peaks_spectrum> only {i} peaks found above threshold={threshold}")
+                break
+            if debugplot != 0:
+                print("find_highest_peaks_spectrum> no peaks found, taking the maximum value as the peak")
+            ixpeaks = [imax]
         # peak values
         peak_values = sx_copy[ixpeaks]
         if debugplot != 0:
@@ -377,9 +384,7 @@ def find_highest_peaks_spectrum(
         # add the highest peak location to the list of peaks
         list_ixpeaks.append(highest_peak_location)
         # clean the area around the highest peak
-        if nclean_around_peak < -1:
-            raise ValueError("nclean_around_peak must be -1 or non-negative")
-        elif nclean_around_peak == -1:
+        if nclean_around_peak == -1:
             sx_copy = zero_monotonic_flanks(sx_copy, highest_peak_location, inplace=True)
         else:
             start_clean = max(0, highest_peak_location - nclean_around_peak)
@@ -408,7 +413,7 @@ def find_highest_peaks_spectrum(
             plt.pause(0.001)
             pause_debugplot(debugplot, pltshow=True, tight_layout=True)
 
-    return np.array(np.sort(list_ixpeaks))
+    return np.sort(np.array(list_ixpeaks, dtype=int))
 
 
 def find_peaks_spectrum(sx, nwinwidth, threshold=0, debugplot=0):
