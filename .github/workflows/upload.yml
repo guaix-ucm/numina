@@ -37,7 +37,7 @@ jobs:
       - uses: actions/checkout@v7
 
       - name: Build wheels
-        uses: pypa/cibuildwheel@v4.2.1
+        uses: pypa/cibuildwheel@v4.3.5
         env:
           CIBW_BUILD: cp311-* cp312-* cp313-* cp314-* cp315-*
           # macos-latest runs on arm64, the x86_64 wheels are cross-compiled
@@ -61,7 +61,7 @@ jobs:
     # alternatively, to publish when a GitHub Release is created, use the following rule:
     if: github.event_name == 'release' && github.event.action == 'published'
     steps:
-      - uses: actions/download-artifact@v8.0.1
+      - uses: actions/download-artifact@v8.0.2
         with:
           merge-multiple: true
           pattern: numina-wheels-*
