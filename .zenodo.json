@@ -21,14 +21,6 @@
     {"identifier": "iparcos-ucm"},
     {"identifier": "guaix-ucm"}
   ],
-  "related_identifiers": [
-    {
-      "identifier": "https://pypi.org/project/numina/",
-      "relation": "compiles",
-      "resource_type": "software",
-      "scheme": "url"
-    }
-  ],
   "custom": {
     "code:codeRepository": "https://github.com/guaix-ucm/numina",
     "code:programmingLanguage": [{"id": "python"}],
