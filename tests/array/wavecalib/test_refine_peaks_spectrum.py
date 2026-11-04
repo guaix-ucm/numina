@@ -57,7 +57,8 @@ def test_poly2_parabolic_line():
     sx = 100.0 - (x - 30.3) ** 2
     xfpeaks, sfpeaks = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2")
     assert xfpeaks[0] == pytest.approx(30.3, abs=1e-6)
-    assert sfpeaks[0] == 0.0
+    # poly2 does not provide a width
+    assert np.isnan(sfpeaks[0])
 
 
 # --- no maximum within the fitting window ----------------------------------------
@@ -116,14 +117,17 @@ def test_negative_spectrum_gaussian_falls_back_to_poly2():
     xfpeaks, sfpeaks = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="gaussian")
     assert xfpeaks[0] == pytest.approx(30.3, abs=1e-6)
     # poly2 does not provide a width
-    assert sfpeaks[0] == 0.0
+    assert np.isnan(sfpeaks[0])
 
 
-def test_negative_spectrum_gaussian_moments_returns_none():
+def test_negative_spectrum_gaussian_moments_not_computed():
     # Previously meaningless moments were computed on the flipped profile
     sx = -5.0 + 3.0 * np.exp(-0.5 * ((np.arange(60) - 20) / 2.0) ** 2)
-    _, _, dict_moments = refine_peaks_spectrum(sx, np.array([20]), nwinwidth=7, method="gaussian+moments")
-    assert dict_moments is None
+    _, _, dict_result = refine_peaks_spectrum(sx, np.array([20]), nwinwidth=7, method="gaussian+moments")
+    assert dict_result["method"] == "gaussian+moments"
+    assert dict_result["final_method"] == "poly2"
+    assert not dict_result["fit_ok"]
+    assert "flux" not in dict_result
 
 
 @pytest.mark.parametrize("method", ["poly2", "gaussian"])
@@ -164,16 +168,18 @@ def test_gaussian_moments_flux_independent_of_peak_window():
 
 
 @pytest.mark.parametrize("debugplot", [0, 10])
-def test_gaussian_moments_non_positive_flux_returns_none(caplog, debugplot):
+def test_gaussian_moments_non_positive_flux(caplog, debugplot):
     # Positive values around the line but negative integrated flux: previously
     # the ValueError raised by line_moments was not caught
     sx = gaussian_line(60, 30.0, amplitude=10.0, sigma=1.0) - 1.0
     sx[29:32] += 1.0
     with caplog.at_level(logging.WARNING, logger="numina.array.wavecalib.peaks_spectrum"):
-        xfpeaks, _, dict_moments = refine_peaks_spectrum(
+        xfpeaks, _, dict_result = refine_peaks_spectrum(
             sx, np.array([30]), nwinwidth=3, method="gaussian+moments", debugplot=debugplot
         )
-    assert dict_moments is None
+    assert dict_result["final_method"] == "gaussian+moments"
+    assert not dict_result["fit_ok"]
+    assert "flux" not in dict_result
     assert xfpeaks[0] == pytest.approx(30.0, abs=1e-6)
     assert any("not positive" in r.getMessage() for r in caplog.records) == (debugplot == 10)
 
@@ -190,3 +196,73 @@ def test_method_is_required():
 def test_invalid_method(method):
     with pytest.raises(ValueError, match="Invalid method"):
         refine_peaks_spectrum(gaussian_line(60, 30.0), np.array([30]), nwinwidth=7, method=method)
+
+
+# --- return_dict_result -----------------------------------------------------------
+
+
+def test_geometry_keeps_its_position():
+    # return_dict_result is the last argument, so geometry can still be
+    # passed by position without changing the number of returned values
+    sx = gaussian_line(60, 30.3)
+    result = refine_peaks_spectrum(sx, np.array([30]), 7, "gaussian", (0, 0, 640, 480))
+    assert len(result) == 2
+
+
+def test_return_dict_result_requires_a_single_peak():
+    sx = gaussian_line(60, 20.0) + gaussian_line(60, 40.0)
+    with pytest.raises(ValueError, match="return_dict_result"):
+        refine_peaks_spectrum(sx, np.array([20, 40]), nwinwidth=7, method="gaussian", return_dict_result=True)
+
+
+def test_return_dict_result_gaussian():
+    amplitude, center, sigma = 250.0, 30.3, 2.0
+    sx = gaussian_line(60, center, amplitude=amplitude, sigma=sigma)
+    xfpeaks, sfpeaks, dict_result = refine_peaks_spectrum(
+        sx, np.array([30]), nwinwidth=7, method="gaussian", return_dict_result=True
+    )
+    assert dict_result["method"] == dict_result["final_method"] == "gaussian"
+    assert dict_result["fit_ok"]
+    assert dict_result["amp"] == pytest.approx(amplitude, rel=1e-6)
+    assert dict_result["mean"] == pytest.approx(xfpeaks[0])
+    assert dict_result["sigma"] == pytest.approx(sfpeaks[0])
+
+
+def test_return_dict_result_gaussian_without_valid_maximum():
+    # Convex data: no valid Gaussian, so fit_ok is False and the Gaussian
+    # parameters are not computed
+    x = np.arange(60, dtype=float)
+    sx = 10.0 + 0.5 * (x - 31.7) ** 2
+    xfpeaks, sfpeaks, dict_result = refine_peaks_spectrum(
+        sx, np.array([30]), nwinwidth=7, method="gaussian", return_dict_result=True
+    )
+    assert not dict_result["fit_ok"]
+    assert "amp" not in dict_result
+    assert xfpeaks[0] == 30.0
+    assert np.isnan(sfpeaks[0])
+
+
+def test_return_dict_result_poly2():
+    x = np.arange(60, dtype=float)
+    sx = 100.0 - (x - 30.3) ** 2
+    _, _, dict_result = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="poly2", return_dict_result=True)
+    assert dict_result["fit_ok"]
+    # coefficients of the parabola fitted to the data normalized to the
+    # maximum of the window, relative to jmax
+    c0, c1, c2 = dict_result["coef"]
+    assert -c1 / (2 * c2) == pytest.approx(0.3, abs=1e-6)
+
+
+@pytest.mark.parametrize("method", ["poly2", "gaussian"])
+def test_return_dict_result_fallback_or_invalid_vertex(method):
+    # poly2 with its vertex outside the window, or gaussian replaced by
+    # poly2 because of null values in the window: fit_ok is False
+    x = np.arange(60, dtype=float)
+    if method == "poly2":
+        sx = 100.0 - 1e-4 * (x - 200.0) ** 2
+    else:
+        sx = 100.0 - (x - 30.3) ** 2
+        sx[31] = 0.0
+    _, _, dict_result = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method, return_dict_result=True)
+    assert dict_result["final_method"] == "poly2"
+    assert not dict_result["fit_ok"]

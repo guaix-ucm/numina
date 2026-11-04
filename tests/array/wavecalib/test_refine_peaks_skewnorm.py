@@ -39,6 +39,20 @@ def test_profile_is_proportional_to_scipy_skewnorm():
     np.testing.assert_allclose(skewnorm_profile(x, 1.0, xi, omega, alpha), expected, rtol=1e-12, atol=1e-15)
 
 
+@pytest.mark.parametrize("alpha", [-5.0, -1.0, 0.5, 3.0, 10.0])
+def test_fit_skewnorm_moments_match_scipy(alpha):
+    from scipy.stats import skewnorm
+
+    xi, omega = 0.3, 2.0
+    x = np.linspace(-15, 15, 301)
+    res = fit_skewnorm(x, skewnorm_profile(x, 1.0, xi, omega, alpha), amp0=1.0, xi0=xi, omega0=omega)
+    mean, var, skew, kurt = skewnorm.stats(alpha, loc=xi, scale=omega, moments="mvsk")
+    assert res["mean"] == pytest.approx(mean, abs=1e-6)
+    assert res["std"] == pytest.approx(np.sqrt(var), rel=1e-6)
+    assert res["skewness"] == pytest.approx(skew, abs=1e-6)
+    assert res["kurtosis_excess"] == pytest.approx(kurt, abs=1e-6)
+
+
 def test_fit_skewnorm_symmetric_data():
     # Near alpha = 0, alpha and xi are degenerate to first order: alpha is
     # only loosely constrained, while mode, std and skewness are not
@@ -65,7 +79,8 @@ def test_skewnorm_line(alpha, nwinwidth):
     xfpeaks, sfpeaks, dict_skewnorm = refine_peaks_spectrum(
         sx, np.array([jmax]), nwinwidth=nwinwidth, method="skewnorm"
     )
-    assert dict_skewnorm is not None
+    assert dict_skewnorm["fit_ok"]
+    assert dict_skewnorm["final_method"] == "skewnorm"
     assert xfpeaks[0] == pytest.approx(true_mode(amp, xi, omega, alpha), abs=1e-3)
     assert dict_skewnorm["mode"] == pytest.approx(xfpeaks[0])
     assert sfpeaks[0] == pytest.approx(true_std(omega, alpha), rel=1e-3)
@@ -98,15 +113,15 @@ def test_skewnorm_more_than_one_peak_raises():
 
 
 def test_skewnorm_too_short_spectrum_raises():
-    sx = np.array([0.1, 1.0, 3.0, 2.0, 0.5, 0.1])
-    with pytest.raises(ValueError, match="at least 7 pixels"):
+    sx = np.array([0.1, 1.0, 3.0, 0.5])
+    with pytest.raises(ValueError, match="at least 5 pixels"):
         refine_peaks_spectrum(sx, np.array([2]), nwinwidth=3, method="skewnorm")
 
 
 def test_skewnorm_minimum_length():
-    sx = skewnorm_profile(np.arange(7, dtype=float), 1.0, 2.8, 1.0, 1.0)
+    sx = skewnorm_profile(np.arange(5, dtype=float), 1.0, 1.8, 1.0, 1.0)
     _, _, dict_skewnorm = refine_peaks_spectrum(sx, np.array([np.argmax(sx)]), nwinwidth=3, method="skewnorm")
-    assert dict_skewnorm is not None
+    assert dict_skewnorm["fit_ok"]
 
 
 @pytest.mark.parametrize("debugplot", [0, 10])
@@ -120,8 +135,10 @@ def test_skewnorm_without_initial_gaussian_fit(caplog, debugplot):
         xfpeaks, sfpeaks, dict_skewnorm = refine_peaks_spectrum(
             sx, np.array([30]), nwinwidth=5, method="skewnorm", debugplot=debugplot
         )
-    assert dict_skewnorm is None
-    assert sfpeaks[0] == 0.0
+    assert dict_skewnorm["final_method"] == "poly2"
+    assert not dict_skewnorm["fit_ok"]
+    assert "alpha" not in dict_skewnorm
+    assert np.isnan(sfpeaks[0])
     assert any("using poly2" in r.getMessage() for r in caplog.records) == (debugplot == 10)
 
 
@@ -130,7 +147,9 @@ def test_skewnorm_without_valid_gaussian_maximum():
     x = np.arange(60, dtype=float)
     sx = 10.0 + 0.5 * (x - 31.7) ** 2
     xfpeaks, sfpeaks, dict_skewnorm = refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method="skewnorm")
-    assert dict_skewnorm is None
+    assert dict_skewnorm["final_method"] == "skewnorm"
+    assert not dict_skewnorm["fit_ok"]
+    assert "alpha" not in dict_skewnorm
     assert xfpeaks[0] == 30.0
     assert np.isnan(sfpeaks[0])
 
