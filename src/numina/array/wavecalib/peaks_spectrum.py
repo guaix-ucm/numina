@@ -520,8 +520,8 @@ def fit_gaussian_pixel_integrated(x, y, flux0, mu0, sigma0):
     dict
         Keys 'flux', 'mean' and 'sigma' (fitted parameters), 'amp' (peak
         value of the Gaussian, flux / (sigma sqrt(2 pi))), and
-        'flux_err', 'mean_err' and 'sigma_err' (uncertainties from the
-        covariance matrix, inf if it cannot be estimated).
+        'flux_err', 'mean_err', 'sigma_err' and 'amp_err' (uncertainties
+        from the covariance matrix, inf if it cannot be estimated).
 
     Raises
     ------
@@ -542,15 +542,20 @@ def fit_gaussian_pixel_integrated(x, y, flux0, mu0, sigma0):
         popt, pcov = curve_fit(gaussian_pixel_integrated, x, y, p0=p0, bounds=(lower, upper))
     flux, mu, sigma = popt
     perr = np.sqrt(np.diag(pcov))
+    amp = flux / (sigma * np.sqrt(2.0 * np.pi))
+    # propagate the covariance of (flux, sigma) to amp = flux / (sigma sqrt(2 pi))
+    jac = np.array([1.0 / flux, 0.0, -1.0 / sigma]) * amp
+    amp_err = np.sqrt(jac @ pcov @ jac) if np.all(np.isfinite(pcov)) else np.inf
 
     return dict(
         flux=flux,
         mean=mu,
         sigma=sigma,
-        amp=flux / (sigma * np.sqrt(2.0 * np.pi)),
+        amp=amp,
         flux_err=perr[0],
         mean_err=perr[1],
         sigma_err=perr[2],
+        amp_err=amp_err,
     )
 
 
@@ -929,6 +934,7 @@ def refine_peaks_spectrum(
     debugplot=0,
     ax_external=None,
     preserve_flux=False,
+    fwhm_diffraction=None,
     return_dict_result=False,
 ):
     """Refine line peaks in spectrum.
@@ -1019,6 +1025,14 @@ def refine_peaks_spectrum(
 
         In both cases fit_ok is False in dict_result when the refined fit
         cannot be performed.
+    fwhm_diffraction : float or None
+        FWHM of the diffraction-limited line profile in the spectral
+        direction, in pixels of the detector (divide by CDELT1 when it is
+        known in wavelength units). Only available with
+        method="gaussian+moments" and preserve_flux=True. If not None, the
+        Strehl ratio of the line profile is computed (key 'strehl' in
+        dict_result), assuming that the diffraction-limited profile is a
+        Gaussian with this FWHM. If None, the Strehl ratio is not computed.
     return_dict_result : bool
         Important: this option is only available when the number of peaks is 1.
         If True, the function returns all the computed values (fxpeaks, sxpeaks
@@ -1074,8 +1088,21 @@ def refine_peaks_spectrum(
           (in the units of sx times pixels), 'gaussian_amp' (in the units of
           sx), 'gaussian_mean' (array coordinates), 'gaussian_sigma' (pixels)
           and their uncertainties 'gaussian_flux_err', 'gaussian_mean_err'
-          and 'gaussian_sigma_err'. These keys are missing when that fit
-          cannot be performed;
+          and 'gaussian_sigma_err', 'gaussian_amp_err'. These keys are
+          missing when that fit cannot be performed. With fwhm_diffraction
+          not None, it also contains 'strehl', the Strehl ratio of the line
+          profile along the spectral direction (not of the 2D PSF):
+
+              strehl = (gaussian_amp / flux) / (peak / flux of the
+                        diffraction-limited Gaussian with FWHM fwhm_diffraction)
+
+          i.e. the intrinsic peak of the flux-preserving Gaussian fit of the
+          core of the line, divided by the total flux of the moments (which
+          includes the wings), relative to the same ratio for the
+          diffraction-limited profile. Its value is not clipped to 1. It is
+          missing when the flux-preserving fit or the moments cannot be
+          computed. No uncertainty is given, since the moments do not
+          provide the uncertainty of the flux;
         - "skewnorm" : the keys returned by fit_skewnorm, with the positions
           'xi', 'mode' and 'mean' in array coordinates and 'amp' and 'amp_err'
           in the units of sx. They are missing when the skew-normal fit cannot
@@ -1117,6 +1144,14 @@ def refine_peaks_spectrum(
             "preserve_flux=True is only available with method=gaussian+moments or method=skewnorm, "
             f"not with method={method}"
         )
+    if fwhm_diffraction is not None:
+        if method != "gaussian+moments" or not preserve_flux:
+            raise ValueError(
+                "fwhm_diffraction (Strehl ratio) is only available with method=gaussian+moments "
+                f"and preserve_flux=True, not with method={method} and preserve_flux={preserve_flux}"
+            )
+        if not fwhm_diffraction > 0:
+            raise ValueError(f"fwhm_diffraction={fwhm_diffraction} must be positive")
     if method in ["gaussian+moments", "skewnorm"]:
         return_dict_result = True  # always return the dictionary with the results
 
@@ -1275,7 +1310,7 @@ def refine_peaks_spectrum(
                             dict_result["gaussian_mean_err"] = gpi["mean_err"]
                             dict_result["gaussian_sigma"] = gpi["sigma"]
                             dict_result["gaussian_sigma_err"] = gpi["sigma_err"]
-                            for key in ["flux", "amp", "flux_err"]:
+                            for key in ["flux", "amp", "flux_err", "amp_err"]:
                                 dict_result["gaussian_" + key] = gpi[key] * sx_peak_flux
                     # compute the moments of the line; sx is assumed to contain
                     # a single continuum-subtracted line
@@ -1300,6 +1335,17 @@ def refine_peaks_spectrum(
                         dict_result["fwhm_np_right"] = fwhm_np_right
                         # with preserve_flux=True, the flux-preserving fit must also succeed
                         dict_result["fit_ok"] = gpi is not None if preserve_flux else True
+                        if fwhm_diffraction is not None and gpi is not None:
+                            # peak / total flux of the observed profile: intrinsic peak of the
+                            # flux-preserving Gaussian fit of the core, and integrated flux of
+                            # the moments (which includes the wings, i.e. the flux missing
+                            # from the core); both in the units of sx, so the normalization
+                            # of the data cancels out
+                            peak_over_flux_obs = dict_result["gaussian_amp"] / dict_result["flux"]
+                            # same ratio for a diffraction-limited Gaussian profile
+                            sigma_diffraction = fwhm_diffraction / (2.0 * np.sqrt(2.0 * np.log(2.0)))
+                            peak_over_flux_diffraction = 1.0 / (sigma_diffraction * np.sqrt(2.0 * np.pi))
+                            dict_result["strehl"] = peak_over_flux_obs / peak_over_flux_diffraction
                 elif final_method == "skewnorm":
                     # fit a skew-normal profile to the whole spectrum, using the Gaussian
                     # fit as the initial guess. The skew-normal profile has 4 free
@@ -1378,7 +1424,9 @@ def refine_peaks_spectrum(
 
             ax.set_xlabel("index around initial integer peak")
             ax.set_ylabel("Normalized number of counts")
-            default_title = "Fit to line at array index " + str(jmax) + " (method=" + final_method + ")"
+            default_title = f"Fit to line at array index {jmax}"
+            if "strehl" in dict_result:
+                default_title += f", Strehl={dict_result['strehl']:.3f}"
             if title is not None:
                 title_ = title + "\n" + default_title
             else:
