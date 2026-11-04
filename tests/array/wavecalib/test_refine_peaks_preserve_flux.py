@@ -10,8 +10,11 @@ from scipy.integrate import quad
 
 from numina.array.wavecalib.peaks_spectrum import (
     fit_gaussian_pixel_integrated,
+    fit_skewnorm,
     gaussian_pixel_integrated,
     refine_peaks_spectrum,
+    skewnorm_pixel_integrated,
+    skewnorm_profile,
 )
 
 MOMENT_KEYS = ["flux", "centroid", "sigma", "skewness", "kurtosis_excess", "fwhm_np", "fwhm_np_left", "fwhm_np_right"]
@@ -119,10 +122,10 @@ def test_preserve_flux_with_noise():
     assert np.isfinite(dict_result["gaussian_sigma_err"])
 
 
-@pytest.mark.parametrize("method", ["poly2", "gaussian", "skewnorm"])
-def test_preserve_flux_only_with_gaussian_moments(method):
+@pytest.mark.parametrize("method", ["poly2", "gaussian"])
+def test_preserve_flux_only_with_gaussian_moments_or_skewnorm(method):
     sx = integrated_line(60, 500.0, 30.3, 1.0)
-    with pytest.raises(ValueError, match="preserve_flux=True is only available with method=gaussian\\+moments"):
+    with pytest.raises(ValueError, match="preserve_flux=True is only available with method=gaussian\\+moments or"):
         refine_peaks_spectrum(sx, np.array([30]), nwinwidth=7, method=method, preserve_flux=True)
 
 
@@ -175,3 +178,137 @@ def test_preserve_flux_external_axes():
     assert "Pixel-integrated model" in labels
     assert "Fitted curve (flux preserved)" in labels
     plt.close(fig)
+
+
+# --- skewnorm_pixel_integrated and method="skewnorm" with preserve_flux=True -----------
+
+
+def integrated_skewnorm_line(npix, flux, xi, omega, alpha):
+    """Skew-normal line integrated over each pixel [i - 0.5, i + 0.5]"""
+    return skewnorm_pixel_integrated(np.arange(npix, dtype=float), flux, xi, omega, alpha)
+
+
+@pytest.mark.parametrize("alpha", [-4.0, 0.0, 3.0])
+def test_skewnorm_pixel_integrated_matches_numerical_integration(alpha):
+    flux, xi, omega = 7.0, 3.3, 0.8
+    amp = flux / (omega * np.sqrt(2 * np.pi))
+    x = np.arange(8, dtype=float)
+    expected = [quad(lambda t: skewnorm_profile(t, amp, xi, omega, alpha), xi_ - 0.5, xi_ + 0.5)[0] for xi_ in x]
+    np.testing.assert_allclose(skewnorm_pixel_integrated(x, flux, xi, omega, alpha), expected, rtol=1e-9, atol=1e-15)
+
+
+def test_skewnorm_pixel_integrated_matches_scipy():
+    from scipy.stats import skewnorm
+
+    x = np.arange(-10, 30, dtype=float)
+    xi, omega, alpha = 5.3, 2.0, 4.0
+    expected = skewnorm.cdf(x + 0.5, alpha, loc=xi, scale=omega) - skewnorm.cdf(x - 0.5, alpha, loc=xi, scale=omega)
+    np.testing.assert_allclose(skewnorm_pixel_integrated(x, 1.0, xi, omega, alpha), expected, rtol=1e-8, atol=1e-15)
+
+
+def test_skewnorm_pixel_integrated_sums_to_flux():
+    np.testing.assert_allclose(integrated_skewnorm_line(200, 123.4, 100.3, 2.5, 3.0).sum(), 123.4, rtol=1e-12)
+
+
+def test_fit_skewnorm_pixel_integrated():
+    x = np.arange(-10, 11, dtype=float)
+    y = skewnorm_pixel_integrated(x, 10.0, 0.3, 0.8, 3.0)
+    res = fit_skewnorm(x, y, amp0=4.0, xi0=0.5, omega0=0.6, pixel_integrated=True)
+    assert res["flux"] == pytest.approx(10.0, rel=1e-6)
+    assert res["xi"] == pytest.approx(0.3, abs=1e-5)
+    assert res["omega"] == pytest.approx(0.8, rel=1e-5)
+    assert res["alpha"] == pytest.approx(3.0, rel=1e-4)
+    assert res["amp"] == pytest.approx(10.0 / (0.8 * np.sqrt(2 * np.pi)), rel=1e-5)
+
+
+def test_fit_skewnorm_without_pixel_integration_has_no_flux():
+    x = np.arange(-10, 11, dtype=float)
+    res = fit_skewnorm(x, skewnorm_profile(x, 1.0, 0.3, 2.0, 2.0), amp0=1.0, xi0=0.0, omega0=2.0)
+    assert "flux" not in res
+
+
+@pytest.mark.parametrize("omega", [0.7, 1.0, 2.0])
+def test_skewnorm_preserve_flux_recovers_intrinsic_profile(omega):
+    flux, xi, alpha = 500.0, 30.3, 3.0
+    sx = integrated_skewnorm_line(60, flux, xi, omega, alpha)
+    jmax = int(np.argmax(sx))
+    xfpeaks, sfpeaks, dict_result = refine_peaks_spectrum(
+        sx, np.array([jmax]), nwinwidth=7, method="skewnorm", preserve_flux=True
+    )
+    assert dict_result["fit_ok"]
+    assert dict_result["flux"] == pytest.approx(flux, rel=1e-5)
+    assert dict_result["xi"] == pytest.approx(xi, abs=1e-4)
+    assert dict_result["omega"] == pytest.approx(omega, rel=1e-4)
+    assert dict_result["alpha"] == pytest.approx(alpha, rel=1e-3)
+    # fxpeaks and sxpeaks: mode and standard deviation of the intrinsic profile
+    delta = alpha / np.sqrt(1 + alpha**2)
+    assert sfpeaks[0] == pytest.approx(omega * np.sqrt(1 - 2 * delta**2 / np.pi), rel=1e-4)
+    x = np.linspace(xi - 2 * omega, xi + 2 * omega, 400001)
+    mode = x[np.argmax(skewnorm_profile(x, 1.0, xi, omega, alpha))]
+    assert xfpeaks[0] == pytest.approx(mode, abs=1e-3)
+    assert dict_result["mode"] == pytest.approx(xfpeaks[0])
+    if omega >= 1.0:
+        # the fit to the pixel values (without preserve_flux) gives a broader
+        # profile; for narrower lines that fit is too degraded to compare
+        _, sfpeaks_sampled, _ = refine_peaks_spectrum(sx, np.array([jmax]), nwinwidth=7, method="skewnorm")
+        assert sfpeaks_sampled[0] > sfpeaks[0]
+
+
+def test_skewnorm_preserve_flux_with_noise():
+    rng = np.random.default_rng(5)
+    flux, xi, omega, alpha = 1000.0, 30.3, 1.5, 3.0
+    sx = integrated_skewnorm_line(60, flux, xi, omega, alpha) + rng.normal(scale=1.0, size=60)
+    # with nwinwidth=7 the window of the initial Gaussian fit would include a
+    # negative noise pixel on the steep side of the line (poly2 would be used);
+    # the flux-preserving fit uses the whole spectrum in any case
+    _, _, dict_result = refine_peaks_spectrum(
+        sx, np.array([int(np.argmax(sx))]), nwinwidth=5, method="skewnorm", preserve_flux=True
+    )
+    assert dict_result["fit_ok"]
+    assert dict_result["flux"] == pytest.approx(flux, rel=0.02)
+    assert dict_result["omega"] == pytest.approx(omega, rel=0.1)
+    assert np.isfinite(dict_result["flux_err"])
+
+
+def test_skewnorm_without_preserve_flux_unchanged():
+    sx = integrated_skewnorm_line(60, 500.0, 30.3, 1.0, 3.0)
+    jmax = int(np.argmax(sx))
+    _, _, dict_result = refine_peaks_spectrum(sx, np.array([jmax]), nwinwidth=7, method="skewnorm")
+    assert dict_result["fit_ok"]
+    assert "flux" not in dict_result
+
+
+def test_skewnorm_preserve_flux_without_valid_initial_gaussian():
+    # convex data: no initial Gaussian, so no skew-normal fit at all
+    x = np.arange(60, dtype=float)
+    sx = 10.0 + 0.5 * (x - 31.7) ** 2
+    xfpeaks, sfpeaks, dict_result = refine_peaks_spectrum(
+        sx, np.array([30]), nwinwidth=7, method="skewnorm", preserve_flux=True
+    )
+    assert not dict_result["fit_ok"]
+    assert "flux" not in dict_result
+    assert xfpeaks[0] == 30.0
+    assert np.isnan(sfpeaks[0])
+
+
+def test_skewnorm_preserve_flux_external_axes():
+    sx = integrated_skewnorm_line(60, 500.0, 30.3, 1.0, 3.0)
+    jmax = int(np.argmax(sx))
+    fig, ax = plt.subplots()
+    refine_peaks_spectrum(sx, np.array([jmax]), nwinwidth=7, method="skewnorm", preserve_flux=True, ax_external=ax)
+    labels = [artist.get_label() for artist in ax.get_children()]
+    assert "Pixel-integrated model" in labels
+    assert any(label.startswith("Fitted skew-normal, flux preserved") for label in labels)
+    plt.close(fig)
+
+
+def test_skewnorm_preserve_flux_narrow_line_local_minimum():
+    # omega = 0.7 pixels: the fit to the pixel values is a poor starting point
+    # (omega ~ 0.2, alpha < 0) and a single fit from it converges to a local
+    # minimum with alpha ~ 0; the multi-start recovers the true profile
+    sx = integrated_skewnorm_line(60, 500.0, 30.3, 0.7, 3.0)
+    _, _, dict_result = refine_peaks_spectrum(
+        sx, np.array([int(np.argmax(sx))]), nwinwidth=7, method="skewnorm", preserve_flux=True
+    )
+    assert dict_result["alpha"] == pytest.approx(3.0, rel=1e-3)
+    assert dict_result["omega"] == pytest.approx(0.7, rel=1e-4)

@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 from numpy.polynomial import Polynomial
 from scipy.optimize import OptimizeWarning, curve_fit, minimize_scalar
-from scipy.special import erf, erfc
+from scipy.special import erf, erfc, ndtr, owens_t
 
 from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
@@ -236,11 +236,58 @@ def skewnorm_profile(x, amp, xi, omega, alpha):
     return amp * np.exp(-0.5 * z**2) * (1.0 + erf(alpha * z / np.sqrt(2.0)))
 
 
-def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0):
+def skewnorm_pixel_integrated(x, flux, xi, omega, alpha):
+    """Skew-normal profile integrated over pixels of unit width.
+
+    The value at each pixel is the integral, over the pixel
+    [x - 0.5, x + 0.5] (pixel centres at the integer array coordinates),
+    of a skew-normal profile with total flux `flux`:
+
+        m(x) = flux * [F(x + 0.5) - F(x - 0.5)]
+
+    where F is the cumulative distribution function of the skew-normal
+    distribution with location xi, scale omega and shape alpha, so that
+    the sum over all the pixels is `flux`. The intrinsic profile is
+    skewnorm_profile with amp = flux / (omega sqrt(2 pi)).
+
+    F is computed as F(z) = Phi(z) - 2 T(z, alpha), with z = (x - xi) / omega,
+    Phi the standard normal CDF and T Owen's T function. This is equivalent
+    to scipy.stats.skewnorm.cdf, but much faster.
+
+    Parameters
+    ----------
+    x : array_like
+        Pixel centres.
+    flux : float
+        Integrated flux of the profile (in the units of the pixel values
+        times pixels).
+    xi, omega, alpha : float
+        Location, scale (must be positive) and shape parameters (see
+        skewnorm_profile).
+
+    Returns
+    -------
+    numpy.ndarray
+        Integral of the skew-normal profile over each pixel.
+    """
+    x = np.asarray(x, dtype=float)
+    za = (x - 0.5 - xi) / omega
+    zb = (x + 0.5 - xi) / omega
+    tza = 2.0 * owens_t(za, alpha)
+    tzb = 2.0 * owens_t(zb, alpha)
+    cdf_a = ndtr(za) - tza
+    # the difference of the CDF loses precision in the right tail (CDF -> 1):
+    # use the survival function S(z) = Phi(-z) + 2 T(z, alpha) there
+    cdf_diff = (ndtr(zb) - tzb) - cdf_a
+    sf_diff = (ndtr(-za) + tza) - (ndtr(-zb) + tzb)
+    return flux * np.where(cdf_a > 0.5, sf_diff, cdf_diff)
+
+
+def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0, alpha0=0.0, pixel_integrated=False):
     """Fit a skew-normal profile starting from a Gaussian solution.
 
-    The fit starts at alpha = 0, where the skew-normal profile coincides
-    with the Gaussian defined by amp0, xi0 and omega0.
+    By default the fit starts at alpha = 0, where the skew-normal profile
+    coincides with the Gaussian defined by amp0, xi0 and omega0.
 
     Parameters
     ----------
@@ -248,11 +295,21 @@ def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0):
         Data to fit. y must be continuum-subtracted.
     amp0, xi0, omega0 : float
         Amplitude, centre and standard deviation of the initial
-        Gaussian fit.
+        Gaussian fit (or amplitude, location and scale of an initial
+        skew-normal fit, together with alpha0).
     alpha_max : float, optional
         Bound on the absolute value of the shape parameter. For large
         |alpha| the profile tends to a half-normal and the parameters
         become strongly degenerate.
+    alpha0 : float, optional
+        Initial value of the shape parameter.
+    pixel_integrated : bool, optional
+        If True, the model value at each pixel is the integral of the
+        profile over the pixel [x - 0.5, x + 0.5] (see
+        skewnorm_pixel_integrated), so that the fit preserves the flux of
+        each pixel. Otherwise the profile is evaluated at the pixel
+        centres. The returned parameters always describe the intrinsic
+        profile (skewnorm_profile).
 
     Returns
     -------
@@ -264,7 +321,9 @@ def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0):
         be estimated);
         'mode' : position of the maximum of the profile;
         'mean', 'std', 'skewness', 'kurtosis_excess' : mean, standard deviation,
-        skewness and kurtosis excess of the skew-normal distribution.
+        skewness and kurtosis excess of the skew-normal distribution;
+        'flux', 'flux_err' : integrated flux of the profile and its
+        uncertainty (only when pixel_integrated=True).
         Positions are in the same units and origin as x.
 
     Raises
@@ -286,15 +345,27 @@ def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0):
     # is not the position of the maximum
     lower = [0.0, x.min() - xrange, 1e-3 * omega0, -alpha_max]
     upper = [np.inf, x.max() + xrange, 10 * xrange, alpha_max]
-    p0 = np.clip([amp0, xi0, omega0, 0.0], lower, upper)
+    # the pixel-integrated model is parametrized by the integrated flux
+    # instead of the amplitude: flux = amp * omega * sqrt(2 pi)
+    norm0 = omega0 * np.sqrt(2.0 * np.pi) if pixel_integrated else 1.0
+    p0 = np.clip([amp0 * norm0, xi0, omega0, alpha0], lower, upper)
+    model = skewnorm_pixel_integrated if pixel_integrated else skewnorm_profile
 
     with warnings.catch_warnings():
         # OptimizeWarning is issued when the covariance cannot be
         # estimated; the uncertainties are then returned as inf
         warnings.simplefilter("ignore", OptimizeWarning)
-        popt, pcov = curve_fit(skewnorm_profile, x, y, p0=p0, bounds=(lower, upper))
-    amp, xi, omega, alpha = popt
+        popt, pcov = curve_fit(model, x, y, p0=p0, bounds=(lower, upper))
     perr = np.sqrt(np.diag(pcov))
+    if pixel_integrated:
+        flux, xi, omega, alpha = popt
+        flux_err = perr[0]
+        amp = flux / (omega * np.sqrt(2.0 * np.pi))
+        # propagate the covariance of (flux, omega) to amp = flux / (omega sqrt(2 pi))
+        jac = np.array([1.0 / flux, 0.0, -1.0 / omega, 0.0]) * amp
+        perr[0] = np.sqrt(jac @ pcov @ jac) if np.all(np.isfinite(pcov)) else np.inf
+    else:
+        amp, xi, omega, alpha = popt
 
     # Moments of the skew-normal distribution
     delta = alpha / np.sqrt(1.0 + alpha**2)
@@ -315,7 +386,7 @@ def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0):
     # Kurtosis excess of the skew-normal distribution
     kurtosis_excess = 2 * (np.pi - 3) * b**4 / (1.0 - b**2) ** 2
 
-    return dict(
+    result = dict(
         amp=amp,
         xi=xi,
         omega=omega,
@@ -330,6 +401,64 @@ def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0):
         skewness=skewness,
         kurtosis_excess=kurtosis_excess,
     )
+    if pixel_integrated:
+        result["flux"] = flux
+        result["flux_err"] = flux_err
+    return result
+
+
+def _fit_skewnorm_pixel_integrated_multistart(x, y, skn, alphas=(-6.0, -3.0, -1.0, 0.0, 1.0, 3.0, 6.0)):
+    """Flux-preserving skew-normal fit started from several initial guesses.
+
+    For narrow lines (omega of the order of one pixel) the fit of the
+    pixel-integrated profile has local minima, and the skew-normal fit to
+    the pixel values (`skn`) can be a poor starting point. The fit is
+    started from `skn` and from several values of alpha, with xi and omega
+    chosen to keep the mean of `skn` and its standard deviation corrected
+    for the pixel integration (Sheppard's correction, var - 1/12), and the
+    solution with the smallest sum of squared residuals is returned.
+
+    Parameters
+    ----------
+    x, y : numpy.ndarray
+        Pixel centres and pixel values to fit (continuum-subtracted).
+    skn : dict
+        Result of fit_skewnorm with pixel_integrated=False for the same data.
+    alphas : tuple of float, optional
+        Initial values of alpha, in addition to the one of `skn`.
+
+    Returns
+    -------
+    dict
+        Result of fit_skewnorm with pixel_integrated=True.
+
+    Raises
+    ------
+    RuntimeError
+        If none of the fits converges.
+    """
+    flux0 = skn["amp"] * skn["omega"] * np.sqrt(2.0 * np.pi)
+    # variance corrected for the pixel integration (kept positive)
+    var = max(skn["std"] ** 2 - 1.0 / 12.0, 0.01 * skn["std"] ** 2)
+    starts = [(skn["amp"], skn["xi"], skn["omega"], skn["alpha"])]
+    for alpha0 in alphas:
+        b = alpha0 / np.sqrt(1.0 + alpha0**2) * np.sqrt(2.0 / np.pi)
+        omega0 = np.sqrt(var / (1.0 - b**2))
+        starts.append((flux0 / (omega0 * np.sqrt(2.0 * np.pi)), skn["mean"] - omega0 * b, omega0, alpha0))
+
+    best = None
+    for amp0, xi0, omega0, alpha0 in starts:
+        try:
+            res = fit_skewnorm(x, y, amp0, xi0, omega0, alpha0=alpha0, pixel_integrated=True)
+        except RuntimeError:
+            continue
+        model = skewnorm_pixel_integrated(x, res["flux"], res["xi"], res["omega"], res["alpha"])
+        chi2 = np.sum((model - y) ** 2)
+        if best is None or chi2 < best[0]:
+            best = (chi2, res)
+    if best is None:
+        raise RuntimeError("none of the flux-preserving skew-normal fits converged")
+    return best[1]
 
 
 def gaussian_pixel_integrated(x, flux, mu, sigma):
@@ -864,16 +993,32 @@ def refine_peaks_spectrum(
         behavior of the debug messages, and the plots will always be drawn
         on the provided axes objects.
     preserve_flux : bool
-        Only available with method="gaussian+moments". If True, the Gaussian
-        fitted to log(y) is used as the initial guess of a least-squares fit,
-        within the same window of nwinwidth pixels, of a Gaussian integrated
-        over each pixel (see gaussian_pixel_integrated). The fit then preserves
-        the flux: the integral of the Gaussian over each pixel matches the
-        signal of the pixel. fxpeaks and sxpeaks contain the centre and the
-        (intrinsic) sigma of this refined fit. The moments are computed as
-        without preserve_flux. If the refined fit cannot be performed, the
-        result of the initial Gaussian fit is returned (with fit_ok=False in
-        dict_result).
+        Only available with method="gaussian+moments" or method="skewnorm".
+        If True, the fit is refined with a profile integrated over each pixel,
+        so that the fit preserves the flux: the integral of the profile over
+        each pixel matches the signal of the pixel.
+
+        - "gaussian+moments": the Gaussian fitted to log(y) is used as the
+          initial guess of a least-squares fit, within the same window of
+          nwinwidth pixels, of a Gaussian integrated over each pixel (see
+          gaussian_pixel_integrated). fxpeaks and sxpeaks contain the centre
+          and the (intrinsic) sigma of this refined fit. The moments are
+          computed as without preserve_flux. If the refined fit cannot be
+          performed, the result of the initial Gaussian fit is returned.
+        - "skewnorm": the skew-normal profile fitted to the pixel values of
+          the whole array sx is used as the initial guess of a least-squares
+          fit, also to the whole array, of a skew-normal profile integrated
+          over each pixel (see skewnorm_pixel_integrated). Since this fit has
+          local minima for narrow lines, it is also started from several
+          values of alpha, and the solution with the smallest residuals is
+          kept. fxpeaks and sxpeaks
+          contain the mode and the standard deviation of the intrinsic
+          profile of this refined fit. If the refined fit cannot be
+          performed, the result of the skew-normal fit to the pixel values is
+          returned.
+
+        In both cases fit_ok is False in dict_result when the refined fit
+        cannot be performed.
     return_dict_result : bool
         Important: this option is only available when the number of peaks is 1.
         If True, the function returns all the computed values (fxpeaks, sxpeaks
@@ -935,7 +1080,10 @@ def refine_peaks_spectrum(
           'xi', 'mode' and 'mean' in array coordinates and 'amp' and 'amp_err'
           in the units of sx. They are missing when the skew-normal fit cannot
           be performed; fxpeaks and sxpeaks then contain the result of the
-          initial Gaussian fit.
+          initial Gaussian fit. With preserve_flux=True, these keys describe
+          the intrinsic profile of the flux-preserving fit, and the dictionary
+          also contains 'flux' and 'flux_err' (integrated flux and its
+          uncertainty, in the units of sx times pixels).
 
     """
 
@@ -964,8 +1112,11 @@ def refine_peaks_spectrum(
     # pixel is required to leave one degree of freedom in the fit
     if method == "skewnorm" and len(sx) < 5:
         raise ValueError(f"method=skewnorm requires at least 5 pixels in sx: len(sx)={len(sx)}")
-    if preserve_flux and method != "gaussian+moments":
-        raise ValueError(f"preserve_flux=True is only available with method=gaussian+moments, not with method={method}")
+    if preserve_flux and method not in ["gaussian+moments", "skewnorm"]:
+        raise ValueError(
+            "preserve_flux=True is only available with method=gaussian+moments or method=skewnorm, "
+            f"not with method={method}"
+        )
     if method in ["gaussian+moments", "skewnorm"]:
         return_dict_result = True  # always return the dictionary with the results
 
@@ -978,6 +1129,7 @@ def refine_peaks_spectrum(
         # fit (method="gaussian" with preserve_flux=True), in the coordinates
         # relative to jmax and in units of the normalized data
         skn = None
+        skn_pi = None
         gpi = None
         # prevent possible problem when fitting a line too near to any
         # of the borders of the spectrum (j2 is an exclusive index)
@@ -1169,17 +1321,33 @@ def refine_peaks_spectrum(
                                     f"Skew-normal fit around {jmax} did not converge ({e}); "
                                     "skew-normal fit not performed."
                                 )
+                    if skn is not None and preserve_flux:
+                        # refine the fit with a skew-normal profile integrated over each
+                        # pixel of the whole spectrum, starting from the previous fit
+                        try:
+                            skn_pi = _fit_skewnorm_pixel_integrated_multistart(x_full - jmax, y_full, skn)
+                        except RuntimeError as e:
+                            skn_pi = None
+                            if abs(debugplot) >= 10:
+                                _logger.warning(
+                                    f"Flux-preserving skew-normal fit around {jmax} did not converge ({e}); "
+                                    "using the skew-normal fit to the pixel values."
+                                )
                     if skn is not None:
+                        if preserve_flux and skn_pi is not None:
+                            skn = skn_pi
                         refined_peak = skn["mode"] + jmax
                         sfpeaks[iline] = skn["std"]
-                        # positions in array coordinates and amplitude in the units of sx
+                        # positions in array coordinates and amplitude (and flux) in the units of sx
                         flux_scale = sx_peak_flux if sx_peak_flux > 0 else 1.0
                         dict_result.update(skn)
                         for key in ["xi", "mode", "mean"]:
                             dict_result[key] = skn[key] + jmax
-                        for key in ["amp", "amp_err"]:
-                            dict_result[key] = skn[key] * flux_scale
-                        dict_result["fit_ok"] = True
+                        for key in ["amp", "amp_err", "flux", "flux_err"]:
+                            if key in skn:
+                                dict_result[key] = skn[key] * flux_scale
+                        # with preserve_flux=True, the flux-preserving fit must also succeed
+                        dict_result["fit_ok"] = skn_pi is not None if preserve_flux else True
                 else:
                     # implementation safety check
                     raise ValueError("Method=" + str(final_method) + " is not yet implemented")
@@ -1232,8 +1400,20 @@ def refine_peaks_spectrum(
                     sigma = np.sqrt(-1 / (2.0 * coef[2]))
                     y_plot = amp0 * np.exp(-((x_plot - x0) ** 2) / (2 * sigma**2))
                     ax.plot(x_plot, y_plot, linestyle="--", color="orange", label="Initial Gaussian fit")
+                    if skn_pi is not None:
+                        # pixel-integrated model over the whole spectrum
+                        x_pixels = x_full - jmax
+                        ax.stairs(
+                            skewnorm_pixel_integrated(x_pixels, skn["flux"], skn["xi"], skn["omega"], skn["alpha"]),
+                            np.append(x_pixels - 0.5, x_pixels[-1] + 0.5),
+                            color="magenta",
+                            label="Pixel-integrated model",
+                        )
+                        label = f"Fitted skew-normal, flux preserved (alpha={skn['alpha']:.2f})"
+                    else:
+                        label = f"Fitted skew-normal (alpha={skn['alpha']:.2f})"
                     y_plot = skewnorm_profile(x_plot, skn["amp"], skn["xi"], skn["omega"], skn["alpha"])
-                    ax.plot(x_plot, y_plot, color="red", label=f"Fitted skew-normal (alpha={skn['alpha']:.2f})")
+                    ax.plot(x_plot, y_plot, color="red", label=label)
                     ax.axvline(x=skn["xi"], color="purple", linestyle=":", label="xi")
                 # refined_peak is always defined (it falls back to the
                 # Gaussian fit or to jmax)
