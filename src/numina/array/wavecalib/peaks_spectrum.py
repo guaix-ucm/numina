@@ -14,7 +14,7 @@ import warnings
 import numpy as np
 from numpy.polynomial import Polynomial
 from scipy.optimize import OptimizeWarning, curve_fit, minimize_scalar
-from scipy.special import erf
+from scipy.special import erf, erfc
 
 from ..display.matplotlib_qt import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
@@ -329,6 +329,99 @@ def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0):
         std=std,
         skewness=skewness,
         kurtosis_excess=kurtosis_excess,
+    )
+
+
+def gaussian_pixel_integrated(x, flux, mu, sigma):
+    """Gaussian profile integrated over pixels of unit width.
+
+    The value at each pixel is the integral of a Gaussian with total flux
+    `flux`, centre `mu` and standard deviation `sigma` over the pixel
+    [x - 0.5, x + 0.5] (pixel centres at the integer array coordinates):
+
+        m(x) = flux / 2 * [erf((x + 0.5 - mu) / (sqrt(2) sigma))
+                           - erf((x - 0.5 - mu) / (sqrt(2) sigma))]
+
+    so that the sum over all the pixels is `flux`.
+
+    Parameters
+    ----------
+    x : array_like
+        Pixel centres.
+    flux : float
+        Integrated flux of the Gaussian (in the units of the pixel values
+        times pixels).
+    mu : float
+        Centre of the Gaussian.
+    sigma : float
+        Standard deviation of the Gaussian (must be positive).
+
+    Returns
+    -------
+    numpy.ndarray
+        Integral of the Gaussian over each pixel.
+    """
+    s = np.sqrt(2.0) * sigma
+    a = (np.asarray(x, dtype=float) - 0.5 - mu) / s
+    b = (np.asarray(x, dtype=float) + 0.5 - mu) / s
+    # erf(b) - erf(a) loses precision in the tails, where both arguments
+    # have the same sign and a large absolute value (erf -> +1 or -1); use
+    # the equivalent expressions erfc(a) - erfc(b) (right tail) and
+    # erfc(-b) - erfc(-a) (left tail) there
+    return 0.5 * flux * np.where(a > 0, erfc(a) - erfc(b), np.where(b < 0, erfc(-b) - erfc(-a), erf(b) - erf(a)))
+
+
+def fit_gaussian_pixel_integrated(x, y, flux0, mu0, sigma0):
+    """Fit a pixel-integrated Gaussian, preserving the flux in each pixel.
+
+    The model value at each pixel is the integral of the Gaussian over the
+    pixel (see gaussian_pixel_integrated), so that the fit matches the
+    signal of each pixel with the flux that the Gaussian puts into it.
+
+    Parameters
+    ----------
+    x, y : numpy.ndarray
+        Pixel centres and pixel values to fit (continuum-subtracted).
+    flux0, mu0, sigma0 : float
+        Initial values of the integrated flux, centre and standard
+        deviation (e.g. from a Gaussian fitted to the pixel values).
+
+    Returns
+    -------
+    dict
+        Keys 'flux', 'mean' and 'sigma' (fitted parameters), 'amp' (peak
+        value of the Gaussian, flux / (sigma sqrt(2 pi))), and
+        'flux_err', 'mean_err' and 'sigma_err' (uncertainties from the
+        covariance matrix, inf if it cannot be estimated).
+
+    Raises
+    ------
+    RuntimeError
+        If the least-squares fit does not converge.
+    """
+    x = np.asarray(x, dtype=float)
+    y = np.asarray(y, dtype=float)
+    # the centre is kept within the fitted pixels
+    lower = [0.0, x.min() - 0.5, 1e-3 * sigma0]
+    upper = [np.inf, x.max() + 0.5, 10 * (x.max() - x.min() + 1)]
+    p0 = np.clip([flux0, mu0, sigma0], lower, upper)
+
+    with warnings.catch_warnings():
+        # OptimizeWarning is issued when the covariance cannot be
+        # estimated (e.g. 3 pixels for 3 parameters)
+        warnings.simplefilter("ignore", OptimizeWarning)
+        popt, pcov = curve_fit(gaussian_pixel_integrated, x, y, p0=p0, bounds=(lower, upper))
+    flux, mu, sigma = popt
+    perr = np.sqrt(np.diag(pcov))
+
+    return dict(
+        flux=flux,
+        mean=mu,
+        sigma=sigma,
+        amp=flux / (sigma * np.sqrt(2.0 * np.pi)),
+        flux_err=perr[0],
+        mean_err=perr[1],
+        sigma_err=perr[2],
     )
 
 
@@ -698,7 +791,16 @@ def _parabola_vertex(coef, x_fit):
 
 
 def refine_peaks_spectrum(
-    sx, ixpeaks, nwinwidth, method, geometry=None, title=None, debugplot=0, ax_external=None, return_dict_result=False
+    sx,
+    ixpeaks,
+    nwinwidth,
+    method,
+    geometry=None,
+    title=None,
+    debugplot=0,
+    ax_external=None,
+    preserve_flux=False,
+    return_dict_result=False,
 ):
     """Refine line peaks in spectrum.
 
@@ -761,6 +863,17 @@ def refine_peaks_spectrum(
         will be raised. The value of debugplot will only determine the
         behavior of the debug messages, and the plots will always be drawn
         on the provided axes objects.
+    preserve_flux : bool
+        Only available with method="gaussian+moments". If True, the Gaussian
+        fitted to log(y) is used as the initial guess of a least-squares fit,
+        within the same window of nwinwidth pixels, of a Gaussian integrated
+        over each pixel (see gaussian_pixel_integrated). The fit then preserves
+        the flux: the integral of the Gaussian over each pixel matches the
+        signal of the pixel. fxpeaks and sxpeaks contain the centre and the
+        (intrinsic) sigma of this refined fit. The moments are computed as
+        without preserve_flux. If the refined fit cannot be performed, the
+        result of the initial Gaussian fit is returned (with fit_ok=False in
+        dict_result).
     return_dict_result : bool
         Important: this option is only available when the number of peaks is 1.
         If True, the function returns all the computed values (fxpeaks, sxpeaks
@@ -810,7 +923,14 @@ def refine_peaks_spectrum(
           right crossings, with the keys 'fwhm_np', 'fwhm_np_left' and
           'fwhm_np_right' (see fwhm_nonparametric). Positions and widths are
           in pixels. These keys are missing when the integrated flux is not
-          positive;
+          positive. With preserve_flux=True, the dictionary also contains the
+          parameters of the flux-preserving Gaussian fit, with the prefix
+          'gaussian_' to distinguish them from the moments: 'gaussian_flux'
+          (in the units of sx times pixels), 'gaussian_amp' (in the units of
+          sx), 'gaussian_mean' (array coordinates), 'gaussian_sigma' (pixels)
+          and their uncertainties 'gaussian_flux_err', 'gaussian_mean_err'
+          and 'gaussian_sigma_err'. These keys are missing when that fit
+          cannot be performed;
         - "skewnorm" : the keys returned by fit_skewnorm, with the positions
           'xi', 'mode' and 'mean' in array coordinates and 'amp' and 'amp_err'
           in the units of sx. They are missing when the skew-normal fit cannot
@@ -844,6 +964,8 @@ def refine_peaks_spectrum(
     # pixel is required to leave one degree of freedom in the fit
     if method == "skewnorm" and len(sx) < 5:
         raise ValueError(f"method=skewnorm requires at least 5 pixels in sx: len(sx)={len(sx)}")
+    if preserve_flux and method != "gaussian+moments":
+        raise ValueError(f"preserve_flux=True is only available with method=gaussian+moments, not with method={method}")
     if method in ["gaussian+moments", "skewnorm"]:
         return_dict_result = True  # always return the dictionary with the results
 
@@ -852,9 +974,11 @@ def refine_peaks_spectrum(
 
     for iline in range(npeaks):
         jmax = ixpeaks[iline]
-        # skew-normal fit (method="skewnorm"), in the coordinates relative to
-        # jmax and in units of the normalized data
+        # skew-normal fit (method="skewnorm") and pixel-integrated Gaussian
+        # fit (method="gaussian" with preserve_flux=True), in the coordinates
+        # relative to jmax and in units of the normalized data
         skn = None
+        gpi = None
         # prevent possible problem when fitting a line too near to any
         # of the borders of the spectrum (j2 is an exclusive index)
         j1 = jmax - nmed
@@ -881,6 +1005,9 @@ def refine_peaks_spectrum(
         if npeaks == 1:
             y_full = sx.astype(float)
             x_full = np.arange(len(sx), dtype=float)
+        else:
+            x_full = None
+            y_full = None
         sx_peak_flux = y_fit.max()
         # normalize only by a positive maximum: dividing by a negative value
         # would flip the profile and hide the check for non-positive values
@@ -965,6 +1092,39 @@ def refine_peaks_spectrum(
                         dict_result["sigma"] = sfpeaks[iline]
                         dict_result["fit_ok"] = True
                 elif final_method == "gaussian+moments":
+                    if preserve_flux:
+                        # refine the Gaussian fitted to log(y) with a Gaussian integrated
+                        # over each pixel of the window (only when the initial Gaussian
+                        # is valid, i.e. sfpeaks is not NaN)
+                        if np.isnan(sfpeaks[iline]):
+                            if abs(debugplot) >= 10:
+                                _logger.warning(
+                                    f"No valid initial Gaussian fit around {jmax}; "
+                                    "flux-preserving Gaussian fit not performed."
+                                )
+                        else:
+                            amp0 = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2]))
+                            flux0 = amp0 * sfpeaks[iline] * np.sqrt(2.0 * np.pi)
+                            try:
+                                gpi = fit_gaussian_pixel_integrated(x_fit, y_fit, flux0, xvertex, sfpeaks[iline])
+                            except RuntimeError as e:
+                                if abs(debugplot) >= 10:
+                                    _logger.warning(
+                                        f"Flux-preserving Gaussian fit around {jmax} did not converge ({e}); "
+                                        "using the initial Gaussian fit."
+                                    )
+                        if gpi is not None:
+                            refined_peak = gpi["mean"] + jmax
+                            sfpeaks[iline] = gpi["sigma"]
+                            # prefix "gaussian_" to avoid overwriting the moments 'flux'
+                            # and 'sigma'; position in array coordinates and fluxes in
+                            # the units of sx
+                            dict_result["gaussian_mean"] = refined_peak
+                            dict_result["gaussian_mean_err"] = gpi["mean_err"]
+                            dict_result["gaussian_sigma"] = gpi["sigma"]
+                            dict_result["gaussian_sigma_err"] = gpi["sigma_err"]
+                            for key in ["flux", "amp", "flux_err"]:
+                                dict_result["gaussian_" + key] = gpi[key] * sx_peak_flux
                     # compute the moments of the line; sx is assumed to contain
                     # a single continuum-subtracted line
                     try:
@@ -986,7 +1146,8 @@ def refine_peaks_spectrum(
                         dict_result["fwhm_np"] = fwhm_np
                         dict_result["fwhm_np_left"] = fwhm_np_left
                         dict_result["fwhm_np_right"] = fwhm_np_right
-                        dict_result["fit_ok"] = True
+                        # with preserve_flux=True, the flux-preserving fit must also succeed
+                        dict_result["fit_ok"] = gpi is not None if preserve_flux else True
                 elif final_method == "skewnorm":
                     # fit a skew-normal profile to the whole spectrum, using the Gaussian
                     # fit as the initial guess. The skew-normal profile has 4 free
@@ -1082,7 +1243,27 @@ def refine_peaks_spectrum(
                 # log(y) is concave (coef[2] < 0); otherwise amp, x0 and
                 # sigma would be undefined (division by zero or sqrt of a
                 # negative number)
-                if len(coef) == 3 and coef[2] < 0:
+                if gpi is not None:
+                    # initial Gaussian fit, pixel-integrated model and refined
+                    # (intrinsic) Gaussian
+                    amp0 = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2]))
+                    x00 = -coef[1] / (2.0 * coef[2])
+                    sigma0 = np.sqrt(-1 / (2.0 * coef[2]))
+                    y_plot = amp0 * np.exp(-((x_plot - x00) ** 2) / (2 * sigma0**2))
+                    ax.plot(x_plot, y_plot, color="gray", linestyle=":", label="Initial Gaussian fit")
+                    ax.stairs(
+                        gaussian_pixel_integrated(x_fit, gpi["flux"], gpi["mean"], gpi["sigma"]),
+                        np.append(x_fit - 0.5, x_fit[-1] + 0.5),
+                        color="magenta",
+                        label="Pixel-integrated model",
+                    )
+                    amp, x0, sigma = gpi["amp"], gpi["mean"], gpi["sigma"]
+                    fwhm = 2.355 * sigma
+                    y_plot = amp * np.exp(-((x_plot - x0) ** 2) / (2 * sigma**2))
+                    ax.plot(x_plot, y_plot, color="red", label="Fitted curve (flux preserved)")
+                    ax.axvline(x=x0 - fwhm / 2, color="orange", linestyle="--", label=f"Fitted FWHM ({fwhm:.2f})")
+                    ax.axvline(x=x0 + fwhm / 2, color="orange", linestyle="--")
+                elif len(coef) == 3 and coef[2] < 0:
                     amp = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2]))
                     x0 = -coef[1] / (2.0 * coef[2])
                     sigma = np.sqrt(-1 / (2.0 * coef[2]))
