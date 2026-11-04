@@ -1086,18 +1086,26 @@ def refine_peaks_spectrum(
                     amp = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2]))
                     x0 = -coef[1] / (2.0 * coef[2])
                     sigma = np.sqrt(-1 / (2.0 * coef[2]))
+                    fwhm = 2.355 * sigma
                     y_plot = amp * np.exp(-((x_plot - x0) ** 2) / (2 * sigma**2))
                     ax.plot(x_plot, y_plot, color="red", label="Fitted curve")
-                    ax.axvline(x=x0 - 2.355 * sigma / 2, color="orange", linestyle="--", label="Fitted FWHM")
-                    ax.axvline(x=x0 + 2.355 * sigma / 2, color="orange", linestyle="--")
+                    ax.axvline(x=x0 - fwhm / 2, color="orange", linestyle="--", label=f"Fitted FWHM ({fwhm:.2f})")
+                    ax.axvline(x=x0 + fwhm / 2, color="orange", linestyle="--")
                 # refined_peak is always defined (it falls back to jmax)
                 ax.axvline(x=refined_peak - jmax, color="green", linestyle="--", label="Refined peak")
+                if "fwhm_np" in dict_result and dict_result["fwhm_np"] is not None:
+                    label_fwhm_np = f"non-parametric FWHM ({dict_result['fwhm_np']:.2f})"
+                else:
+                    label_fwhm_np = "non-parametric FWHM (undefined)"
                 if "fwhm_np_left" in dict_result and dict_result["fwhm_np_left"] is not None:
-                    ax.axvline(
-                        x=dict_result["fwhm_np_left"] - jmax, color="cyan", linestyle="--", label="non-parametric FWHM"
-                    )
+                    label_fwhm_np_displayed = True
+                    ax.axvline(x=dict_result["fwhm_np_left"] - jmax, color="cyan", linestyle="--", label=label_fwhm_np)
+                else:
+                    label_fwhm_np_displayed = False
                 if "fwhm_np_right" in dict_result and dict_result["fwhm_np_right"] is not None:
-                    ax.axvline(x=dict_result["fwhm_np_right"] - jmax, color="cyan", linestyle="--")
+                    if label_fwhm_np_displayed:
+                        label_fwhm_np = None  # avoid duplicate legend entry
+                    ax.axvline(x=dict_result["fwhm_np_right"] - jmax, color="cyan", linestyle="--", label=label_fwhm_np)
             else:
                 raise ValueError("Invalid method=" + str(final_method) + " value")
             ax.legend()
