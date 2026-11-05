@@ -157,7 +157,9 @@ def line_moments(x, y, window=None, debugplot=0):
     Returns
     -------
     dict
-        Keys: 'flux', 'centroid', 'sigma', 'skewness', 'kurtosis_excess'.
+        Dictionary with the computed moments.
+        Keys: 'moment_flux', 'moment_centroid', 'moment_sigma', 'moment_fwhm',
+        'moment_skewness', 'moment_kurtosis_excess'.
 
     Raises
     ------
@@ -187,8 +189,10 @@ def line_moments(x, y, window=None, debugplot=0):
         if abs(debugplot) >= 10:
             _logger.warning("Negative variance encountered in line_moments; setting sigma to NaN.")
         sigma = np.nan
+        fwhm = np.nan
     else:
         sigma = np.sqrt(var)
+        fwhm = sigma * 2.0 * np.sqrt(2.0 * np.log(2.0))  # FWHM of a Gaussian with the same sigma
 
     # Standardized third and fourth central moments
     if sigma > 0:
@@ -198,7 +202,14 @@ def line_moments(x, y, window=None, debugplot=0):
         skew = np.nan
         kurt = np.nan
 
-    return dict(flux=m0, centroid=mu, sigma=sigma, skewness=skew, kurtosis_excess=kurt)
+    return dict(
+        moment_flux=m0,
+        moment_centroid=mu,
+        moment_sigma=sigma,
+        moment_fwhm=fwhm,
+        moment_skewness=skew,
+        moment_kurtosis_excess=kurt,
+    )
 
 
 def skewnorm_profile(x, amp, xi, omega, alpha):
@@ -1277,6 +1288,7 @@ def refine_peaks_spectrum(
                         dict_result["amp"] = np.exp(coef[0] - coef[1] * coef[1] / (4 * coef[2])) * sx_peak_flux
                         dict_result["mean"] = refined_peak
                         dict_result["sigma"] = sfpeaks[iline]
+                        dict_result["fwhm"] = sfpeaks[iline] * 2.0 * np.sqrt(2.0 * np.log(2.0))
                         dict_result["fit_ok"] = True
                 elif final_method == "gaussian+moments":
                     if preserve_flux:
@@ -1310,6 +1322,8 @@ def refine_peaks_spectrum(
                             dict_result["gaussian_mean_err"] = gpi["mean_err"]
                             dict_result["gaussian_sigma"] = gpi["sigma"]
                             dict_result["gaussian_sigma_err"] = gpi["sigma_err"]
+                            dict_result["gaussian_fwhm"] = gpi["sigma"] * 2.0 * np.sqrt(2.0 * np.log(2.0))
+                            dict_result["gaussian_fwhm_err"] = gpi["sigma_err"] * 2.0 * np.sqrt(2.0 * np.log(2.0))
                             for key in ["flux", "amp", "flux_err", "amp_err"]:
                                 dict_result["gaussian_" + key] = gpi[key] * sx_peak_flux
                     # compute the moments of the line; sx is assumed to contain
@@ -1326,7 +1340,7 @@ def refine_peaks_spectrum(
                         # y_full is normalized to the peak flux: express the
                         # integrated flux in the units of sx
                         if sx_peak_flux > 0:
-                            dict_result["flux"] *= sx_peak_flux
+                            dict_result["moment_flux"] *= sx_peak_flux
                         # compute the non-parametric FWHM and its left and right crossings
                         fwhm_np, fwhm_np_left, fwhm_np_right = fwhm_nonparametric(x_full, y_full, debugplot=debugplot)
                         # add the non-parametric FWHM and its left and right crossings to the moments dictionary
@@ -1341,7 +1355,7 @@ def refine_peaks_spectrum(
                             # the moments (which includes the wings, i.e. the flux missing
                             # from the core); both in the units of sx, so the normalization
                             # of the data cancels out
-                            peak_over_flux_obs = dict_result["gaussian_amp"] / dict_result["flux"]
+                            peak_over_flux_obs = dict_result["gaussian_amp"] / dict_result["moment_flux"]
                             # same ratio for a diffraction-limited Gaussian profile
                             sigma_diffraction = fwhm_diffraction / (2.0 * np.sqrt(2.0 * np.log(2.0)))
                             peak_over_flux_diffraction = 1.0 / (sigma_diffraction * np.sqrt(2.0 * np.pi))
