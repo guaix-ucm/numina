@@ -308,7 +308,7 @@ def polfit_residuals(
             fig.savefig(pdffile, pad_inches=0.02, bbox_inches="tight")
 
         if show and fig.canvas.manager is not None:
-            pause_debugplot(debugplot, pltshow=show, tight_layout=True)
+            pause_debugplot(debugplot, pltshow=show, tight_layout=True, fig=fig)
 
     # return result
     return poly, yres
