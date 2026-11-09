@@ -108,7 +108,7 @@ def test_no_strehl_when_flux_preserving_fit_fails():
     dict_result = strehl(sx, 20, nwinwidth=7)
     assert not dict_result["fit_ok"]
     assert "strehl" not in dict_result
-    assert "flux" in dict_result
+    assert "moment_flux" in dict_result
 
 
 @pytest.mark.parametrize(

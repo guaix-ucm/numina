@@ -17,7 +17,17 @@ from numina.array.wavecalib.peaks_spectrum import (
     skewnorm_profile,
 )
 
-MOMENT_KEYS = ["flux", "centroid", "sigma", "skewness", "kurtosis_excess", "fwhm_np", "fwhm_np_left", "fwhm_np_right"]
+MOMENT_KEYS = [
+    "moment_flux",
+    "moment_centroid",
+    "moment_sigma",
+    "moment_fwhm",
+    "moment_skewness",
+    "moment_kurtosis_excess",
+    "fwhm_np",
+    "fwhm_np_left",
+    "fwhm_np_right",
+]
 
 
 def integrated_line(npix, flux, mu, sigma):
@@ -143,7 +153,7 @@ def test_preserve_flux_without_valid_initial_gaussian():
     xfpeaks, sfpeaks, dict_result = refine(sx, 20, nwinwidth=7)
     assert not dict_result["fit_ok"]
     assert "gaussian_flux" not in dict_result
-    assert "flux" in dict_result
+    assert "moment_flux" in dict_result
     assert xfpeaks[0] == 20.0
     assert np.isnan(sfpeaks[0])
 
@@ -167,7 +177,7 @@ def test_gaussian_method_unchanged():
     xfpeaks, sfpeaks, dict_result = refine_peaks_spectrum(
         sx, np.array([30]), nwinwidth=7, method="gaussian", return_dict_result=True
     )
-    assert sorted(dict_result) == ["amp", "final_method", "fit_ok", "mean", "method", "sigma"]
+    assert sorted(dict_result) == ["amp", "final_method", "fit_ok", "fwhm", "mean", "method", "sigma"]
 
 
 def test_preserve_flux_external_axes():
