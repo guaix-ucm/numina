@@ -222,9 +222,7 @@ class NuminaScriptDefinition:
                 self.logger.warning("version: unknown")
             self.logger.info(f"(numina version: '{str(__version__)}')")
 
-        self.logger.debug(
-            f"[bold]Command line arguments:[/bold]\n{"\n".join([f"{k}: {v!r}" for k, v in vars(self.args).items()])}"
-        )
+        self.logger.debug(f"Command line arguments:{"".join([f"\n{k}: {v!r}" for k, v in vars(self.args).items()])}")
         self.console.rule()
 
         # Generate output directory if it does not exist
