@@ -56,6 +56,12 @@ def main(args=None):
     # required parameters
     parser.add_argument("fitsfile", help="FITS image containing the spectra", type=str)
     parser.add_argument("--scans", required=True, help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
+    parser.add_argument(
+        "--method",
+        help="collapsing method to compute the average spectrum (default='mean', 'median')",
+        default="mean",
+        choices=["mean", "median"],
+    )
     parser.add_argument("--wv_master_file", required=True, help="TXT file containing wavelengths")
     parser.add_argument("--degree", required=True, help="Polynomial degree", type=int)
     # optional arguments
@@ -65,9 +71,6 @@ def main(args=None):
     parser.add_argument("--wvmax_useful", help="Maximum useful wavelength", type=float)
     parser.add_argument(
         "--nwin_background", help="window to compute background (0=none)" " (default=0)", default=0, type=int
-    )
-    parser.add_argument(
-        "--method", help="collapsing method (default='mean', 'median')", default="mean", choices=["mean", "median"]
     )
     parser.add_argument(
         "--times_sigma_threshold",
@@ -189,6 +192,7 @@ def main(args=None):
         method=args.method,
         nwin_background=args.nwin_background,
         reverse=args.reverse,
+        debugplot=args.debugplot,
     )
 
     # read arc line wavelengths from external file (all the lines)

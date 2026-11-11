@@ -32,7 +32,7 @@ from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 
 
-def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None):
+def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None, debugplot=0):
     """Compute a collapsed spectrum from a 2D image using scans in [ns1,ns2].
 
     Parameters
@@ -56,6 +56,10 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
     out_sp : string or None
         File name to save the selected spectrum in FITS format before
         performing the wavelength calibration.
+    debugplot : int
+        Determines whether intermediate computations and/or plots
+        are displayed. The valid codes are defined in
+        numina.array.display.pause_debugplot.
 
     Returns
     -------
@@ -101,6 +105,25 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
         logger.error("ERROR: Invalid ns1=" + str(ns1) + ", ns2=" + str(ns2) + " values")
         raise SystemExit()
 
+    if debugplot % 10 != 0:
+        xplot = np.arange(1, naxis1 + 1, dtype=float)
+        ax = ximplotxy(
+            xplot,
+            sp,
+            title="Collapsed spectrum",
+            show=False,
+            xlabel="pixel (from 1 to NAXIS1)",
+            ylabel="number of counts",
+        )
+        ymin = sp.min()
+        ymax = sp.max()
+        dy = ymax - ymin
+        ymin -= dy / 20.0
+        ymax += dy / 20.0
+        ax.set_ylim([ymin, ymax])
+        ax.set_title(f"Collapsed spectrum\n(scans from {ns1} to {ns2}, method '{method}')")
+        pause_debugplot(debugplot=debugplot, pltshow=True)
+
     return sp
 
 
@@ -133,14 +156,16 @@ def read_wv_master_from_array(master_table, lines="brightest"):
         wv_master = master_table
     else:
         wv_master_all = master_table[:, 0]
-        if master_table.shape[1] == 2:  # assume old format
+        if master_table.shape[1] == 2:  # assume old format: only wavelength and relative intensity
             wv_master = np.copy(wv_master_all)
-        elif master_table.shape[1] == 3:  # assume new format
+        elif master_table.shape[1] == 3:  # assume new format: wavelength, brightness flag and relative intensity
             if lines == "brightest":
                 wv_flag = master_table[:, 1]
                 wv_master = wv_master_all[np.where(wv_flag == 1)]
-            else:
+            elif lines == "all":
                 wv_master = np.copy(wv_master_all)
+            else:
+                raise ValueError("Unexpected lines=" + str(lines))
         else:
             raise ValueError("Lines_catalog file does not have the expected number of columns")
 
