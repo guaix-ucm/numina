@@ -1672,9 +1672,11 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
                 if wv_unused[j - 1]:
                     wv_verified_all_peaks[j - 1] = wv_master[i]
                     wv_unused[j - 1] = False
+                    minimum_delta_wv[j - 1] = delta_wv
                 else:
                     if delta_wv < minimum_delta_wv[j - 1]:
                         wv_verified_all_peaks[j - 1] = wv_master[i]
+                        minimum_delta_wv[j - 1] = delta_wv
         else:
             delta_wv1 = abs(wv_master[i] - wv_expected_all_peaks[j - 1])
             delta_wv2 = abs(wv_master[i] - wv_expected_all_peaks[j])
@@ -1683,17 +1685,21 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
                     if wv_unused[j - 1]:
                         wv_verified_all_peaks[j - 1] = wv_master[i]
                         wv_unused[j - 1] = False
+                        minimum_delta_wv[j - 1] = delta_wv1
                     else:
                         if delta_wv1 < minimum_delta_wv[j - 1]:
                             wv_verified_all_peaks[j - 1] = wv_master[i]
+                            minimum_delta_wv[j - 1] = delta_wv1
             else:
                 if delta_wv2 < delta_wv_max:
                     if wv_unused[j]:
                         wv_verified_all_peaks[j] = wv_master[i]
                         wv_unused[j] = False
+                        minimum_delta_wv[j] = delta_wv2
                     else:
                         if delta_wv2 < minimum_delta_wv[j]:
                             wv_verified_all_peaks[j] = wv_master[i]
+                            minimum_delta_wv[j] = delta_wv2
 
     return wv_verified_all_peaks
 
