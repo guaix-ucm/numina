@@ -271,33 +271,20 @@ def fit_list_of_wvfeatures(
 
         # title
         if plot_title is None:
-            plt.title("Wavelength calibration")
+            title = "Wavelength calibration"
         else:
-            plt.title(plot_title)
+            title = plot_title
+
+        title += " (NAXIS1 = " + str(naxis1_arc) + ", CRPIX1 = " + str(crpix1) + ")"
+        title += "\nCRVAL1 = " + str(round(crval1_linear, 4)) + ", CDELT1 = " + str(round(cdelt1_linear, 4))
+
+        ax.set_title(title)
 
         # include important parameters in plot
         ax.text(
             0.50,
-            0.25,
+            0.50,
             "poldeg: " + str(poly_degree_wfit) + ", nfit: " + str(len(xfit)),
-            fontsize=12,
-            transform=ax.transAxes,
-            horizontalalignment="center",
-            verticalalignment="bottom",
-        )
-        ax.text(
-            0.50,
-            0.15,
-            "CRVAL1: " + str(round(crval1_linear, 4)),
-            fontsize=12,
-            transform=ax.transAxes,
-            horizontalalignment="center",
-            verticalalignment="bottom",
-        )
-        ax.text(
-            0.50,
-            0.05,
-            "CDELT1: " + str(round(cdelt1_linear, 4)),
             fontsize=12,
             transform=ax.transAxes,
             horizontalalignment="center",
@@ -315,6 +302,7 @@ def fit_list_of_wvfeatures(
 
         # set window geometry
         set_window_geometry(geometry)
+        fig.tight_layout()
         pause_debugplot(debugplot, pltshow=True, tight_layout=False)
 
     return solution_wv
@@ -947,7 +935,6 @@ def arccalibration_direct(
             + str(len(itriplet_search))
         )
         logger.debug("List with no. of solutions/triplet.:\n" + str(ntriplets_layered_list))
-        pause_debugplot(debugplot)
 
     # ---
     # Computation of the cost function.
@@ -1001,7 +988,8 @@ def arccalibration_direct(
                 )
             else:
                 logger.debug(f">>> {i} {None} (None, None, None) {None} {None}")
-        pause_debugplot(debugplot)
+        if logger.isEnabledFor(logging.DEBUG):
+            pause_debugplot(debugplot)
 
     # intermediate plots
     if abs(debugplot) in [21, 22]:
@@ -1126,7 +1114,8 @@ def arccalibration_direct(
     if abs(debugplot) >= 10:
         for i in range(nlines_arc):
             logger.debug(f"Line {i}: {diagonal_ids[i]} {diagonal_funcost[i]}")
-        pause_debugplot(debugplot)
+        if logger.isEnabledFor(logging.DEBUG):
+            pause_debugplot(debugplot)
 
     # The solutions are stored in a list of WavecalFeature instances.
     # Each WavecalFeature contains the following elements:
@@ -1996,24 +1985,27 @@ def refine_arccalibration(
             ax1.set_ylabel("polynomial - linear fit " + r"($\AA$)")
             ax1.text(
                 0.01,
-                0.99,
-                "CRVAL1 (" + r"$\AA$" + "):" + str(round(crval1_linear, decimal_places)),
+                0.97,
+                "CRVAL1 (" + r"$\AA$" + "): " + str(round(crval1_linear, decimal_places)),
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
                 horizontalalignment="left",
                 verticalalignment="top",
                 transform=ax1.transAxes,
             )
             ax1.text(
                 0.01,
-                0.91,
-                "CDELT1 (" + r"$\AA$" + "/pixel):" + str(round(cdelt1_linear, decimal_places)),
+                0.89,
+                "CDELT1 (" + r"$\AA$" + "/pixel): " + str(round(cdelt1_linear, decimal_places)),
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
                 horizontalalignment="left",
                 verticalalignment="top",
                 transform=ax1.transAxes,
             )
             ax1.text(
                 0.99,
-                0.99,
-                "robust std (" + r"$\AA$" + "):" + str(round(yres_summary["robust_std"], decimal_places)),
+                0.97,
+                "robust std (" + r"$\AA$" + "): " + str(round(yres_summary["robust_std"], decimal_places)),
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
                 horizontalalignment="right",
                 verticalalignment="top",
                 transform=ax1.transAxes,

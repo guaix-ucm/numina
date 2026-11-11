@@ -128,7 +128,9 @@ def main(args=None):
         default=None,
         type=str,
     )
-    parser.add_argument("--geometry", help="tuple x,y,dx,dy (default 0,0,640,480)", default="0,0,640,480")
+    parser.add_argument(
+        "--geometry", help="Geometry for refinement: tuple x,y,dx,dy (default 0,0,640,480)", default="0,0,640,480"
+    )
     parser.add_argument("--pdffile", help="Output PDF file name", type=lambda x: arg_file_is_new(parser, x, mode="wb"))
     parser.add_argument(
         "--debugplot",
@@ -229,8 +231,8 @@ def main(args=None):
 
     # determine refined peak location in array coordinates, i.e.,
     # from 0 to (naxis - 1)
-    plottitle0 = " [{}, {}:{}],  line list: {}".format(args.method, ns1, ns2, os.path.basename(args.wv_master_file))
-    plottitle = os.path.basename(args.fitsfile) + plottitle0
+    plottitle0 = f" [{args.method}, {ns1}:{ns2}]\nline list: {os.path.basename(args.wv_master_file)}"
+    plottitle = f"{os.path.basename(args.fitsfile)}{plottitle0}"
     fxpeaks, sxpeaks = core.find_fxpeaks(
         sp=sp,
         times_sigma_threshold=args.times_sigma_threshold,
@@ -242,7 +244,7 @@ def main(args=None):
         sigma_gaussian_filtering=args.sigma_gauss_filt,
         minimum_gaussian_filtering=args.minimum_gauss_filt,
         plottitle=plottitle,
-        geometry=geometry,
+        geometry=None,
         extra_plots=args.extra_plots,
     )
 
@@ -256,7 +258,7 @@ def main(args=None):
         wv_end_search=args.wvmax,
         wvmin_useful=args.wvmin_useful,
         wvmax_useful=args.wvmax_useful,
-        geometry=geometry,
+        geometry=None,
         debugplot=args.debugplot,
     )
 

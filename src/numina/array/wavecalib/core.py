@@ -17,6 +17,7 @@ wavelength calibration of a spectrum. The script numina-wavecalib
 """
 
 import logging
+import os
 
 from astropy.io import fits
 from astropy.table import Table
@@ -114,6 +115,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
             show=False,
             xlabel="pixel (from 1 to NAXIS1)",
             ylabel="number of counts",
+            geometry=None,
         )
         ymin = sp.min()
         ymax = sp.max()
@@ -121,7 +123,10 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
         ymin -= dy / 20.0
         ymax += dy / 20.0
         ax.set_ylim([ymin, ymax])
-        ax.set_title(f"Collapsed spectrum\n(scans from {ns1} to {ns2}, method '{method}')")
+        # fitsfile can be a path or a file object (use its name in the latter case)
+        fname = os.path.basename(getattr(fitsfile, "name", str(fitsfile)))
+        title = f"{fname} [{method}, {ns1}:{ns2}]\n(collapsed spectrum)"
+        ax.set_title(title)
         pause_debugplot(debugplot=debugplot, pltshow=True)
 
     return sp
@@ -341,7 +346,7 @@ def find_fxpeaks(
     lines_found_table["width"].info.format = ".3f"
     for i, (fx, sx) in enumerate(zip(fxpeaks, sxpeaks)):
         lines_found_table.add_row([i, fx + 1, sx])
-    logger.info(lines_found_table)
+    logger.debug(lines_found_table)
 
     # display median spectrum and peaks if requested
     if extra_plots:
