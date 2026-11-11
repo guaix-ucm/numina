@@ -2090,7 +2090,13 @@ def refine_arccalibration(
                 # choose values within valid channel range
                 tmproots = tmproots[(tmproots >= 1) * (tmproots <= naxis1)]
                 if len(tmproots) > 0:
-                    ax2.plot([tmproots[0], tmproots[0]], [ymin, ymax], color="grey", linestyle="dotted")
+                    ax2.plot(
+                        [tmproots[0], tmproots[0]],
+                        [ymin, ymax],
+                        color="grey",
+                        linestyle="dotted",
+                        label="master line" if i == 0 else None,
+                    )
             # legend
             ax2.legend(numpoints=1)
             # h_pad=0 to keep both panels as close as possible
