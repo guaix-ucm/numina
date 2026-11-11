@@ -306,7 +306,8 @@ def find_fxpeaks(
     ixpeaks = find_peaks_spectrum(spf, nwinwidth=nwinwidth_initial, threshold=threshold)
 
     # select a maximum number of brightest lines in each region
-    if len(nbrightlines) == 1 and nbrightlines[0] == 0:
+    nregions = len(nbrightlines)
+    if nregions == 1 and nbrightlines[0] == 0:
         pass
     else:
         logger.debug(f"nbrightlines = {nbrightlines}")
@@ -325,10 +326,10 @@ def find_fxpeaks(
                     spos = peak_fluxes.argsort()
                     ixpeaks_tmp = ixpeaks_region[spos[-nlines_in_region:]]
                     ixpeaks_tmp.sort()  # in-place sort
-                    logger.debug(f"ixpeaks in region........:\n{ixpeaks_tmp}")
+                    logger.debug(f"ixpeaks in region #{iregion+1}:\n{ixpeaks_tmp}")
                     ixpeaks_filtered = np.concatenate((ixpeaks_filtered, ixpeaks_tmp))
         ixpeaks = ixpeaks_filtered
-        logger.debug(f"ixpeaks filtered.........:\n{ixpeaks}")
+        logger.debug(f"ixpeaks filtered:\n{ixpeaks}")
 
     # remove peaks too close to any of the borders of the spectrum
     if npix_avoid_border > 0:
@@ -369,6 +370,15 @@ def find_fxpeaks(
         # mark peak location
         ax.plot(ixpeaks + 1, spf[ixpeaks], "bo", label="initial location")
         ax.plot(fxpeaks + 1, spf[ixpeaks], "go", label="refined location")
+        # show different regions with different alternative background colors
+        if nregions > 1:
+            for iregion in range(nregions):
+                imin = int(iregion * region_size)
+                imax = int((iregion + 1) * region_size)
+                if iregion > 0:
+                    imin += 1
+                facecolor = "lightgray" if iregion % 2 == 0 else "lightyellow"
+                ax.axvspan(imin + 1, imax + 1, facecolor=facecolor, alpha=0.5)
         # legend
         ax.legend(title=f"{len(fxpeaks)} lines found", numpoints=1)
         # show plot

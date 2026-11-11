@@ -277,28 +277,11 @@ def fit_list_of_wvfeatures(
 
         title += " (NAXIS1 = " + str(naxis1_arc) + ", CRPIX1 = " + str(crpix1) + ")"
         title += "\nCRVAL1 = " + str(round(crval1_linear, 4)) + ", CDELT1 = " + str(round(cdelt1_linear, 4))
+        title += "\nPol. degree = " + str(poly_degree_wfit)
+        title += ", N fit = " + str(nfit)
+        title += ", Residual std = " + str(round(residual_std, 4))
 
         ax.set_title(title)
-
-        # include important parameters in plot
-        ax.text(
-            0.50,
-            0.50,
-            "poldeg: " + str(poly_degree_wfit) + ", nfit: " + str(len(xfit)),
-            fontsize=12,
-            transform=ax.transAxes,
-            horizontalalignment="center",
-            verticalalignment="bottom",
-        )
-        ax2.text(
-            0.50,
-            0.05,
-            "r.m.s.: " + str(round(residual_std, 4)),
-            fontsize=12,
-            transform=ax2.transAxes,
-            horizontalalignment="center",
-            verticalalignment="bottom",
-        )
 
         # set window geometry
         set_window_geometry(geometry)
@@ -1981,8 +1964,10 @@ def refine_arccalibration(
                 # reuse the window opened in a previous iteration
                 fig.clf()
 
+            # no explicit subplot parameters (left, top, hspace...) are set
+            # in the gridspec, since they make it incompatible with
+            # tight_layout (see fig.tight_layout below)
             grid = fig.add_gridspec(2, 1)
-            grid.update(left=0.10, right=0.98, bottom=0.10, top=0.90, hspace=0.01)
 
             # differences between linear fit and fitted polynomial
             # polynomial fit
@@ -1994,21 +1979,9 @@ def refine_arccalibration(
 
             # upper plot
             ax1 = fig.add_subplot(grid[0, 0])
-            if nlines_ok > 0:
-                ymin = min(ypol)
-                ymax = max(ypol)
-                dy = ymax - ymin
-                if dy > 0:
-                    ymin -= dy / 50
-                    ymax += dy / 50
-                else:
-                    ymin -= 0.5
-                    ymax += 0.5
-            else:
-                ymin = -1.0
-                ymax = 1.0
             ax1.set_xlim(1 - 0.02 * naxis1, naxis1 * 1.02)
-            ax1.set_ylim(ymin, ymax)
+            # x labels only in the lower panel (shared x axis)
+            ax1.tick_params(labelbottom=False)
             if nlines_ok > 0:
                 ax1.plot(xdum, yp, "mo", label="identified")
                 if sum(reject) > 0:
@@ -2042,28 +2015,14 @@ def refine_arccalibration(
                 verticalalignment="top",
                 transform=ax1.transAxes,
             )
-            ax1.text(
-                0.5,
-                0.55,
-                "No. points (total / used): " + str(nlines_ok) + " / " + str(yres_summary["npoints"]),
-                horizontalalignment="center",
-                verticalalignment="top",
-                transform=ax1.transAxes,
-            )
-            ax1.text(
-                0.5,
-                0.4,
-                "Polynomial degree: " + str(poldeg_effective),
-                horizontalalignment="center",
-                verticalalignment="bottom",
-                transform=ax1.transAxes,
-            )
             if plottitle is None:
-                ax1.set_title("Refined wavelength calibration")
+                title = "Refined wavelength calibration"
             else:
-                ax1.set_title(plottitle)
-            ax1.legend(numpoints=1, ncol=3, fancybox=True, loc="lower center")
-            #           bbox_to_anchor=(0.5, 1.00))
+                title = plottitle
+            title += f"\nNo. of points (total / used): {nlines_ok} / {yres_summary['npoints']}, "
+            title += f"Polynomial degree: {poldeg_effective}"
+            ax1.set_title(title)
+            ax1.legend(numpoints=1, ncol=3, fancybox=True, loc="best")
 
             # lower plot
             if local_ylogscale:
@@ -2128,6 +2087,8 @@ def refine_arccalibration(
                     ax2.plot([tmproots[0], tmproots[0]], [ymin, ymax], color="grey", linestyle="dotted")
             # legend
             ax2.legend(numpoints=1)
+            # h_pad=0 to keep both panels as close as possible
+            fig.tight_layout(h_pad=0)
 
             if pdf is not None:
                 pdf.savefig(fig)
@@ -2186,7 +2147,7 @@ def refine_arccalibration(
                 logger.info("[blue](w) replot whole spectrum")
                 logger.info("[blue](x) exit without additional changes")
                 logger.info(f"[blue](#) number from 1 to {len(ixpeaks)} --> modify line #")
-                ioption = readi("Option", default="x", minval=1, maxval=len(ixpeaks), allowed_single_chars="adeilrwx")
+                ioption = readi("Option", default="w", minval=1, maxval=len(ixpeaks), allowed_single_chars="adeilrwx")
                 if ioption == "d":
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == "r":
