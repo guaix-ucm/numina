@@ -1715,6 +1715,39 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
     return wv_verified_all_peaks
 
 
+def _disable_quit_keys(fig):
+    """Disable the keyboard shortcuts that close a figure window.
+
+    The default matplotlib key handler of the figure is replaced by
+    one that ignores the keys in the rcParams 'keymap.quit' and
+    'keymap.quit_all' (e.g. 'q', 'ctrl+w', 'cmd+w'), while keeping the
+    remaining shortcuts (zoom, pan, home, etc.).
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure displayed in a window.
+
+    """
+    from matplotlib import rcParams
+    from matplotlib.backend_bases import key_press_handler
+
+    manager = fig.canvas.manager
+    handler_id = getattr(manager, "key_press_handler_id", None)
+    if handler_id is None:
+        # no default key handler (e.g. toolmanager in use)
+        return
+
+    def filtered_key_press_handler(evt):
+        # the keymaps are read when the key is pressed, as matplotlib does
+        quit_keys = set(rcParams["keymap.quit"]) | set(rcParams["keymap.quit_all"])
+        if evt.key not in quit_keys:
+            key_press_handler(evt)
+
+    fig.canvas.mpl_disconnect(handler_id)
+    manager.key_press_handler_id = fig.canvas.mpl_connect("key_press_event", filtered_key_press_handler)
+
+
 def refine_arccalibration(
     sp,
     poly_initial,
@@ -1942,6 +1975,8 @@ def refine_arccalibration(
                 # first iteration, or the window was closed by the user
                 fig = new_figure()
                 set_window_geometry(geometry)
+                if interactive:
+                    _disable_quit_keys(fig)
             else:
                 # reuse the window opened in a previous iteration
                 fig.clf()
@@ -2106,15 +2141,20 @@ def refine_arccalibration(
                 plt.show(block=False)
                 logger.info("Zoom/Unzoom in the figure and press RETURN in the figure window to continue...")
 
+                waiting = [True]
+
                 def stop_on_enter(evt):
                     if evt.key == "enter":
+                        waiting[0] = False
                         fig.canvas.stop_event_loop()
 
                 cid_key = fig.canvas.mpl_connect("key_press_event", stop_on_enter)
-                cid_close = fig.canvas.mpl_connect("close_event", lambda evt: fig.canvas.stop_event_loop())
-                fig.canvas.start_event_loop(timeout=-1)
+                # run the event loop in short slices and check whether the
+                # window is still open, so that closing it by any means
+                # (window button, OS shortcut) cannot leave this loop hanging
+                while waiting[0] and plt.fignum_exists(fig.number):
+                    fig.canvas.start_event_loop(timeout=0.1)
                 fig.canvas.mpl_disconnect(cid_key)
-                fig.canvas.mpl_disconnect(cid_close)
                 # store the current limits to keep them when replotting
                 xmin_previous, xmax_previous = ax2.get_xlim()
                 ymin_previous, ymax_previous = ax2.get_ylim()
