@@ -2112,7 +2112,9 @@ def refine_arccalibration(
                 fig_interactive = True
                 fig.canvas.draw_idle()
                 plt.show(block=False)
-                logger.info("Zoom/Unzoom in the figure and press RETURN in the figure window to continue...")
+                print(
+                    "Zoom/Unzoom in the figure and press RETURN in the figure window to continue...", end="", flush=True
+                )
 
                 waiting = [True]
 
