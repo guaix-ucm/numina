@@ -1820,10 +1820,6 @@ def refine_arccalibration(
     local_ylogscale = ylogscale
 
     # latest limits
-    global xmin_previous
-    global xmax_previous
-    global ymin_previous
-    global ymax_previous
     xmin_previous = None
     xmax_previous = None
     ymin_previous = None
@@ -1862,6 +1858,10 @@ def refine_arccalibration(
         wv_verified_all_peaks = match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max=delta_wv_max)
 
     loop = True
+
+    # in interactive sessions the same figure is reused in every iteration
+    fig = None
+    fig_interactive = False
 
     nrepeat_eff = nrepeat
     while loop:
@@ -1933,21 +1933,18 @@ def refine_arccalibration(
 
         if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
 
-            def handle_close(evt):
-                global xmin_previous
-                global xmax_previous
-                global ymin_previous
-                global ymax_previous
-                xmin_previous, xmax_previous = ax2.get_xlim()
-                ymin_previous, ymax_previous = ax2.get_ylim()
+            from numina.array.display.matplotlib_qt import plt
 
             if pdf is not None:
                 # the figure is only saved in the PDF file
                 fig = new_figure(interactive=False, figsize=(11.69, 8.27), dpi=100)
-            else:
+            elif fig is None or not plt.fignum_exists(fig.number):
+                # first iteration, or the window was closed by the user
                 fig = new_figure()
-                fig.canvas.mpl_connect("close_event", handle_close)
                 set_window_geometry(geometry)
+            else:
+                # reuse the window opened in a previous iteration
+                fig.clf()
 
             grid = fig.add_gridspec(2, 1)
             grid.update(left=0.10, right=0.98, bottom=0.10, top=0.90, hspace=0.01)
@@ -2099,6 +2096,31 @@ def refine_arccalibration(
 
             if pdf is not None:
                 pdf.savefig(fig)
+            elif interactive:
+                # display the figure without blocking and run the GUI event
+                # loop (allowing zoom/pan) until RETURN is pressed in the
+                # figure window or the window is closed; "enter" is not
+                # used in the default matplotlib keymaps
+                fig_interactive = True
+                fig.canvas.draw_idle()
+                plt.show(block=False)
+                logger.info("Zoom/Unzoom in the figure and press RETURN in the figure window to continue...")
+
+                def stop_on_enter(evt):
+                    if evt.key == "enter":
+                        fig.canvas.stop_event_loop()
+
+                cid_key = fig.canvas.mpl_connect("key_press_event", stop_on_enter)
+                cid_close = fig.canvas.mpl_connect("close_event", lambda evt: fig.canvas.stop_event_loop())
+                fig.canvas.start_event_loop(timeout=-1)
+                fig.canvas.mpl_disconnect(cid_key)
+                fig.canvas.mpl_disconnect(cid_close)
+                # store the current limits to keep them when replotting
+                xmin_previous, xmax_previous = ax2.get_xlim()
+                ymin_previous, ymax_previous = ax2.get_ylim()
+                # make sure the figure is fully drawn before reading from
+                # the terminal (the window does not respond meanwhile)
+                fig.canvas.flush_events()
             else:
                 if local_debugplot in [-22, -12, 12, 22]:
                     pause_debugplot(
@@ -2195,6 +2217,12 @@ def refine_arccalibration(
 
         else:
             loop = False
+
+    # close the figure reused in the interactive session
+    if fig_interactive:
+        from numina.array.display.matplotlib_qt import plt
+
+        plt.close(fig)
 
     # if effective degree of poly_refined < poldeg, add zeros
     if poldeg_effective < poldeg:
