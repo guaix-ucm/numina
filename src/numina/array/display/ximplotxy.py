@@ -7,6 +7,15 @@
 # License-Filename: LICENSE.txt
 #
 
+"""ximplotxy.py: Plot X-Y data from ASCII files or numpy arrays.
+
+Example of usage from command line:
+    $ numina-ximplotxy data.txt 1 2 --kwargs "{'marker':'o','linestyle':''}"
+    $ numina-ximplotxy lineas.txt 1 2 --vlines --kwargs "{'color':'red', 'xlabel':'wavelength', 'ylabel':'flux'}"
+
+
+"""
+
 import argparse
 import numpy as np
 
@@ -51,8 +60,13 @@ def ximplotxy(
     fmt : str, optional
         Format string for quickly setting basic line properties.
     plottype : string
-        Plot type. It can be 'loglog', 'semilogx', 'semilogy' or None
-        (default, non-logarithmic plot).
+        Plot type. It can be 'loglog', 'semilogx', 'semilogy', 'vlines'
+        or None (default, non-logarithmic plot). With 'vlines', a
+        vertical line from y=0 to y[i] is drawn at each x[i] (e.g. to
+        simulate an emission-line spectrum); in this case 'fmt' is
+        ignored and 'kwargs' are passed to matplotlib's Axes.vlines.
+        If 'ylim' is None and all y values are non-negative, the lower
+        limit of the y-axis is set to zero.
     xlim : tuple of floats
         Tuple defining the x-axis range.
     ylim : tuple of floats
@@ -119,6 +133,11 @@ def ximplotxy(
         return ax
 
 
+# Line2D properties (besides those starting with 'marker') that are not
+# accepted by the LineCollection returned by Axes.vlines
+_LINE2D_ONLY_KWARGS = {"ms", "mfc", "mec", "mew", "fillstyle", "drawstyle", "ds"}
+
+
 def _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs):
     """Draw the plot of ximplotxy in the axes ax"""
     if plottype == "loglog":
@@ -136,6 +155,16 @@ def _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs
             ax.semilogy(x, y, **kwargs)
         else:
             ax.semilogy(x, y, fmt, **kwargs)
+    elif plottype == "vlines":
+        # vertical lines starting at y=0; Axes.vlines returns a
+        # LineCollection, which does not accept a format string nor
+        # the marker/drawstyle properties of Line2D
+        if fmt is not None:
+            raise ValueError("fmt cannot be used with plottype='vlines'")
+        invalid_kwargs = [key for key in kwargs if key.startswith("marker") or key in _LINE2D_ONLY_KWARGS]
+        if invalid_kwargs:
+            raise ValueError(f"Invalid argument(s) for plottype='vlines': {', '.join(invalid_kwargs)}")
+        ax.vlines(x, 0, y, **kwargs)
     elif plottype is None:
         if fmt is None:
             ax.plot(x, y, **kwargs)
@@ -148,6 +177,10 @@ def _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs
         ax.set_xlim(xlim[0], xlim[1])
     if ylim is not None:
         ax.set_ylim(ylim[0], ylim[1])
+    elif plottype == "vlines" and np.min(y) >= 0:
+        # lines start at y=0: remove the autoscale margin below zero
+        # (kept when there are negative values, to avoid hiding them)
+        ax.set_ylim(bottom=0)
 
     if xlabel is not None:
         ax.set_xlabel(xlabel)
@@ -165,6 +198,11 @@ def main(args=None):
     parser.add_argument("col1", help="Column number for X data", type=int)
     parser.add_argument("col2", help="Column number for Y data", type=int)
     parser.add_argument(
+        "--vlines",
+        help="Draw a vertical line from y=0 at each point (emission-line spectrum)",
+        action="store_true",
+    )
+    parser.add_argument(
         "--kwargs",
         help="Extra arguments for plot, e.g.: "
         "\"{'marker':'o',"
@@ -175,6 +213,8 @@ def main(args=None):
         " 'label':'sample data',"
         " 'color':'magenta'}\"",
     )
+    parser.add_argument("--xlim", help="X-axis limits", type=float, nargs=2, metavar=("XMIN", "XMAX"))
+    parser.add_argument("--ylim", help="Y-axis limits", type=float, nargs=2, metavar=("YMIN", "YMAX"))
     parser.add_argument("--geometry", help="tuple x,y,dx,dy (default 0,0,640,480)", default="0,0,640,480")
     args = parser.parse_args(args)
 
@@ -193,10 +233,25 @@ def main(args=None):
     x = bigtable[:, col1]
     y = bigtable[:, col2]
 
+    plottype = "vlines" if args.vlines else None
+
     if args.kwargs is None:
-        ximplotxy(x, y, geometry=geometry, debugplot=12, marker="o", linestyle="")
+        if args.vlines:
+            plot_kwargs = {}
+        else:
+            plot_kwargs = {"marker": "o", "linestyle": ""}
     else:
-        ximplotxy(x, y, geometry=geometry, debugplot=12, **eval(args.kwargs))
+        plot_kwargs = eval(args.kwargs)
+
+    # axis limits: --xlim/--ylim cannot be combined with the same keys in --kwargs
+    for limname in ("xlim", "ylim"):
+        limvalue = getattr(args, limname)
+        if limvalue is not None:
+            if limname in plot_kwargs:
+                parser.error(f"--{limname} cannot be used together with '{limname}' in --kwargs")
+            plot_kwargs[limname] = limvalue
+
+    ximplotxy(x, y, plottype=plottype, geometry=geometry, debugplot=12, **plot_kwargs)
 
 
 if __name__ == "__main__":
