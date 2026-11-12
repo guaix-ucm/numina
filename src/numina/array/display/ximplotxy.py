@@ -66,7 +66,10 @@ def ximplotxy(
         simulate an emission-line spectrum); in this case 'fmt' is
         ignored and 'kwargs' are passed to matplotlib's Axes.vlines.
         If 'ylim' is None and all y values are non-negative, the lower
-        limit of the y-axis is set to zero.
+        limit of the y-axis is set to zero. 'vlineslog' is similar to
+        'vlines', but the plotted values are log10(y - min(y) + 1.0),
+        which are always >= 0; in this case 'ylim' refers to these
+        transformed values.
     xlim : tuple of floats
         Tuple defining the x-axis range.
     ylim : tuple of floats
@@ -155,15 +158,19 @@ def _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs
             ax.semilogy(x, y, **kwargs)
         else:
             ax.semilogy(x, y, fmt, **kwargs)
-    elif plottype == "vlines":
+    elif plottype in ("vlines", "vlineslog"):
         # vertical lines starting at y=0; Axes.vlines returns a
         # LineCollection, which does not accept a format string nor
         # the marker/drawstyle properties of Line2D
         if fmt is not None:
-            raise ValueError("fmt cannot be used with plottype='vlines'")
+            raise ValueError(f"fmt cannot be used with plottype='{plottype}'")
         invalid_kwargs = [key for key in kwargs if key.startswith("marker") or key in _LINE2D_ONLY_KWARGS]
         if invalid_kwargs:
-            raise ValueError(f"Invalid argument(s) for plottype='vlines': {', '.join(invalid_kwargs)}")
+            raise ValueError(f"Invalid argument(s) for plottype='{plottype}': {', '.join(invalid_kwargs)}")
+        if plottype == "vlineslog":
+            # shift the data so that the minimum maps to 1 (log10 = 0),
+            # which avoids problems with values <= 0
+            y = np.log10(np.asarray(y, dtype=float) - np.nanmin(y) + 1.0)
         ax.vlines(x, 0, y, **kwargs)
     elif plottype is None:
         if fmt is None:
@@ -177,7 +184,7 @@ def _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs
         ax.set_xlim(xlim[0], xlim[1])
     if ylim is not None:
         ax.set_ylim(ylim[0], ylim[1])
-    elif plottype == "vlines" and np.min(y) >= 0:
+    elif plottype in ("vlines", "vlineslog") and np.nanmin(y) >= 0:
         # lines start at y=0: remove the autoscale margin below zero
         # (kept when there are negative values, to avoid hiding them)
         ax.set_ylim(bottom=0)
@@ -197,9 +204,15 @@ def main(args=None):
     parser.add_argument("filename", help="ASCII file with data in columns")
     parser.add_argument("col1", help="Column number for X data", type=int)
     parser.add_argument("col2", help="Column number for Y data", type=int)
-    parser.add_argument(
+    group_vlines = parser.add_mutually_exclusive_group()
+    group_vlines.add_argument(
         "--vlines",
         help="Draw a vertical line from y=0 at each point (emission-line spectrum)",
+        action="store_true",
+    )
+    group_vlines.add_argument(
+        "--vlineslog",
+        help="Same as --vlines, but plotting log10(y - min(y) + 1.0)",
         action="store_true",
     )
     parser.add_argument(
@@ -233,10 +246,15 @@ def main(args=None):
     x = bigtable[:, col1]
     y = bigtable[:, col2]
 
-    plottype = "vlines" if args.vlines else None
+    if args.vlines:
+        plottype = "vlines"
+    elif args.vlineslog:
+        plottype = "vlineslog"
+    else:
+        plottype = None
 
     if args.kwargs is None:
-        if args.vlines:
+        if plottype is not None:
             plot_kwargs = {}
         else:
             plot_kwargs = {"marker": "o", "linestyle": ""}
