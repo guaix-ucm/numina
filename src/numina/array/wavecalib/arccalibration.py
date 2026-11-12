@@ -2013,6 +2013,28 @@ def refine_arccalibration(
                 transform=ax1.transAxes,
             )
             ax1.text(
+                0.01,
+                0.81,
+                r"$\lambda_{\rm min}$" + " (" + r"$\AA$" + "): " + str(round(poly_refined(0.5), decimal_places)),
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
+                horizontalalignment="left",
+                verticalalignment="top",
+                transform=ax1.transAxes,
+            )
+            ax1.text(
+                0.01,
+                0.73,
+                r"$\lambda_{\rm max}$"
+                + " ("
+                + r"$\AA$"
+                + "): "
+                + str(round(poly_refined(naxis1 + 0.5), decimal_places)),
+                bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
+                horizontalalignment="left",
+                verticalalignment="top",
+                transform=ax1.transAxes,
+            )
+            ax1.text(
                 0.99,
                 0.97,
                 "robust std (" + r"$\AA$" + "): " + str(round(yres_summary["robust_std"], decimal_places)),
