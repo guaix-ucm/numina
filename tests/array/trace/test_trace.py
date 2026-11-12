@@ -119,3 +119,20 @@ def test_trace_axis1(gauss):
 
     # x and y are swapped, the peak value is the same
     assert_allclose(mm1, mm0[:, [1, 0, 2]])
+
+
+@pytest.mark.parametrize("gauss", [1, 0])
+def test_trace_negative_neighbour(gauss):
+    """A non-positive value next to the peak does not give a non-finite point"""
+    arr = np.zeros((100, 100))
+    arr[47, 10:90] = 10.0
+    arr[48, 10:90] = 100.0
+    arr[49, 10:90] = 12.0
+    # a cosmetic defect next to the trace
+    arr[49, 60:64] = -50.0
+
+    result = trace(arr, 50, 48, step=1, gauss=gauss)
+
+    assert np.isfinite(result).all()
+    assert_allclose(result[:, 1], 48.0, atol=0.5)
+    assert result[:, 0].max() >= 88

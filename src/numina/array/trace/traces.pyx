@@ -154,6 +154,7 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
     cdef double dis, ndis
     cdef size_t ipeak
     cdef size_t nearp
+    cdef int ip
     cdef vector[double] result
 
     # Init pbuff
@@ -210,15 +211,17 @@ cdef InternalTrace _internal_tracing(FType[:, :] arr,
 
         nearp = peaks[ipeak] + pred_off
 
-        # fit the peak with three points
-        if gauss:
-            result = interp_max_3(logc(pbuff[peaks[ipeak]-1]), logc(pbuff[peaks[ipeak]]), logc(pbuff[peaks[ipeak]+1]))
+        # fit the peak with three points; the Gaussian fit (a parabola
+        # in the logarithm) needs the three values to be positive
+        ip = peaks[ipeak]
+        if gauss and pbuff[ip-1] > 0 and pbuff[ip] > 0 and pbuff[ip+1] > 0:
+            result = interp_max_3(logc(pbuff[ip-1]), logc(pbuff[ip]), logc(pbuff[ip+1]))
             result[1] = expc(result[1])
         else:
-            result = interp_max_3(pbuff[peaks[ipeak]-1], pbuff[peaks[ipeak]], pbuff[peaks[ipeak]+1])
+            result = interp_max_3(pbuff[ip-1], pbuff[ip], pbuff[ip+1])
 
-        if (result[0] > 0.5) or (result[0] < -0.5):
-            # ignore the correction if it's larger than 0.5 pixel
+        if not (fabs(result[0]) <= 0.5):
+            # ignore the correction if it's larger than 0.5 pixel, or not finite
             trace.push_back(col, nearp, pbuff[peaks[ipeak]])
         else:
             trace.push_back(col, result[0] + nearp, result[1])
