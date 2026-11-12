@@ -1704,18 +1704,22 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
     return wv_verified_all_peaks
 
 
-def _disable_quit_keys(fig):
+def _disable_default_keys(fig, extra_keys=()):
     """Disable the keyboard shortcuts that close a figure window.
 
     The default matplotlib key handler of the figure is replaced by
     one that ignores the keys in the rcParams 'keymap.quit' and
-    'keymap.quit_all' (e.g. 'q', 'ctrl+w', 'cmd+w'), while keeping the
-    remaining shortcuts (zoom, pan, home, etc.).
+    'keymap.quit_all' (e.g. 'q', 'ctrl+w', 'cmd+w'), as well as the
+    keys in 'extra_keys', while keeping the remaining shortcuts
+    (zoom, pan, home, etc.).
 
     Parameters
     ----------
     fig : matplotlib.figure.Figure
         Figure displayed in a window.
+    extra_keys : iterable of str
+        Additional keys to be ignored by the default matplotlib key
+        handler (e.g. keys used by an interactive menu).
 
     """
     from matplotlib import rcParams
@@ -1729,8 +1733,8 @@ def _disable_quit_keys(fig):
 
     def filtered_key_press_handler(evt):
         # the keymaps are read when the key is pressed, as matplotlib does
-        quit_keys = set(rcParams["keymap.quit"]) | set(rcParams["keymap.quit_all"])
-        if evt.key not in quit_keys:
+        ignored_keys = set(rcParams["keymap.quit"]) | set(rcParams["keymap.quit_all"]) | set(extra_keys)
+        if evt.key not in ignored_keys:
             key_press_handler(evt)
 
     fig.canvas.mpl_disconnect(handler_id)
@@ -1885,6 +1889,23 @@ def refine_arccalibration(
     fig = None
     fig_interactive = False
 
+    # single-key options of the interactive menu ('n' asks for the
+    # number of the line to be modified)
+    menu_keys = "adeilnrwx"
+
+    def print_menu():
+        logger.info("[bold blue]Recalibration menu")
+        logger.info("[bold blue]------------------")
+        logger.info("[blue](i) insert new peak and restart")
+        logger.info("[blue](d) delete all the identified lines")
+        logger.info("[blue](r) restart from begining")
+        logger.info("[blue](a) automatic line inclusion")
+        logger.info("[blue](l) toggle logarithmic scale on/off")
+        logger.info("[blue](e) evaluate current polynomial at a given pixel")
+        logger.info("[blue](w) replot whole spectrum")
+        logger.info("[blue](x) exit without additional changes")
+        logger.info(f"[blue](n) modify line #<number> (number from 1 to {len(ixpeaks)})")
+
     nrepeat_eff = nrepeat
     while loop:
 
@@ -1965,7 +1986,9 @@ def refine_arccalibration(
                 fig = new_figure()
                 set_window_geometry(geometry)
                 if interactive:
-                    _disable_quit_keys(fig)
+                    # the menu keys must not trigger matplotlib shortcuts
+                    # (e.g. 'r' = home, 'l' = toggle y log scale)
+                    _disable_default_keys(fig, extra_keys=menu_keys)
             else:
                 # reuse the window opened in a previous iteration
                 fig.clf()
@@ -2124,34 +2147,53 @@ def refine_arccalibration(
             # h_pad=0 to keep both panels as close as possible
             fig.tight_layout(h_pad=0)
 
+            # option of the interactive menu selected in the figure window
+            # (None if it has to be read from the terminal)
+            ioption = None
+            menu_printed = False
+
             if pdf is not None:
                 pdf.savefig(fig)
             elif interactive:
                 # display the figure without blocking and run the GUI event
-                # loop (allowing zoom/pan) until RETURN is pressed in the
-                # figure window or the window is closed; "enter" is not
-                # used in the default matplotlib keymaps
+                # loop (allowing zoom/pan) until a menu key (or RETURN, which
+                # selects the default option 'w') is pressed in the figure
+                # window or the window is closed; the menu keys are not
+                # handled by the default matplotlib key handler (see
+                # _disable_default_keys) and "enter" is not used in the
+                # default matplotlib keymaps
                 fig_interactive = True
                 fig.canvas.draw_idle()
                 plt.show(block=False)
+                print_menu()
+                menu_printed = True
                 print(
-                    "Zoom/Unzoom in the figure and press RETURN in the figure window to continue...", end="", flush=True
+                    "Zoom/Unzoom in the figure (RETURN = w)... ",
+                    end="",
+                    flush=True,
                 )
 
-                waiting = [True]
+                selected_key = [None]
 
-                def stop_on_enter(evt):
-                    if evt.key == "enter":
-                        waiting[0] = False
+                def select_option(evt):
+                    # evt.key may be None or a combination such as 'ctrl+a'
+                    if evt.key is not None and len(evt.key) == 1 and evt.key in menu_keys:
+                        selected_key[0] = evt.key
+                    elif evt.key == "enter":
+                        selected_key[0] = "w"
+                    if selected_key[0] is not None:
                         fig.canvas.stop_event_loop()
 
-                cid_key = fig.canvas.mpl_connect("key_press_event", stop_on_enter)
+                cid_key = fig.canvas.mpl_connect("key_press_event", select_option)
                 # run the event loop in short slices and check whether the
                 # window is still open, so that closing it by any means
                 # (window button, OS shortcut) cannot leave this loop hanging
-                while waiting[0] and plt.fignum_exists(fig.number):
+                while selected_key[0] is None and plt.fignum_exists(fig.number):
                     fig.canvas.start_event_loop(timeout=0.1)
                 fig.canvas.mpl_disconnect(cid_key)
+                ioption = selected_key[0]
+                # end the prompt line, showing the selected option
+                print(ioption if ioption is not None else "")
                 # store the current limits to keep them when replotting
                 xmin_previous, xmax_previous = ax2.get_xlim()
                 ymin_previous, ymax_previous = ax2.get_ylim()
@@ -2172,18 +2214,25 @@ def refine_arccalibration(
             # request next action in interactive session
             if interactive:
                 nrepeat_eff = 1
-                logger.info("[bold blue]Recalibration menu")
-                logger.info("[bold blue]------------------")
-                logger.info("[blue](i) insert new peak and restart")
-                logger.info("[blue](d) delete all the identified lines")
-                logger.info("[blue](r) restart from begining")
-                logger.info("[blue](a) automatic line inclusion")
-                logger.info("[blue](l) toggle logarithmic scale on/off")
-                logger.info("[blue](e) evaluate current polynomial at a given pixel")
-                logger.info("[blue](w) replot whole spectrum")
-                logger.info("[blue](x) exit without additional changes")
-                logger.info(f"[blue](#) number from 1 to {len(ixpeaks)} --> modify line #")
-                ioption = readi("Option", default="w", minval=1, maxval=len(ixpeaks), allowed_single_chars="adeilrwx")
+                if ioption is None:
+                    # no option selected in the figure window (window closed
+                    # or PDF output): read it from the terminal, where the
+                    # line number can also be given directly
+                    if not menu_printed:
+                        print_menu()
+                    ioption = readi(
+                        "Option", default="w", minval=1, maxval=len(ixpeaks), allowed_single_chars=menu_keys
+                    )
+                if ioption == "n":
+                    if len(ixpeaks) > 0:
+                        ioption = readi(
+                            f"Number of the line to be modified (1 to {len(ixpeaks)})",
+                            minval=1,
+                            maxval=len(ixpeaks),
+                        )
+                    else:
+                        logger.info("No lines available to be modified")
+                        ioption = "w"
                 if ioption == "d":
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == "r":
