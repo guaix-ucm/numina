@@ -423,6 +423,15 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         z2 = np.nanmax(image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2])
     else:
         z1, z2 = z1z2
+
+    # check colormap is valid
+    try:
+        from numina.array.display.matplotlib_qt import plt  # noqa: F401
+
+        plt.get_cmap(cmap)
+    except Exception:
+        raise ValueError(f"Invalid colormap '{cmap}'")
+
     im_show = ax.imshow(
         image2d[(ns1 - 1) : ns2, (nc1 - 1) : nc2],
         cmap=cmap,
