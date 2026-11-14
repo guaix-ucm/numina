@@ -62,39 +62,39 @@ def main(args=None):
         default="mean",
         choices=["mean", "median"],
     )
-    parser.add_argument("--wv_master_file", required=True, help="TXT file containing wavelengths")
+    parser.add_argument("--wv-master-file", required=True, help="ECSV/ASCII file containing wavelengths")
     parser.add_argument("--degree", required=True, help="Polynomial degree", type=int)
     # optional arguments
     parser.add_argument("--wvmin", help="Minimum expected wavelength", type=float)
     parser.add_argument("--wvmax", help="Maximum expected wavelength", type=float)
-    parser.add_argument("--wvmin_useful", help="Minimum useful wavelength", type=float)
-    parser.add_argument("--wvmax_useful", help="Maximum useful wavelength", type=float)
+    parser.add_argument("--wvmin-useful", help="Minimum useful wavelength", type=float)
+    parser.add_argument("--wvmax-useful", help="Maximum useful wavelength", type=float)
     parser.add_argument(
-        "--nwin_background", help="window to compute background (0=none)" " (default=0)", default=0, type=int
+        "--nwin-background", help="window to compute background (0=none)" " (default=0)", default=0, type=int
     )
     parser.add_argument(
-        "--times_sigma_threshold",
+        "--times-sigma-threshold",
         help="Threshold (times robust sigma to detect lines)" " (default=10)",
         default=10,
         type=float,
     )
     parser.add_argument(
-        "--minimum_threshold", help="Minimum threshold to detect lines" " (default=0)", default=0, type=float
+        "--minimum-threshold", help="Minimum threshold to detect lines" " (default=0)", default=0, type=float
     )
     parser.add_argument(
-        "--nwinwidth_initial",
+        "--nwinwidth-initial",
         help="Initial window width to detect lines (odd integer >= 3, default=7)",
         default=7,
         type=odd_window_width,
     )
     parser.add_argument(
-        "--nwinwidth_refined",
+        "--nwinwidth-refined",
         help="Refined window width to detect lines (odd integer >= 3, default=5)",
         default=5,
         type=odd_window_width,
     )
     parser.add_argument(
-        "--npix_avoid_border", help="Number of pixels in the borders to be avoided" " (default=6)", default=6, type=int
+        "--npix-avoid-border", help="Number of pixels in the borders to be avoided" " (default=6)", default=6, type=int
     )
     parser.add_argument(
         "--nbrightlines",
@@ -102,26 +102,26 @@ def main(args=None):
         default="0",
     )
     parser.add_argument(
-        "--degree_refined",
+        "--degree-refined",
         help="Degree of the refined fit using faint lines " "from wv_master_file (default=None, i.e. no " "refinement)",
         default=None,
         type=int,
     )
     parser.add_argument(
-        "--sigma_gauss_filt",
+        "--sigma-gauss-filt",
         help="Sigma (pixels) of gaussian filtering to avoid " "saturared lines (default=0)",
         default=0,
         type=float,
     )
     parser.add_argument(
-        "--minimum_gauss_filt",
+        "--minimum-gauss-filt",
         help="Minimum pixel value to use gaussian filtering " "(default=0)",
         default=0,
         type=float,
     )
     parser.add_argument("--reverse", help="Reverse wavelength direction", action="store_true")
     parser.add_argument(
-        "--out_sp",
+        "--out-sp",
         help="File name to save the selected spectrum in FITS "
         "format before performing the wavelength "
         "calibration (default=None)",

@@ -183,7 +183,7 @@ def read_wv_master_file(wv_master_file, lines="brightest"):
     Parameters
     ----------
     wv_master_file : string
-        File name of txt file containing the wavelength database.
+        File name of ECSV/ASCII file containing the wavelength database.
     lines : string
         Indicates which lines to read. For files with a single column
         or two columns this parameter is irrelevant. For files with
@@ -203,10 +203,26 @@ def read_wv_master_file(wv_master_file, lines="brightest"):
     if lines not in ["brightest", "all"]:
         raise ValueError("Unexpected lines=" + str(lines))
 
-    # read table from txt file
-    master_table = np.genfromtxt(wv_master_file)
-
-    wv_master = read_wv_master_from_array(master_table, lines)
+    # check if external file is a valid ECSV file; if not,
+    # try to read it as a simple text file
+    if not os.path.isfile(wv_master_file):
+        raise FileNotFoundError(f"File not found: '{wv_master_file}'")
+    if not str(wv_master_file).lower().endswith(".ecsv"):
+        logger.warning(f"WARNING: File is not a valid ECSV file: '{wv_master_file}'")
+        logger.info("INFO: Trying to read as a simple text file...")
+        master_table = np.genfromtxt(wv_master_file)
+        wv_master = read_wv_master_from_array(master_table, lines)
+    else:
+        master_table_ecsv = Table.read(wv_master_file, format="ascii.ecsv")
+        # generate numpy array with three columns: wavelength, flag and intensity
+        master_table = np.zeros((len(master_table_ecsv), 3))
+        for colname in ["wavelength", "flag", "intensity"]:
+            if colname not in master_table_ecsv.colnames:
+                raise ValueError(f"Column '{colname}' not found in ECSV file '{wv_master_file}'")
+        master_table[:, 0] = master_table_ecsv["wavelength"].data
+        master_table[:, 1] = master_table_ecsv["flag"].data
+        master_table[:, 2] = master_table_ecsv["intensity"].data
+        wv_master = read_wv_master_from_array(master_table, lines)
 
     logger.debug(f"Reading master table: {wv_master_file}")
     logger.debug(f"wv_master:\n{wv_master}")

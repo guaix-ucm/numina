@@ -82,7 +82,7 @@ def test_main_extra_plots(tmp_path, monkeypatch, options, extra_plots):
         raise StopAfterPeaks
 
     monkeypatch.setattr(core, "find_fxpeaks", fake_find_fxpeaks)
-    args = [str(fitsfile), "--scans", "2", "--wv_master_file", str(wv_master_file), "--degree", "1"]
+    args = [str(fitsfile), "--scans", "2", "--wv-master-file", str(wv_master_file), "--degree", "1"]
     with pytest.raises(StopAfterPeaks):
         wavecalib_main.main(args + options)
     assert received["extra_plots"] is extra_plots
