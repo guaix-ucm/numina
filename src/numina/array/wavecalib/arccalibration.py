@@ -1995,7 +1995,7 @@ def refine_arccalibration(
 
             # no explicit subplot parameters (left, top, hspace...) are set
             # in the gridspec, since they make it incompatible with
-            # tight_layout (see fig.tight_layout below)
+            # tight_layout (see fig.set_layout_engine below)
             grid = fig.add_gridspec(2, 1)
 
             # differences between linear fit and fitted polynomial
@@ -2090,7 +2090,9 @@ def refine_arccalibration(
             ymax = spectrum.max()
             dy = ymax - ymin
             ymin -= dy / 40.0
-            ymax += dy / 40.0
+            # larger upper margin to leave room for the labels of the
+            # brightest lines (the labels are clipped to the axes area)
+            ymax += dy / 10.0
             ax2.set_ylim(ymin, ymax)
             if xmin_previous is not None:
                 ax2.set_xlim(xmin_previous, xmax_previous)
@@ -2107,6 +2109,9 @@ def refine_arccalibration(
             # ax2.plot(fxpeaks + 1, spectrum[ixpeaks], 'go',
             #          label="refined location")
             ax2.plot((fxpeaks + 1)[lines_ok], spectrum[ixpeaks][lines_ok], "mo", label="identified lines")
+            # clip_on=True: labels outside the axes limits (e.g. after
+            # zooming) are not drawn and are ignored by tight_layout,
+            # which otherwise cannot be applied
             for i in range(len(ixpeaks)):
                 if wv_verified_all_peaks[i] > 0:
                     ax2.text(
@@ -2115,6 +2120,7 @@ def refine_arccalibration(
                         str(wv_verified_all_peaks[i]) + "(" + str(i + 1) + ")",
                         fontsize=8,
                         horizontalalignment="center",
+                        clip_on=True,
                     )
                 else:
                     ax2.text(
@@ -2123,6 +2129,7 @@ def refine_arccalibration(
                         "(" + str(i + 1) + ")",
                         fontsize=8,
                         horizontalalignment="center",
+                        clip_on=True,
                     )
             # display expected location of lines in master file
             for i in range(len(wv_master)):
@@ -2144,8 +2151,11 @@ def refine_arccalibration(
                     )
             # legend
             ax2.legend(numpoints=1)
-            # h_pad=0 to keep both panels as close as possible
-            fig.tight_layout(h_pad=0)
+            # h_pad=0 to keep both panels as close as possible; the layout
+            # engine (instead of a single call to fig.tight_layout) applies
+            # tight_layout at every draw, so that it is recomputed when the
+            # window gets its final size (when it is shown) or is resized
+            fig.set_layout_engine("tight", h_pad=0)
 
             # option of the interactive menu selected in the figure window
             # (None if it has to be read from the terminal)
