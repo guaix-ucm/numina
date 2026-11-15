@@ -117,9 +117,13 @@ def ximplotxy(
     from numina.array.display.matplotlib_qt import plt
 
     if not show and using_jupyter:
-        plt.ioff()
-
-    fig = plt.figure()
+        # in Jupyter, a figure created in interactive mode is displayed
+        # automatically at the end of the cell; plt.ioff() used as a
+        # context manager prevents it and restores the previous state
+        with plt.ioff():
+            fig = plt.figure()
+    else:
+        fig = plt.figure()
     ax = fig.add_subplot(111)
     _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs)
 
@@ -131,8 +135,6 @@ def ximplotxy(
         if tight_layout:
             plt.tight_layout()
         # return axes
-        if using_jupyter:
-            plt.ion()
         return ax
 
 

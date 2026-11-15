@@ -202,9 +202,6 @@ def ximshow(
     if fig is None:
         from numina.array.display.matplotlib_qt import plt
 
-        if not show and using_jupyter:
-            plt.ioff()
-
     # protections
     if not isinstance(image2d, np.ndarray):
         raise ValueError("image2d=" + str(image2d) + " must be a numpy.ndarray")
@@ -399,7 +396,13 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
     drawn_in_fig = fig is not None
     if not drawn_in_fig:
         if figuredict is None:
-            fig = plt.figure()
+            figuredict = {}
+        if not show and using_jupyter:
+            # in Jupyter, a figure created in interactive mode is displayed
+            # automatically at the end of the cell; plt.ioff() used as a
+            # context manager prevents it and restores the previous state
+            with plt.ioff():
+                fig = plt.figure(**figuredict)
         else:
             fig = plt.figure(**figuredict)
 
@@ -511,8 +514,6 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
             except Exception:
                 pass
         # return axes
-        if using_jupyter:
-            plt.ion()
         return ax
 
 
