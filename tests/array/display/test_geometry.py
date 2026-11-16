@@ -6,7 +6,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pytest
 
-from numina.array.display.matplotlib_qt import parse_geometry, set_window_geometry
+from numina.array.display.matplotlib_utils import parse_geometry, set_window_geometry
 from numina.array.display.ximshow import ximshow
 
 

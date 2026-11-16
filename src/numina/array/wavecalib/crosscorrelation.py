@@ -12,7 +12,7 @@ from numpy.polynomial import Polynomial
 from scipy.interpolate import interp1d
 from scipy.ndimage import gaussian_filter
 
-from numina.array.display.matplotlib_qt import new_figure
+from numina.array.display.matplotlib_utils import new_figure
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.ximplotxy import ximplotxy
 from numina.modeling.gaussbox import gauss_box_model
@@ -75,7 +75,7 @@ def filtmask(sp, fmin, fmax, sp_label="spectrum", debugplot=0):
 
     sp_filt = np.fft.ifft(yf).real
     if abs(debugplot) in (21, 22):
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_utils import plt
 
         xdum = np.arange(1, sp_filt.size + 1)
         _, ax = ximplotxy(xdum, sp, title="filtering " + sp_label, label="original", show=False)
@@ -278,7 +278,7 @@ def periodic_corr1d(
     xcorr = xcorr[isort]
 
     if abs(debugplot) in (21, 22):
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_utils import plt
 
         xdum = np.arange(len(sp_reference)) + 1
         xdumf = np.arange(len(sp_reference_filtmask)) + 1

@@ -7,7 +7,7 @@ from astropy.io import fits
 from matplotlib.backends.backend_pdf import PdfPages
 from matplotlib.figure import Figure
 
-from numina.array.display.matplotlib_qt import new_figure
+from numina.array.display.matplotlib_utils import new_figure
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.ximplotxy import ximplotxy
 from numina.array.display.ximshow import ximshow, ximshow_file

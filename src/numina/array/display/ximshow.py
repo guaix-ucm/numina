@@ -18,7 +18,7 @@ import warnings
 from rich import print
 from rich_argparse import RichHelpFormatter
 
-from .matplotlib_qt import new_figure, parse_geometry, set_window_geometry
+from .matplotlib_utils import new_figure, parse_geometry, set_window_geometry
 from .pause_debugplot import pause_debugplot
 from .fileinfo import list_fileinfo_from_txt
 from .fileinfo import check_extnum
@@ -169,7 +169,7 @@ def ximshow(
         x, y, dx, dy values employed to set the window geometry.
     factor_macosx : None
         Deprecated and ignored: the window size on macOS is set by
-        numina.array.display.matplotlib_qt.set_window_geometry.
+        numina.array.display.matplotlib_utils.set_window_geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     figuredict: dictionary
@@ -196,7 +196,7 @@ def ximshow(
     """
 
     if fig is None:
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_utils import plt
 
     if factor_macosx is not None:
         warnings.warn("factor_macosx is deprecated and ignored", DeprecationWarning, stacklevel=2)
@@ -428,7 +428,7 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
 
     # check colormap is valid
     try:
-        from numina.array.display.matplotlib_qt import plt  # noqa: F401
+        from numina.array.display.matplotlib_utils import plt  # noqa: F401
 
         plt.get_cmap(cmap)
     except Exception:
@@ -561,7 +561,7 @@ def ximshow_file(
         This information is ignored if args_pdffile is not None.
     args_factor_macosx : None
         Deprecated and ignored: the window size on macOS is set by
-        numina.array.display.matplotlib_qt.set_window_geometry.
+        numina.array.display.matplotlib_utils.set_window_geometry.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
     png : string or None
@@ -1122,7 +1122,7 @@ def main(args=None):
 
         pdf = PdfPages(args.pdffile)
     else:
-        from numina.array.display.matplotlib_qt import plt  # noqa: F401
+        from numina.array.display.matplotlib_utils import plt  # noqa: F401
 
     png = None
     if args.pngfile is not None:

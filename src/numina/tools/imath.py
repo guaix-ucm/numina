@@ -21,7 +21,7 @@ from astropy.io import fits
 import numpy as np
 import pathlib
 
-from numina.array.display.matplotlib_qt import parse_geometry
+from numina.array.display.matplotlib_utils import parse_geometry
 from numina.array.display.ximshow import ximshow_file, ximshow
 
 

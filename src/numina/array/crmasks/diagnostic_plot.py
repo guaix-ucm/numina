@@ -18,7 +18,7 @@ import numpy as np
 from pathlib import Path
 import teareduce as tea
 
-from numina.array.display.matplotlib_qt import new_figure
+from numina.array.display.matplotlib_utils import new_figure
 
 mpl.rcParams["keymap.quit"] = []  # disable 'q' key for quitting plots
 

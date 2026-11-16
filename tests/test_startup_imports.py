@@ -27,14 +27,14 @@ def test_wavecalib_does_not_import_matplotlib(module):
     assert result.stdout.strip() == "False"
 
 
-def test_matplotlib_qt_plt():
+def test_matplotlib_utils_plt():
     import matplotlib.pyplot
 
-    from numina.array.display import matplotlib_qt
-    from numina.array.display.matplotlib_qt import plt, set_window_geometry
+    from numina.array.display import matplotlib_utils
+    from numina.array.display.matplotlib_utils import plt, set_window_geometry
 
     assert plt is matplotlib.pyplot
-    assert matplotlib_qt.plt is plt
+    assert matplotlib_utils.plt is plt
     set_window_geometry(None)
     with pytest.raises(AttributeError):
-        matplotlib_qt.other
+        matplotlib_utils.other

@@ -16,7 +16,7 @@ from numpy.polynomial import Polynomial
 from scipy.optimize import OptimizeWarning, curve_fit, minimize_scalar
 from scipy.special import erf, erfc, ndtr, owens_t
 
-from ..display.matplotlib_qt import set_window_geometry
+from ..display.matplotlib_utils import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
 _logger = logging.getLogger(__name__)
@@ -765,7 +765,7 @@ def find_highest_peaks_spectrum(
             sx_copy[start_clean:end_clean] = 0
 
         if debugplot % 10 != 0:
-            from numina.array.display.matplotlib_qt import plt
+            from numina.array.display.matplotlib_utils import plt
 
             fig, ax = plt.subplots()
             xdum = np.arange(len(sx_copy))
@@ -1427,7 +1427,7 @@ def refine_peaks_spectrum(
             debugplot_effective = 1
         if debugplot_effective % 10 != 0:
             if ax_external is None:
-                from numina.array.display.matplotlib_qt import plt
+                from numina.array.display.matplotlib_utils import plt
 
                 fig = plt.figure()
                 if geometry is not None:

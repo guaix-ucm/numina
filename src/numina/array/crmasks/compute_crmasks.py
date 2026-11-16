@@ -45,7 +45,7 @@ try:
 except ModuleNotFoundError:
     CONN_AVAILABLE = False
 
-from numina.array.display.matplotlib_qt import new_figure
+from numina.array.display.matplotlib_utils import new_figure
 from numina.array.distortion import shift_image2d
 from numina.tools.input_number import input_number
 import teareduce as tea

@@ -15,7 +15,7 @@ import numbers
 import numpy as np
 from numpy.polynomial import Polynomial
 
-from .matplotlib_qt import parse_geometry, set_window_geometry
+from .matplotlib_utils import parse_geometry, set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
 
@@ -214,7 +214,7 @@ def polfit_residuals(
             srejected = mysize[reject]
 
         if fig is None:
-            from numina.array.display.matplotlib_qt import plt
+            from numina.array.display.matplotlib_utils import plt
 
             fig = plt.figure()
 

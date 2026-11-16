@@ -40,7 +40,7 @@ from ...tools.arg_file_is_new import arg_file_is_new
 
 from numina.tools.initialize_script_with_args import NuminaScriptDefinition
 
-from ..display.matplotlib_qt import parse_geometry
+from ..display.matplotlib_utils import parse_geometry
 from ..display.pause_debugplot import DEBUGPLOT_CODES
 
 # Functions moved to numina.array.wavecalib.core

@@ -20,7 +20,7 @@ from numina.array.stats import summary
 from numina.array.display.iofunctions import readi
 from numina.array.display.iofunctions import readf
 from numina.array.display.iofunctions import readc
-from numina.array.display.matplotlib_qt import new_figure, parse_geometry, set_window_geometry
+from numina.array.display.matplotlib_utils import new_figure, parse_geometry, set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection

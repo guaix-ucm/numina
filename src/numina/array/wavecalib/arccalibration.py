@@ -18,7 +18,7 @@ from scipy.special import comb
 
 from ..display.iofunctions import readi
 from ..display.iofunctions import readf
-from ..display.matplotlib_qt import new_figure, set_window_geometry
+from ..display.matplotlib_utils import new_figure, set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..display.polfit_residuals import polfit_residuals_with_sigma_rejection
@@ -210,7 +210,7 @@ def fit_list_of_wvfeatures(
         yp = yfit - (crval1_linear + (xp - crpix1) * cdelt1_linear)
         yres = yfit - poly(xp)  # residuals
         # include residuals plot with identified lines
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_utils import plt
 
         fig = plt.figure()
         ax2 = fig.add_subplot(2, 1, 2)
@@ -379,7 +379,7 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
         bins_in = np.linspace(0.0, 1.0, 41)
         hist, bins_out = np.histogram(ratios_master, bins=bins_in)
         #
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_utils import plt
 
         fig = plt.figure()
         ax = fig.add_subplot(111)
@@ -766,7 +766,7 @@ def arccalibration_direct(
 
     # intermediate plots
     if abs(debugplot) in [21, 22]:
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_utils import plt
 
         # CDELT1 vs CRVAL1 diagram (original coordinates)
         fig = plt.figure()
@@ -978,7 +978,7 @@ def arccalibration_direct(
     if abs(debugplot) in [21, 22]:
         # pyplot is imported lazily (only when plotting) and with the numina
         # rcParams; do not replace with a module-level matplotlib.pyplot import
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_utils import plt
 
         # CDELT1 vs CRVAL1 diagram (normalized coordinates) with symbol
         # size proportional to the inverse of the cost function
@@ -1976,7 +1976,7 @@ def refine_arccalibration(
 
         if (abs(local_debugplot) % 10 != 0) or (pdf is not None):
 
-            from numina.array.display.matplotlib_qt import plt
+            from numina.array.display.matplotlib_utils import plt
 
             if pdf is not None:
                 # the figure is only saved in the PDF file
@@ -2316,7 +2316,7 @@ def refine_arccalibration(
 
     # close the figure reused in the interactive session
     if fig_interactive:
-        from numina.array.display.matplotlib_qt import plt
+        from numina.array.display.matplotlib_utils import plt
 
         plt.close(fig)
 

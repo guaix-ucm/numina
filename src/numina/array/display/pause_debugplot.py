@@ -41,7 +41,7 @@ def pause_debugplot(debugplot, optional_prompt=None, pltshow=False, tight_layout
         If not None, the figure to be closed when debugplot is negative.
 
     """
-    from numina.array.display.matplotlib_qt import plt
+    from numina.array.display.matplotlib_utils import plt
 
     if debugplot not in DEBUGPLOT_CODES:
         raise ValueError("Invalid debugplot value:", debugplot)

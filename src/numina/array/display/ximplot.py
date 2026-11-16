@@ -9,7 +9,7 @@
 
 import numpy as np
 
-from .matplotlib_qt import set_window_geometry
+from .matplotlib_utils import set_window_geometry
 from .pause_debugplot import pause_debugplot
 
 
@@ -67,7 +67,7 @@ def ximplot(
             raise ValueError("ycut.size=" + str(ycut.size) + " does not correspond to bounding box size")
 
     # display image
-    from numina.array.display.matplotlib_qt import plt
+    from numina.array.display.matplotlib_utils import plt
 
     if not show:
         plt.ioff()

@@ -301,7 +301,7 @@ Once the module is created and loaded, a sample session would be:
 .. automodule:: numina.array.display.logging_from_debugplot
    :members:
 
-.. automodule:: numina.array.display.matplotlib_qt
+.. automodule:: numina.array.display.matplotlib_utils
    :members:
 
 .. automodule:: numina.array.display.pause_debugplot

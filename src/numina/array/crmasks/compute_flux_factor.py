@@ -18,7 +18,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pathlib import Path
 
-from numina.array.display.matplotlib_qt import new_figure
+from numina.array.display.matplotlib_utils import new_figure
 from numina.array.display.plot_hist_step import plot_hist_step
 import teareduce as tea
 

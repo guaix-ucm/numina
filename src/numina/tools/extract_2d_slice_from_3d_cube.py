@@ -19,7 +19,7 @@ import numpy as np
 from pathlib import Path
 from rich_argparse import RichHelpFormatter
 
-from numina.array.display.matplotlib_qt import new_figure
+from numina.array.display.matplotlib_utils import new_figure
 
 from .hdul_utils import get_hdu_from_hdul
 from .initialize_script_with_args import NuminaScriptDefinition

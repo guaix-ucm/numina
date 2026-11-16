@@ -19,7 +19,7 @@ from pathlib import Path
 from scipy import ndimage
 import sys
 
-from numina.array.display.matplotlib_qt import new_figure
+from numina.array.display.matplotlib_utils import new_figure
 from numina.array.numsplines import spline_positive_derivative
 from numina.tools.input_number import input_number
 import teareduce as tea

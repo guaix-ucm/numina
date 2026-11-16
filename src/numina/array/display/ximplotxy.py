@@ -19,7 +19,7 @@ Example of usage from command line:
 import argparse
 import numpy as np
 
-from .matplotlib_qt import parse_geometry, set_window_geometry
+from .matplotlib_utils import parse_geometry, set_window_geometry
 from .pause_debugplot import pause_debugplot
 
 
@@ -129,7 +129,7 @@ def ximplotxy(
             fig.tight_layout()
         return fig, ax
 
-    from numina.array.display.matplotlib_qt import plt
+    from numina.array.display.matplotlib_utils import plt
 
     if not show and using_jupyter:
         # in Jupyter, a figure created in interactive mode is displayed
