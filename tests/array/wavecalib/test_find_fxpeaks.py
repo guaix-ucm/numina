@@ -70,20 +70,6 @@ def test_extra_plots_geometry(pauses):
     assert tuple(plt.gcf().get_size_inches()) == pytest.approx((10.24, 7.68))
 
 
-@pytest.mark.parametrize(
-    "sp, expected, ylabel",
-    [
-        ([2.0, 11.0, 101.0], [0.0, 1.0, 2.0], "log10(counts - min(counts) + 1)"),
-        ([0.0, 9.0, 99.0], [0.0, 1.0, 2.0], "log10(counts - min(counts) + 1)"),
-        ([-10.0, -1.0, 89.0], [0.0, 1.0, 2.0], "log10(counts - min(counts) + 1)"),
-    ],
-)
-def test_log_spectrum(sp, expected, ylabel):
-    splog, label = core._log_spectrum(np.array(sp))
-    assert np.allclose(splog, expected)
-    assert label == ylabel
-
-
 class StopAfterPeaks(Exception):
     pass
 

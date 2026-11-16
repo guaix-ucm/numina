@@ -31,29 +31,9 @@ from ..display.matplotlib_utils import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 from ..display.ximplotxy import ximplotxy
 from ..stats import robust_std
+from .log_spectrum import log_spectrum
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
-
-
-def _log_spectrum(sp):
-    """Logarithm of a spectrum, valid also for non-positive values.
-
-    Parameters
-    ----------
-    sp : 1d numpy array
-        Spectrum.
-
-    Returns
-    -------
-    splog : 1d numpy array
-        Logarithm of the spectrum. It is computed as
-        log10(sp - min(sp) + 1) to avoid taking the logarithm of non-positive values.
-    ylabel : str
-        Label describing splog, to be used in the plot.
-
-    """
-    spmin = np.min(sp)
-    return np.log10(sp - spmin + 1.0), "log10(counts - min(counts) + 1)"
 
 
 def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None, debugplot=0):
@@ -153,7 +133,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
             fig=fig,
             ax=ax1,
         )
-        splog, ylabel = _log_spectrum(sp)
+        splog, ylabel = log_spectrum(sp)
         ximplotxy(
             xplot,
             splog,
@@ -430,7 +410,7 @@ def find_fxpeaks(
         set_window_geometry(geometry)
         xlabel = "pixel (from 1 to NAXIS1)"
         ximplotxy(xplot, sp, xlabel=None, show=False, fig=fig, ax=ax1, **{"label": "original spectrum"})
-        splog, ylabel = _log_spectrum(sp)
+        splog, ylabel = log_spectrum(sp)
         ximplotxy(
             xplot,
             splog,
@@ -600,7 +580,7 @@ def wvcal_spectrum(
             fig=fig,
             ax=ax1,
         )
-        splog, ylabel = _log_spectrum(sp)
+        splog, ylabel = log_spectrum(sp)
         ximplotxy(
             xplot,
             splog,

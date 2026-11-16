@@ -26,6 +26,7 @@ from ..display.matplotlib_utils import new_figure, set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 from ..display.polfit_residuals import polfit_residuals_with_cook_rejection
 from ..display.polfit_residuals import polfit_residuals_with_sigma_rejection
+from .log_spectrum import log_spectrum
 from ..robustfit import fit_theil_sen
 from ..stats import summary
 from ..stats import robust_std
@@ -2215,16 +2216,12 @@ def refine_arccalibration(
 
             # lower plot
             if local_ylogscale:
-                spectrum = sp - sp.min() + 1.0
-                spectrum = np.log10(spectrum)
+                spectrum, ylabel_logspectrum = log_spectrum(sp)
             else:
                 spectrum = sp.copy()
             ax2 = fig.add_subplot(grid[1, 0], sharex=ax1)
             ax2.set_xlim(1 - 0.02 * naxis1, naxis1 * 1.02)
-            if local_ylogscale:
-                ymin = spectrum[ixpeaks].min()
-            else:
-                ymin = spectrum.min()
+            ymin = spectrum.min()
             ymax = spectrum.max()
             dy = ymax - ymin
             ymin -= dy / 40.0
@@ -2238,7 +2235,7 @@ def refine_arccalibration(
             ax2.plot(xpol, spectrum, "-")
             ax2.set_xlabel("pixel position (from 1 to NAXIS1)")
             if local_ylogscale:
-                ax2.set_ylabel("log10(counts - min(counts) + 1)")
+                ax2.set_ylabel(ylabel_logspectrum)
             else:
                 ax2.set_ylabel("number of counts")
             # mark peak location
