@@ -26,11 +26,36 @@ from scipy import ndimage
 
 from .arccalibration import arccalibration
 from .arccalibration import fit_list_of_wvfeatures
+from ..display.matplotlib_utils import set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 from ..display.ximplotxy import ximplotxy
 from ..stats import robust_std
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
+
+
+def _log_spectrum(sp):
+    """Logarithm of a spectrum, valid also for non-positive values.
+
+    Parameters
+    ----------
+    sp : 1d numpy array
+        Spectrum.
+
+    Returns
+    -------
+    splog : 1d numpy array
+        log10(sp) if all the values of sp are positive; otherwise
+        log10(sp - min(sp) + 1), which maps the minimum to zero and
+        avoids taking the logarithm of non-positive values.
+    ylabel : str
+        Label describing splog, to be used in the plot.
+
+    """
+    spmin = np.min(sp)
+    if spmin <= 0:
+        return np.log10(sp - spmin + 1.0), "log10(number of counts - min(counts) + 1)"
+    return np.log10(sp), "log10(number of counts)"
 
 
 def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None, debugplot=0):
@@ -108,25 +133,34 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
 
     if debugplot % 10 != 0:
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        fig, ax = ximplotxy(
+        from numina.array.display.matplotlib_utils import plt
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(8, 6))
+        ximplotxy(
             xplot,
             sp,
             title="Collapsed spectrum",
             show=False,
-            xlabel="pixel (from 1 to NAXIS1)",
+            xlabel=None,
             ylabel="number of counts",
-            geometry=None,
+            fig=fig,
+            ax=ax1,
         )
-        ymin = sp.min()
-        ymax = sp.max()
-        dy = ymax - ymin
-        ymin -= dy / 20.0
-        ymax += dy / 20.0
-        ax.set_ylim([ymin, ymax])
+        splog, ylabel = _log_spectrum(sp)
+        ximplotxy(
+            xplot,
+            splog,
+            title=None,
+            show=False,
+            xlabel="pixel (from 1 to NAXIS1)",
+            ylabel=ylabel,
+            fig=fig,
+            ax=ax2,
+        )
         # fitsfile can be a path or a file object (use its name in the latter case)
         fname = os.path.basename(getattr(fitsfile, "name", str(fitsfile)))
         title = f"{fname} [{method}, {ns1}:{ns2}]\n(collapsed spectrum)"
-        ax.set_title(title)
+        ax1.set_title(title)
         fig.tight_layout()
         pause_debugplot(debugplot=debugplot, pltshow=True)
 
@@ -369,24 +403,35 @@ def find_fxpeaks(
     # display median spectrum and peaks if requested
     if extra_plots:
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        fig, ax = ximplotxy(xplot, sp, show=False, geometry=geometry, **{"label": "original spectrum"})
-        ax.set_xlabel("pixel (from 1 to NAXIS1)")
-        ax.set_ylabel("counts")
+        from numina.array.display.matplotlib_utils import plt
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(8, 6))
+        # when geometry is not None, it also sets the figure size
+        set_window_geometry(geometry)
+        xlabel = "pixel (from 1 to NAXIS1)"
+        ximplotxy(xplot, sp, xlabel=None, show=False, fig=fig, ax=ax1, **{"label": "original spectrum"})
+        splog, ylabel = _log_spectrum(sp)
+        ximplotxy(
+            xplot,
+            splog,
+            xlabel=xlabel,
+            ylabel=ylabel,
+            show=False,
+            fig=fig,
+            ax=ax2,
+            **{"label": "logarithmic spectrum"},
+        )
         if plottitle is not None:
-            ax.set_title(plottitle)
+            ax1.set_title(plottitle)
         if sigma_gaussian_filtering > 0:
-            ax.plot(xplot, spf, label="filtered spectrum")
-        ymin = sp.min()
-        ymax = sp.max()
-        dy = ymax - ymin
-        ymin -= dy / 20.0
-        ymax += dy / 20.0
-        ax.set_ylim([ymin, ymax])
+            ax1.plot(xplot, spf, label="filtered spectrum")
         # display threshold
-        ax.axhline(y=threshold, color="black", linestyle="dotted", label="detection threshold")
+        ax1.axhline(y=threshold, color="black", linestyle="dotted", label="detection threshold")
         # mark peak location
-        ax.plot(ixpeaks + 1, spf[ixpeaks], "bo", label="initial location")
-        ax.plot(fxpeaks + 1, spf[ixpeaks], "go", label="refined location")
+        ax1.plot(ixpeaks + 1, spf[ixpeaks], "bo", label="initial location")
+        ax1.plot(fxpeaks + 1, spf[ixpeaks], "go", label="refined location")
+        ax2.plot(ixpeaks + 1, splog[ixpeaks], "bo", label="initial location")
+        ax2.plot(fxpeaks + 1, splog[ixpeaks], "go", label="refined location")
         # show different regions with different alternative background colors
         if nregions > 1:
             for iregion in range(nregions):
@@ -395,9 +440,10 @@ def find_fxpeaks(
                 if iregion > 0:
                     imin += 1
                 facecolor = "lightgray" if iregion % 2 == 0 else "lightyellow"
-                ax.axvspan(imin + 1, imax + 1, facecolor=facecolor, alpha=0.5)
+                ax1.axvspan(imin + 1, imax + 1, facecolor=facecolor, alpha=0.5)
+                ax2.axvspan(imin + 1, imax + 1, facecolor=facecolor, alpha=0.5)
         # legend
-        ax.legend(title=f"{len(fxpeaks)} lines found", numpoints=1)
+        ax1.legend(title=f"{len(fxpeaks)} lines found", numpoints=1)
         # show plot
         fig.tight_layout()
         pause_debugplot(debugplot=2, pltshow=True)
@@ -512,27 +558,39 @@ def wvcal_spectrum(
 
     if abs(debugplot) % 10 != 0:
         # final plot with identified lines
+        from numina.array.display.matplotlib_utils import plt
+
+        fig, (ax1, ax2) = plt.subplots(nrows=2, ncols=1, sharex=True, figsize=(8, 6))
+        # when geometry is not None, it also sets the figure size
+        set_window_geometry(geometry)
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        _, ax = ximplotxy(
+        ximplotxy(
             xplot,
             sp,
             title=title,
             show=False,
-            xlabel="pixel (from 1 to NAXIS1)",
+            xlabel=None,
             ylabel="number of counts",
-            geometry=geometry,
+            fig=fig,
+            ax=ax1,
         )
-        ymin = sp.min()
-        ymax = sp.max()
-        dy = ymax - ymin
-        ymin -= dy / 20.0
-        ymax += dy / 20.0
-        ax.set_ylim([ymin, ymax])
+        splog, ylabel = _log_spectrum(sp)
+        ximplotxy(
+            xplot,
+            splog,
+            title=None,
+            show=False,
+            xlabel="pixel (from 1 to NAXIS1)",
+            ylabel=ylabel,
+            fig=fig,
+            ax=ax2,
+        )
         # plot wavelength of each identified line
         for feature in solution_wv.features:
             xpos = feature.xpos
             reference = feature.reference
-            ax.text(xpos, sp[int(xpos + 0.5) - 1], str(reference), fontsize=8, horizontalalignment="center")
+            ax1.text(xpos, sp[int(xpos + 0.5) - 1], str(reference), fontsize=8, horizontalalignment="center")
+            ax2.text(xpos, splog[int(xpos + 0.5) - 1], str(reference), fontsize=8, horizontalalignment="center")
         # show plot
         logger.info("Plot with identified lines")
         pause_debugplot(12, pltshow=True)

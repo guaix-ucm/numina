@@ -64,6 +64,26 @@ def test_extra_plots(pauses):
     assert plt.gcf().axes[0].get_title() == "arc"
 
 
+def test_extra_plots_geometry(pauses):
+    # with the Agg backend set_window_geometry only sets the figure size
+    call_find_fxpeaks(extra_plots=True, geometry=(0, 0, 1024, 768))
+    assert tuple(plt.gcf().get_size_inches()) == pytest.approx((10.24, 7.68))
+
+
+@pytest.mark.parametrize(
+    "sp, expected, ylabel",
+    [
+        ([1.0, 10.0, 100.0], [0.0, 1.0, 2.0], "log10(number of counts)"),
+        ([0.0, 9.0, 99.0], [0.0, 1.0, 2.0], "log10(number of counts - min(counts) + 1)"),
+        ([-10.0, -1.0, 89.0], [0.0, 1.0, 2.0], "log10(number of counts - min(counts) + 1)"),
+    ],
+)
+def test_log_spectrum(sp, expected, ylabel):
+    splog, label = core._log_spectrum(np.array(sp))
+    assert np.allclose(splog, expected)
+    assert label == ylabel
+
+
 class StopAfterPeaks(Exception):
     pass
 
