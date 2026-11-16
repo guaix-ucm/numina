@@ -247,7 +247,7 @@ def compute_distortion(x_orig, y_orig, x_rect, y_rect, order, debugplot):
         print(">>> v=v(x,y) --> bij:\n", bij)
 
     if abs(debugplot) % 10 != 0:
-        ax = ximplotxy(
+        fig, ax = ximplotxy(
             x_orig_scaled, y_orig_scaled, show=False, **{"marker": "o", "label": "(u,v) coordinates", "linestyle": ""}
         )
         dum = list(zip(x_orig_scaled, y_orig_scaled))

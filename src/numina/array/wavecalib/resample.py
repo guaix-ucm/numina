@@ -67,8 +67,9 @@ def oversample1d(sp, crval1, cdelt1, oversampling=1, debugplot=0):
         crvaln = crval1 + (naxis1 - 1) * cdelt1
         crvaln_over = crval1_over + (naxis1_over - 1) * cdelt1_over
         xover = np.linspace(crval1_over, crvaln_over, naxis1_over)
-        ax = ximplotxy(np.linspace(crval1, crvaln, naxis1), sp, "bo", label="original", show=False)
+        fig, ax = ximplotxy(np.linspace(crval1, crvaln, naxis1), sp, "bo", label="original", show=False)
         ax.plot(xover, sp_over, "r+", label="resampled")
+        fig.tight_layout()
         pause_debugplot(debugplot, pltshow=True)
 
     return sp_over, crval1_over, cdelt1_over

@@ -20,7 +20,7 @@ from numina.array.stats import summary
 from numina.array.display.iofunctions import readi
 from numina.array.display.iofunctions import readf
 from numina.array.display.iofunctions import readc
-from numina.array.display.matplotlib_qt import new_figure, set_window_geometry
+from numina.array.display.matplotlib_qt import new_figure, parse_geometry, set_window_geometry
 from numina.array.display.pause_debugplot import pause_debugplot
 from numina.array.display.polfit_residuals import polfit_residuals
 from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_rejection
@@ -722,7 +722,7 @@ def main(args=None):
     parser.add_argument(
         "--remove_null_borders", help="Remove leading and trailing zeros in spectrum", action="store_true"
     )
-    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="0,0,640,480")
+    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="0,0,640,480", type=parse_geometry)
     parser.add_argument(
         "--debugplot",
         help="integer indicating plotting/debugging" + " (default=0)",
@@ -745,15 +745,7 @@ def main(args=None):
         raise ValueError("Invalid tuple for scan range")
 
     # geometry
-    if args.geometry is None:
-        geometry = None
-    else:
-        tmp_str = args.geometry.split(",")
-        x_geom = int(tmp_str[0])
-        y_geom = int(tmp_str[1])
-        dx_geom = int(tmp_str[2])
-        dy_geom = int(tmp_str[3])
-        geometry = x_geom, y_geom, dx_geom, dy_geom
+    geometry = args.geometry
 
     # read FITS file
     with fits.open(args.filename) as hdulist:

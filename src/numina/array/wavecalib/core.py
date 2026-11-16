@@ -108,7 +108,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
 
     if debugplot % 10 != 0:
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        ax = ximplotxy(
+        fig, ax = ximplotxy(
             xplot,
             sp,
             title="Collapsed spectrum",
@@ -127,6 +127,7 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
         fname = os.path.basename(getattr(fitsfile, "name", str(fitsfile)))
         title = f"{fname} [{method}, {ns1}:{ns2}]\n(collapsed spectrum)"
         ax.set_title(title)
+        fig.tight_layout()
         pause_debugplot(debugplot=debugplot, pltshow=True)
 
     return sp
@@ -368,7 +369,7 @@ def find_fxpeaks(
     # display median spectrum and peaks if requested
     if extra_plots:
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        ax = ximplotxy(xplot, sp, show=False, geometry=geometry, **{"label": "original spectrum"})
+        fig, ax = ximplotxy(xplot, sp, show=False, geometry=geometry, **{"label": "original spectrum"})
         ax.set_xlabel("pixel (from 1 to NAXIS1)")
         ax.set_ylabel("counts")
         if plottitle is not None:
@@ -398,6 +399,7 @@ def find_fxpeaks(
         # legend
         ax.legend(title=f"{len(fxpeaks)} lines found", numpoints=1)
         # show plot
+        fig.tight_layout()
         pause_debugplot(debugplot=2, pltshow=True)
 
     return fxpeaks, sxpeaks
@@ -511,7 +513,7 @@ def wvcal_spectrum(
     if abs(debugplot) % 10 != 0:
         # final plot with identified lines
         xplot = np.arange(1, naxis1 + 1, dtype=float)
-        ax = ximplotxy(
+        _, ax = ximplotxy(
             xplot,
             sp,
             title=title,

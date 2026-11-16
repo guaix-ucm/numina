@@ -15,7 +15,7 @@ import numbers
 import numpy as np
 from numpy.polynomial import Polynomial
 
-from .matplotlib_qt import set_window_geometry
+from .matplotlib_qt import parse_geometry, set_window_geometry
 from ..display.pause_debugplot import pause_debugplot
 
 
@@ -821,7 +821,7 @@ def main(args=None):
     parser.add_argument(
         "--times_sigma_cook", help="Times sigma to reject points" + " (default=None)", default=None, type=float
     )
-    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="0,0,640,480")
+    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="0,0,640,480", type=parse_geometry)
     parser.add_argument("--pdffile", help="Output PDF file name (default=None)", default=None, type=str)
     args = parser.parse_args(args)
 
@@ -845,15 +845,7 @@ def main(args=None):
     pdffile = args.pdffile
 
     # geometry
-    if args.geometry is None:
-        geometry = None
-    else:
-        tmp_str = args.geometry.split(",")
-        x_geom = int(tmp_str[0])
-        y_geom = int(tmp_str[1])
-        dx_geom = int(tmp_str[2])
-        dy_geom = int(tmp_str[3])
-        geometry = x_geom, y_geom, dx_geom, dy_geom
+    geometry = args.geometry
 
     # check
     if times_sigma_reject is not None and times_sigma_cook is not None:

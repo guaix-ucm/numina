@@ -9,16 +9,16 @@
 
 import argparse
 
-import matplotlib
 from astropy.io import fits
 from astropy.visualization import ZScaleInterval
 import math
 import numpy as np
 import re
+import warnings
 from rich import print
 from rich_argparse import RichHelpFormatter
 
-from .matplotlib_qt import new_figure, set_window_geometry
+from .matplotlib_qt import new_figure, parse_geometry, set_window_geometry
 from .pause_debugplot import pause_debugplot
 from .fileinfo import list_fileinfo_from_txt
 from .fileinfo import check_extnum
@@ -26,7 +26,7 @@ from .overplot_ds9reg import overplot_ds9reg
 from ..stats import summary
 
 GLOBAL_ASPECT = "auto"
-GLOBAL_GEOMETRY = "1024,768,0,0"  # xwidth,ywidth,xorigin,yorigin
+GLOBAL_GEOMETRY = (0, 0, 1024, 768)  # x, y, dx, dy
 dum_str = ""  # global variable in function keypress
 dum_par = ""  # global variable in function keypress
 
@@ -107,7 +107,7 @@ def ximshow(
     cunit1=None,
     ds9regfile=None,
     geometry=GLOBAL_GEOMETRY,
-    factor_macosx=1.5,
+    factor_macosx=None,
     figuredict=None,
     tight_layout=True,
     debugplot=0,
@@ -165,15 +165,11 @@ def ximshow(
         the X direction.
     ds9regfile : str or None
         Ds9 region file to be overplotted.
-    geometry : str or None
-        xwidth, ywidth, xorigin, yorigin values employed to set the
-        window geometry.
-    factor_macosx : float
-        Factor to control the size of the plot on macOS (default=1.5).
-        This factor is applied to the xwidth and ywidth values provided
-        in geometry when the backend is macOS. This is a workaround to
-        control the size of the plot on macOS, which does not allow to set
-        the window geometry.
+    geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the window geometry.
+    factor_macosx : None
+        Deprecated and ignored: the window size on macOS is set by
+        numina.array.display.matplotlib_qt.set_window_geometry.
     tight_layout : bool
         If True, and show=True, a tight display layout is set.
     figuredict: dictionary
@@ -201,6 +197,9 @@ def ximshow(
 
     if fig is None:
         from numina.array.display.matplotlib_qt import plt
+
+    if factor_macosx is not None:
+        warnings.warn("factor_macosx is deprecated and ignored", DeprecationWarning, stacklevel=2)
 
     # protections
     if not isinstance(image2d, np.ndarray):
@@ -456,28 +455,8 @@ Toggle y axis scale (log/linear): l when mouse is over an axes
         overplot_ds9reg(ds9regfile, ax)
 
     # set the geometry
-    if geometry is not None and not drawn_in_fig:
-        tmp_str = geometry.split(",")
-        xwidth_geom = int(tmp_str[0])
-        ywidth_geom = int(tmp_str[1])
-        xini_geom = int(tmp_str[2])
-        yini_geom = int(tmp_str[3])
-        backend = matplotlib.get_backend()
-        if backend.lower() == "tkagg":
-            print(xwidth_geom, ywidth_geom, xini_geom, yini_geom)
-            input("Press RETURN to set the window geometry...")
-            plt.get_current_fig_manager().resize(xwidth_geom, ywidth_geom)
-            plt.get_current_fig_manager().window.wm_geometry(f"+{xini_geom}+{yini_geom}")
-        elif backend.lower() == "qt5agg":
-            geometry_tuple = xwidth_geom, ywidth_geom, xini_geom, yini_geom
-            set_window_geometry(geometry_tuple)
-        elif backend.lower() == "macosx":
-            fig = plt.gcf()
-            fig.set_size_inches(factor_macosx * xwidth_geom / fig.dpi, factor_macosx * ywidth_geom / fig.dpi)
-            print(f"WARNING: Window position control not available for backend {backend}")
-        else:
-            print(f"WARNING: geometry {geometry} ignored with backend {backend}")
-            print("(you can try the TkAgg backend instead)")
+    if not drawn_in_fig:
+        set_window_geometry(geometry)
 
     # connect keypress event with function responsible for
     # updating vmin and vmax
@@ -533,7 +512,7 @@ def ximshow_file(
     args_ylabel=None,
     args_ds9reg=None,
     args_geometry=GLOBAL_GEOMETRY,
-    args_factor_macosx=1.5,
+    args_factor_macosx=None,
     pdf=None,
     png=None,
     args_figuredict=None,
@@ -577,15 +556,12 @@ def ximshow_file(
         Y-axis label.
     args_ds9reg : string or None
         Ds9 region file to be overplotted.
-    args_geometry : string or None
-        xwidth, ywidth, xorigin, yorigin to define the window geometry.
+    args_geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the window geometry.
         This information is ignored if args_pdffile is not None.
-    args_factor_macosx : float
-        Factor to control the size of the plot on macOS (default=1.5).
-        This factor is applied to the xwidth and ywidth values provided
-        in args_geometry when the backend is macOS. This is a workaround to
-        control the size of the plot on macOS, which does not allow to set
-        the window geometry.
+    args_factor_macosx : None
+        Deprecated and ignored: the window size on macOS is set by
+        numina.array.display.matplotlib_qt.set_window_geometry.
     pdf : PdfFile object or None
         If not None, output is sent to PDF file.
     png : string or None
@@ -1092,10 +1068,10 @@ def main(args=None):
     )
     parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
     parser.add_argument("--ds9reg", help="ds9 region file to be overplotted", type=str, default=None)
-    parser.add_argument("--geometry", help='string "xwidth,ywidth,xorigin,yorigin"', default=GLOBAL_GEOMETRY)
     parser.add_argument(
-        "--factor_macosx", help="Factor to control the size of the plot on macOS (default=1.5)", default=1.5, type=float
+        "--geometry", help="tuple x,y,dx,dy (default 0,0,1024,768)", default="0,0,1024,768", type=parse_geometry
     )
+    parser.add_argument("--factor_macosx", help="Deprecated and ignored", default=None, type=float)
     parser.add_argument("--pdffile", help="ouput PDF file name", type=str, default=None)
     parser.add_argument("--pngfile", help="ouput PNG file name", type=str, default=None)
     parser.add_argument("--figuredict", help="string with dictionary of parameters for plt.figure()", type=str)

@@ -7,6 +7,7 @@
 # License-Filename: LICENSE.txt
 #
 
+import argparse
 import logging
 
 _logger = logging.getLogger(__name__)
@@ -59,6 +60,37 @@ def new_figure(interactive=True, **kwargs):
     return Figure(**kwargs)
 
 
+def parse_geometry(text):
+    """Convert a command-line string "x,y,dx,dy" into a geometry tuple
+
+    It can be used as the 'type' of an argparse argument.
+
+    Parameters
+    ==========
+    text : str
+        Comma-separated string with 4 integers: x, y, dx, dy.
+
+    Returns
+    =======
+    geometry : tuple (4 integers)
+        x, y, dx, dy values employed to set the window geometry.
+
+    Raises
+    ======
+    argparse.ArgumentTypeError
+        If the string does not contain exactly 4 integers.
+
+    """
+    items = text.split(",")
+    try:
+        geometry = tuple(int(item) for item in items)
+    except ValueError:
+        geometry = None
+    if geometry is None or len(geometry) != 4:
+        raise argparse.ArgumentTypeError(f"invalid geometry '{text}': expected 4 integers 'x,y,dx,dy'")
+    return geometry
+
+
 def set_window_geometry(geometry):
     """Set window geometry.
 
@@ -78,6 +110,8 @@ def set_window_geometry(geometry):
     if geometry is None:
         return
 
+    if isinstance(geometry, str):
+        raise TypeError(f"geometry must be a tuple (x, y, dx, dy), not a string: '{geometry}'")
     x_geom, y_geom, dx_geom, dy_geom = geometry
     plt = _pyplot()
     mngr = plt.get_current_fig_manager()

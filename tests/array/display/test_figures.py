@@ -30,9 +30,30 @@ def test_new_figure():
 
 def test_ximplotxy_fig():
     fig = Figure()
-    ax = ximplotxy([1, 2, 3], [4, 5, 6], title="plot", show=True, fig=fig)
+    fig_out, ax = ximplotxy([1, 2, 3], [4, 5, 6], title="plot", show=True, fig=fig)
+    assert fig_out is fig
     assert ax.figure is fig
     assert ax.get_title() == "plot"
+
+
+def test_ximplotxy_ax():
+    # the plot is drawn in the given axes; the figure is taken from it
+    fig = Figure()
+    ax1, ax2 = fig.subplots(1, 2)
+    fig_out, ax_out = ximplotxy([1, 2, 3], [4, 5, 6], title="plot", ax=ax2)
+    assert fig_out is fig
+    assert ax_out is ax2
+    assert ax2.get_title() == "plot"
+    assert len(fig.axes) == 2
+    fig_out, ax_out = ximplotxy([1, 2, 3], [4, 5, 6], fig=fig, ax=ax1)
+    assert fig_out is fig
+    assert ax_out is ax1
+
+
+def test_ximplotxy_ax_not_in_fig():
+    ax = Figure().add_subplot(111)
+    with pytest.raises(ValueError, match="ax does not belong to fig"):
+        ximplotxy([1, 2, 3], [4, 5, 6], fig=Figure(), ax=ax)
 
 
 def test_ximshow_fig():

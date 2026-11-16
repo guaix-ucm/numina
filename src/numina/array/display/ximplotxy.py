@@ -19,7 +19,7 @@ Example of usage from command line:
 import argparse
 import numpy as np
 
-from .matplotlib_qt import set_window_geometry
+from .matplotlib_qt import parse_geometry, set_window_geometry
 from .pause_debugplot import pause_debugplot
 
 
@@ -48,6 +48,7 @@ def ximplotxy(
     debugplot=0,
     using_jupyter=False,
     fig=None,
+    ax=None,
     **kwargs,
 ):
     """
@@ -95,24 +96,38 @@ def ximplotxy(
         If True, this function is called from a jupyter notebook.
     fig : matplotlib.figure.Figure or None
         Figure where the plot is drawn, for example a figure created
-        without pyplot to be saved in a file. The axes are returned,
-        and 'show', 'geometry' and 'debugplot' are not used. If None,
-        a new figure is created with pyplot.
+        without pyplot to be saved in a file. In this case 'show',
+        'geometry', 'debugplot' and 'using_jupyter' are not used. If
+        None (and 'ax' is None), a new figure is created with pyplot.
+    ax : matplotlib.axes.Axes or None
+        Axes where the plot is drawn. If 'fig' is None, the figure is
+        taken from ax.figure; otherwise 'ax' must belong to 'fig'.
+        As with 'fig', 'show', 'geometry', 'debugplot' and
+        'using_jupyter' are not used. If None, a new axes is created
+        in the figure.
 
     Returns
     -------
+    fig : figure object
+        Matplotlib figure instance.
     ax : axes object
-        Matplotlib axes instance. This value is returned only when
-        'show' is False or 'fig' is given.
+        Matplotlib axes instance.
 
     """
 
+    if ax is not None:
+        if fig is None:
+            fig = ax.figure
+        elif ax.figure is not fig:
+            raise ValueError("ax does not belong to fig")
+
     if fig is not None:
-        ax = fig.add_subplot(111)
+        if ax is None:
+            ax = fig.add_subplot(111)
         _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs)
         if tight_layout:
             fig.tight_layout()
-        return ax
+        return fig, ax
 
     from numina.array.display.matplotlib_qt import plt
 
@@ -131,11 +146,9 @@ def ximplotxy(
 
     if show:
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
-    else:
-        if tight_layout:
-            plt.tight_layout()
-        # return axes
-        return ax
+    elif tight_layout:
+        plt.tight_layout()
+    return fig, ax
 
 
 # Line2D properties (besides those starting with 'marker') that are not
@@ -230,7 +243,9 @@ def main(args=None):
     )
     parser.add_argument("--xlim", help="X-axis limits", type=float, nargs=2, metavar=("XMIN", "XMAX"))
     parser.add_argument("--ylim", help="Y-axis limits", type=float, nargs=2, metavar=("YMIN", "YMAX"))
-    parser.add_argument("--geometry", help="tuple x,y,dx,dy (default 0,0,640,480)", default="0,0,640,480")
+    parser.add_argument(
+        "--geometry", help="tuple x,y,dx,dy (default 0,0,640,480)", default="0,0,640,480", type=parse_geometry
+    )
     args = parser.parse_args(args)
 
     # ASCII file
@@ -239,9 +254,6 @@ def main(args=None):
     # columns to be plotted (first column will be number 1 and not 0)
     col1 = args.col1 - 1
     col2 = args.col2 - 1
-
-    # geometry
-    geometry = tuple(int(item) for item in args.geometry.split(","))
 
     # read ASCII file
     bigtable = np.genfromtxt(filename)
@@ -271,7 +283,7 @@ def main(args=None):
                 parser.error(f"--{limname} cannot be used together with '{limname}' in --kwargs")
             plot_kwargs[limname] = limvalue
 
-    ximplotxy(x, y, plottype=plottype, geometry=geometry, debugplot=12, **plot_kwargs)
+    ximplotxy(x, y, plottype=plottype, geometry=args.geometry, debugplot=12, **plot_kwargs)
 
 
 if __name__ == "__main__":

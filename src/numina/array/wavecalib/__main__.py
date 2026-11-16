@@ -40,6 +40,7 @@ from ...tools.arg_file_is_new import arg_file_is_new
 
 from numina.tools.initialize_script_with_args import NuminaScriptDefinition
 
+from ..display.matplotlib_qt import parse_geometry
 from ..display.pause_debugplot import DEBUGPLOT_CODES
 
 # Functions moved to numina.array.wavecalib.core
@@ -129,7 +130,10 @@ def main(args=None):
         type=str,
     )
     parser.add_argument(
-        "--geometry", help="Geometry for refinement: tuple x,y,dx,dy (default 0,0,640,480)", default="0,0,640,480"
+        "--geometry",
+        help="Geometry for refinement: tuple x,y,dx,dy (default 0,0,640,480)",
+        default="0,0,640,480",
+        type=parse_geometry,
     )
     parser.add_argument("--pdffile", help="Output PDF file name", type=lambda x: arg_file_is_new(parser, x, mode="wb"))
     parser.add_argument(
@@ -173,15 +177,7 @@ def main(args=None):
         raise ValueError("Invalid tuple for scan range")
 
     # geometry
-    if args.geometry is None:
-        geometry = None
-    else:
-        tmp_str = args.geometry.split(",")
-        x_geom = int(tmp_str[0])
-        y_geom = int(tmp_str[1])
-        dx_geom = int(tmp_str[2])
-        dy_geom = int(tmp_str[3])
-        geometry = x_geom, y_geom, dx_geom, dy_geom
+    geometry = args.geometry
 
     # convert nbrightlines in a list of integers
     nbrightlines = [int(nlines) for nlines in args.nbrightlines.split(",")]

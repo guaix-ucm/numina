@@ -21,6 +21,7 @@ from astropy.io import fits
 import numpy as np
 import pathlib
 
+from numina.array.display.matplotlib_qt import parse_geometry
 from numina.array.display.ximshow import ximshow_file, ximshow
 
 
@@ -91,8 +92,8 @@ def compute_operation(
         String providing the bounding box tuple: nc1, nc2, ns1, ns2.
     args_keystitle : string or None
         Tuple of FITS keywords.format: key1,key2,...,keyn.format
-    args_geometry : string or None
-        Tuple x,y,dx,dy to define the Qt backend geometry.
+    args_geometry : tuple (4 integers) or None
+        x, y, dx, dy values employed to set the window geometry.
 
     """
 
@@ -241,7 +242,9 @@ def main(args=None):
     parser.add_argument("--z1z2", help="tuple z1,z2, minmax or None (use zscale)")
     parser.add_argument("--bbox", help="bounding box tuple: nc1,nc2,ns1,ns2")
     parser.add_argument("--keystitle", help="tuple of FITS keywords.format: " + "key1,key2,...keyn.'format'")
-    parser.add_argument("--geometry", help="Tuple x,y,dx,dy indicating window geometry", default="0,0,640,480")
+    parser.add_argument(
+        "--geometry", help="Tuple x,y,dx,dy indicating window geometry", default="0,0,640,480", type=parse_geometry
+    )
     parser.add_argument("--echo", help="Display full command line", action="store_true")
 
     args = parser.parse_args(args=args)

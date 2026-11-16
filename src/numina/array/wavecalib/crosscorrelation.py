@@ -78,7 +78,7 @@ def filtmask(sp, fmin, fmax, sp_label="spectrum", debugplot=0):
         from numina.array.display.matplotlib_qt import plt
 
         xdum = np.arange(1, sp_filt.size + 1)
-        ax = ximplotxy(xdum, sp, title="filtering " + sp_label, label="original", show=False)
+        _, ax = ximplotxy(xdum, sp, title="filtering " + sp_label, label="original", show=False)
         ax.plot(xdum, sp_filt, label="filtered")
         ax.legend()
         plt.show()
@@ -283,13 +283,13 @@ def periodic_corr1d(
         xdum = np.arange(len(sp_reference)) + 1
         xdumf = np.arange(len(sp_reference_filtmask)) + 1
         # reference spectrum
-        ax = ximplotxy(xdum, sp_reference, show=False, title="reference " + sp_label, label="original " + sp_label)
+        _, ax = ximplotxy(xdum, sp_reference, show=False, title="reference " + sp_label, label="original " + sp_label)
         if remove_mean or frac_cosbell or zero_padding or fminmax:
             ax.plot(xdumf, sp_reference_filtmask, label="processed " + sp_label)
         ax.legend()
         plt.show()
         # offset spectrum
-        ax = ximplotxy(xdum, sp_offset, show=False, title="offset " + sp_label, label="original " + sp_label)
+        _, ax = ximplotxy(xdum, sp_offset, show=False, title="offset " + sp_label, label="original " + sp_label)
         if remove_mean or frac_cosbell or zero_padding or fminmax:
             ax.plot(xdumf, sp_offset_filtmask, label="processed " + sp_label)
         ax.legend()
@@ -299,7 +299,9 @@ def periodic_corr1d(
     if (abs(debugplot) in (21, 22)) or (pdf is not None):
         xdum = np.arange(naxis1) + 1
         fig = None if pdf is None else new_figure(interactive=False)
-        ax = ximplotxy(xdum, sp_reference_filtmask, show=False, title=plottitle, label="reference " + sp_label, fig=fig)
+        _, ax = ximplotxy(
+            xdum, sp_reference_filtmask, show=False, title=plottitle, label="reference " + sp_label, fig=fig
+        )
         ax.plot(xdum, sp_offset_filtmask, label="offset " + sp_label)
         ax.legend()
         if pdf is not None:
@@ -325,7 +327,7 @@ def periodic_corr1d(
         if (abs(debugplot) in (21, 22)) or (pdf is not None):
             xdum = np.arange(naxis1) + 1
             fig = None if pdf is None else new_figure(interactive=False)
-            ax = ximplotxy(
+            _, ax = ximplotxy(
                 xdum,
                 sp_reference_norm,
                 show=False,
@@ -385,7 +387,7 @@ def periodic_corr1d(
 
     if (abs(debugplot) % 10 != 0) or (pdf is not None):
         fig = None if pdf is None else new_figure(interactive=False)
-        ax = ximplotxy(
+        _, ax = ximplotxy(
             xcorr,
             corr,
             xlabel="offset (pixels)",
@@ -558,7 +560,7 @@ def compute_broadening(
 
     # plot initial resampled spectra
     if abs(debugplot) in (21, 22):
-        ax = ximplotxy(
+        _, ax = ximplotxy(
             wv, flux_ref, xlabel="wavelength (Angstrom)", ylabel="flux (arbitrary units)", label="flux_ref", show=False
         )
         ax.plot(wv, flux_obj, label="flux_obj")
@@ -573,7 +575,7 @@ def compute_broadening(
         flux_ref_broad = gaussian_filter(flux_ref, sigma)
         # plot the two spectra
         if abs(debugplot) in (21, 22):
-            ax = ximplotxy(
+            _, ax = ximplotxy(
                 wv,
                 flux_ref_broad,
                 xlabel="wavelength (Angstrom)",
