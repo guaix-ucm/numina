@@ -16,6 +16,7 @@ import numpy as np
 from numpy.polynomial import Polynomial
 from scipy.special import comb
 
+from ..display.iofunctions import readc
 from ..display.iofunctions import readi
 from ..display.iofunctions import readf
 from ..display.matplotlib_utils import new_figure, set_window_geometry
@@ -1891,7 +1892,7 @@ def refine_arccalibration(
 
     # single-key options of the interactive menu ('n' asks for the
     # number of the line to be modified)
-    menu_keys = "adeilnrwx"
+    menu_keys = "adeilnrwq"
 
     def print_menu():
         logger.info("[bold blue]Recalibration menu")
@@ -1903,7 +1904,7 @@ def refine_arccalibration(
         logger.info("[blue](l) toggle logarithmic scale on/off")
         logger.info("[blue](e) evaluate current polynomial at a given pixel")
         logger.info("[blue](w) replot whole spectrum")
-        logger.info("[blue](x) exit without additional changes")
+        logger.info("[blue](q) quit without additional changes")
         logger.info(f"[blue](n) modify line #<number> (number from 1 to {len(ixpeaks)})")
 
     nrepeat_eff = nrepeat
@@ -2297,8 +2298,11 @@ def refine_arccalibration(
                     xmax_previous = None
                     ymin_previous = None
                     ymax_previous = None
-                elif ioption == "x":
-                    loop = False
+                elif ioption == "q":
+                    # ask for confirmation; otherwise the figure is replotted
+                    # keeping the current limits
+                    if readc("Do you really want to quit (y/n)", default="n", valid="yn") == "y":
+                        loop = False
                 else:
                     logger.info(wv_master)
                     expected_value = poly_refined(fxpeaks[ioption - 1] + 1.0)

@@ -6,6 +6,7 @@ import pytest
 from matplotlib.backends.backend_pdf import PdfPages
 from numpy.polynomial import Polynomial
 
+from numina.array.wavecalib import arccalibration
 from numina.array.wavecalib.arccalibration import refine_arccalibration
 from numina.array.wavecalib.check_wlcalib import check_wlcalib_sp
 from numina.array.wavecalib.crosscorrelation import periodic_corr1d
@@ -39,6 +40,23 @@ def test_refine_arccalibration_pdf(tmp_path, arc):
         assert pdf.get_pagecount() == 1
     np.testing.assert_allclose(poly.coef[:2], [3999.0, 1.0], atol=1e-3)
     assert summary["npoints"] == len(WV_MASTER)
+
+
+def test_refine_arccalibration_quit_asks_for_confirmation(tmp_path, arc, monkeypatch):
+    # with PDF output the menu options are read from the terminal
+    options = iter(["q", "q"])
+    answers = iter(["n", "y"])
+    monkeypatch.setattr(arccalibration, "readi", lambda *args, **kwargs: next(options))
+    monkeypatch.setattr(arccalibration, "readc", lambda *args, **kwargs: next(answers))
+    with PdfPages(tmp_path / "refine.pdf") as pdf:
+        refine_arccalibration(
+            arc, Polynomial([4000.5, 1.0]), WV_MASTER, poldeg=2, interactive=True, plottitle="arc", pdf=pdf
+        )
+        # the first 'q' is not confirmed, so the spectrum is plotted again
+        assert pdf.get_pagecount() == 2
+    # all the options and answers have been used
+    assert next(options, None) is None
+    assert next(answers, None) is None
 
 
 def test_check_wlcalib_sp_pdf(tmp_path, arc):
