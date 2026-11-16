@@ -152,3 +152,21 @@ def test_warns_gather_info_dframe():
     with pytest.warns(DeprecationWarning, match="gather_info_dframe is deprecated"):
         info = datamodel.gather_info_dframe(DataFrame(frame=hdulist))
     assert info["uuid"] == "u1"
+
+
+def test_warns_matplotlib_qt(monkeypatch):
+    """matplotlib_qt is a deprecated alias of matplotlib_utils"""
+    import importlib
+    import sys
+
+    monkeypatch.delitem(sys.modules, "numina.array.display.matplotlib_qt", raising=False)
+    with pytest.warns(DeprecationWarning, match="matplotlib_qt is deprecated"):
+        importlib.import_module("numina.array.display.matplotlib_qt")
+
+    import numina.array.display.matplotlib_utils as utils
+    from numina.array.display.matplotlib_qt import new_figure, parse_geometry, plt, set_window_geometry
+
+    assert new_figure is utils.new_figure
+    assert parse_geometry is utils.parse_geometry
+    assert set_window_geometry is utils.set_window_geometry
+    assert plt is utils.plt
