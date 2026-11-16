@@ -471,8 +471,8 @@ def config_recipe_logger(root_level_logger, ref_logger="numina"):
     """
     numina_logger = logging.getLogger(ref_logger)
     recipe_logger = logging.getLogger(root_level_logger)
-    # Save state of logger
-    save_level = recipe_logger.getEffectiveLevel()
+    # Save state of logger, its own level, that can be NOTSET
+    save_level = recipe_logger.level
     recipe_logger.setLevel(logging.DEBUG)
     save_propagate = recipe_logger.propagate
     recipe_logger.propagate = False

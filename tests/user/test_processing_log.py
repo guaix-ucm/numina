@@ -93,3 +93,18 @@ def test_messages_of_a_pool_of_processes(basedir):
     log = processing_log(basedir, 4)
     assert "message of the process for 1" in log
     assert "message of the process for 2" in log
+
+
+@pytest.mark.parametrize("level", [logging.NOTSET, logging.INFO])
+def test_config_recipe_logger_restores_own_level(level):
+    """The logger of the recipe gets back its own level, not the effective one"""
+    from numina.user.baserun import config_recipe_logger
+
+    logger = logging.getLogger("test_config_recipe_logger_pkg")
+    logger.setLevel(level)
+    with config_recipe_logger("test_config_recipe_logger_pkg"):
+        assert logger.level == logging.DEBUG
+        assert not logger.propagate
+    assert logger.level == level
+    assert logger.propagate
+    assert not logger.handlers
