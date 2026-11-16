@@ -63,6 +63,8 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
     ----------
     fitsfile : file object
         File name of FITS file containing the spectra to be calibrated.
+        A 1D image (NAXIS=1) is handled as a 2D image with a single
+        scan (NAXIS2=1).
     ns1 : int
         First scan (from 1 to NAXIS2).
     ns2 : int
@@ -96,6 +98,13 @@ def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, rev
     # read FITS file
     with fits.open(fitsfile) as hdulist:
         image2d = hdulist[0].data
+    if image2d is None:
+        raise ValueError(f"No data found in the primary HDU of '{fitsfile}'")
+    if image2d.ndim == 1:
+        # single spectrum: handle it as a 2D image with NAXIS2=1
+        image2d = image2d.reshape(1, -1)
+    elif image2d.ndim != 2:
+        raise ValueError(f"Unexpected number of dimensions in '{fitsfile}': NAXIS={image2d.ndim}")
     naxis2, naxis1 = image2d.shape
     logger.info(f"Reading file: '{fitsfile}'")
     logger.info(f"NAXIS1: {naxis1}")
