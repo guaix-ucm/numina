@@ -468,7 +468,7 @@ def check_wlcalib_sp(
                 lok = wv_verified_all_peaks > 0
                 ax1.plot(fxpeaks_wv[lok], spectrum[ixpeaks][lok], "go", label="valid line")
             if local_ylogscale:
-                ax1.set_ylabel("~ log10(number of counts)")
+                ax1.set_ylabel("log10(counts - min(counts) + 1)")
             else:
                 ax1.set_ylabel("number of counts")
             ax1.yaxis.label.set_size(10)

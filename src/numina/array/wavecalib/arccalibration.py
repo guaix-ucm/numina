@@ -2101,7 +2101,7 @@ def refine_arccalibration(
             ax2.plot(xpol, spectrum, "-")
             ax2.set_xlabel("pixel position (from 1 to NAXIS1)")
             if local_ylogscale:
-                ax2.set_ylabel("~ log10(number of counts)")
+                ax2.set_ylabel("log10(counts - min(counts) + 1)")
             else:
                 ax2.set_ylabel("number of counts")
             # mark peak location

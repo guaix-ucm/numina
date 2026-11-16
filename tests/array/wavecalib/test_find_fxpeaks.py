@@ -73,9 +73,9 @@ def test_extra_plots_geometry(pauses):
 @pytest.mark.parametrize(
     "sp, expected, ylabel",
     [
-        ([1.0, 10.0, 100.0], [0.0, 1.0, 2.0], "log10(number of counts)"),
-        ([0.0, 9.0, 99.0], [0.0, 1.0, 2.0], "log10(number of counts - min(counts) + 1)"),
-        ([-10.0, -1.0, 89.0], [0.0, 1.0, 2.0], "log10(number of counts - min(counts) + 1)"),
+        ([2.0, 11.0, 101.0], [0.0, 1.0, 2.0], "log10(counts - min(counts) + 1)"),
+        ([0.0, 9.0, 99.0], [0.0, 1.0, 2.0], "log10(counts - min(counts) + 1)"),
+        ([-10.0, -1.0, 89.0], [0.0, 1.0, 2.0], "log10(counts - min(counts) + 1)"),
     ],
 )
 def test_log_spectrum(sp, expected, ylabel):

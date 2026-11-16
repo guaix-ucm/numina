@@ -45,17 +45,14 @@ def _log_spectrum(sp):
     Returns
     -------
     splog : 1d numpy array
-        log10(sp) if all the values of sp are positive; otherwise
-        log10(sp - min(sp) + 1), which maps the minimum to zero and
-        avoids taking the logarithm of non-positive values.
+        Logarithm of the spectrum. It is computed as
+        log10(sp - min(sp) + 1) to avoid taking the logarithm of non-positive values.
     ylabel : str
         Label describing splog, to be used in the plot.
 
     """
     spmin = np.min(sp)
-    if spmin <= 0:
-        return np.log10(sp - spmin + 1.0), "log10(number of counts - min(counts) + 1)"
-    return np.log10(sp), "log10(number of counts)"
+    return np.log10(sp - spmin + 1.0), "log10(counts - min(counts) + 1)"
 
 
 def collapsed_spectrum(fitsfile, ns1, ns2, method="mean", nwin_background=0, reverse=False, out_sp=None, debugplot=0):
