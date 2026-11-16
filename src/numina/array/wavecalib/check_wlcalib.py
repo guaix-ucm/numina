@@ -12,9 +12,13 @@
 import logging
 import argparse
 import astropy.io.fits as fits
+import astropy.units as u
 import decimal
+from matplotlib.backends.backend_pdf import PdfPages
 import numpy as np
 import os
+from rich_argparse import RichHelpFormatter
+import sys
 
 from numina.array.stats import summary
 from numina.array.display.iofunctions import readi
@@ -27,10 +31,53 @@ from numina.array.display.polfit_residuals import polfit_residuals_with_sigma_re
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 from .peaks_spectrum import odd_window_width
+from . import core
+from .arccalibration import _wv_unit_and_label
+from numina.tools.arg_file_is_new import arg_file_is_new
+from numina.tools.initialize_script_with_args import NuminaScriptDefinition
 
 from numina.array.display.pause_debugplot import DEBUGPLOT_CODES
 
 _logger = logging.getLogger(__name__)
+
+# command-line options renamed from underscores to hyphens; the old names
+# are still accepted (but not displayed in the help) for backward
+# compatibility
+_RENAMED_OPTIONS = {
+    "--wv_master_file": "--wv-master-file",
+    "--nwinwidth_initial": "--nwinwidth-initial",
+    "--nwinwidth_refined": "--nwinwidth-refined",
+    "--ntimes_match_wv": "--ntimes-match-wv",
+    "--poldeg_residuals": "--poldeg-residuals",
+    "--times_sigma_reject": "--times-sigma-reject",
+    "--use_r": "--use-r",
+    "--remove_null_borders": "--remove-null-borders",
+}
+
+
+def _translate_renamed_options(argv):
+    """Replace old command-line option names by the new ones.
+
+    Parameters
+    ----------
+    argv : list of str
+        Command-line arguments (excluding the program name).
+
+    Returns
+    -------
+    argv_new : list of str
+        Command-line arguments with the old option names (with
+        underscores) replaced by the new ones (with hyphens). Both
+        '--option value' and '--option=value' are handled.
+
+    """
+    argv_new = []
+    for arg in argv:
+        option, sep, value = arg.partition("=")
+        if option in _RENAMED_OPTIONS:
+            arg = _RENAMED_OPTIONS[option] + sep + value
+        argv_new.append(arg)
+    return argv_new
 
 
 def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
@@ -106,6 +153,37 @@ def match_wv_arrays(wv_master, wv_expected_all_peaks, delta_wv_max):
     return wv_verified_all_peaks
 
 
+def _number_of_decimals(values, max_decimals=10):
+    """Maximum number of decimals needed to represent the input values.
+
+    For each value, the number of decimals is the smallest one that
+    reproduces the value within a relative tolerance of 1e-12 (this
+    avoids spurious decimals due to the floating point
+    representation, e.g. after a unit conversion).
+
+    Parameters
+    ----------
+    values : array_like
+        Input values.
+    max_decimals : int
+        Maximum number of decimals to be returned.
+
+    Returns
+    -------
+    ndecimals : int
+        Maximum number of decimals (between 0 and max_decimals).
+
+    """
+    values = np.asarray(values, dtype=float)
+    values = values[np.isfinite(values)]
+    if values.size == 0:
+        return 0
+    for ndecimals in range(max_decimals + 1):
+        if np.allclose(np.round(values, ndecimals), values, rtol=1e-12, atol=0):
+            return ndecimals
+    return max_decimals
+
+
 def fun_wv(xchannel, crpix1, crval1, cdelt1):
     """Compute wavelengths from channels.
 
@@ -156,6 +234,7 @@ def check_wlcalib_sp(
     geometry=None,
     pdf=None,
     debugplot=0,
+    wv_unit="Angstrom",
 ):
     """Check wavelength calibration of the provided spectrum.
 
@@ -219,6 +298,9 @@ def check_wlcalib_sp(
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
+    wv_unit : str, astropy.units.UnitBase or None
+        Wavelength unit employed in the plot labels. If None,
+        Angstrom is assumed.
 
     Returns
     -------
@@ -252,6 +334,13 @@ def check_wlcalib_sp(
         if pdf is not None:
             raise ValueError("ERROR: interactive use of this function is not " "possible when pdf is not None")
 
+    # LaTeX representation of the wavelength unit for the plot labels
+    wv_unit, wv_unit_label = _wv_unit_and_label(wv_unit)
+
+    # number of decimals employed to display wavelengths in the plot
+    # (the maximum number found in the list of arc lines)
+    wv_decimals = _number_of_decimals(wv_master)
+
     # display list of expected arc lines
     if abs(debugplot) in (21, 22):
         print("wv_master:", wv_master)
@@ -271,6 +360,7 @@ def check_wlcalib_sp(
     polyres = np.polynomial.Polynomial([0])
     poldeg_effective = 0
     ysummary = summary(np.array([]))
+    offset_median = np.nan
     local_ylogscale = ylogscale
 
     # find initial line peaks
@@ -286,6 +376,19 @@ def check_wlcalib_sp(
         # match peaks with expected arc lines
         delta_wv_max = ntimes_match_wv * cdelt1
         wv_verified_all_peaks = match_wv_arrays(wv_master, fxpeaks_wv, delta_wv_max=delta_wv_max)
+
+    # wavelength at the center of each pixel (pixels from 1 to NAXIS1)
+    xwv = fun_wv(np.arange(naxis1) + 1.0, crpix1, crval1, cdelt1)
+
+    # wavelength range displayed in the figure (without the plot margins),
+    # removing leading and trailing zeros in spectrum when requested
+    nonzero = np.nonzero(sp)[0]
+    if remove_null_borders and len(nonzero) > 0:
+        wvmin_plot = xwv[nonzero[0]]
+        wvmax_plot = xwv[nonzero[-1]]
+    else:
+        wvmin_plot = min(xwv)
+        wvmax_plot = max(xwv)
 
     loop = True
 
@@ -318,8 +421,13 @@ def check_wlcalib_sp(
                     debugplot=0,
                 )
                 ysummary = summary(yresres)
+                # median offset (expected - measured wavelength) of the
+                # lines employed in the fit; note that ysummary describes
+                # the residuals around the fitted polynomial instead
+                offset_median = np.median(yresid[~reject]) if np.any(~reject) else np.nan
             else:
                 polyres = np.polynomial.Polynomial([0.0])
+                offset_median = np.nan
 
         list_wv_found = [str(round(wv, 4)) for wv in wv_verified_all_peaks if wv != 0]
         list_wv_master = [str(round(wv, 4)) for wv in wv_master]
@@ -339,7 +447,17 @@ def check_wlcalib_sp(
             print(">>> Number of identified lines........:", nlines_ok)
             print(">>> Number of unmatched lines.........:", len(missing_wv))
             print(">>> Polynomial degree in residuals fit:", poldeg_effective)
-            print(">>> Polynomial fit to residuals.......:\n", polyres)
+            print(
+                f">>> Polynomial fit to residuals.......:\n(offset in {wv_unit} vs. x = wavelength in {wv_unit})\n",
+                polyres,
+            )
+            # offset predicted by the fit at the borders of the displayed
+            # wavelength range
+            for clabel, wv_border in zip(["minimum", "maximum"], [wvmin_plot, wvmax_plot]):
+                print(
+                    f">>> Offset at {clabel} wavelength......:\n{polyres(wv_border):.6g} {wv_unit} "
+                    f"(wavelength = {wv_border:.{wv_decimals}f} {wv_unit})"
+                )
 
         # display results
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
@@ -369,16 +487,15 @@ def check_wlcalib_sp(
             if nlines_ok > 0:
                 ax2.plot(xresid, yresid, "o")
                 ax2.plot(xresid[reject], yresid[reject], "o", color="tab:gray")
-            ax2.set_ylabel("Offset " + r"($\AA$)")
+            ax2.set_ylabel(f"Offset ({wv_unit_label})")
             ax2.yaxis.label.set_size(10)
             if title is not None:
                 ax2.set_title(title, **{"size": 12})
-            xwv = fun_wv(np.arange(naxis1) + 1.0, crpix1, crval1, cdelt1)
             ax2.plot(xwv, polyres(xwv), "-")
             ax2.text(
                 1,
                 0,
-                "CDELT1 (" + r"$\AA$" + "/pixel)=" + str(cdelt1),
+                f"CDELT1 ({wv_unit_label}/pixel)=" + str(cdelt1),
                 horizontalalignment="right",
                 verticalalignment="bottom",
                 transform=ax2.transAxes,
@@ -386,7 +503,7 @@ def check_wlcalib_sp(
             ax2.text(
                 0,
                 0,
-                "Wavelength " + r"($\AA$) --->",
+                f"Wavelength ({wv_unit_label}) --->",
                 horizontalalignment="left",
                 verticalalignment="bottom",
                 transform=ax2.transAxes,
@@ -394,7 +511,7 @@ def check_wlcalib_sp(
             ax2.text(
                 0,
                 1,
-                "median=" + str(round(ysummary["median"], 4)) + r" $\AA$",
+                "median offset=" + str(round(offset_median, 4)) + f" {wv_unit_label}",
                 horizontalalignment="left",
                 verticalalignment="top",
                 transform=ax2.transAxes,
@@ -418,23 +535,15 @@ def check_wlcalib_sp(
             ax2.text(
                 1,
                 1,
-                "robust_std=" + str(round(ysummary["robust_std"], 4)) + r" $\AA$",
+                "robust_std=" + str(round(ysummary["robust_std"], 4)) + f" {wv_unit_label}",
                 horizontalalignment="right",
                 verticalalignment="top",
                 transform=ax2.transAxes,
             )
 
             # median spectrum and peaks
-            # remove leading and trailing zeros in spectrum when requested
-            if remove_null_borders:
-                nonzero = np.nonzero(sp)[0]
-                j1 = nonzero[0]
-                j2 = nonzero[-1]
-                xmin = xwv[j1]
-                xmax = xwv[j2]
-            else:
-                xmin = min(xwv)
-                xmax = max(xwv)
+            xmin = wvmin_plot
+            xmax = wvmax_plot
             dx = xmax - xmin
             if dx > 0:
                 xmin -= dx / 80
@@ -480,7 +589,7 @@ def check_wlcalib_sp(
                     ax1.text(
                         fxpeaks_wv[i],
                         spectrum[ixpeaks[i]],
-                        str(wv_verified_all_peaks[i]) + "(" + str(i + 1) + ")",
+                        f"{wv_verified_all_peaks[i]:.{wv_decimals}f}({i + 1})",
                         fontsize=8,
                         horizontalalignment="center",
                     )
@@ -495,7 +604,7 @@ def check_wlcalib_sp(
                 # estimated wavelength from initial calibration
                 if npeaks > 0:
                     estimated_wv = fun_wv(fxpeaks[i] + 1, crpix1, crval1, cdelt1)
-                    estimated_wv = str(round(estimated_wv, 4))
+                    estimated_wv = f"{estimated_wv:.{wv_decimals}f}"
                     ax1.text(
                         fxpeaks_wv[i],
                         ymin,  # spmedian[ixpeaks[i]],
@@ -510,6 +619,11 @@ def check_wlcalib_sp(
                 tmp = [float(wv) for wv in missing_wv]
                 ax1.vlines(tmp, ymin=ymin, ymax=ymax, colors="grey", linestyles="dotted", label="missing lines")
             ax1.legend()
+            # the layout engine (instead of a single call to
+            # fig.tight_layout) applies tight_layout at every draw, so that
+            # it is recomputed when the window gets its final size (when it
+            # is shown) or is resized, and also when saving the PDF file
+            fig.set_layout_engine("tight")
             if pdf is not None:
                 pdf.savefig(fig)
             else:
@@ -518,22 +632,23 @@ def check_wlcalib_sp(
                         debugplot=debugplot,
                         optional_prompt="Zoom/Unzoom or " + "press RETURN to continue...",
                         pltshow=True,
+                        tight_layout=False,
                     )
                 else:
-                    pause_debugplot(debugplot=debugplot, pltshow=True)
+                    pause_debugplot(debugplot=debugplot, pltshow=True, tight_layout=False)
 
             # display results and request next action
             if interactive:
                 print("Recalibration menu")
                 print("------------------")
-                print("[d] (d)elete all the identified lines")
-                print("[r] (r)estart from begining")
-                print("[a] (a)utomatic line inclusion")
-                print("[l] toggle (l)ogarithmic scale on/off")
-                print("[p] modify (p)olynomial degree")
-                print("[o] (o)utput data with identified line peaks")
-                print("[x] e(x)it without additional changes")
-                print("[#] from 1 to " + str(len(ixpeaks)) + " --> modify line #")
+                print("(d) delete all the identified lines")
+                print("(r) restart from begining")
+                print("(a) automatic line inclusion")
+                print("(l) toggle logarithmic scale on/off")
+                print("(p) modify polynomial degree")
+                print("(o) output data with identified line peaks")
+                print("(x) exit without additional changes")
+                print("(#) from 1 to " + str(len(ixpeaks)) + " --> modify line #")
                 ioption = readi("Option", default="x", minval=1, maxval=len(ixpeaks), allowed_single_chars="adloprx")
                 if ioption == "d":
                     wv_verified_all_peaks = np.zeros(npeaks)
@@ -678,60 +793,108 @@ def update_poly_wlcalib(coeff_ini, coeff_residuals, naxis1_ini, debugplot):
 
 
 def main(args=None):
-    # parse command-line options
-    parser = argparse.ArgumentParser()
+    """Check the wavelength calibration of a spectrum in a FITS file.
 
-    # positional parameters
-    parser.add_argument("filename", help="FITS image containing the spectra", type=str)
-    parser.add_argument(
-        "--scans", required=True, help="Tuple ns1[,ns2] (from 1 to NAXIS2) to compute " "median spectrum"
+    The spectrum, obtained by collapsing the requested scans of the
+    FITS image, must be calibrated with a linear wavelength scale
+    defined by the keywords CRPIX1, CRVAL1 and CDELT1 (and optionally
+    CUNIT1). The line peaks are compared with the wavelengths of the
+    provided arc line list.
+
+    Parameters
+    ----------
+    args : list of str or None
+        Command-line arguments (excluding the program name). If None,
+        sys.argv[1:] is used.
+
+    """
+
+    # parse command-line options
+    parser = argparse.ArgumentParser(
+        description="Supervised quality control of the wavelength calibration of a spectrum.",
+        formatter_class=RichHelpFormatter,
     )
-    parser.add_argument("--wv_master_file", required=True, help="TXT file containing wavelengths", type=str)
+
+    # required parameters
+    parser.add_argument("filename", help="FITS image containing the spectra", type=str)
+    parser.add_argument("--scans", required=True, help="Tuple ns1[,ns2] (from 1 to NAXIS2)")
+    parser.add_argument("--wv-master-file", required=True, help="ECSV/ASCII file containing wavelengths", type=str)
 
     # optional arguments
-    parser.add_argument("--interactive", help="Allows the user to modify de residuals fit", action="store_true")
+    parser.add_argument(
+        "--method",
+        help="collapsing method to compute the average spectrum (default='median', 'mean')",
+        default="median",
+        choices=["mean", "median"],
+    )
+    parser.add_argument("--interactive", help="Allows the user to modify the residuals fit", action="store_true")
     parser.add_argument("--threshold", help="Minimum signal in the line peaks (default=0)", default=0, type=float)
     parser.add_argument(
-        "--nwinwidth_initial",
+        "--nwinwidth-initial",
         help="Window width where each peak must be found (odd integer >= 3, default=7)",
         type=odd_window_width,
         default=7,
     )
     parser.add_argument(
-        "--nwinwidth_refined",
+        "--nwinwidth-refined",
         help="Window width where each peak must be refined (odd integer >= 3, default=5)",
         type=odd_window_width,
         default=5,
     )
     parser.add_argument(
-        "--ntimes_match_wv",
-        help="Times CDELT1 to match measured and expected " "wavelengths (default 2)",
+        "--ntimes-match-wv",
+        help="Times CDELT1 to match measured and expected wavelengths (default=2)",
         default=2,
         type=float,
     )
     parser.add_argument(
-        "--poldeg_residuals", help="Polynomial degree for fit to residuals " "(default 1)", default=1, type=int
+        "--poldeg-residuals", help="Polynomial degree for fit to residuals (default=1)", default=1, type=int
     )
     parser.add_argument(
-        "--times_sigma_reject",
-        help="Times the standard deviation to reject points " "iteratively in the fit to residuals (" "default=5)",
+        "--times-sigma-reject",
+        help="Times the standard deviation to reject points iteratively in the fit to residuals (default=5)",
         default=5,
         type=float,
     )
-    parser.add_argument("--use_r", help="Perform additional statistical analysis with R", action="store_true")
+    parser.add_argument("--use-r", help="Perform additional statistical analysis with R", action="store_true")
     parser.add_argument(
-        "--remove_null_borders", help="Remove leading and trailing zeros in spectrum", action="store_true"
+        "--remove-null-borders", help="Remove leading and trailing zeros in spectrum", action="store_true"
     )
-    parser.add_argument("--geometry", help="tuple x,y,dx,dy", default="0,0,640,480", type=parse_geometry)
+    parser.add_argument(
+        "--geometry",
+        help="Window geometry: tuple x,y,dx,dy (default 0,0,640,480)",
+        default="0,0,640,480",
+        type=parse_geometry,
+    )
+    parser.add_argument("--pdffile", help="Output PDF file name", type=lambda x: arg_file_is_new(parser, x, mode="wb"))
     parser.add_argument(
         "--debugplot",
-        help="integer indicating plotting/debugging" + " (default=0)",
+        help="Integer indicating plotting/debugging (default=12)",
         type=int,
         default=12,
         choices=DEBUGPLOT_CODES,
     )
 
-    args = parser.parse_args(args=args)
+    # accept the old option names (with underscores)
+    if args is None:
+        args = sys.argv[1:]
+    args = _translate_renamed_options(args)
+
+    # Include default arguments for common actions, and initialize console and logging
+    myscript = NuminaScriptDefinition(parser, argv=args)
+    args = myscript.args
+    logger = myscript.logger
+
+    # interactive use and PDF output are incompatible
+    if args.pdffile is not None:
+        # the file handle is only employed to check that the file is new
+        pdffilename = args.pdffile.name
+        args.pdffile.close()
+        if args.interactive:
+            os.remove(pdffilename)
+            parser.error("--interactive and --pdffile cannot be used simultaneously")
+    else:
+        pdffilename = None
 
     # scan range
     tmp_str = args.scans.split(",")
@@ -744,78 +907,79 @@ def main(args=None):
     else:
         raise ValueError("Invalid tuple for scan range")
 
-    # geometry
-    geometry = args.geometry
+    # collapsed spectrum (1D or 2D images are valid)
+    sp = core.collapsed_spectrum(fitsfile=args.filename, ns1=ns1, ns2=ns2, method=args.method, debugplot=0)
 
-    # read FITS file
-    with fits.open(args.filename) as hdulist:
-        image2d_header = hdulist[0].header
-        image2d = hdulist[0].data
-    if image2d.ndim == 1:
-        naxis1 = image2d.shape[0]
-        naxis2 = 1
-    elif image2d.ndim == 2:
-        naxis2, naxis1 = image2d.shape
+    # linear wavelength calibration (FITS convention: pixels from 1 to NAXIS1)
+    header = fits.getheader(args.filename)
+    wcs_values = {}
+    for keyword in ["CRPIX1", "CRVAL1", "CDELT1"]:
+        if keyword not in header:
+            raise ValueError(f"Keyword {keyword} not found in '{args.filename}'")
+        wcs_values[keyword] = header[keyword]
+        logger.info(f"{keyword}: {wcs_values[keyword]}")
+    crpix1, crval1, cdelt1 = wcs_values["CRPIX1"], wcs_values["CRVAL1"], wcs_values["CDELT1"]
+
+    # read list of expected arc lines (all the lines)
+    wv_master, wv_unit = core.read_wv_master_file(args.wv_master_file, lines="all", return_unit=True)
+
+    # when CUNIT1 is defined, express the arc line wavelengths in that unit
+    cunit1 = header.get("CUNIT1")
+    if cunit1 is None:
+        logger.info(f"CUNIT1 not found: assuming the unit of the line list ({wv_unit})")
     else:
-        raise ValueError("Unexpected image dimensions!")
-    crpix1 = image2d_header["crpix1"]
-    crval1 = image2d_header["crval1"]
-    cdelt1 = image2d_header["cdelt1"]
-    print("* Input file:", args.filename)
-    print(">>> NAXIS1:", naxis1)
-    print(">>> NAXIS2:", naxis2)
-    print(">>> CRPIX1:", crpix1)
-    print(">>> CRVAL1:", crval1)
-    print(">>> CDELT1:", cdelt1)
-
-    if 1 <= ns1 <= ns2 <= naxis2:
-        if ns1 == ns2 == 1 and image2d.ndim == 1:
-            spmedian = np.copy(image2d[:])
-        else:
-            # extract spectrum
-            spmedian = np.median(image2d[(ns1 - 1) : ns2], axis=0)
-    else:
-        raise ValueError("Invalid scan numbers")
-
-    # read list of expected arc lines
-    master_table = np.genfromtxt(args.wv_master_file)
-    wv_master = master_table[:, 0]
-    if abs(args.debugplot) in (21, 22):
-        print("wv_master:", wv_master)
+        logger.info(f"CUNIT1: {cunit1}")
+        try:
+            header_unit = u.Unit(cunit1, format="fits")
+        except ValueError:
+            header_unit = u.Unit(cunit1)
+        if header_unit != wv_unit:
+            try:
+                wv_master = (wv_master * wv_unit).to_value(header_unit)
+            except u.UnitConversionError:
+                raise ValueError(
+                    f"Wavelength unit of the line list ({wv_unit}) cannot be converted to CUNIT1 ({cunit1})"
+                ) from None
+            logger.info(f"Line list wavelengths converted from {wv_unit} to {header_unit}")
+            wv_unit = header_unit
+    logger.debug(f"wv_master:\n{wv_master}")
 
     # define plot title
     title = (
-        "fitsfile: "
-        + os.path.basename(args.filename)
-        + " ["
-        + str(ns1)
-        + ","
-        + str(ns2)
-        + "]\n"
-        + "wv_master: "
-        + os.path.basename(args.wv_master_file)
+        f"fitsfile: {os.path.basename(args.filename)} [{ns1},{ns2}]\n"
+        f"wv_master: {os.path.basename(args.wv_master_file)}"
     )
 
     # check the wavelength calibration
-    check_wlcalib_sp(
-        sp=spmedian,
-        crpix1=crpix1,
-        crval1=crval1,
-        cdelt1=cdelt1,
-        wv_master=wv_master,
-        interactive=args.interactive,
-        threshold=args.threshold,
-        nwinwidth_initial=args.nwinwidth_initial,
-        nwinwidth_refined=args.nwinwidth_refined,
-        ntimes_match_wv=args.ntimes_match_wv,
-        poldeg_residuals=args.poldeg_residuals,
-        times_sigma_reject=args.times_sigma_reject,
-        use_r=args.use_r,
-        title=title,
-        remove_null_borders=args.remove_null_borders,
-        geometry=geometry,
-        debugplot=args.debugplot,
-    )
+    pdf = PdfPages(pdffilename) if pdffilename is not None else None
+    try:
+        check_wlcalib_sp(
+            sp=sp,
+            crpix1=crpix1,
+            crval1=crval1,
+            cdelt1=cdelt1,
+            wv_master=wv_master,
+            interactive=args.interactive,
+            threshold=args.threshold,
+            nwinwidth_initial=args.nwinwidth_initial,
+            nwinwidth_refined=args.nwinwidth_refined,
+            ntimes_match_wv=args.ntimes_match_wv,
+            poldeg_residuals=args.poldeg_residuals,
+            times_sigma_reject=args.times_sigma_reject,
+            use_r=args.use_r,
+            title=title,
+            remove_null_borders=args.remove_null_borders,
+            geometry=args.geometry,
+            pdf=pdf,
+            debugplot=args.debugplot,
+            wv_unit=wv_unit,
+        )
+    finally:
+        if pdf is not None:
+            pdf.close()
+
+    # Display goodbye message and save console log if recording is enabled
+    myscript.goodbye_message_and_save_console()
 
 
 if __name__ == "__main__":
