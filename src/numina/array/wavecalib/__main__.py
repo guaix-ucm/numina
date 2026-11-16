@@ -194,7 +194,7 @@ def main(args=None):
     )
 
     # read arc line wavelengths from external file (all the lines)
-    wv_master_all = core.read_wv_master_file(args.wv_master_file, lines="all")
+    wv_master_all, wv_unit = core.read_wv_master_file(args.wv_master_file, lines="all", return_unit=True)
     # read arc line wavelengths from external file (brightest lines only)
     wv_master = core.read_wv_master_file(args.wv_master_file, lines="brightest")
 
@@ -256,6 +256,7 @@ def main(args=None):
         wvmax_useful=args.wvmax_useful,
         geometry=None,
         debugplot=args.debugplot,
+        wv_unit=wv_unit,
     )
 
     # apply gaussian filtering
@@ -301,6 +302,8 @@ def main(args=None):
             geometry=geometry,
             pdf=pdf,
             debugplot=args.debugplot,
+            sp_unfiltered=sp if args.sigma_gauss_filt > 0 else None,
+            wv_unit=wv_unit,
         )
 
     if pdf is not None:

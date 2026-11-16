@@ -9,10 +9,13 @@
 
 """Automatic identification of lines and wavelength calibration"""
 
+from astropy.io import fits
 from astropy.table import Table
+import astropy.units as u
 import itertools
 import logging
 import numpy as np
+import os
 from numpy.polynomial import Polynomial
 from scipy.special import comb
 
@@ -29,11 +32,35 @@ from ..stats import robust_std
 from .solutionarc import CrLinear, WavecalFeature, SolutionArcCalibration
 from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
+from .resample import resample_image2d_flux
 
 xmin_previous = None
 xmax_previous = None
 ymin_previous = None
 ymax_previous = None
+
+
+def _wv_unit_and_label(wv_unit):
+    """Return wavelength unit and its LaTeX representation for plot labels.
+
+    Parameters
+    ----------
+    wv_unit : str, astropy.units.UnitBase or None
+        Wavelength unit. If None, Angstrom is assumed.
+
+    Returns
+    -------
+    wv_unit : astropy.units.UnitBase
+        Wavelength unit.
+    wv_unit_label : str
+        LaTeX (matplotlib mathtext) representation of the unit.
+
+    """
+    if wv_unit is None:
+        wv_unit = u.AA
+    else:
+        wv_unit = u.Unit(wv_unit)
+    return wv_unit, wv_unit.to_string("latex_inline")
 
 
 def select_data_for_fit(list_of_wvfeatures):
@@ -91,6 +118,7 @@ def fit_list_of_wvfeatures(
     plot_title=None,
     geometry=None,
     debugplot=0,
+    wv_unit="Angstrom",
 ):
     """Fit polynomial to arc calibration list_of_wvfeatures.
 
@@ -124,6 +152,9 @@ def fit_list_of_wvfeatures(
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    wv_unit : str, astropy.units.UnitBase or None
+        Wavelength unit employed in the plot labels. If None,
+        Angstrom is assumed.
 
     Returns
     -------
@@ -136,6 +167,8 @@ def fit_list_of_wvfeatures(
 
     """
     logger = logging.getLogger(__name__)
+
+    wv_unit, wv_unit_label = _wv_unit_and_label(wv_unit)
 
     nlines_arc = len(list_of_wvfeatures)
 
@@ -217,7 +250,7 @@ def fit_list_of_wvfeatures(
         ax2 = fig.add_subplot(2, 1, 2)
         ax2.set_xlim(1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc)
         ax2.set_xlabel("pixel position in arc spectrum [from 1 to NAXIS1]")
-        ax2.set_ylabel("residuals (Angstrom)")
+        ax2.set_ylabel(f"residuals ({wv_unit_label})")
         ax2.plot(xp, yres, "go")
         ax2.axhline(y=0.0, color="black", linestyle="dashed")
         # residuals with R, T, P and K lines
@@ -236,7 +269,7 @@ def fit_list_of_wvfeatures(
         # polynomial
         ax = fig.add_subplot(2, 1, 1, sharex=ax2)
         ax.set_xlim(1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc)
-        ax.set_ylabel("differences with\nlinear solution (Angstrom)")
+        ax.set_ylabel(f"differences with\nlinear solution ({wv_unit_label})")
         ax.plot(xp, yp, "go", label="identified")
         for i in range(nfit):
             ax.text(xp[i], yp[i], list_of_wvfeatures[ifit[i]].category, fontsize=15)
@@ -303,7 +336,7 @@ def gen_triplets_master(wv_master, geometry=None, debugplot=0):
     ----------
     wv_master : numpy.ndarray
         1D array of floats with wavelengths corresponding to the master table
-        (Angstroms).
+        (any unit can be employed, since only distance ratios are computed).
     geometry : tuple (4 integers) or None
         x, y, dx, dy values employed to set the window geometry.
     debugplot : int
@@ -440,6 +473,7 @@ def arccalibration(
     times_sigma_inclusion,
     geometry=None,
     debugplot=0,
+    wv_unit="Angstrom",
 ):
     """Performs arc line identification for arc calibration.
 
@@ -456,7 +490,7 @@ def arccalibration(
     ----------
     wv_master : numpy.ndarray
         1D array of floats with wavelengths corresponding to the master table
-        (Angstroms).
+        (in the unit given by 'wv_unit').
     xpos_arc : numpy.ndarray
         1D array of floats with the location of arc lines (pixels).
     naxis1_arc : int
@@ -500,6 +534,9 @@ def arccalibration(
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    wv_unit : str, astropy.units.UnitBase or None
+        Wavelength unit employed in the plot labels. If None,
+        Angstrom is assumed.
 
     Returns
     -------
@@ -537,6 +574,7 @@ def arccalibration(
         times_sigma_inclusion=times_sigma_inclusion,
         geometry=geometry,
         debugplot=debugplot,
+        wv_unit=wv_unit,
     )
 
     return list_of_wvfeatures
@@ -564,6 +602,7 @@ def arccalibration_direct(
     times_sigma_inclusion=5.0,
     geometry=None,
     debugplot=0,
+    wv_unit="Angstrom",
 ):
     """Performs line identification for arc calibration using line triplets.
 
@@ -595,7 +634,7 @@ def arccalibration_direct(
     ----------
     wv_master : numpy.ndarray
         1D array of floats with wavelengths corresponding to the master table
-        (Angstroms).
+        (in the unit given by 'wv_unit').
     ntriplets_master : int
         Number of triplets built from master table.
     ratios_master_sorted : numpy.ndarray
@@ -648,6 +687,9 @@ def arccalibration_direct(
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    wv_unit : str, astropy.units.UnitBase or None
+        Wavelength unit employed in the plot labels. If None,
+        Angstrom is assumed.
 
     Returns
     -------
@@ -659,6 +701,8 @@ def arccalibration_direct(
 
     """
     logger = logging.getLogger(__name__)
+
+    wv_unit, wv_unit_label = _wv_unit_and_label(wv_unit)
 
     nlines_master = wv_master.size
 
@@ -772,8 +816,8 @@ def arccalibration_direct(
         # CDELT1 vs CRVAL1 diagram (original coordinates)
         fig = plt.figure()
         ax = fig.add_subplot(111)
-        ax.set_xlabel("cdelt1 (Angstroms/pixel)")
-        ax.set_ylabel("crval1 (Angstroms)")
+        ax.set_xlabel(f"cdelt1 ({wv_unit_label}/pixel)")
+        ax.set_ylabel(f"crval1 ({wv_unit_label})")
         ax.scatter(cdelt1_search, crval1_search, s=200, alpha=0.1)
         xmin = 0.0
         xmax = cdelt1_max
@@ -1126,7 +1170,7 @@ def arccalibration_direct(
         )
         list_of_wvfeatures.append(tmp_feature)
 
-    # set clipping window (in Angstrom)
+    # set clipping window (in the same unit as wv_master)
     # note that potential lines with wavelengths outside the interval
     # [wvmin_clip, wvmax_clip] will be ignored
     if wvmin_useful is None:
@@ -1294,6 +1338,7 @@ def arccalibration_direct(
             weighted=False,
             geometry=geometry,
             debugplot=debugplot,
+            wv_unit=wv_unit,
         )
 
     # ---
@@ -1348,6 +1393,7 @@ def arccalibration_direct(
                 weighted=False,
                 geometry=geometry,
                 debugplot=debugplot,
+                wv_unit=wv_unit,
             )
 
     # ---
@@ -1402,6 +1448,7 @@ def arccalibration_direct(
                 weighted=False,
                 geometry=geometry,
                 debugplot=debugplot,
+                wv_unit=wv_unit,
             )
 
     # ---
@@ -1453,6 +1500,7 @@ def arccalibration_direct(
                     weighted=False,
                     geometry=geometry,
                     debugplot=debugplot,
+                    wv_unit=wv_unit,
                 )
     else:
         if abs(debugplot) >= 10:
@@ -1508,6 +1556,7 @@ def arccalibration_direct(
                     weighted=False,
                     geometry=geometry,
                     debugplot=debugplot,
+                    wv_unit=wv_unit,
                 )
     else:
         if abs(debugplot) >= 10:
@@ -1602,6 +1651,7 @@ def arccalibration_direct(
                     weighted=False,
                     geometry=geometry,
                     debugplot=debugplot,
+                    wv_unit=wv_unit,
                 )
             else:
                 if new_lines_included:
@@ -1742,6 +1792,79 @@ def _disable_default_keys(fig, extra_keys=()):
     manager.key_press_handler_id = fig.canvas.mpl_connect("key_press_event", filtered_key_press_handler)
 
 
+def _save_linear_wvcal_spectrum(sp, poly, crval1, cdelt1, naxis1_out, filename, wv_unit="Angstrom"):
+    """Resample a spectrum to a linear wavelength scale and save it.
+
+    The resampling preserves the flux (see
+    numina.array.wavecalib.resample.resample_image2d_flux). Output
+    pixels outside the wavelength range of the input spectrum are set
+    to zero.
+
+    Parameters
+    ----------
+    sp : numpy.ndarray
+        1D array of length NAXIS1 containing the input spectrum.
+    poly : Polynomial instance
+        Wavelength calibration polynomial, providing the wavelength as
+        a function of pixel number (running from 1 to NAXIS1).
+    crval1 : float
+        Wavelength at the center of the first pixel of the output
+        spectrum (CRPIX1=1).
+    cdelt1 : float
+        Wavelength increment per pixel of the output spectrum.
+    naxis1_out : int
+        Number of pixels of the output spectrum.
+    filename : str
+        Output FITS file name (overwritten if it already exists).
+    wv_unit : str, astropy.units.UnitBase or None
+        Wavelength unit, stored in the CUNIT1 keyword. If None,
+        Angstrom is assumed.
+
+    Raises
+    ------
+    ValueError
+        If cdelt1 is not positive, if naxis1_out is smaller than 1,
+        or if the wavelength calibration polynomial is not
+        monotonically increasing within the input spectrum.
+
+    """
+    if cdelt1 <= 0:
+        raise ValueError(f"CDELT1 must be > 0 (CDELT1={cdelt1})")
+    if naxis1_out < 1:
+        raise ValueError(f"NAXIS1 must be >= 1 (NAXIS1={naxis1_out})")
+
+    naxis1 = sp.shape[0]
+    # wavelengths at the pixel borders of the input spectrum (pixel
+    # coordinates running from 1 to NAXIS1, i.e., borders at 0.5, 1.5,
+    # ..., NAXIS1 + 0.5); the flux-conserving interpolation requires
+    # them to increase monotonically
+    wv_borders = poly(np.arange(naxis1 + 1) + 0.5)
+    if not np.all(np.diff(wv_borders) > 0):
+        raise ValueError("the wavelength calibration polynomial is not monotonically increasing")
+
+    # crpix1=1.0 indicates that the input pixel coordinates (where the
+    # polynomial is evaluated) run from 1 to NAXIS1; the output pixel
+    # centers are located at crval1 + cdelt1 * (0, 1, ..., naxis1_out - 1)
+    sp_resampled = resample_image2d_flux(
+        sp, naxis1=naxis1_out, cdelt1=cdelt1, crval1=crval1, crpix1=1.0, coeff=poly.coef
+    )
+
+    # unit string following the FITS standard when possible
+    wv_unit, _ = _wv_unit_and_label(wv_unit)
+    try:
+        cunit1 = wv_unit.to_string("fits")
+    except ValueError:
+        cunit1 = wv_unit.to_string()
+
+    hdu = fits.PrimaryHDU(sp_resampled.astype(np.float32))
+    hdu.header["CRPIX1"] = (1.0, "reference pixel")
+    hdu.header["CRVAL1"] = (crval1, "wavelength at reference pixel")
+    hdu.header["CDELT1"] = (cdelt1, "wavelength increment per pixel")
+    hdu.header["CTYPE1"] = "WAVE"
+    hdu.header["CUNIT1"] = cunit1
+    hdu.writeto(filename, overwrite=True)
+
+
 def refine_arccalibration(
     sp,
     poly_initial,
@@ -1760,6 +1883,8 @@ def refine_arccalibration(
     geometry=None,
     pdf=None,
     debugplot=0,
+    sp_unfiltered=None,
+    wv_unit="Angstrom",
 ):
     """Refine wavelength calibration using an initial polynomial.
 
@@ -1813,6 +1938,15 @@ def refine_arccalibration(
     debugplot : int
         Debugging level for messages and plots. For details see
         'numina.array.display.pause_debugplot.py'.
+    sp_unfiltered : numpy.ndarray or None
+        Original version of the input spectrum when 'sp' has been
+        filtered (e.g. with a gaussian filter). If not None, the
+        user is asked which version of the spectrum is saved when
+        using the interactive option 's'.
+    wv_unit : str, astropy.units.UnitBase or None
+        Unit of the wavelengths in 'wv_master', employed in the plot
+        labels and in the CUNIT1 keyword of the spectrum saved with
+        the interactive option 's'. If None, Angstrom is assumed.
 
     Returns
     -------
@@ -1834,6 +1968,10 @@ def refine_arccalibration(
         raise ValueError(
             "Polynomial degree of refined polynomial must be " "equal or larger than that of the initial polynomial"
         )
+
+    # wavelength unit (Angstrom when undefined) and its LaTeX
+    # representation for the plot labels
+    wv_unit, wv_unit_label = _wv_unit_and_label(wv_unit)
 
     # check that interactive use takes place when plotting
     if interactive:
@@ -1892,7 +2030,7 @@ def refine_arccalibration(
 
     # single-key options of the interactive menu ('n' asks for the
     # number of the line to be modified)
-    menu_keys = "adeilnrwq"
+    menu_keys = "adeilnrswq"
 
     def print_menu():
         logger.info("[bold blue]Recalibration menu")
@@ -1904,6 +2042,7 @@ def refine_arccalibration(
         logger.info("[blue](l) toggle logarithmic scale on/off")
         logger.info("[blue](e) evaluate current polynomial at a given pixel")
         logger.info("[blue](w) replot whole spectrum")
+        logger.info("[blue](s) save wavelength calibrated spectrum (constant CDELT1) in FITS file")
         logger.info("[blue](q) quit without additional changes")
         logger.info(f"[blue](n) modify line #<number> (number from 1 to {len(ixpeaks)})")
 
@@ -2017,11 +2156,11 @@ def refine_arccalibration(
                 if sum(reject) > 0:
                     ax1.plot(xdum[reject], yp[reject], "o", color="tab:gray", label="ignored")
                 ax1.plot(xpol, ypol, "c-", label="fit")
-            ax1.set_ylabel("polynomial - linear fit " + r"($\AA$)")
+            ax1.set_ylabel(f"polynomial - linear fit ({wv_unit_label})")
             ax1.text(
                 0.01,
                 0.97,
-                "CRVAL1 (" + r"$\AA$" + "): " + str(round(crval1_linear, decimal_places)),
+                f"CRVAL1 ({wv_unit_label}): " + str(round(crval1_linear, decimal_places)),
                 bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
                 horizontalalignment="left",
                 verticalalignment="top",
@@ -2030,7 +2169,7 @@ def refine_arccalibration(
             ax1.text(
                 0.01,
                 0.89,
-                "CDELT1 (" + r"$\AA$" + "/pixel): " + str(round(cdelt1_linear, decimal_places)),
+                f"CDELT1 ({wv_unit_label}/pixel): " + str(round(cdelt1_linear, decimal_places)),
                 bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
                 horizontalalignment="left",
                 verticalalignment="top",
@@ -2039,7 +2178,7 @@ def refine_arccalibration(
             ax1.text(
                 0.01,
                 0.81,
-                r"$\lambda_{\rm min}$" + " (" + r"$\AA$" + "): " + str(round(poly_refined(0.5), decimal_places)),
+                r"$\lambda_{\rm min}$" + f" ({wv_unit_label}): " + str(round(poly_refined(0.5), decimal_places)),
                 bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
                 horizontalalignment="left",
                 verticalalignment="top",
@@ -2049,9 +2188,7 @@ def refine_arccalibration(
                 0.01,
                 0.73,
                 r"$\lambda_{\rm max}$"
-                + " ("
-                + r"$\AA$"
-                + "): "
+                + f" ({wv_unit_label}): "
                 + str(round(poly_refined(naxis1 + 0.5), decimal_places)),
                 bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
                 horizontalalignment="left",
@@ -2061,7 +2198,7 @@ def refine_arccalibration(
             ax1.text(
                 0.99,
                 0.97,
-                "robust std (" + r"$\AA$" + "): " + str(round(yres_summary["robust_std"], decimal_places)),
+                f"robust std ({wv_unit_label}): " + str(round(yres_summary["robust_std"], decimal_places)),
                 bbox=dict(facecolor="white", alpha=0.7, edgecolor="none"),
                 horizontalalignment="right",
                 verticalalignment="top",
@@ -2298,6 +2435,52 @@ def refine_arccalibration(
                     xmax_previous = None
                     ymin_previous = None
                     ymax_previous = None
+                elif ioption == "s":
+                    # resample the spectrum to a linear wavelength scale
+                    # (using the current polynomial) and save it
+                    if sp_unfiltered is not None:
+                        cspectrum = readc("Spectrum to be saved: (o)riginal, (f)iltered", default="o", valid="of")
+                        sp_to_save = sp_unfiltered if cspectrum == "o" else sp
+                    else:
+                        sp_to_save = sp
+                    crval1_out = readf(
+                        f"CRVAL1 (wavelength at the center of the first pixel, in {wv_unit})", default=crval1_linear
+                    )
+                    cdelt1_out = readf(f"CDELT1 (wavelength increment per pixel, in {wv_unit})", default=cdelt1_linear)
+                    # default NAXIS1: number of output pixels whose center
+                    # lies between CRVAL1 and the upper border of the last
+                    # pixel of the input spectrum
+                    naxis1_default = naxis1
+                    if cdelt1_out > 0:
+                        naxis1_default = max(
+                            1, int(np.floor((poly_refined(naxis1 + 0.5) - crval1_out) / cdelt1_out)) + 1
+                        )
+                    naxis1_out = readi("NAXIS1 (number of pixels)", default=naxis1_default, minval=1)
+                    default_filename = "wvcal_spectrum.fits"
+                    filename = input(f"Output FITS file name [{default_filename}] ? ").strip()
+                    if filename == "":
+                        filename = default_filename
+                    if os.path.exists(filename) and (
+                        readc(f"File {filename} already exists. Overwrite (y/n)", default="n", valid="yn") != "y"
+                    ):
+                        logger.info("Spectrum not saved")
+                    else:
+                        try:
+                            _save_linear_wvcal_spectrum(
+                                sp_to_save,
+                                poly_refined,
+                                crval1=crval1_out,
+                                cdelt1=cdelt1_out,
+                                naxis1_out=naxis1_out,
+                                filename=filename,
+                                wv_unit=wv_unit,
+                            )
+                            logger.info(
+                                f"Spectrum saved in {filename} "
+                                f"(NAXIS1={naxis1_out}, CRVAL1={crval1_out}, CDELT1={cdelt1_out})"
+                            )
+                        except ValueError as e:
+                            logger.warning(f"Spectrum not saved: {e}")
                 elif ioption == "q":
                     # ask for confirmation; otherwise the figure is replotted
                     # keeping the current limits

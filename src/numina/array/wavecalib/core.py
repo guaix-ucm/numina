@@ -21,6 +21,7 @@ import os
 
 from astropy.io import fits
 from astropy.table import Table
+import astropy.units as u
 import numpy as np
 from scipy import ndimage
 
@@ -209,7 +210,7 @@ def read_wv_master_from_array(master_table, lines="brightest"):
     return wv_master
 
 
-def read_wv_master_file(wv_master_file, lines="brightest"):
+def read_wv_master_file(wv_master_file, lines="brightest", return_unit=False):
     """read arc line wavelengths from external file.
 
     Parameters
@@ -222,11 +223,17 @@ def read_wv_master_file(wv_master_file, lines="brightest"):
         three columns, lines='brightest' indicates that only the
         brightest lines are read, whereas lines='all' means that all
         the lines are considered.
+    return_unit : bool
+        If True, also return the unit of the wavelengths.
 
     Returns
     -------
     wv_master : 1d numpy array
         Array with arc line wavelengths.
+    wv_unit : astropy.units.UnitBase
+        Unit of the 'wavelength' column in the ECSV file. Angstrom is
+        assumed when the file is not an ECSV file or when the column
+        has no unit. Only returned when return_unit is True.
 
     """
     logger = logging.getLogger(__name__)
@@ -244,6 +251,7 @@ def read_wv_master_file(wv_master_file, lines="brightest"):
         logger.info("INFO: Trying to read as a simple text file...")
         master_table = np.genfromtxt(wv_master_file)
         wv_master = read_wv_master_from_array(master_table, lines)
+        wv_unit = None
     else:
         master_table_ecsv = Table.read(wv_master_file, format="ascii.ecsv")
         # generate numpy array with three columns: wavelength, flag and intensity
@@ -255,10 +263,16 @@ def read_wv_master_file(wv_master_file, lines="brightest"):
         master_table[:, 1] = master_table_ecsv["flag"].data
         master_table[:, 2] = master_table_ecsv["intensity"].data
         wv_master = read_wv_master_from_array(master_table, lines)
+        wv_unit = master_table_ecsv["wavelength"].unit
 
     logger.debug(f"Reading master table: {wv_master_file}")
     logger.debug(f"wv_master:\n{wv_master}")
 
+    if return_unit:
+        if wv_unit is None:
+            logger.warning(f"No wavelength unit defined in '{wv_master_file}': assuming Angstrom")
+            wv_unit = u.AA
+        return wv_master, wv_unit
     return wv_master
 
 
@@ -459,6 +473,7 @@ def wvcal_spectrum(
     wvmax_useful=None,
     geometry=None,
     debugplot=0,
+    wv_unit="Angstrom",
 ):
     """Execute wavelength calibration of a spectrum using fixed line peaks.
 
@@ -488,6 +503,9 @@ def wvcal_spectrum(
         Determines whether intermediate computations and/or plots
         are displayed. The valid codes are defined in
         numina.array.display.pause_debugplot.
+    wv_unit : str, astropy.units.UnitBase or None
+        Wavelength unit employed in the plot labels. If None,
+        Angstrom is assumed.
 
     Returns
     -------
@@ -539,6 +557,7 @@ def wvcal_spectrum(
         times_sigma_inclusion=10.0,
         geometry=geometry,
         debugplot=debugplot,
+        wv_unit=wv_unit,
     )
 
     title = "Wavelength calibration"
@@ -551,6 +570,7 @@ def wvcal_spectrum(
         plot_title=title,
         geometry=geometry,
         debugplot=debugplot,
+        wv_unit=wv_unit,
     )
 
     if abs(debugplot) % 10 != 0:
