@@ -316,7 +316,7 @@ def main(args=None):
 def __getattr__(name):
     if name in _MOVED:
         warnings.warn(
-            f"numina.array.wavecalib.__main__.{name} is deprecated, it will be removed in 0.42, "
+            f"numina.array.wavecalib.__main__.{name} is deprecated, it will be removed in a future version, "
             f"use numina.array.wavecalib.core.{name}",
             DeprecationWarning,
             stacklevel=2,

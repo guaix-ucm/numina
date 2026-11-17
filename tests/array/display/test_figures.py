@@ -50,6 +50,23 @@ def test_ximplotxy_ax():
     assert ax_out is ax1
 
 
+def test_ximplotxy_result_as_axes():
+    """The result unpacks to (fig, ax), and used as the axes, as before numina 0.42, it warns"""
+    from numina.array.display.ximplotxy import FigureAxes
+
+    result = ximplotxy([1, 2, 3], [4, 5, 6], show=False)
+    try:
+        fig, ax = result
+        assert isinstance(result, FigureAxes) and isinstance(result, tuple)
+        assert ax.figure is fig
+        with pytest.warns(DeprecationWarning, match="fig, ax = ximplotxy"):
+            result.stem([1.5], [5.0])
+        with pytest.warns(DeprecationWarning):
+            assert result.get_title() == ax.get_title()
+    finally:
+        plt.close(fig)
+
+
 def test_ximplotxy_ax_not_in_fig():
     ax = Figure().add_subplot(111)
     with pytest.raises(ValueError, match="ax does not belong to fig"):

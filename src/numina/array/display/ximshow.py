@@ -87,6 +87,26 @@ def ximshow_jupyter(image2d, **args):
     return ximshow(image2d, using_jupyter=True, **args)
 
 
+def _geometry_from_string(text):
+    """Geometry (x, y, dx, dy) from the string 'xwidth,ywidth,xorigin,yorigin' of ximshow before numina 0.42
+
+    A string is deprecated. A geometry without width or height is ignored (None).
+    """
+    warnings.warn(
+        "a string geometry in ximshow is deprecated, use a tuple (x, y, dx, dy); "
+        "the string is read as 'xwidth,ywidth,xorigin,yorigin'",
+        DeprecationWarning,
+        stacklevel=3,
+    )
+    try:
+        xwidth, ywidth, xorigin, yorigin = (int(value) for value in text.split(","))
+    except ValueError:
+        raise ValueError(f"geometry must be 'xwidth,ywidth,xorigin,yorigin', not '{text}'") from None
+    if xwidth <= 0 or ywidth <= 0:
+        return None
+    return xorigin, yorigin, xwidth, ywidth
+
+
 def ximshow(
     image2d,
     title=None,
@@ -166,7 +186,9 @@ def ximshow(
     ds9regfile : str or None
         Ds9 region file to be overplotted.
     geometry : tuple (4 integers) or None
-        x, y, dx, dy values employed to set the window geometry.
+        x, y, dx, dy values employed to set the window geometry. A string
+        'xwidth,ywidth,xorigin,yorigin', the convention before numina 0.42,
+        is deprecated.
     factor_macosx : None
         Deprecated and ignored: the window size on macOS is set by
         numina.array.display.matplotlib_utils.set_window_geometry.
@@ -200,6 +222,9 @@ def ximshow(
 
     if factor_macosx is not None:
         warnings.warn("factor_macosx is deprecated and ignored", DeprecationWarning, stacklevel=2)
+
+    if isinstance(geometry, str):
+        geometry = _geometry_from_string(geometry)
 
     # protections
     if not isinstance(image2d, np.ndarray):

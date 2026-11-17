@@ -17,10 +17,32 @@ Example of usage from command line:
 """
 
 import argparse
+import warnings
+
 import numpy as np
 
 from .matplotlib_utils import parse_geometry, set_window_geometry
 from .pause_debugplot import pause_debugplot
+
+
+class FigureAxes(tuple):
+    """The pair (fig, ax) returned by ximplotxy
+
+    Before numina 0.42 ximplotxy returned only the axes. Using the result as
+    the axes (for example, ``ax = ximplotxy(...); ax.plot(...)``) still works,
+    and is deprecated.
+    """
+
+    def __new__(cls, fig, ax):
+        return super().__new__(cls, (fig, ax))
+
+    def __getattr__(self, name):
+        warnings.warn(
+            "ximplotxy returns (fig, ax); using its result as the axes is deprecated, use fig, ax = ximplotxy(...)",
+            DeprecationWarning,
+            stacklevel=2,
+        )
+        return getattr(self[1], name)
 
 
 def ximplotxy_jupyter(x, y, fmt=None, **args):
@@ -113,6 +135,9 @@ def ximplotxy(
     ax : axes object
         Matplotlib axes instance.
 
+    The pair is a FigureAxes: using it as the axes, as with the axes that
+    ximplotxy returned before numina 0.42, is deprecated.
+
     """
 
     if ax is not None:
@@ -127,7 +152,7 @@ def ximplotxy(
         _plotxy(ax, x, y, fmt, plottype, xlim, ylim, xlabel, ylabel, title, **kwargs)
         if tight_layout:
             fig.tight_layout()
-        return fig, ax
+        return FigureAxes(fig, ax)
 
     from numina.array.display.matplotlib_utils import plt
 
@@ -148,7 +173,7 @@ def ximplotxy(
         pause_debugplot(debugplot, pltshow=show, tight_layout=tight_layout)
     elif tight_layout:
         plt.tight_layout()
-    return fig, ax
+    return FigureAxes(fig, ax)
 
 
 # Line2D properties (besides those starting with 'marker') that are not

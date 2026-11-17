@@ -42,9 +42,28 @@ def test_ximshow_geometry_tuple():
         plt.close(ax.figure)
 
 
-def test_ximshow_geometry_string_is_rejected():
-    with pytest.raises(TypeError, match="not a string"):
-        ximshow(np.arange(100.0).reshape(10, 10), geometry="1024,768,0,0", show=False)
+def test_ximshow_geometry_string_is_deprecated():
+    """A string is read with the convention before numina 0.42, 'xwidth,ywidth,xorigin,yorigin'"""
+    with pytest.warns(DeprecationWarning, match="string geometry"):
+        ax = ximshow(np.arange(100.0).reshape(10, 10), geometry="1024,768,0,0", show=False)
+    try:
+        assert tuple(ax.figure.get_size_inches()) == pytest.approx((10.24, 7.68))
+    finally:
+        plt.close(ax.figure)
+
+
+def test_ximshow_geometry_string_without_size_is_ignored():
+    with pytest.warns(DeprecationWarning, match="string geometry"):
+        ax = ximshow(np.arange(100.0).reshape(10, 10), geometry="0,0,640,480", show=False)
+    try:
+        assert tuple(ax.figure.get_size_inches()) == pytest.approx(tuple(plt.rcParams["figure.figsize"]))
+    finally:
+        plt.close(ax.figure)
+
+
+def test_ximshow_geometry_string_invalid():
+    with pytest.warns(DeprecationWarning), pytest.raises(ValueError, match="xwidth,ywidth,xorigin,yorigin"):
+        ximshow(np.arange(100.0).reshape(10, 10), geometry="1024,768", show=False)
     plt.close("all")
 
 
