@@ -1,4 +1,0 @@
-name: TEST3
-configurations:
-  - something: broken
-    invalid: file

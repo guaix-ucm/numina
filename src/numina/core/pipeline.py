@@ -376,18 +376,6 @@ class ObservingMode:
         self.build_ob_options = None
         self.rawimage = None
 
-    def validate(self, obsres):
-        """Deprecated, it is not used by numina and will be removed
-
-        The observation results are validated with the attribute validator.
-        """
-        warnings.warn(
-            "ObservingMode.validate is deprecated, it is not used by numina and will be removed",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return True
-
     def build_ob(self, partial_ob, backend, options=None):
         """Complete the observing block `partial_ob` and return it.
 

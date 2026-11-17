@@ -10,9 +10,7 @@
 
 import datetime
 import collections.abc
-import sys
 import uuid
-import warnings
 
 import numpy
 import astropy.io.fits as fits
@@ -86,13 +84,6 @@ class _ExtractKeyword:
         return value
 
 
-def _is_schema_keyword(value):
-    """True if `value` is a SchemaKeyword of the deprecated numina.frame.schema"""
-    # The module is not imported here, it warns when imported
-    schema = sys.modules.get("numina.frame.schema")
-    return schema is not None and isinstance(value, schema.SchemaKeyword)
-
-
 def _inspect_method(value):
     """Convert a value of ``zeros``, ``scales`` or ``weights`` of ``combine`` into a sequence or a callable.
 
@@ -121,14 +112,6 @@ def _inspect_method(value):
         return value, False
     elif isinstance(value, KeyDefinition):
         return _ExtractKeyword(value), True
-    elif _is_schema_keyword(value):
-        warnings.warn(
-            "passing a SchemaKeyword to combine is deprecated, it will be removed in 0.42, "
-            "use numina.keydef.KeyDefinition",
-            DeprecationWarning,
-            stacklevel=3,
-        )
-        return _ExtractKeyword(KeyDefinition(value.name)), True
     elif callable(value):
         return value, True
     else:
@@ -254,20 +237,3 @@ def combine(
 
     result = fits.HDUList(list_of_hdu)
     return result
-
-
-def __getattr__(name):
-    """Return ``SchemaKeyword`` for the deprecated name ``Keyword``, with a warning."""
-    if name == "Keyword":
-        warnings.warn(
-            "numina.frame.combine.Keyword is deprecated, it will be removed in 0.42, "
-            "use numina.keydef.KeyDefinition",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            from numina.frame.schema import SchemaKeyword
-
-        return SchemaKeyword
-    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")

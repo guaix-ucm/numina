@@ -152,15 +152,6 @@ class DataModel:
             info = self.gather_info_hdu(hdulist)
         return info
 
-    def gather_info_dframe(self, img):
-        """Deprecated, use gather_info"""
-        warnings.warn(
-            "gather_info_dframe is deprecated, use gather_info",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return self.gather_info(img)
-
     def gather_info_hdu(self, hdulist):
         """Obtain a summary of information about the image."""
         values = {}

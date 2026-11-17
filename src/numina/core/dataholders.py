@@ -14,7 +14,6 @@ Recipe requirements
 import inspect
 import numina.exceptions
 import collections.abc
-import contextlib
 import copy
 import warnings
 
@@ -200,33 +199,6 @@ class Result(EntryHolder):
         return self.type.convert_out(val)
 
 
-class Product(Result):
-    """Product holder for RecipeResult.
-
-    .. deprecated:: 0.16
-            `Product` is replaced by `Result`. It will
-            be removed in 1.0
-    """
-
-    def __init__(
-        self, ptype, description="", validation=True, destination=None, optional=False, default=None, choices=None
-    ):
-        super().__init__(
-            ptype,
-            description=description,
-            validation=validation,
-            destination=destination,
-            optional=optional,
-            default=default,
-            choices=choices,
-        )
-
-        warnings.warn("The 'Product' class was renamed to 'Result'", DeprecationWarning, stacklevel=2)
-
-    def __repr__(self):
-        return f"Product(type={self.type!r}, dest={self.dest!r})"
-
-
 def _with_tags(obsres, tags):
     """The observation result with other tags, without modifying it"""
     if tags is obsres.tags:
@@ -234,40 +206,6 @@ def _with_tags(obsres, tags):
     other = copy.copy(obsres)
     other.tags = tags
     return other
-
-
-@contextlib.contextmanager
-def tags_as_scalar(obsres):
-    """Deprecated, it is not used by numina and will be removed"""
-    warnings.warn(
-        "tags_as_scalar is deprecated, it is not used by numina and will be removed",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-    saved = obsres.tags
-    if isinstance(obsres.tags, list):
-        obsres.tags = obsres.tags[0]
-    try:
-        yield obsres
-    finally:
-        obsres.tags = saved
-
-
-@contextlib.contextmanager
-def tags_as_list(obsres):
-    """Deprecated, it is not used by numina and will be removed"""
-    warnings.warn(
-        "tags_as_list is deprecated, it is not used by numina and will be removed",
-        DeprecationWarning,
-        stacklevel=3,
-    )
-    saved = obsres.tags
-    if not isinstance(obsres.tags, list):
-        obsres.tags = [obsres.tags]
-    try:
-        yield obsres
-    finally:
-        obsres.tags = saved
 
 
 class Requirement(EntryHolder):
@@ -554,17 +492,6 @@ class Requirement(EntryHolder):
         sclass = type(self).__name__
         fmt = "%s(dest=%r, description='%s', " "default=%s, optional=%s, type=%s, choices=%r)"
         return fmt % (sclass, self.dest, self.description, self.default, self.optional, self.type, self.choices)
-
-    def query_constraints(self):
-        """Deprecated, it is not used by numina and will be removed"""
-        warnings.warn(
-            "Requirement.query_constraints is deprecated, it is not used by numina and will be removed",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        with warnings.catch_warnings():
-            warnings.simplefilter("ignore", DeprecationWarning)
-            return self.type.query_constraints()
 
     def tag_names(self):
         """Return the names of the tags of the type of the requirement."""

@@ -9,8 +9,6 @@
 
 """Modify how to query results in the storage backend"""
 
-import warnings
-
 
 class QueryModifier:
     """Base class of the options that modify the query of a requirement.
@@ -18,21 +16,6 @@ class QueryModifier:
     They are given in the 'query_opts' of a requirement or in the 'links'
     of a recipe in drp.yaml.
     """
-
-
-class Constraint(QueryModifier):
-    """Deprecated, it is not used by numina and will be removed"""
-
-    def __init__(self):
-        warnings.warn(
-            "Constraint is deprecated, it is not used by numina and will be removed", DeprecationWarning, stacklevel=2
-        )
-        super().__init__()
-
-    @classmethod
-    def _create(cls):
-        """Create an instance without warning, for the deprecated query_constraints"""
-        return cls.__new__(cls)
 
 
 class ResultOf(QueryModifier):

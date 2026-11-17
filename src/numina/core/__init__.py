@@ -15,7 +15,7 @@ from .pipeline import InstrumentDRP, Pipeline  # noqa: F401
 from .pipeline import ObservingMode  # noqa: F401
 from .pipelineload import drp_load  # noqa: F401
 from .dataholders import Parameter, Requirement  # noqa: F401
-from .dataholders import Result, Product  # noqa: F401
+from .dataholders import Result  # noqa: F401
 from .oresult import ObservationResult  # noqa: F401
 from numina.types.product import DataProductType  # noqa: F401
 from numina.types.frame import DataFrameType  # noqa: F401

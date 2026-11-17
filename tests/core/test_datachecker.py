@@ -36,24 +36,3 @@ def test_no_checker(drpmocker):
     assert "OTHER" not in checker
     with pytest.warns(UserWarning, match="no function for OTHER"):
         assert checker("OTHER", "obj") is None
-
-
-def test_register_deprecated(drpmocker):
-    """A function registered is used if the DRP has no checker"""
-    drpmocker.add_drp("TEST1", lambda: pload.drp_load_data("numina", DRP_TEST1))
-    checker = numina.core.dataload.DataChecker()
-    with pytest.warns(DeprecationWarning, match="DataChecker.register is deprecated"):
-
-        @checker.register("TEST1")
-        def check(obj, astype=None, level=None):
-            return "registered"
-
-    assert "TEST1" in checker
-    assert checker("TEST1", "obj") == "registered"
-
-
-def test_checker_of_drp_first(drp_with_checker):
-    checker = numina.core.dataload.DataChecker()
-    with pytest.warns(DeprecationWarning):
-        checker.register("TEST1")(lambda obj, astype=None, level=None: "registered")
-    assert checker("TEST1", "obj") == ("TEST1", "obj", None)

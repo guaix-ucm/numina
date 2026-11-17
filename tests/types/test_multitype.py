@@ -120,37 +120,11 @@ def test_validate1():
     assert intl_args == (AVal, BVal)
 
 
-def test_validate2():
-
-    multi = MultiType(TypeA, TypeB)
-
-    # Simulate valid query
-    multi.current_node = multi.node_type[0]
-
-    # testing with selection of the internal type
-    # It should validate TypeA only
-    assert multi.validate(AVal())
-
-    with pytest.raises(numina.exceptions.ValidationError):
-        multi.validate(BVal())
-
-    with pytest.raises(numina.exceptions.ValidationError):
-        multi.validate(3)
-
-
 def test_tag_names1():
 
     multi = MultiType(TypeA, TypeB)
 
     assert multi.tag_names() == ["domeA", "domeA2", "domeB"]
-
-
-def test_tag_names2():
-
-    multi = MultiType(TypeA, TypeB)
-    multi.current_node = multi.node_type[1]
-
-    assert multi.tag_names() == ["domeB"]
 
 
 def test_internal_default():

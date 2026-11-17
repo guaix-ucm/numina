@@ -95,14 +95,6 @@ def test_datamanager_remote(datamanager_remote, downloads):
     assert set(datamanager_remote.backend.ob_table) == {testdrp.BIAS["id"]}
 
 
-def test_numinatmpdir(tmpdir):
-    # The fixture is deprecated, it is called directly to check the warning
-    with pytest.warns(DeprecationWarning, match="numinatmpdir"):
-        result = plugins.numinatmpdir.__wrapped__(tmpdir)
-    assert (result / "_work").isdir()
-    assert (result / "_data").isdir()
-
-
 @pytest.mark.parametrize("has_benchmark, header", [(True, ""), (False, "pytest-benchmark not installed")])
 def test_report_header(monkeypatch, has_benchmark, header):
     monkeypatch.setattr(plugins, "HAS_BENCHMARCK", has_benchmark)

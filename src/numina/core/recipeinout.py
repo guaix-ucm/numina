@@ -392,18 +392,6 @@ class define_input:
         return klass
 
 
-class define_requirements(define_input):
-    """Deprecated alias of define_input"""
-
-    def __init__(self, input_class):
-        warnings.warn(
-            "define_requirements is deprecated, declare the requirements in the recipe",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self._set_class(input_class)
-
-
 def generate_docs(klass):
     """Add documentation to generated classes"""
     import numina.types.datatype

@@ -7,8 +7,6 @@
 #
 
 
-import warnings
-
 from numina.util.convert import convert_qc
 
 from .base import DataTypeBase
@@ -24,15 +22,6 @@ class DataProductMixin(DataTypeBase):
         super().__init__(*args, **kwds)
         self.quality_control = QC.UNKNOWN
 
-    def generators(self):
-        """Deprecated, it is not used by numina and will be removed"""
-        warnings.warn(
-            "DataProductMixin.generators is deprecated, it is not used by numina and will be removed",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return []
-
     @classmethod
     def isproduct(cls):
         """Return True, the type is a data product."""
@@ -42,17 +31,6 @@ class DataProductMixin(DataTypeBase):
         """Unique name of the datatype"""
         sclass = type(self).__name__
         return f"{sclass}"
-
-    def query_constraints(self):
-        """Deprecated, it is not used by numina and will be removed"""
-        import numina.core.query
-
-        warnings.warn(
-            "DataProductMixin.query_constraints is deprecated, it is not used by numina and will be removed",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return numina.core.query.Constraint._create()
 
     def extract_db_info(self, obj, keys):
         """Extract metadata from serialized file"""
@@ -114,32 +92,6 @@ class DataProductType(DataProductMixin, DataType):
 
     def __init__(self, ptype, default=None):
         super().__init__(ptype, default=default)
-
-
-class ConfigurationTag:
-    """Deprecated, it is not used by numina and will be removed.
-
-    A type that is part of the instrument configuration.
-    """
-
-    def __init_subclass__(cls, **kwargs):
-        """Warn that ConfigurationTag is deprecated."""
-        super().__init_subclass__(**kwargs)
-        warnings.warn(
-            "ConfigurationTag is deprecated, it is not used by numina and will be removed",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-    @classmethod
-    def isconfiguration(cls):
-        """Deprecated, return True."""
-        warnings.warn(
-            "ConfigurationTag is deprecated, it is not used by numina and will be removed",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        return True
 
 
 if __name__ == "__main__":

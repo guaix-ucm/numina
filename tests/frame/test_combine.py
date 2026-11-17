@@ -1,7 +1,5 @@
 """Combination of images of numina.frame.combine"""
 
-import warnings
-
 import astropy.io.fits as fits
 import numpy
 import pytest
@@ -122,24 +120,6 @@ def test_combine_keyword_default():
 def test_combine_keyword_missing():
     with pytest.raises(KeyError, match="'EXPOSED' not found in HDU 0"):
         fc.combine(intl.mean_method(), images(), scales=KeyDefinition("EXPOSED"))
-
-
-def test_combine_schema_keyword_deprecated():
-    with warnings.catch_warnings():
-        warnings.simplefilter("ignore", DeprecationWarning)
-        from numina.frame.schema import SchemaKeyword
-
-    with pytest.warns(DeprecationWarning, match="SchemaKeyword"):
-        result = fc.combine(intl.mean_method(), images(), scales=SchemaKeyword("EXPTIME"))
-    assert numpy.allclose(result[0].data, 1.0)
-
-
-def test_keyword_deprecated():
-    with pytest.warns(DeprecationWarning, match="Keyword is deprecated"):
-        keyword = fc.Keyword("EXPTIME")
-    assert keyword.name == "EXPTIME"
-    with pytest.raises(AttributeError):
-        fc.Other
 
 
 @pytest.mark.parametrize("scales", ["mean", "median", "mode"])

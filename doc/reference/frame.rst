@@ -7,11 +7,6 @@
    :members:
 
 
-.. automodule:: numina.frame.schema
-   :synopsis: Schema for FITS header
-   :members:
-
-
 .. automodule:: numina.frame.utils
    :synopsis: Frame utilities
    :members:

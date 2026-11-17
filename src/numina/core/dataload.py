@@ -122,13 +122,7 @@ class DataChecker:
     The function of an instrument is the attribute ``checker`` of its DRP
     (:class:`~numina.core.pipeline.InstrumentDRP`), and it is called as
     ``func(obj, astype=None, level=None)``. The DRPs are loaded if needed.
-
-    Functions registered with :meth:`register` are used for the instruments
-    whose DRP has no checker.
     """
-
-    def __init__(self):
-        self._loaders = {}
 
     def _function(self, instrument_name):
         """The function of `instrument_name`, or None"""
@@ -138,31 +132,11 @@ class DataChecker:
             drp = numina.drps.get_system_drps().query_by_name(instrument_name)
         except KeyError:
             drp = None
-        func = getattr(drp, "checker", None)
-        if func is None:
-            func = self._loaders.get(instrument_name)
-        return func
+        return getattr(drp, "checker", None)
 
     def __contains__(self, instrument_name):
         """True if there is a function for `instrument_name`"""
         return self._function(instrument_name) is not None
-
-    def register(self, instrument_name):
-        """Decorator that registers the function of `instrument_name`.
-
-        Deprecated, set the attribute ``checker`` of the DRP instead.
-        """
-        warnings.warn(
-            "DataChecker.register is deprecated, set the attribute checker of the InstrumentDRP",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-
-        def wrapper(func):
-            self._loaders[instrument_name] = func
-            return func
-
-        return wrapper
 
     def dispatch(self, instrument, hdulist, astype=None, level=None):
         """Check `hdulist` with the function of `instrument`.

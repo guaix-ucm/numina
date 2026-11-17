@@ -16,16 +16,6 @@ from numina.ext.gtc import DF
 from .dataframe import DataFrame
 from .datatype import DataType
 
-# Used only by the deprecated DataFrameType.headerschema
-_base_schema = {
-    "keywords": {
-        "INSTRUME": {"valid": True},
-        "READMODE": {"valid": True},
-        "EXPTIME": {"value": float},
-        "NUMINAID": {"value": int},
-    }
-}
-
 
 class DataFrameType(DataType):
     """A type of DataFrame.
@@ -62,35 +52,8 @@ class DataFrameType(DataType):
 
     def __init__(self, datamodel=None):
         super().__init__(DataFrame, datamodel=datamodel)
-        self._headerschema = None
 
         self.add_dialect_info("gtc", DF.TYPE_FRAME)
-
-    @property
-    def headerschema(self):
-        """Deprecated, a schema of numina.frame.schema, it is not used"""
-        warnings.warn(
-            "DataFrameType.headerschema is deprecated, it will be removed in 0.42, use header_schema",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        if self._headerschema is None:
-            with warnings.catch_warnings():
-                warnings.simplefilter("ignore", DeprecationWarning)
-                from numina.frame.schema import Schema
-
-            self._headerschema = Schema(_base_schema)
-        return self._headerschema
-
-    @headerschema.setter
-    def headerschema(self, value):
-        """Deprecated, set the schema returned by the property."""
-        warnings.warn(
-            "DataFrameType.headerschema is deprecated, it will be removed in 0.42, use header_schema",
-            DeprecationWarning,
-            stacklevel=2,
-        )
-        self._headerschema = value
 
     def convert(self, obj):
         """Convert"""

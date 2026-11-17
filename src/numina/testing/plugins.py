@@ -39,25 +39,6 @@ def _extractall(tar):
 
 
 @pytest.fixture
-def numinatmpdir(tmpdir):
-    """Return a temporary directory for recipe testing
-
-    .. deprecated:: 0.41
-            Use the fixture `tmp_path` of pytest. It will be removed
-            in 0.42
-
-    """
-    warnings.warn(
-        "the fixture 'numinatmpdir' is deprecated, it will be removed in 0.42, use 'tmp_path'",
-        DeprecationWarning,
-        stacklevel=2,
-    )
-    tmpdir.mkdir("_work")
-    tmpdir.mkdir("_data")
-    return tmpdir
-
-
-@pytest.fixture
 def numinatpldir(tmpdir, request):
     """Return a temporary dataset for recipe testing.
 

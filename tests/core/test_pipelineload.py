@@ -92,13 +92,6 @@ def test_load_modes_dict():
     assert modes["bias"].instrument == "TEST1"
 
 
-def test_observing_mode_validate_deprecated():
-    from numina.core.pipeline import ObservingMode
-
-    with pytest.warns(DeprecationWarning, match="ObservingMode.validate"):
-        assert ObservingMode().validate(None)
-
-
 DRP_TEST1_MODES = """
 name: TEST1
 configurations:
