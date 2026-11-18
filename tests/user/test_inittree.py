@@ -33,7 +33,8 @@ def make_zip(path, files):
 def setup(drpmocker, tmp_path, monkeypatch):
     """A DRP with two datasets, the work directory and an empty cache"""
     cache = tmp_path / "cache"
-    cache.mkdir()
+    # astropy uses $XDG_CACHE_HOME/numina only if it exists, if not it uses ~/.numina/cache
+    (cache / "numina").mkdir(parents=True)
     monkeypatch.setenv("XDG_CACHE_HOME", str(cache))
     work = tmp_path / "work"
     work.mkdir()
