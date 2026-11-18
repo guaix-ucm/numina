@@ -1,4 +1,8 @@
+import matplotlib
 import pytest
+
+# the tests do not depend on the display: no windows, the same behaviour as in CI
+matplotlib.use("agg")
 
 pytest_plugins = ["numina.testing.plugins", "tests.support.plugins_pattri"]
 
