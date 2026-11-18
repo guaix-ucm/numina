@@ -388,16 +388,6 @@
                 }
             }
         ],
-        "./src/numina/frame/schema.py": [
-            {
-                "code": "reportCallIssue",
-                "range": {
-                    "startColumn": 22,
-                    "endColumn": 54,
-                    "lineCount": 1
-                }
-            }
-        ],
         "./src/numina/instrument/simulation/factory.py": [
             {
                 "code": "reportRedeclaration",

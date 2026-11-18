@@ -309,8 +309,8 @@ def fit_skewnorm(x, y, amp0, xi0, omega0, alpha_max=20.0, alpha0=0.0, pixel_inte
         Gaussian fit (or amplitude, location and scale of an initial
         skew-normal fit, together with alpha0).
     alpha_max : float, optional
-        Bound on the absolute value of the shape parameter. For large
-        |alpha| the profile tends to a half-normal and the parameters
+        Bound on the absolute value of the shape parameter. For a large
+        absolute value of alpha the profile tends to a half-normal and the parameters
         become strongly degenerate.
     alpha0 : float, optional
         Initial value of the shape parameter.
@@ -1095,7 +1095,7 @@ def refine_peaks_spectrum(
           in pixels. These keys are missing when the integrated flux is not
           positive. With preserve_flux=True, the dictionary also contains the
           parameters of the flux-preserving Gaussian fit, with the prefix
-          'gaussian_' to distinguish them from the moments: 'gaussian_flux'
+          ``gaussian_`` to distinguish them from the moments: 'gaussian_flux'
           (in the units of sx times pixels), 'gaussian_amp' (in the units of
           sx), 'gaussian_mean' (array coordinates), 'gaussian_sigma' (pixels)
           and their uncertainties 'gaussian_flux_err', 'gaussian_mean_err'

@@ -18,6 +18,7 @@ wavelength calibration of a spectrum. The script numina-wavecalib
 
 import logging
 import os
+from typing import Literal, overload
 
 from astropy.io import fits
 from astropy.table import Table
@@ -197,6 +198,14 @@ def read_wv_master_from_array(master_table, lines="brightest"):
             raise ValueError("Lines_catalog file does not have the expected number of columns")
 
     return wv_master
+
+
+@overload
+def read_wv_master_file(wv_master_file, lines=..., return_unit: Literal[False] = ...) -> np.ndarray: ...
+
+
+@overload
+def read_wv_master_file(wv_master_file, lines=..., *, return_unit: Literal[True]) -> tuple[np.ndarray, u.UnitBase]: ...
 
 
 def read_wv_master_file(wv_master_file, lines="brightest", return_unit=False):

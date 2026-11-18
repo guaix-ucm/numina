@@ -2318,7 +2318,7 @@ def refine_arccalibration(
                     flush=True,
                 )
 
-                selected_key = [None]
+                selected_key: list[str | None] = [None]
 
                 def select_option(evt):
                     # evt.key may be None or a combination such as 'ctrl+a'

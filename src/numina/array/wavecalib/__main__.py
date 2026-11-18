@@ -210,7 +210,7 @@ def main(args=None):
 
     lok1 = wvmin <= wv_master_all
     lok2 = wv_master_all <= wvmax
-    lok = lok1 * lok2
+    lok = lok1 & lok2
     lsize = len(str(len(wv_master_all)))
     logger.info(f"Number of lines in wv_master_all........: {len(wv_master_all):>{lsize}d}")
     wv_master_all = wv_master_all[lok]
@@ -219,7 +219,7 @@ def main(args=None):
 
     lok1 = wvmin <= wv_master
     lok2 = wv_master <= wvmax
-    lok = lok1 * lok2
+    lok = lok1 & lok2
     logger.info(f"Number of lines in wv_master............: {len(wv_master):>{lsize}d}")
     wv_master = wv_master[lok]
     logger.info(f"Number of lines in clipped wv_master....: {len(wv_master):>{lsize}d}")
