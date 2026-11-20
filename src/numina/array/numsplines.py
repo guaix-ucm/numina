@@ -28,6 +28,63 @@ def fun_residuals(params, xnor, ynor, w, bbox, k, ext):
     return spl.get_residual()
 
 
+# Displacement of each knot in the initial Nelder-Mead simplex, as a
+# fraction of the width of the interval in which that knot can move
+_SIMPLEX_STEP_FRACTION = 0.1
+
+
+def _initial_simplex(params, fraction=_SIMPLEX_STEP_FRACTION):
+    """Initial Nelder-Mead simplex in lmfit internal coordinates.
+
+    The default simplex built by scipy perturbs each coordinate by 5%
+    of its value (or by 0.00025 if the value is exactly 0). lmfit maps
+    a parameter bounded in [min, max] to the internal coordinate
+    u = arcsin(2 (v - min) / (max - min) - 1), which is 0 (or ~1e-15,
+    depending on float rounding) for a parameter starting at the centre
+    of its interval. In the latter case the step is ~1e-16 and the
+    parameter never moves (see issue #285). Here each vertex displaces
+    one parameter by a fixed fraction of the width of its interval,
+    towards the farthest bound, so the step does not depend on where
+    the parameter starts.
+
+    Parameters
+    ----------
+    params : lmfit.Parameters
+        Parameters to be fitted. The varying parameters must have
+        finite bounds, with min < max.
+    fraction : float, optional
+        Displacement of each parameter, as a fraction of the width of
+        its interval. It must be in (0, 0.5], so that the displaced
+        value lies within the bounds.
+
+    Returns
+    -------
+    simplex : numpy.ndarray
+        Array of shape (N + 1, N), where N is the number of varying
+        parameters, in lmfit internal coordinates. The first row is the
+        starting point of the fit.
+
+    """
+    pars = [par for par in params.values() if par.vary]
+    # internal coordinates of the starting point, computed by lmfit
+    # itself so that the simplex matches the internal coordinates used
+    # in Minimizer.scalar_minimize
+    u0 = np.array([par.setup_bounds() for par in pars])
+    vmin = np.array([par.min for par in pars])
+    vmax = np.array([par.max for par in pars])
+    v0 = vmin + (np.sin(u0) + 1) * (vmax - vmin) / 2
+    width = vmax - vmin
+    sign = np.where(v0 <= (vmin + vmax) / 2, 1.0, -1.0)
+    v1 = v0 + sign * fraction * width
+    # clip to protect arcsin against rounding errors
+    u1 = np.arcsin(np.clip(2 * (v1 - vmin) / width - 1, -1.0, 1.0))
+    simplex = np.tile(u0, (len(pars) + 1, 1))
+    # vertex i + 1 differs from the starting point only in coordinate i
+    idx = np.arange(len(pars))
+    simplex[idx + 1, idx] = u1
+    return simplex
+
+
 class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
     """Extend scipy.interpolate.LSQUnivariateSpline.
 
@@ -181,8 +238,12 @@ class AdaptiveLSQUnivariateSpline(LSQUnivariateSpline):
                 params.add(name=f"xknot{i:03d}", value=xknotnor[i], min=xminknot, max=xmaxknot, vary=True)
             self._params = params.copy()
             fitter = Minimizer(userfcn=fun_residuals, params=params, fcn_args=(xnor, ynor, w, bbox, k, ext))
+            # passing options replaces the dictionary built by lmfit, so
+            # maxiter is set here to the value lmfit uses by default
+            # (2 * max_nfev, with max_nfev = 2000 * (nvarys + 1))
+            options = {"maxiter": 2 * 2000 * (nknots + 1), "initial_simplex": _initial_simplex(params)}
             try:
-                self._result = fitter.scalar_minimize(method="Nelder-Mead", tol=tolerance)
+                self._result = fitter.scalar_minimize(method="Nelder-Mead", tol=tolerance, options=options)
                 xknot = [item.value for item in self._result.params.values()]
                 xknot = (np.asarray(xknot) + cx) / bx
             except ValueError as error:
