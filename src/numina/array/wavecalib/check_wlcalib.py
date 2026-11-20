@@ -32,6 +32,7 @@ from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 from .peaks_spectrum import odd_window_width
 from . import core
+from .arccalibration import _disable_default_keys
 from .arccalibration import _wv_unit_and_label
 from numina.tools.arg_file_is_new import arg_file_is_new
 from numina.tools.initialize_script_with_args import NuminaScriptDefinition
@@ -392,6 +393,33 @@ def check_wlcalib_sp(
 
     loop = True
 
+    # in interactive sessions the same figure is reused in every iteration
+    fig = None
+    fig_interactive = False
+
+    # latest limits of the spectrum panel (kept when replotting)
+    xmin_previous = None
+    xmax_previous = None
+    ymin_previous = None
+    ymax_previous = None
+
+    # single-key options of the interactive menu ('n' asks for the
+    # number of the line to be modified)
+    menu_keys = "adlnopqrw"
+
+    def print_menu():
+        _logger.info("[bold blue]Recalibration menu")
+        _logger.info("[bold blue]------------------")
+        _logger.info("[blue](d) delete all the identified lines")
+        _logger.info("[blue](r) restart from begining")
+        _logger.info("[blue](a) automatic line inclusion")
+        _logger.info("[blue](l) toggle logarithmic scale on/off")
+        _logger.info("[blue](p) modify polynomial degree")
+        _logger.info("[blue](o) output data with identified line peaks")
+        _logger.info("[blue](w) replot whole spectrum")
+        _logger.info("[blue](q) quit without additional changes")
+        _logger.info(f"[blue](n) modify line #<number> (number from 1 to {len(ixpeaks)})")
+
     while loop:
 
         if npeaks > 0:
@@ -461,12 +489,24 @@ def check_wlcalib_sp(
 
         # display results
         if (abs(debugplot) % 10 != 0) or (pdf is not None):
+            from numina.array.display.matplotlib_utils import plt
+
             if pdf is not None:
                 # the figure is only saved in the PDF file
                 fig = new_figure(interactive=False, figsize=(11.69, 8.27), dpi=100)
-            else:
+            elif not interactive:
                 fig = new_figure()
                 set_window_geometry(geometry)
+            elif fig is None or not plt.fignum_exists(fig.number):
+                # first iteration, or the window was closed by the user
+                fig = new_figure()
+                set_window_geometry(geometry)
+                # the menu keys must not trigger matplotlib shortcuts
+                # (e.g. 'p' = pan, 'o' = zoom, 'l' = toggle y log scale)
+                _disable_default_keys(fig, extra_keys=menu_keys)
+            else:
+                # reuse the window opened in a previous iteration
+                fig.clf()
 
             # residuals
             ax2 = fig.add_subplot(2, 1, 1)
@@ -570,6 +610,11 @@ def check_wlcalib_sp(
             ax1 = fig.add_subplot(2, 1, 2, sharex=ax2)
             ax1.set_xlim(xmin, xmax)
             ax1.set_ylim(ymin, ymax)
+            if xmin_previous is not None:
+                # keep the limits of the previous iteration (the x axis is
+                # shared with the residuals panel)
+                ax1.set_xlim(xmin_previous, xmax_previous)
+                ax1.set_ylim(ymin_previous, ymax_previous)
             ax1.plot(xwv, spectrum)
             if npeaks > 0:
                 ax1.plot(ixpeaks_wv, spectrum[ixpeaks], "o", fillstyle="none", label="initial location")
@@ -583,6 +628,10 @@ def check_wlcalib_sp(
             ax1.yaxis.label.set_size(10)
             ax1.xaxis.tick_top()
             ax1.xaxis.set_label_position("top")
+            # labels below the lower border of the panel (outside the axes)
+            estimated_wv_labels = []
+            # clip_on=True: labels outside the axes limits (e.g. after
+            # zooming) are not drawn and are ignored by tight_layout
             for i in range(len(ixpeaks)):
                 # identified lines
                 if wv_verified_all_peaks[i] > 0:
@@ -592,6 +641,7 @@ def check_wlcalib_sp(
                         f"{wv_verified_all_peaks[i]:.{wv_decimals}f}({i + 1})",
                         fontsize=8,
                         horizontalalignment="center",
+                        clip_on=True,
                     )
                 else:
                     ax1.text(
@@ -600,21 +650,38 @@ def check_wlcalib_sp(
                         "(" + str(i + 1) + ")",
                         fontsize=8,
                         horizontalalignment="center",
+                        clip_on=True,
                     )
-                # estimated wavelength from initial calibration
+                # estimated wavelength from initial calibration; x in data
+                # coordinates and y in axes coordinates (y=0 is the lower
+                # border of the panel, whatever the current y limits)
                 if npeaks > 0:
                     estimated_wv = fun_wv(fxpeaks[i] + 1, crpix1, crval1, cdelt1)
                     estimated_wv = f"{estimated_wv:.{wv_decimals}f}"
-                    ax1.text(
-                        fxpeaks_wv[i],
-                        ymin,  # spmedian[ixpeaks[i]],
-                        estimated_wv,
-                        fontsize=8,
-                        color="grey",
-                        rotation="vertical",
-                        horizontalalignment="center",
-                        verticalalignment="top",
+                    estimated_wv_labels.append(
+                        ax1.text(
+                            fxpeaks_wv[i],
+                            0,
+                            estimated_wv,
+                            fontsize=8,
+                            color="grey",
+                            rotation="vertical",
+                            horizontalalignment="center",
+                            verticalalignment="top",
+                            transform=ax1.get_xaxis_transform(),
+                        )
                     )
+
+            # these labels are outside the axes and cannot be clipped: hide
+            # those outside the current x limits (otherwise they would be
+            # drawn beyond the panel borders after zooming)
+            def update_estimated_wv_labels(ax):
+                x1, x2 = sorted(ax.get_xlim())
+                for label in estimated_wv_labels:
+                    label.set_visible(x1 <= label.get_position()[0] <= x2)
+
+            update_estimated_wv_labels(ax1)
+            ax1.callbacks.connect("xlim_changed", update_estimated_wv_labels)
             if len(missing_wv) > 0:
                 tmp = [float(wv) for wv in missing_wv]
                 ax1.vlines(tmp, ymin=ymin, ymax=ymax, colors="grey", linestyles="dotted", label="missing lines")
@@ -624,8 +691,56 @@ def check_wlcalib_sp(
             # it is recomputed when the window gets its final size (when it
             # is shown) or is resized, and also when saving the PDF file
             fig.set_layout_engine("tight")
+
+            # option of the interactive menu selected in the figure window
+            # (None if it has to be read from the terminal)
+            ioption = None
+            menu_printed = False
+
             if pdf is not None:
                 pdf.savefig(fig)
+            elif interactive:
+                # display the figure without blocking and run the GUI event
+                # loop (allowing zoom/pan) until a menu key (or RETURN, which
+                # selects the default option 'w') is pressed in the figure
+                # window or the window is closed; the menu keys are not
+                # handled by the default matplotlib key handler (see
+                # _disable_default_keys) and "enter" is not used in the
+                # default matplotlib keymaps
+                fig_interactive = True
+                fig.canvas.draw_idle()
+                plt.show(block=False)
+                print_menu()
+                menu_printed = True
+                print("Zoom/Unzoom in the figure (RETURN = w)... ", end="", flush=True)
+
+                selected_key: list[str | None] = [None]
+
+                def select_option(evt):
+                    # evt.key may be None or a combination such as 'ctrl+a'
+                    if evt.key is not None and len(evt.key) == 1 and evt.key in menu_keys:
+                        selected_key[0] = evt.key
+                    elif evt.key == "enter":
+                        selected_key[0] = "w"
+                    if selected_key[0] is not None:
+                        fig.canvas.stop_event_loop()
+
+                cid_key = fig.canvas.mpl_connect("key_press_event", select_option)
+                # run the event loop in short slices and check whether the
+                # window is still open, so that closing it by any means
+                # (window button, OS shortcut) cannot leave this loop hanging
+                while selected_key[0] is None and plt.fignum_exists(fig.number):
+                    fig.canvas.start_event_loop(timeout=0.1)
+                fig.canvas.mpl_disconnect(cid_key)
+                ioption = selected_key[0]
+                # end the prompt line, showing the selected option
+                print(ioption if ioption is not None else "")
+                # store the current limits to keep them when replotting
+                xmin_previous, xmax_previous = ax1.get_xlim()
+                ymin_previous, ymax_previous = ax1.get_ylim()
+                # make sure the figure is fully drawn before reading from
+                # the terminal (the window does not respond meanwhile)
+                fig.canvas.flush_events()
             else:
                 if debugplot in [-22, -12, 12, 22]:
                     pause_debugplot(
@@ -639,17 +754,26 @@ def check_wlcalib_sp(
 
             # display results and request next action
             if interactive:
-                print("Recalibration menu")
-                print("------------------")
-                print("(d) delete all the identified lines")
-                print("(r) restart from begining")
-                print("(a) automatic line inclusion")
-                print("(l) toggle logarithmic scale on/off")
-                print("(p) modify polynomial degree")
-                print("(o) output data with identified line peaks")
-                print("(x) exit without additional changes")
-                print("(#) from 1 to " + str(len(ixpeaks)) + " --> modify line #")
-                ioption = readi("Option", default="x", minval=1, maxval=len(ixpeaks), allowed_single_chars="adloprx")
+                if ioption is None:
+                    # no option selected in the figure window (window
+                    # closed): read it from the terminal, where the line
+                    # number can also be given directly
+                    if not menu_printed:
+                        print_menu()
+                    ioption = readi(
+                        "Option", default="w", minval=1, maxval=len(ixpeaks), allowed_single_chars=menu_keys
+                    )
+                if ioption == "n":
+                    if len(ixpeaks) > 0:
+                        ioption = readi(
+                            f"Number of the line to be modified (1 to {len(ixpeaks)})",
+                            minval=1,
+                            maxval=len(ixpeaks),
+                        )
+                    else:
+                        print("No lines available to be modified")
+                        # replot without changes
+                        continue
                 if ioption == "d":
                     wv_verified_all_peaks = np.zeros(npeaks)
                 elif ioption == "r":
@@ -662,6 +786,10 @@ def check_wlcalib_sp(
                     delta_wv_max = ntimes_match_wv * cdelt1
                     wv_verified_all_peaks = match_wv_arrays(wv_master, fxpeaks_wv_corrected, delta_wv_max=delta_wv_max)
                 elif ioption == "l":
+                    xmin_previous = None
+                    xmax_previous = None
+                    ymin_previous = None
+                    ymax_previous = None
                     if local_ylogscale:
                         local_ylogscale = False
                     else:
@@ -673,8 +801,16 @@ def check_wlcalib_sp(
                         # identified lines
                         if wv_verified_all_peaks[i] > 0:
                             print(wv_verified_all_peaks[i], spectrum[ixpeaks[i]])
-                elif ioption == "x":
-                    loop = False
+                elif ioption == "w":
+                    xmin_previous = None
+                    xmax_previous = None
+                    ymin_previous = None
+                    ymax_previous = None
+                elif ioption == "q":
+                    # ask for confirmation; otherwise the figure is replotted
+                    # keeping the current limits
+                    if readc("Do you really want to quit (y/n)", default="n", valid="yn") == "y":
+                        loop = False
                 else:
                     print(wv_master)
                     expected_value = fxpeaks_wv[ioption - 1] + polyres(fxpeaks_wv[ioption - 1])
@@ -687,6 +823,12 @@ def check_wlcalib_sp(
                 loop = False
         else:
             loop = False
+
+    # close the figure reused in the interactive session
+    if fig_interactive:
+        from numina.array.display.matplotlib_utils import plt
+
+        plt.close(fig)
 
     # refined wavelength calibration coefficients
     if coeff_ini is not None:
