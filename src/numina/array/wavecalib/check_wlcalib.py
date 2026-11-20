@@ -32,6 +32,7 @@ from .peaks_spectrum import find_peaks_spectrum
 from .peaks_spectrum import refine_peaks_spectrum
 from .peaks_spectrum import odd_window_width
 from . import core
+from .arccalibration import _activate_zoom_mode
 from .arccalibration import _disable_default_keys
 from .arccalibration import _wv_unit_and_label
 from numina.tools.arg_file_is_new import arg_file_is_new
@@ -405,7 +406,7 @@ def check_wlcalib_sp(
 
     # single-key options of the interactive menu ('n' asks for the
     # number of the line to be modified)
-    menu_keys = "adlnopqrw"
+    menu_keys = "adilmnqrw"
 
     def print_menu():
         _logger.info("[bold blue]Recalibration menu")
@@ -414,8 +415,8 @@ def check_wlcalib_sp(
         _logger.info("[blue](r) restart from begining")
         _logger.info("[blue](a) automatic line inclusion")
         _logger.info("[blue](l) toggle logarithmic scale on/off")
-        _logger.info("[blue](p) modify polynomial degree")
-        _logger.info("[blue](o) output data with identified line peaks")
+        _logger.info("[blue](m) modify polynomial degree")
+        _logger.info("[blue](i) output data with identified line peaks")
         _logger.info("[blue](w) replot whole spectrum")
         _logger.info("[blue](q) quit without additional changes")
         _logger.info(f"[blue](n) modify line #<number> (number from 1 to {len(ixpeaks)})")
@@ -502,8 +503,12 @@ def check_wlcalib_sp(
                 fig = new_figure()
                 set_window_geometry(geometry)
                 # the menu keys must not trigger matplotlib shortcuts
-                # (e.g. 'p' = pan, 'o' = zoom, 'l' = toggle y log scale)
+                # (e.g. 'r' = home, 'l' = toggle y log scale)
                 _disable_default_keys(fig, extra_keys=menu_keys)
+                # start with the zoom mode of the navigation toolbar
+                # activated; the mode selected later by the user (zoom,
+                # pan or none) is kept in the next iterations
+                _activate_zoom_mode(fig)
             else:
                 # reuse the window opened in a previous iteration
                 fig.clf()
@@ -794,9 +799,9 @@ def check_wlcalib_sp(
                         local_ylogscale = False
                     else:
                         local_ylogscale = True
-                elif ioption == "p":
+                elif ioption == "m":
                     poldeg_residuals = readi("New polynomial degree", minval=0)
-                elif ioption == "o":
+                elif ioption == "i":
                     for i in range(len(ixpeaks)):
                         # identified lines
                         if wv_verified_all_peaks[i] > 0:

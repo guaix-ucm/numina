@@ -1793,6 +1793,31 @@ def _disable_default_keys(fig, extra_keys=()):
     manager.key_press_handler_id = fig.canvas.mpl_connect("key_press_event", filtered_key_press_handler)
 
 
+def _activate_zoom_mode(fig):
+    """Activate the zoom mode of the navigation toolbar of a figure.
+
+    This is equivalent to pressing the zoom button of the toolbar (or
+    the key 'o'). The mode is kept by the toolbar when the figure is
+    cleared (fig.clf), so this function only needs to be called once,
+    when the figure window is created.
+
+    Nothing is done when the figure window has no navigation toolbar
+    or when the toolbar is not a NavigationToolbar2 instance (e.g. when
+    rcParams['toolbar'] is 'toolmanager').
+
+    Parameters
+    ----------
+    fig : matplotlib.figure.Figure
+        Figure displayed in a window.
+
+    """
+    from matplotlib.backend_bases import NavigationToolbar2
+
+    toolbar = getattr(fig.canvas.manager, "toolbar", None)
+    if isinstance(toolbar, NavigationToolbar2):
+        toolbar.zoom()
+
+
 def _save_linear_wvcal_spectrum(sp, poly, crval1, cdelt1, naxis1_out, filename, wv_unit="Angstrom"):
     """Resample a spectrum to a linear wavelength scale and save it.
 
@@ -2130,6 +2155,10 @@ def refine_arccalibration(
                     # the menu keys must not trigger matplotlib shortcuts
                     # (e.g. 'r' = home, 'l' = toggle y log scale)
                     _disable_default_keys(fig, extra_keys=menu_keys)
+                    # start with the zoom mode of the navigation toolbar
+                    # activated; the mode selected later by the user (zoom,
+                    # pan or none) is kept in the next iterations
+                    _activate_zoom_mode(fig)
             else:
                 # reuse the window opened in a previous iteration
                 fig.clf()
