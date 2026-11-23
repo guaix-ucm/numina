@@ -131,7 +131,7 @@ def update_image2d_rss_detector_method0(
         order = dumdict["order"]
         aij = np.array(dumdict["aij"])
         bij = np.array(dumdict["bij"])
-        y_hawaii, x_hawaii = fmap(
+        x_hawaii, y_hawaii = fmap(
             order=order,
             aij=aij,
             bij=bij,

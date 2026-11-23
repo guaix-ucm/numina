@@ -95,14 +95,14 @@ def update_image2d_rss_method1(
     aij = np.array(dumdict["aij"])
     bij = np.array(dumdict["bij"])
 
-    y_detector_lower_index, x_detector_lower_index = fmap(
+    x_detector_lower_index, y_detector_lower_index = fmap(
         order=order, aij=aij, bij=bij, x=x_ifu_lower, y=wavelength.to(wavelength_unit).value
     )
     # subtract 1 to work with array indices
     x_detector_lower_index -= 1
     y_detector_lower_index -= 1
 
-    y_detector_upper_index, x_detector_upper_index = fmap(
+    x_detector_upper_index, y_detector_upper_index = fmap(
         order=order, aij=aij, bij=bij, x=x_ifu_upper, y=wavelength.to(wavelength_unit).value
     )
     # subtract 1 to work with array indices
@@ -194,7 +194,7 @@ def update_image2d_rss_method1(
         plt.tight_layout()
         plt.show()
     # project the previous points in the detector
-    y_hawaii_grid_index, x_hawaii_grid_index = fmap(
+    x_hawaii_grid_index, y_hawaii_grid_index = fmap(
         order=order,
         aij=aij,
         bij=bij,
@@ -204,7 +204,7 @@ def update_image2d_rss_method1(
     x_hawaii_grid_index -= 1
     y_hawaii_grid_index -= 1
 
-    y_hawaii_grid_index, x_hawaii_grid_index = fmap(
+    x_hawaii_grid_index, y_hawaii_grid_index = fmap(
         order=order,
         aij=aij,
         bij=bij,
