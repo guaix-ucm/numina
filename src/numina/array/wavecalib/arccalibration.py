@@ -271,6 +271,8 @@ def fit_list_of_wvfeatures(
         ax = fig.add_subplot(2, 1, 1, sharex=ax2)
         ax.set_xlim(1 - 0.05 * naxis1_arc, naxis1_arc + 0.05 * naxis1_arc)
         ax.set_ylabel(f"differences with\nlinear solution ({wv_unit_label})")
+        # same differences in pixels, using the linear dispersion
+        _add_pixel_yaxis(ax, cdelt1_linear, "differences with\nlinear solution (pixels)")
         ax.plot(xp, yp, "go", label="identified")
         for i in range(nfit):
             ax.text(xp[i], yp[i], list_of_wvfeatures[ifit[i]].category, fontsize=15)
@@ -1818,6 +1820,39 @@ def _activate_zoom_mode(fig):
         toolbar.zoom()
 
 
+def _add_pixel_yaxis(ax, cdelt1, ylabel):
+    """Add a right y axis with wavelength differences in pixels.
+
+    The left y axis of 'ax' must display wavelength differences. The
+    secondary axis displays the same values divided by 'cdelt1'. When
+    the wavelength calibration is not linear, this is an approximation
+    of the local dispersion.
+
+    Nothing is done when 'cdelt1' is zero or not finite (e.g. when no
+    arc lines have been identified).
+
+    Parameters
+    ----------
+    ax : matplotlib.axes.Axes
+        Axes whose left y axis displays wavelength differences.
+    cdelt1 : float
+        Linear dispersion (wavelength units per pixel).
+    ylabel : str
+        Label of the secondary y axis.
+
+    Returns
+    -------
+    ax_pixels : matplotlib.axes.Axes or None
+        Secondary y axis (None when it has not been created).
+
+    """
+    if not np.isfinite(cdelt1) or cdelt1 == 0:
+        return None
+    ax_pixels = ax.secondary_yaxis("right", functions=(lambda y: y / cdelt1, lambda y: y * cdelt1))
+    ax_pixels.set_ylabel(ylabel)
+    return ax_pixels
+
+
 def _save_linear_wvcal_spectrum(sp, poly, crval1, cdelt1, naxis1_out, filename, wv_unit="Angstrom"):
     """Resample a spectrum to a linear wavelength scale and save it.
 
@@ -2187,6 +2222,8 @@ def refine_arccalibration(
                     ax1.plot(xdum[reject], yp[reject], "o", color="tab:gray", label="ignored")
                 ax1.plot(xpol, ypol, "c-", label="fit")
             ax1.set_ylabel(f"polynomial - linear fit ({wv_unit_label})")
+            # same differences in pixels, using the linear dispersion
+            _add_pixel_yaxis(ax1, cdelt1_linear, "polynomial - linear fit (pixels)")
             ax1.text(
                 0.01,
                 0.97,

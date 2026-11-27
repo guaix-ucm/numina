@@ -33,6 +33,7 @@ from .peaks_spectrum import refine_peaks_spectrum
 from .peaks_spectrum import odd_window_width
 from . import core
 from .arccalibration import _activate_zoom_mode
+from .arccalibration import _add_pixel_yaxis
 from .arccalibration import _disable_default_keys
 from .arccalibration import _wv_unit_and_label
 from numina.tools.arg_file_is_new import arg_file_is_new
@@ -534,6 +535,11 @@ def check_wlcalib_sp(
                 ax2.plot(xresid[reject], yresid[reject], "o", color="tab:gray")
             ax2.set_ylabel(f"Offset ({wv_unit_label})")
             ax2.yaxis.label.set_size(10)
+            # same offsets in pixels (exact, since the wavelength
+            # calibration is linear)
+            ax2_pixels = _add_pixel_yaxis(ax2, cdelt1, "Offset (pixels)")
+            if ax2_pixels is not None:
+                ax2_pixels.yaxis.label.set_size(10)
             if title is not None:
                 ax2.set_title(title, **{"size": 12})
             ax2.plot(xwv, polyres(xwv), "-")
